@@ -1,0 +1,518 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --amber: #f59e0b;
+  --amber-light: #fbbf24;
+
+  /* Hero layout + typography defaults (see HeroRootStyles) */
+  --layout-width: 76%;
+  --hero-text-y: 8px;
+  --hero-cards-x: 96px;
+  --hero-cards-y: -120px;
+  --hero-card-size: 0.7;
+  --hero-card-rotate: 10;
+  --hero-card-spacing: 48;
+  --hero-title-size: 92px;
+  --hero-title-color: #ffffff;
+  --hero-highlight-color: #f59e0b;
+  --hero-subtitle-size: 16px;
+  --hero-subtitle-color: #f59e0b;
+  --hero-desc-size: 18px;
+  --hero-desc-color: #ffffff;
+  --hero-btn-bg: #f59e0b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-nav: var(--font-rajdhani);
+  --font-nav-display: var(--font-orbitron);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/*
+ * Cuộn mượt + bù fixed header khi bấm anchor / hash (SERVICES → FAQ, #contact, …).
+ * prefers-reduced-motion: tắt smooth scroll theo khuyến nghị a11y.
+ */
+html {
+  scroll-padding-top: 5.75rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-marquee {
+    animation: none !important;
+  }
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+/* Scan line animation for cyber cards */
+@keyframes scan {
+  0% {
+    top: -2px;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+/* Glitch transition */
+@keyframes glitch-flash {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.15;
+  }
+  20% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.08;
+  }
+  50% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 0.12;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes glitch-strip-1 {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  15% {
+    transform: translateX(-8px);
+    opacity: 0.6;
+  }
+  30% {
+    transform: translateX(5px);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateX(-3px);
+    opacity: 0.3;
+  }
+  70% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+}
+
+@keyframes glitch-strip-2 {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  20% {
+    transform: translateX(10px);
+    opacity: 0.5;
+  }
+  40% {
+    transform: translateX(-6px);
+    opacity: 0.35;
+  }
+  60% {
+    transform: translateX(2px);
+    opacity: 0.2;
+  }
+  80% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+}
+
+@keyframes glitch-rgb-r {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-4px, 0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(3px, 0);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes glitch-rgb-b {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(4px, 0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-3px, 0);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+}
+
+/* Lightning transition */
+@keyframes lightning-bolt {
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  40% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes lightning-glow {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lightning-flash {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.25;
+  }
+  16% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.15;
+  }
+  45% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes shatter-piece {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) rotate(var(--tr)) scale(0.3);
+  }
+}
+
+@keyframes electric-arc {
+  0% {
+    stroke-dashoffset: 500;
+    opacity: 0;
+    filter: blur(0px);
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    filter: blur(1px);
+  }
+  75% {
+    opacity: 0.4;
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes charEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cardFly {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(calc(var(--tx) * 0.3), calc(var(--ty) * 0.5))
+      scale(1.1) rotate(-8deg);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(calc(var(--tx) * 0.8), calc(var(--ty) * 0.9))
+      scale(var(--sw) * 0.8, var(--sh) * 0.8) rotate(4deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(var(--sw), var(--sh))
+      rotate(0deg);
+    opacity: 0;
+  }
+}
+
+@keyframes bigExpand {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Floating particles animations */
+@keyframes float-1 {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translateY(-8px) translateX(3px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-12px) translateX(-2px);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateY(-6px) translateX(4px);
+    opacity: 0.9;
+  }
+}
+
+@keyframes float-2 {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.3;
+  }
+  33% {
+    transform: translateY(-10px) translateX(-4px);
+    opacity: 0.7;
+  }
+  66% {
+    transform: translateY(-8px) translateX(5px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes float-3 {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.5;
+  }
+  20% {
+    transform: translateY(-6px) translateX(2px);
+    opacity: 0.8;
+  }
+  40% {
+    transform: translateY(-14px) translateX(-3px);
+    opacity: 0.4;
+  }
+  60% {
+    transform: translateY(-10px) translateX(6px);
+    opacity: 0.9;
+  }
+  80% {
+    transform: translateY(-4px) translateX(-1px);
+    opacity: 0.6;
+  }
+}
+
+/* Border glow animation */
+@keyframes border-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.8));
+    stroke-dashoffset: 0;
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(251, 191, 36, 1))
+      drop-shadow(0 0 20px rgba(251, 191, 36, 0.6));
+    stroke-dashoffset: -50;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #f59e0b;
+  border-radius: 2px;
+}
+
+@keyframes glow-ping {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(245, 158, 11, 0.6),
+      0 0 16px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(245, 158, 11, 0),
+      0 0 28px rgba(245, 158, 11, 0.5);
+  }
+}
+
+/* Nav link hover effect */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  background: #f7a31c;
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+  box-shadow: 0 0 0px rgba(247, 163, 28, 0);
+}
+.nav-link:hover {
+  color: #f7a31c !important;
+  text-shadow:
+    0 0 12px rgba(247, 163, 28, 0.62),
+    0 0 24px rgba(247, 163, 28, 0.32);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+  box-shadow:
+    0 0 8px 2px rgba(247, 163, 28, 0.52),
+    0 0 16px 4px rgba(247, 163, 28, 0.27);
+}
+.nav-link.active-link {
+  color: #f7a31c !important;
+  text-shadow: 0 0 10px rgba(247, 163, 28, 0.52);
+}
+.nav-link.active-link::after {
+  transform: scaleX(1);
+  box-shadow: 0 0 8px 2px rgba(247, 163, 28, 0.42);
+}
+
+/* Keep dropdown trigger clean so arrow connects visually */
+.nav-link.services-trigger::after {
+  display: none;
+}
+
+/* Portfolio grid fade-in animation */
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
