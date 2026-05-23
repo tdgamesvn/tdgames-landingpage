@@ -91,28 +91,36 @@ function ServiceIcon({ type }: { type: string }) {
     );
   }
 
-  const iconSrc =
-    type === "art"
-      ? "https://cdn.tdgamestudio.com/landing/images/art.png"
-      : type === "animation"
-        ? "https://cdn.tdgamestudio.com/landing/images/running.png"
-        : "https://cdn.tdgamestudio.com/landing/images/sparkling.png";
+  // 2D Art — palette / brush
+  if (type === "art") {
+    return (
+      <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 2a10 10 0 0 0-9.95 9c-.07.78.57 1.43 1.35 1.43h.1c.7 0 1.3-.52 1.42-1.2A7 7 0 1 1 19 16H5" />
+        <path d="M5 16v3a2 2 0 0 0 2 2h1" />
+        <circle cx="12" cy="12" r="2" />
+      </svg>
+    );
+  }
 
+  // 2D Animation — running figure
+  if (type === "animation") {
+    return (
+      <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="13" cy="4" r="1.5" />
+        <path d="M7.5 13.5 10 11l2.5 2.5L15 9" />
+        <path d="m9 19 2-6 3 3 2-4" />
+        <path d="M3 13h4M17 13h4" />
+      </svg>
+    );
+  }
+
+  // 2D VFX — sparkle / effects
   return (
-    <span
-      className="block h-9 w-9 bg-current"
-      style={{
-        maskImage: `url('${iconSrc}')`,
-        WebkitMaskImage: `url('${iconSrc}')`,
-        maskRepeat: "no-repeat",
-        WebkitMaskRepeat: "no-repeat",
-        maskPosition: "center",
-        WebkitMaskPosition: "center",
-        maskSize: "contain",
-        WebkitMaskSize: "contain",
-      }}
-      aria-hidden="true"
-    />
+    <svg className="h-7 w-7 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.64 5.64l1.42 1.42M16.95 16.95l1.41 1.41M5.64 18.36l1.42-1.42M16.95 7.05l1.41-1.41" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="m8 12 1.5 1.5M14.5 10.5 16 12M12 8v1M12 15v1" />
+    </svg>
   );
 }
 
