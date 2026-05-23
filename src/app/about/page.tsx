@@ -1,12 +1,23 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
-import siteContent from "@/content/site.json";
+import fs from "node:fs/promises";
+import path from "node:path";
 
-export default function AboutPage() {
+export const dynamic = "force-dynamic";
+
+type TeamMember = { id: string; name: string; title: string; photo: string };
+
+async function getTeam(): Promise<TeamMember[]> {
+  const filePath = path.join(process.cwd(), "src", "content", "site.json");
+  const raw = await fs.readFile(filePath, "utf8");
+  const data = JSON.parse(raw);
+  return data.team ?? [];
+}
+
+export default async function AboutPage() {
+  const team = await getTeam();
   return (
     <>
       <SiteHeader />
@@ -482,7 +493,7 @@ export default function AboutPage() {
             </h2>
 
             <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {siteContent.team.map((member) => (
+              {team.map((member) => (
                 <div key={member.id} className="group relative aspect-square overflow-hidden rounded-lg">
                   <Image
                     src={member.photo}
