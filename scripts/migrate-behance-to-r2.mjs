@@ -73,7 +73,11 @@ const r2 = new S3Client({
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function r2PublicUrl(key) {
-  return `https://pub-${env.R2_ACCOUNT_ID}.r2.dev/${key}`;
+  const baseUrl = env.R2_PUBLIC_BASE_URL;
+  if (!baseUrl) {
+    throw new Error("R2_PUBLIC_BASE_URL is required");
+  }
+  return `${baseUrl.replace(/\/+$/, "")}/${key}`;
 }
 
 function extFromUrl(url) {

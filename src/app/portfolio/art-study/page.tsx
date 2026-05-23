@@ -113,7 +113,7 @@ function HeroTitle() {
 }
 
 const TOOL_LOGOS: Record<string, string> = {
-  "Photoshop": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/after-effects-cc-logo-png-transparent.png",
+  "Photoshop": "https://tdgamestudio.com/landing/images/after-effects-cc-logo-png-transparent.png",
 };
 
 function PanelWorkflow() {

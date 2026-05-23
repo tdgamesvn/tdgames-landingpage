@@ -185,7 +185,7 @@ export default function HomeProjectsSection() {
         aria-hidden
       >
         <Image
-          src="https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/scribble.png"
+          src="https://tdgamestudio.com/landing/images/scribble.png"
           alt=""
           fill
           className="object-contain"

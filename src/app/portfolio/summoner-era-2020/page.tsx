@@ -113,8 +113,8 @@ function HeroTitle() {
 }
 
 const TOOL_LOGOS: Record<string, string> = {
-  "Spine 2D": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/spinelogo.jpg",
-  "After Effects": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/after-effects-cc-logo-png-transparent.png",
+  "Spine 2D": "https://tdgamestudio.com/landing/images/spinelogo.jpg",
+  "After Effects": "https://tdgamestudio.com/landing/images/after-effects-cc-logo-png-transparent.png",
 };
 
 function PanelWorkflow() {

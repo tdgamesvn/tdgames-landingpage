@@ -10,7 +10,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Attack chains, cancels, and hit reactions timed for gameplay feedback and marketing trailers.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/ourproject.jpg",
+    image: "https://tdgamestudio.com/landing/images/ourproject.jpg",
   },
   {
     title: "Locomotion & idles",
@@ -20,7 +20,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Walk, run, and idle loops tuned for Spine rigs and consistent silhouette at target zoom.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Casual_character-1024x683.jpg",
+    image: "https://tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
   },
   {
     title: "UI & presentation motion",
@@ -30,7 +30,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Menu flourishes, reward reveals, and lightweight motion that supports UX without noise.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Screenshot 2026-05-07 233917.png",
+    image: "https://tdgamestudio.com/landing/images/Screenshot 2026-05-07 233917.png",
   },
 ];
 

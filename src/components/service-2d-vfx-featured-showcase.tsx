@@ -10,7 +10,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Punchy hit frames, elemental pops, and combo accents authored for atlas efficiency.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/summoners.png",
+    image: "https://tdgamestudio.com/landing/images/summoners.png",
   },
   {
     title: "Buffs & ambient layers",
@@ -20,7 +20,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Auras, trails, and environmental shimmer that reinforce mood without stealing focus.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Isometry_art-1024x683.jpg",
+    image: "https://tdgamestudio.com/landing/images/Isometry_art-1024x683.jpg",
   },
   {
     title: "UI & feedback flashes",
@@ -30,7 +30,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Screen-safe glows, level-up sparks, and reward VFX aligned to your HUD contrast rules.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/trieuvan.png",
+    image: "https://tdgamestudio.com/landing/images/trieuvan.png",
   },
 ];
 

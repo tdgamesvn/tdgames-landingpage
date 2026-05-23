@@ -33,7 +33,10 @@ const s3 = new S3Client({
   },
 });
 
-const R2_PUBLIC_BASE = `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${process.env.R2_BUCKET}`;
+const R2_PUBLIC_BASE = (process.env.R2_PUBLIC_BASE_URL || "").replace(/\/+$/, "");
+if (!R2_PUBLIC_BASE) {
+  throw new Error("R2_PUBLIC_BASE_URL is required");
+}
 
 // ── 1. Collect all hardcoded Behance project_modules URLs from source ─────────
 const files = globSync("src/app/portfolio/*/project-data.ts", { nodir: true });

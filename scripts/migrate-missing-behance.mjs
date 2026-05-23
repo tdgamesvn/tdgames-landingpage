@@ -81,7 +81,10 @@ if (!APPLY) {
 // ── 3. Download → upload → insert for each missing URL ────────────────────────
 let ok = 0, fail = 0;
 
-const r2PublicBase = `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${process.env.R2_BUCKET}`;
+const r2PublicBase = (process.env.R2_PUBLIC_BASE_URL || "").replace(/\/+$/, "");
+if (!r2PublicBase) {
+  throw new Error("R2_PUBLIC_BASE_URL is required");
+}
 
 for (const [i, url] of [...missing].entries()) {
   process.stdout.write(`[${i + 1}/${missing.size}] `);

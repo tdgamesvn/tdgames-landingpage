@@ -115,7 +115,13 @@ const r2 = new S3Client({
   credentials: { accessKeyId: R2.accessKeyId, secretAccessKey: R2.secretAccessKey },
 });
 
-const r2PublicUrl = (key) => `https://pub-${R2.accountId}.r2.dev/${key}`;
+const r2PublicUrl = (key) => {
+  const baseUrl = process.env.R2_PUBLIC_BASE_URL;
+  if (!baseUrl) {
+    throw new Error("R2_PUBLIC_BASE_URL is required");
+  }
+  return `${baseUrl.replace(/\/+$/, "")}/${key}`;
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function extFromUrl(url) {

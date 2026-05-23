@@ -8,6 +8,26 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "tdgamestudio.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.tdgamestudio.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.r2.dev",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.r2.cloudflarestorage.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "mir-s3-cdn-cf.behance.net",
         pathname: "/**",
       },
@@ -19,11 +39,6 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "pub-97eae399068b4753bb314896c009c27e.r2.dev",
         pathname: "/**",
       },
     ],

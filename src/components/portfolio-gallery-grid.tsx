@@ -19,7 +19,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Kayn Snow Moon | League of Legends - Login Screen",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/0a0b35cf8d5e9eb6.png",
+      "https://tdgamestudio.com/landing/behance/0a0b35cf8d5e9eb6.png",
     href: "/portfolio/kayn-snow-moon",
   },
   {
@@ -27,7 +27,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Horse Racing - Splash Art Animation",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/50a462dee6f25801.jpg",
+      "https://tdgamestudio.com/landing/behance/50a462dee6f25801.jpg",
     href: "/portfolio/horse-racing",
   },
   {
@@ -35,7 +35,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Lore Axie Origin | Cinematic",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/bcd3c09a543c36d3.png",
+      "https://tdgamestudio.com/landing/behance/bcd3c09a543c36d3.png",
     href: "/portfolio/lore-axie-origin",
   },
   {
@@ -43,7 +43,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Axie Infinity - Origins | Animation",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/2bac7de14d05fa8f.png",
+      "https://tdgamestudio.com/landing/behance/2bac7de14d05fa8f.png",
     href: "/portfolio/axie-infinity-origins",
   },
   {
@@ -51,7 +51,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Boss Animation - The Twins",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/379f981b88c6a84f.png",
+      "https://tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
     href: "/portfolio/boss-animation",
   },
   {
@@ -59,7 +59,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Animation/VFX - Heroes Fire | Summoner Era",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/011ed49edb1767f3.png",
+      "https://tdgamestudio.com/landing/behance/011ed49edb1767f3.png",
     href: "/portfolio/heroes-fire",
   },
   {
@@ -67,7 +67,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Summoner Era - Login Screen Animations (2020)",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/807956f4ca57c6ed.jpg",
+      "https://tdgamestudio.com/landing/behance/807956f4ca57c6ed.jpg",
     href: "/portfolio/summoner-era-2020",
   },
   {
@@ -75,7 +75,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Game Animation/VFX - 3Q",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/4974242912a7c2f1.png",
+      "https://tdgamestudio.com/landing/behance/4974242912a7c2f1.png",
     href: "/portfolio/game-animation-vfx-3q",
   },
   {
@@ -83,7 +83,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Battle of the Gods | Mytheria - Login Screen",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/9fed6d92877b5d19.png",
+      "https://tdgamestudio.com/landing/behance/9fed6d92877b5d19.png",
     href: "/portfolio/battle-of-the-gods-mytheria",
   },
   {
@@ -91,7 +91,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Animation Contest - Sky Mavis",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/d4011a345f6c4002.png",
+      "https://tdgamestudio.com/landing/behance/d4011a345f6c4002.png",
     href: "/portfolio/animation-contest-sky-mavis",
   },
   {
@@ -99,7 +99,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Mid Autumn Animation for Summoner Era",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/2d586b5a85d5dfb9.jpg",
+      "https://tdgamestudio.com/landing/behance/2d586b5a85d5dfb9.jpg",
     href: "/portfolio/mid-autumn-summoner-era",
   },
   {
@@ -107,7 +107,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Animation for Summoner Era - Arena of Heroes",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/1a2bf9c55f457909.png",
+      "https://tdgamestudio.com/landing/behance/1a2bf9c55f457909.png",
     href: "/portfolio/summoner-era-arena-of-heroes",
   },
   {
@@ -115,7 +115,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Character Animation for Puzzle Wonderland",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/0658c26a43e63dc4.png",
+      "https://tdgamestudio.com/landing/behance/0658c26a43e63dc4.png",
     href: "/portfolio/puzzle-wonderland",
   },
   {
@@ -123,7 +123,7 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
     title: "Game Animation - Reaper & Lady - Project: OverDrive",
     tag: "Behance Project",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/52c6beca311ad4e9.png",
+      "https://tdgamestudio.com/landing/behance/52c6beca311ad4e9.png",
     href: "/portfolio/reaper-lady-project-overdrive",
   },
 ];

@@ -10,7 +10,7 @@ const CONTACT_EMAIL = "hello@tdgames.com";
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 /** Full-bleed section art (no overlay on the image). */
-const CONTACT_BG_SRC = "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/bgcontact.png";
+const CONTACT_BG_SRC = "https://tdgamestudio.com/landing/images/bgcontact.png";
 
 export default function ContactShowcaseSection({
   sectionStep = "05",

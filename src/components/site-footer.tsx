@@ -43,7 +43,7 @@ export default function SiteFooter() {
           <div>
             <div className="relative h-10 w-[170px]">
               <Image
-                src="https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/logo/logo_td2.png"
+                src="https://tdgamestudio.com/landing/video/logo/logo_td2.png"
                 alt="TD Games"
                 fill
                 className="object-contain"

@@ -93,10 +93,10 @@ function ServiceIcon({ type }: { type: string }) {
 
   const iconSrc =
     type === "art"
-      ? "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/art.png"
+      ? "https://tdgamestudio.com/landing/images/art.png"
       : type === "animation"
-        ? "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/running.png"
-        : "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/sparkling.png";
+        ? "https://tdgamestudio.com/landing/images/running.png"
+        : "https://tdgamestudio.com/landing/images/sparkling.png";
 
   return (
     <span
@@ -255,7 +255,7 @@ export default function SiteHeader() {
             aria-label="TD Games home"
           >
             <Image
-              src="https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/logo/logo_td2.png"
+              src="https://tdgamestudio.com/landing/video/logo/logo_td2.png"
               alt=""
               width={260}
               height={76}

@@ -48,7 +48,7 @@ export const projectMeta: ProjectMeta = {
   madeForLabel: "AnimVFX Clan",
   madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
-    "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/d707664aa91765a0.jpg",
+    "https://tdgamestudio.com/landing/behance/d707664aa91765a0.jpg",
   tools: [],
   fields: ["Game Design"],
   tags: [
@@ -80,26 +80,26 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "m01", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/728e2b4bd0ee1812.gif" },
-  { id: "m02", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/7be1c929387344e1.png" },
-  { id: "m03", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m04", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/6a566ab48bcb4809.gif" },
-  { id: "m05", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m06", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/542c64f1e55c771c.gif" },
-  { id: "m07", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m08", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/44a5819fe5bf0ab6.gif" },
-  { id: "m09", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m10", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/caba6aa6de22d63a.gif" },
-  { id: "m11", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m12", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/4d89acbb15424e64.gif" },
-  { id: "m13", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m14", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/71b3c5bb1d896037.gif" },
-  { id: "m15", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m16", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/8d6c7382a60e4c7b.gif" },
-  { id: "m17", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m18", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/886cdb0e0cd67309.gif" },
-  { id: "m19", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/8a5db7fe874d57cc.png" },
-  { id: "m20", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/8c5d418101a286f6.gif" },
+  { id: "m01", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/728e2b4bd0ee1812.gif" },
+  { id: "m02", variant: "banner", src: "https://tdgamestudio.com/landing/behance/7be1c929387344e1.png" },
+  { id: "m03", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m04", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/6a566ab48bcb4809.gif" },
+  { id: "m05", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m06", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/542c64f1e55c771c.gif" },
+  { id: "m07", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m08", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/44a5819fe5bf0ab6.gif" },
+  { id: "m09", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m10", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/caba6aa6de22d63a.gif" },
+  { id: "m11", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m12", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/4d89acbb15424e64.gif" },
+  { id: "m13", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m14", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/71b3c5bb1d896037.gif" },
+  { id: "m15", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m16", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/8d6c7382a60e4c7b.gif" },
+  { id: "m17", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m18", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/886cdb0e0cd67309.gif" },
+  { id: "m19", variant: "banner", src: "https://tdgamestudio.com/landing/behance/8a5db7fe874d57cc.png" },
+  { id: "m20", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/8c5d418101a286f6.gif" },
 ] as const;
 
 export const relatedProjects: readonly RelatedProject[] = [
@@ -110,7 +110,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/7b463f2be013bcd3.jpg",
+      "https://tdgamestudio.com/landing/behance/7b463f2be013bcd3.jpg",
     appreciations: "208",
     views: "2.3K",
   },
@@ -121,7 +121,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/011ed49edb1767f3.png",
+      "https://tdgamestudio.com/landing/behance/011ed49edb1767f3.png",
     appreciations: "627",
     views: "6.0K",
   },
@@ -132,7 +132,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/807956f4ca57c6ed.jpg",
+      "https://tdgamestudio.com/landing/behance/807956f4ca57c6ed.jpg",
     appreciations: "89",
     views: "1.7K",
   },
@@ -143,7 +143,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/d4011a345f6c4002.png",
+      "https://tdgamestudio.com/landing/behance/d4011a345f6c4002.png",
     appreciations: "218",
     views: "3.2K",
   },
@@ -154,7 +154,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/9fed6d92877b5d19.png",
+      "https://tdgamestudio.com/landing/behance/9fed6d92877b5d19.png",
     appreciations: "112",
     views: "1.9K",
   },
@@ -165,7 +165,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/4974242912a7c2f1.png",
+      "https://tdgamestudio.com/landing/behance/4974242912a7c2f1.png",
     appreciations: "193",
     views: "2.5K",
   },
@@ -176,7 +176,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/379f981b88c6a84f.png",
+      "https://tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
     appreciations: "261",
     views: "3.0K",
   },
@@ -187,7 +187,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/0a0b35cf8d5e9eb6.png",
+      "https://tdgamestudio.com/landing/behance/0a0b35cf8d5e9eb6.png",
     appreciations: "446",
     views: "7.5K",
   },

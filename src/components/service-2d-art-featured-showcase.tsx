@@ -10,7 +10,7 @@ const featured2DArtShowcaseCards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Hero and NPC explorations, lineup sheets, and splash-ready poses with a clear stylized read.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Character_Concept-1024x683.jpg",
+    image: "https://tdgamestudio.com/landing/images/Character_Concept-1024x683.jpg",
   },
   {
     title: "Environments & scenes",
@@ -20,7 +20,7 @@ const featured2DArtShowcaseCards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Key art, mood-led backgrounds, and readable set dressing built for world-building and marketing beats.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Environment_Art-1024x683.jpg",
+    image: "https://tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
   },
   {
     title: "Props, UI & icon packs",
@@ -30,7 +30,7 @@ const featured2DArtShowcaseCards: StudioServiceCard[] = [
     statLabel: "Completed projects",
     description:
       "Objects, symbols, and HUD-friendly assets that stay on-model with your gameâ€™s 2D visual language.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Casual_Art_Props-1024x683.jpg",
+    image: "https://tdgamestudio.com/landing/images/Casual_Art_Props-1024x683.jpg",
   },
 ];
 

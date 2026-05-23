@@ -22,7 +22,7 @@ export default function Service2DVfxPage() {
         </>
       }
       hero={{
-        image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
+        image: "https://tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
         titleTop: "2D GAME",
         titleMain: "VFX",
         subheading: "2D VFX outsource",
@@ -41,37 +41,37 @@ export default function Service2DVfxPage() {
             title: "Combat impacts",
             description:
               "Hit flashes, slams, and combo punctuation with clear telegraphing.",
-            image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/bcc4707e-cae2-46a2-9c96-c254c28ba763.png",
+            image: "https://tdgamestudio.com/landing/images/bcc4707e-cae2-46a2-9c96-c254c28ba763.png",
           },
           {
             title: "Skill libraries",
             description:
               "Elemental variants and tiered intensity so designers can reuse content.",
-            image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/3067c837-e030-403f-b7c5-0c7246bfe15f.png",
+            image: "https://tdgamestudio.com/landing/images/3067c837-e030-403f-b7c5-0c7246bfe15f.png",
           },
           {
             title: "Buffs & auras",
             description:
               "Looping overlays and support effects that stay readable at mobile scale.",
-            image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/95bff405-e638-4cec-9260-e5c9af46f49b.png",
+            image: "https://tdgamestudio.com/landing/images/95bff405-e638-4cec-9260-e5c9af46f49b.png",
           },
           {
             title: "Ambient world VFX",
             description:
               "Weather hints, glows, and environmental motion that sell mood.",
-            image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Environment_Art-1024x683.jpg",
+            image: "https://tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
           },
           {
             title: "UI feedback",
             description:
               "Reward bursts, level-up sparks, and HUD-safe treatments.",
-            image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
+            image: "https://tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
           },
           {
             title: "Atlas delivery",
             description:
               "Packed sheets, pivots, and integration notes for your shaders and tools.",
-            image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",
+            image: "https://tdgamestudio.com/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",
           },
         ],
       }}

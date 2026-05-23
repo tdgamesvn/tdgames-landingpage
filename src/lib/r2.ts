@@ -26,9 +26,15 @@ function createR2Client() {
 }
 
 export function r2PublicUrl(key: string) {
-  const { accountId } = getR2Config();
   const cleanKey = key.startsWith("/") ? key.slice(1) : key;
-  return `https://pub-${accountId}.r2.dev/${cleanKey}`;
+  const baseUrl = process.env.R2_PUBLIC_BASE_URL;
+  if (!baseUrl) {
+    throw new Error(
+      "R2_PUBLIC_BASE_URL is required (e.g. https://tdgamestudio.com or https://pub-<id>.r2.dev)",
+    );
+  }
+  const trimmed = baseUrl.replace(/\/+$/, "");
+  return `${trimmed}/${cleanKey}`;
 }
 
 export async function uploadToR2(params: {
