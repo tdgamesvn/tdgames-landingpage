@@ -22,7 +22,7 @@ export default function Service2DAnimationPage() {
         </>
       }
       hero={{
-        image: "https://tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
+        image: "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
         titleTop: "2D GAME",
         titleMain: "ANIMATION",
         subheading: "2D Animation outsource",
@@ -41,37 +41,37 @@ export default function Service2DAnimationPage() {
             title: "Spine gameplay sets",
             description:
               "Rig-driven loops and attacks tuned for engine constraints and revision speed.",
-            image: "https://tdgamestudio.com/landing/images/7be77dae-b42e-44c0-b1be-397150c7ff3d.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/7be77dae-b42e-44c0-b1be-397150c7ff3d.jpg",
           },
           {
             title: "Frame highlights",
             description:
               "Hand-drawn accents for promo beats and hero moments when the brief demands it.",
-            image: "https://tdgamestudio.com/landing/images/minh-hong-minh-hong-thumbnail-2.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/minh-hong-minh-hong-thumbnail-2.jpg",
           },
           {
             title: "Combat actions",
             description:
               "Chains, cancels, and hit reactions authored for readable silhouettes.",
-            image: "https://tdgamestudio.com/landing/images/ourproject.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg",
           },
           {
             title: "Locomotion packages",
             description:
               "Walk, run, turn, and idle families that stay on-model across variants.",
-            image: "https://tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
           },
           {
             title: "UI & presentation",
             description:
               "Lightweight motion for menus, rewards, and tutorial flourishes.",
-            image: "https://tdgamestudio.com/landing/images/Screenshot 2026-05-07 233917.png",
+            image: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-07 233917.png",
           },
           {
             title: "Export & QA",
             description:
               "Atlases, naming, pivots, and checklists so engineering can integrate fast.",
-            image: "https://tdgamestudio.com/landing/images/2f308aec-bd0c-42b9-9220-ca123338d9b9.png",
+            image: "https://cdn.tdgamestudio.com/landing/images/2f308aec-bd0c-42b9-9220-ca123338d9b9.png",
           },
         ],
       }}

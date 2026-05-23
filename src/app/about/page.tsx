@@ -335,10 +335,10 @@ export default function AboutPage() {
 
             <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
               {[
-                { img: "https://tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png", label: "KAYN SNOW MOON" },
-                { img: "https://tdgamestudio.com/landing/images/summonerDetail.png", label: "SUMMONER ERA" },
-                { img: "https://tdgamestudio.com/landing/images/service-animation.jpg", label: "ANIMATION" },
-                { img: "https://tdgamestudio.com/landing/images/ourproject.jpg", label: "BATTLE OF GODS" },
+                { img: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png", label: "KAYN SNOW MOON" },
+                { img: "https://cdn.tdgamestudio.com/landing/images/summonerDetail.png", label: "SUMMONER ERA" },
+                { img: "https://cdn.tdgamestudio.com/landing/images/service-animation.jpg", label: "ANIMATION" },
+                { img: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg", label: "BATTLE OF GODS" },
               ].map((item, i) => (
                 <div key={i} className="group relative aspect-[3/4] overflow-hidden rounded-lg">
                   <Image
@@ -504,7 +504,7 @@ export default function AboutPage() {
         <section className="relative overflow-hidden bg-gradient-to-br from-[#f59e0b]/10 via-black to-black py-20 md:py-28">
           <div className="absolute right-0 top-0 h-full w-1/2 opacity-20">
             <Image
-              src="https://tdgamestudio.com/landing/images/summoners.png"
+              src="https://cdn.tdgamestudio.com/landing/images/summoners.png"
               alt=""
               fill
               className="object-cover"

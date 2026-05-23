@@ -107,7 +107,7 @@ function computeBoardDesignSize(cards: CardConfig[]): {
   return { w, h, topPad };
 }
 
-/** Original pixel ratio of publichttps://tdgamestudio.com/landing/images/bgright.png (adjust in settings if changing file). */
+/** Original pixel ratio of publichttps://cdn.tdgamestudio.com/landing/images/bgright.png (adjust in settings if changing file). */
 const BG_RIGHT_NATURAL = { w: 1065, h: 938 } as const;
 
 type InteractionState =
@@ -169,7 +169,7 @@ const PORTFOLIO_CARDS_INITIAL: CardConfig[] = [
     id: "overdrive-top-left",
     title: "",
     subtitle: "",
-    image: "https://tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
+    image: "https://cdn.tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
     align: "center",
     x: 1471,
     y: 369,
@@ -193,7 +193,7 @@ const PORTFOLIO_CARDS_INITIAL: CardConfig[] = [
     id: "overdrive-top-right",
     title: "",
     subtitle: "",
-    image: "https://tdgamestudio.com/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",
+    image: "https://cdn.tdgamestudio.com/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",
     align: "top",
     x: 1263,
     y: -97,
@@ -217,7 +217,7 @@ const PORTFOLIO_CARDS_INITIAL: CardConfig[] = [
     id: "summoners-era",
     title: "",
     subtitle: "",
-    image: "https://tdgamestudio.com/landing/images/3067c837-e030-403f-b7c5-0c7246bfe15f.png",
+    image: "https://cdn.tdgamestudio.com/landing/images/3067c837-e030-403f-b7c5-0c7246bfe15f.png",
     align: "center",
     x: 1185,
     y: 259,
@@ -240,7 +240,7 @@ const PORTFOLIO_CARDS_INITIAL: CardConfig[] = [
     id: "environment-art",
     title: "",
     subtitle: "",
-    image: "https://tdgamestudio.com/landing/images/f0d05f71-5089-4b3f-b453-7a8d19afc013.png",
+    image: "https://cdn.tdgamestudio.com/landing/images/f0d05f71-5089-4b3f-b453-7a8d19afc013.png",
     align: "center",
     x: 1593,
     y: -45,
@@ -266,7 +266,7 @@ const PORTFOLIO_CARDS_INITIAL: CardConfig[] = [
     id: "hexagon-card",
     title: "",
     subtitle: "",
-    image: "https://tdgamestudio.com/landing/images/IMG_4352.png",
+    image: "https://cdn.tdgamestudio.com/landing/images/IMG_4352.png",
     align: "center",
     x: 335,
     y: 171,
@@ -598,24 +598,24 @@ export default function PortfolioPage() {
       const data = (await res.json()) as { images?: string[] };
       const listed = Array.isArray(data.images) ? data.images : [];
       const extra = [
-        "https://tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg",
-        "https://tdgamestudio.com/landing/sinspired/Artboard-1-copy-11-min-1024x572.jpg",
-        "https://tdgamestudio.com/landing/sinspired/Artboard-2-copy-1024x850.jpg",
-        "https://tdgamestudio.com/landing/sinspired/Artboard-2-copy-4-1024x850.jpg",
-        "https://tdgamestudio.com/landing/sinspired/2D-Art-min-947x1024.jpg",
-        "https://tdgamestudio.com/landing/sinspired/3a7ab9112768871.602fbfbfa228c-882x1024.jpg",
-        "https://tdgamestudio.com/landing/sinspired/Character-Design-min-822x1024.jpg",
-        "https://tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg",
-        "https://tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg",
-        "https://tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg",
-        "https://tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg",
-        "https://tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg",
-        "https://tdgamestudio.com/landing/sinspired/Game_Animation-min-1024x612.jpg",
-        "https://tdgamestudio.com/landing/sinspired/lab_asset-min-1024x506.jpg",
-        "https://tdgamestudio.com/landing/sinspired/lab_asset_dark_final-min-1024x506.jpg",
-        "https://tdgamestudio.com/landing/sinspired/promo_amanda.jpg",
-        "https://tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg",
-        "https://tdgamestudio.com/landing/sinspired/Volcano_Arena_render-min-1024x567.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-11-min-1024x572.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-1024x850.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-4-1024x850.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/2D-Art-min-947x1024.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/3a7ab9112768871.602fbfbfa228c-882x1024.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/Character-Design-min-822x1024.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/Game_Animation-min-1024x612.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/lab_asset-min-1024x506.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/lab_asset_dark_final-min-1024x506.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/promo_amanda.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg",
+        "https://cdn.tdgamestudio.com/landing/sinspired/Volcano_Arena_render-min-1024x567.jpg",
       ];
       const merged = Array.from(new Set([...listed, ...extra]));
       setAvailableImages(merged);
@@ -1720,7 +1720,7 @@ export default function PortfolioPage() {
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src="https://tdgamestudio.com/landing/images/bgright.png"
+                        src="https://cdn.tdgamestudio.com/landing/images/bgright.png"
                         alt=""
                         className={`pointer-events-none absolute inset-0 h-full w-full select-none object-right transition-opacity duration-500 ease-out ${
                           bgRightLockAspect ? "object-contain" : "object-cover"

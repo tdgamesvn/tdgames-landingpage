@@ -93,10 +93,10 @@ function ServiceIcon({ type }: { type: string }) {
 
   const iconSrc =
     type === "art"
-      ? "https://tdgamestudio.com/landing/images/art.png"
+      ? "https://cdn.tdgamestudio.com/landing/images/art.png"
       : type === "animation"
-        ? "https://tdgamestudio.com/landing/images/running.png"
-        : "https://tdgamestudio.com/landing/images/sparkling.png";
+        ? "https://cdn.tdgamestudio.com/landing/images/running.png"
+        : "https://cdn.tdgamestudio.com/landing/images/sparkling.png";
 
   return (
     <span
@@ -255,7 +255,7 @@ export default function SiteHeader() {
             aria-label="TD Games home"
           >
             <Image
-              src="https://tdgamestudio.com/landing/video/logo/logo_td2.png"
+              src="https://cdn.tdgamestudio.com/landing/video/logo/logo_td2.png"
               alt=""
               width={260}
               height={76}

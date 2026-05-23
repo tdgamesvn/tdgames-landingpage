@@ -188,29 +188,29 @@ const characterMarqueeFilters: MarqueeFilter[] = [
     id: "characters",
     label: "3D Characters",
     images: [
-      { src: "https://tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg", alt: "Character 1" },
-      { src: "https://tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg", alt: "Character 2" },
-      { src: "https://tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg", alt: "Character 3" },
-      { src: "https://tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg", alt: "Character 4" },
-      { src: "https://tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg", alt: "Character 5" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg", alt: "Character 1" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg", alt: "Character 2" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg", alt: "Character 3" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg", alt: "Character 4" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg", alt: "Character 5" },
     ],
   },
   {
     id: "props",
     label: "3D Props",
     images: [
-      { src: "https://tdgamestudio.com/landing/sinspired/lab_asset-min-1024x506.jpg", alt: "Prop 1" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/lab_asset-min-1024x506.jpg", alt: "Prop 1" },
       {
-        src: "https://tdgamestudio.com/landing/sinspired/Volcano_Arena_render-min-1024x567.jpg",
+        src: "https://cdn.tdgamestudio.com/landing/sinspired/Volcano_Arena_render-min-1024x567.jpg",
         alt: "Prop 2",
       },
-      { src: "https://tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg", alt: "Scene 1" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg", alt: "Scene 1" },
       {
-        src: "https://tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg",
+        src: "https://cdn.tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg",
         alt: "Scene 2",
       },
       {
-        src: "https://tdgamestudio.com/landing/sinspired/lab_asset_dark_final-min-1024x506.jpg",
+        src: "https://cdn.tdgamestudio.com/landing/sinspired/lab_asset_dark_final-min-1024x506.jpg",
         alt: "Scene 3",
       },
     ],
@@ -219,18 +219,18 @@ const characterMarqueeFilters: MarqueeFilter[] = [
     id: "backgrounds",
     label: "Backgrounds",
     images: [
-      { src: "https://tdgamestudio.com/landing/sinspired/Artboard-2-copy-4-1024x850.jpg", alt: "Background 1" },
-      { src: "https://tdgamestudio.com/landing/sinspired/Artboard-2-copy-1024x850.jpg", alt: "Background 2" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-4-1024x850.jpg", alt: "Background 1" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-1024x850.jpg", alt: "Background 2" },
       {
-        src: "https://tdgamestudio.com/landing/sinspired/Artboard-1-copy-11-min-1024x572.jpg",
+        src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-11-min-1024x572.jpg",
         alt: "Background 3",
       },
       {
-        src: "https://tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg",
+        src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg",
         alt: "Background 4",
       },
       {
-        src: "https://tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg",
+        src: "https://cdn.tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg",
         alt: "Background 5",
       },
     ],
@@ -239,14 +239,14 @@ const characterMarqueeFilters: MarqueeFilter[] = [
     id: "design",
     label: "Character design",
     images: [
-      { src: "https://tdgamestudio.com/landing/sinspired/Character-Design-min-822x1024.jpg", alt: "Design 1" },
-      { src: "https://tdgamestudio.com/landing/sinspired/2D-Art-min-947x1024.jpg", alt: "Design 2" },
-      { src: "https://tdgamestudio.com/landing/sinspired/promo_amanda.jpg", alt: "Design 3" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Character-Design-min-822x1024.jpg", alt: "Design 1" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/2D-Art-min-947x1024.jpg", alt: "Design 2" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/promo_amanda.jpg", alt: "Design 3" },
       {
-        src: "https://tdgamestudio.com/landing/sinspired/3a7ab9112768871.602fbfbfa228c-882x1024.jpg",
+        src: "https://cdn.tdgamestudio.com/landing/sinspired/3a7ab9112768871.602fbfbfa228c-882x1024.jpg",
         alt: "Design 4",
       },
-      { src: "https://tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg", alt: "Design 5" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg", alt: "Design 5" },
     ],
   },
 ];
@@ -535,7 +535,7 @@ export default function HomePageLower() {
           aria-hidden
         >
           <Image
-            src="https://tdgamestudio.com/landing/images/scribble.png"
+            src="https://cdn.tdgamestudio.com/landing/images/scribble.png"
             alt=""
             fill
             className="object-contain"
@@ -609,7 +609,7 @@ export default function HomePageLower() {
               <div className="mt-6 flex items-center gap-3 border-t border-white/12 pt-5">
                 <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-2 ring-[#ff8c3a]/40">
                   <Image
-                    src="https://tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg"
+                    src="https://cdn.tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg"
                     alt=""
                     fill
                     className="object-cover"
@@ -639,7 +639,7 @@ export default function HomePageLower() {
                     "I recently had a 3D character created, and the experience was fantastic. The team nailed my vision and delivered on time.",
                   name: "Tom Brunner",
                   role: "Indie dev",
-                  avatar: "https://tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg",
+                  avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg",
                   stars: 5,
                 },
                 {
@@ -647,7 +647,7 @@ export default function HomePageLower() {
                     "Awesome job, guys! Thanks for cooperation, delivery in time, and of course quality of the animation.",
                   name: "Adel Wazir",
                   role: "Producer",
-                  avatar: "https://tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg",
+                  avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg",
                   stars: 5,
                 },
                 {
@@ -655,7 +655,7 @@ export default function HomePageLower() {
                     "Worked with this team on a couple of titles â€” quality is smooth and consistent. Would recommend.",
                   name: "Tom Johnson",
                   role: "Art director",
-                  avatar: "https://tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg",
+                  avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg",
                   stars: 4,
                 },
                 {
@@ -663,7 +663,7 @@ export default function HomePageLower() {
                     "Very short deadline for characters after our previous vendor slipped â€” you helped us ship on time.",
                   name: "Peter Wilson",
                   role: "Studio lead",
-                  avatar: "https://tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg",
+                  avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg",
                   stars: 5,
                 },
               ].map((r, idx) => (
@@ -760,7 +760,7 @@ export default function HomePageLower() {
               <div className="relative mx-auto flex w-full max-w-[520px] items-center justify-center md:max-w-none md:justify-end">
                 <div className="relative h-[min(420px,78vw)] w-full max-w-[420px] md:h-[520px] md:max-w-[480px]">
                   <AutoLoopMedia
-                    src="https://tdgamestudio.com/landing/video/CutScene_SE/1.mp4"
+                    src="https://cdn.tdgamestudio.com/landing/video/CutScene_SE/1.mp4"
                     alt="Character"
                     className="absolute inset-0 h-full w-full object-contain"
                   />
@@ -879,16 +879,16 @@ export default function HomePageLower() {
                 transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
               >
                 {[
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-26-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-27-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-28-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-29-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-30-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-26-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-27-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-28-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-29-min-300x141.png",
-                  "https://tdgamestudio.com/landing/logoCompany/Frame-30-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-26-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-27-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-28-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-29-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-30-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-26-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-27-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-28-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-29-min-300x141.png",
+                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-30-min-300x141.png",
                 ].map((src, idx) => (
                   <div
                     key={`${src}-${idx}`}
@@ -920,17 +920,17 @@ export default function HomePageLower() {
               {
                 title: "How to create a game character",
                 date: "01.22.2024",
-                image: "https://tdgamestudio.com/landing/images/blog-1.jpg",
+                image: "https://cdn.tdgamestudio.com/landing/images/blog-1.jpg",
               },
               {
                 title: "High poly and low poly modeling",
                 date: "01.22.2024",
-                image: "https://tdgamestudio.com/landing/images/blog-2.jpg",
+                image: "https://cdn.tdgamestudio.com/landing/images/blog-2.jpg",
               },
               {
                 title: "Animation outsourcing: a guide for success",
                 date: "01.22.2024",
-                image: "https://tdgamestudio.com/landing/images/blog-1.jpg",
+                image: "https://cdn.tdgamestudio.com/landing/images/blog-1.jpg",
               },
             ].map((post, idx) => (
               <motion.article
@@ -1008,7 +1008,7 @@ export default function HomePageLower() {
             </div>
             <div className="relative mx-auto h-[160px] w-[160px]">
               <Image
-                src="https://tdgamestudio.com/landing/logoCompany/5-min-1-1024x970.jpg"
+                src="https://cdn.tdgamestudio.com/landing/logoCompany/5-min-1-1024x970.jpg"
                 alt="Mascot"
                 fill
                 className="rounded-2xl object-cover"

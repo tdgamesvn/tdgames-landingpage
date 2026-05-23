@@ -5,8 +5,8 @@
         "id": "1",
         "name": "MALEFICA",
         "label": "Skin 2 – I",
-        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/1big.mp4",
-        "path": "https://tdgamestudio.com/landing/video/CutScene_SE/video1.mp4",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/1big.mp4",
+        "path": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video1.mp4",
         "isBgVideo": true,
         "isIframe": false
       },
@@ -14,8 +14,8 @@
         "id": "2",
         "name": "VESTA",
         "label": "Skin 2 – III",
-        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/2big.mp4",
-        "path": "https://tdgamestudio.com/landing/video/CutScene_SE/video_summoner_3_skill_1_skin_2.mp4",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/2big.mp4",
+        "path": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video_summoner_3_skill_1_skin_2.mp4",
         "isBgVideo": true,
         "isIframe": false
       },
@@ -23,8 +23,8 @@
         "id": "3",
         "name": "FABER",
         "label": "Skin 2 – IV",
-        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/3big.mp4",
-        "path": "https://tdgamestudio.com/landing/video/CutScene_SE/video_summoner_4_skill_1_skin_2.mp4",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/3big.mp4",
+        "path": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video_summoner_4_skill_1_skin_2.mp4",
         "isBgVideo": true,
         "isIframe": false
       },
@@ -32,8 +32,8 @@
         "id": "4",
         "name": "BIGBY",
         "label": "Long Arm",
-        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/4.png",
-        "path": "https://tdgamestudio.com/landing/video/Super_Move/BIGBY-Long Arm of the Law_Closed.mp4",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/4.png",
+        "path": "https://cdn.tdgamestudio.com/landing/video/Super_Move/BIGBY-Long Arm of the Law_Closed.mp4",
         "isBgVideo": true,
         "isIframe": false
       },
@@ -41,8 +41,8 @@
         "id": "5",
         "name": "???",
         "label": "On Your Knees",
-        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/5.png",
-        "path": "https://tdgamestudio.com/landing/video/Super_Move/On_Your_Knees.mp4",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/5.png",
+        "path": "https://cdn.tdgamestudio.com/landing/video/Super_Move/On_Your_Knees.mp4",
         "isBgVideo": true,
         "isIframe": false
       }
@@ -53,55 +53,55 @@
       {
         "title": "Kayn Snow Moon - League of Legends",
         "category": "Login Screen Animation",
-        "image": "https://tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
+        "image": "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
         "slug": "kayn-snow-moon"
       },
       {
         "title": "Axie Infinity Origins",
         "category": "Game Animation",
-        "image": "https://tdgamestudio.com/landing/behance/b173c85213385cf6.png",
+        "image": "https://cdn.tdgamestudio.com/landing/behance/b173c85213385cf6.png",
         "slug": "axie-infinity-origins"
       },
       {
         "title": "Boss Animation - The Twins",
         "category": "Character Animation",
-        "image": "https://tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
+        "image": "https://cdn.tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
         "slug": "boss-animation"
       },
       {
         "title": "Summoner Era - Heroes Light/Dark",
         "category": "2D Animation & VFX",
-        "image": "https://tdgamestudio.com/landing/images/summonerDetail.png",
+        "image": "https://cdn.tdgamestudio.com/landing/images/summonerDetail.png",
         "slug": "summoner-era"
       },
       {
         "title": "Horse Racing - Splash Art",
         "category": "Splash Art Animation",
-        "image": "https://tdgamestudio.com/landing/behance/50a462dee6f25801.jpg",
+        "image": "https://cdn.tdgamestudio.com/landing/behance/50a462dee6f25801.jpg",
         "slug": "horse-racing"
       },
       {
         "title": "Battle of the Gods | Mytheria",
         "category": "Login Screen",
-        "image": "https://tdgamestudio.com/landing/behance/9bfe7e73a64fc7d4.png",
+        "image": "https://cdn.tdgamestudio.com/landing/behance/9bfe7e73a64fc7d4.png",
         "slug": "battle-of-the-gods-mytheria"
       },
       {
         "title": "Animation Contest - Sky Mavis",
         "category": "Animation & VFX",
-        "image": "https://tdgamestudio.com/landing/behance/e3eeb2716aa68b48.png",
+        "image": "https://cdn.tdgamestudio.com/landing/behance/e3eeb2716aa68b48.png",
         "slug": "animation-contest-sky-mavis"
       },
       {
         "title": "Reaper & Lady - Project OverDrive",
         "category": "Game Animation",
-        "image": "https://tdgamestudio.com/landing/behance/87a63a36f47dc948.png",
+        "image": "https://cdn.tdgamestudio.com/landing/behance/87a63a36f47dc948.png",
         "slug": "reaper-lady-project-overdrive"
       },
       {
         "title": "Art Study Collection",
         "category": "Character Design",
-        "image": "https://tdgamestudio.com/landing/behance/2e9463653cd72994.jpg",
+        "image": "https://cdn.tdgamestudio.com/landing/behance/2e9463653cd72994.jpg",
         "slug": "art-study"
       }
     ]
@@ -115,7 +115,7 @@
         "statValue": "50+",
         "statLabel": "Completed projects",
         "description": "Stylized attack loops, promo motion, idle cycles, and lightweight animated sequences built for game readability.",
-        "image": "https://tdgamestudio.com/landing/images/service-animation.jpg"
+        "image": "https://cdn.tdgamestudio.com/landing/images/service-animation.jpg"
       },
       {
         "title": "2D Art",
@@ -124,7 +124,7 @@
         "statValue": "50+",
         "statLabel": "Completed projects",
         "description": "Character sheets, splash illustrations, UI-support art, and painted assets tuned for a cleaner, friendlier game look.",
-        "image": "https://tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg"
+        "image": "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg"
       },
       {
         "title": "2D VFX",
@@ -133,7 +133,7 @@
         "statValue": "50+",
         "statLabel": "Completed projects",
         "description": "Skill bursts, hit flashes, elemental trails, and screen-space accents that add energy without pushing the style too hard.",
-        "image": "https://tdgamestudio.com/landing/sinspired/Game_Animation-min-1024x612.jpg"
+        "image": "https://cdn.tdgamestudio.com/landing/sinspired/Game_Animation-min-1024x612.jpg"
       }
     ]
   },

@@ -46,7 +46,7 @@ export const projectMeta: ProjectMeta = {
   madeForLabel: "AnimVFX Clan",
   madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
-    "https://tdgamestudio.com/landing/behance/e3eeb2716aa68b48.png",
+    "https://cdn.tdgamestudio.com/landing/behance/e3eeb2716aa68b48.png",
   tools: [],
   fields: ["Visual Effects", "Character Design"],
   tags: [
@@ -78,16 +78,16 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "m01", variant: "banner", src: "https://tdgamestudio.com/landing/behance/e73dc01ec786d788.png" },
+  { id: "m01", variant: "banner", src: "https://cdn.tdgamestudio.com/landing/behance/e73dc01ec786d788.png" },
   {
     id: "m02",
     variant: "video",
     src: "https://player.vimeo.com/video/642207661?h=f7b128ae87&badge=0&autopause=0",
   },
-  { id: "m03", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/690506509663163c.mp4" },
-  { id: "m04", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/d4181d65cfde15fe.mp4" },
-  { id: "m05", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/541884549eb61421.mp4" },
-  { id: "m06", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/2a2f49888589fa22.mp4" },
+  { id: "m03", variant: "fullGif", src: "https://cdn.tdgamestudio.com/landing/behance/690506509663163c.mp4" },
+  { id: "m04", variant: "fullGif", src: "https://cdn.tdgamestudio.com/landing/behance/d4181d65cfde15fe.mp4" },
+  { id: "m05", variant: "fullGif", src: "https://cdn.tdgamestudio.com/landing/behance/541884549eb61421.mp4" },
+  { id: "m06", variant: "fullGif", src: "https://cdn.tdgamestudio.com/landing/behance/2a2f49888589fa22.mp4" },
 ];
 
 export const relatedProjects: readonly RelatedProject[] = [
@@ -98,7 +98,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/2bac7de14d05fa8f.png",
+      "https://cdn.tdgamestudio.com/landing/behance/2bac7de14d05fa8f.png",
     appreciations: "1.1K",
     views: "12.2K",
   },
@@ -109,7 +109,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/bcd3c09a543c36d3.png",
+      "https://cdn.tdgamestudio.com/landing/behance/bcd3c09a543c36d3.png",
     appreciations: "138",
     views: "1.8K",
   },
@@ -120,7 +120,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/9fed6d92877b5d19.png",
+      "https://cdn.tdgamestudio.com/landing/behance/9fed6d92877b5d19.png",
     appreciations: "112",
     views: "1.9K",
   },
@@ -131,7 +131,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
+      "https://cdn.tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
     appreciations: "261",
     views: "3.0K",
   },
@@ -142,7 +142,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/011ed49edb1767f3.png",
+      "https://cdn.tdgamestudio.com/landing/behance/011ed49edb1767f3.png",
     appreciations: "627",
     views: "6.0K",
   },
@@ -153,7 +153,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/7b463f2be013bcd3.jpg",
+      "https://cdn.tdgamestudio.com/landing/behance/7b463f2be013bcd3.jpg",
     appreciations: "208",
     views: "2.3K",
   },
@@ -164,7 +164,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/50a462dee6f25801.jpg",
+      "https://cdn.tdgamestudio.com/landing/behance/50a462dee6f25801.jpg",
     appreciations: "143",
     views: "1.7K",
   },
@@ -175,7 +175,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/0a0b35cf8d5e9eb6.png",
+      "https://cdn.tdgamestudio.com/landing/behance/0a0b35cf8d5e9eb6.png",
     appreciations: "446",
     views: "7.5K",
   },

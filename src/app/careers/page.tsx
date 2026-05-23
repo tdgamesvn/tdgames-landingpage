@@ -51,7 +51,7 @@ const ROLES: Role[] = [
       "Create high-quality 2D character animation using Spine for in-game assets.",
     location: "HĂ  Ná»™i",
     type: "Full-time",
-    image: "https://tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
+    image: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
     categories: ["Art", "Animation"],
     primaryCategory: "Art",
     postedAgo: "2 days ago",
@@ -86,7 +86,7 @@ const ROLES: Role[] = [
       "Design characters, props and environments with strong style and storytelling.",
     location: "HĂ  Ná»™i",
     type: "Full-time",
-    image: "https://tdgamestudio.com/landing/images/summonerDetail.png",
+    image: "https://cdn.tdgamestudio.com/landing/images/summonerDetail.png",
     categories: ["Art", "Illustration"],
     primaryCategory: "Art",
     postedAgo: "5 days ago",
@@ -121,7 +121,7 @@ const ROLES: Role[] = [
       "Create visual content for marketing, branding and community campaigns.",
     location: "HĂ  Ná»™i",
     type: "Full-time",
-    image: "https://tdgamestudio.com/landing/images/summoners.png",
+    image: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
     categories: ["Art", "Design"],
     primaryCategory: "Art",
     postedAgo: "1 week ago",
@@ -156,7 +156,7 @@ const ROLES: Role[] = [
       "Support project managers and ensure smooth communication with partners.",
     location: "HĂ  Ná»™i",
     type: "Full-time",
-    image: "https://tdgamestudio.com/landing/images/ourproject.jpg",
+    image: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg",
     categories: ["Production"],
     primaryCategory: "Production",
     postedAgo: "3 days ago",
@@ -191,7 +191,7 @@ const ROLES: Role[] = [
       "Bring skill effects, particles and impact frames to life for in-game moments.",
     location: "HĂ  Ná»™i",
     type: "Full-time",
-    image: "https://tdgamestudio.com/landing/images/service-animation.jpg",
+    image: "https://cdn.tdgamestudio.com/landing/images/service-animation.jpg",
     categories: ["Art", "Animation"],
     primaryCategory: "Art",
     postedAgo: "1 day ago",
@@ -226,7 +226,7 @@ const ROLES: Role[] = [
       "Plan and execute marketing campaigns to grow our community and reach.",
     location: "HĂ  Ná»™i",
     type: "Full-time",
-    image: "https://tdgamestudio.com/landing/images/maxresdefault.jpg",
+    image: "https://cdn.tdgamestudio.com/landing/images/maxresdefault.jpg",
     categories: ["Marketing"],
     primaryCategory: "Marketing",
     postedAgo: "4 days ago",
@@ -527,7 +527,7 @@ export default function CareersPage() {
         <section className="relative h-[100vh] overflow-hidden border-b border-white/10">
           <div className="pointer-events-none absolute inset-0 z-0">
             <Image
-              src="https://tdgamestudio.com/landing/images/f0d05f71-5089-4b3f-b453-7a8d19afc013.png"
+              src="https://cdn.tdgamestudio.com/landing/images/f0d05f71-5089-4b3f-b453-7a8d19afc013.png"
               alt=""
               fill
               className="object-cover object-[center_35%]"
@@ -1047,7 +1047,7 @@ export default function CareersPage() {
               {/* Background image */}
               <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 opacity-30">
                 <Image
-                  src="https://tdgamestudio.com/landing/images/summoners.png"
+                  src="https://cdn.tdgamestudio.com/landing/images/summoners.png"
                   alt=""
                   fill
                   className="object-cover object-right"

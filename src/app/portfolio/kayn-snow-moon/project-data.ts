@@ -38,7 +38,7 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/149524063/Kayn-Snow-Moon-League-of-Legends-Login-Screen",
-  coverImage: "https://tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
+  coverImage: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
   tools: [],
   fields: ["Visual Effects"],
   tags: [
@@ -74,7 +74,7 @@ export const showcaseModules: readonly ShowcaseModule[] = [
   {
     id: "m01",
     variant: "full",
-    src: "https://tdgamestudio.com/landing/behance/22fac62b0d0a176f.png",
+    src: "https://cdn.tdgamestudio.com/landing/behance/22fac62b0d0a176f.png",
   },
   {
     id: "m02",
@@ -86,23 +86,23 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     id: "m03",
     variant: "trio",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/5ceff1ff190e5e09.mp4",
-      "https://tdgamestudio.com/landing/behance/f6227a38caa288eb.mp4",
-      "https://tdgamestudio.com/landing/behance/481838b85dc79aa6.mp4",
+      "https://cdn.tdgamestudio.com/landing/behance/5ceff1ff190e5e09.mp4",
+      "https://cdn.tdgamestudio.com/landing/behance/f6227a38caa288eb.mp4",
+      "https://cdn.tdgamestudio.com/landing/behance/481838b85dc79aa6.mp4",
     ],
   },
   {
     id: "m04",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/9a3d71cd0be5e2fa.mp4",
-      "https://tdgamestudio.com/landing/behance/f3a0235c9fb342a4.mp4",
+      "https://cdn.tdgamestudio.com/landing/behance/9a3d71cd0be5e2fa.mp4",
+      "https://cdn.tdgamestudio.com/landing/behance/f3a0235c9fb342a4.mp4",
     ],
   },
   {
     id: "m05",
     variant: "full",
-    src: "https://tdgamestudio.com/landing/behance/87483212e020760b.png",
+    src: "https://cdn.tdgamestudio.com/landing/behance/87483212e020760b.png",
   },
 ];
 
@@ -114,7 +114,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/7b463f2be013bcd3.jpg",
+      "https://cdn.tdgamestudio.com/landing/behance/7b463f2be013bcd3.jpg",
     appreciations: "208",
     views: "2.3K",
   },
@@ -125,7 +125,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/50a462dee6f25801.jpg",
+      "https://cdn.tdgamestudio.com/landing/behance/50a462dee6f25801.jpg",
     appreciations: "143",
     views: "1.7K",
   },
@@ -136,7 +136,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/bcd3c09a543c36d3.png",
+      "https://cdn.tdgamestudio.com/landing/behance/bcd3c09a543c36d3.png",
     appreciations: "138",
     views: "1.8K",
   },
@@ -147,7 +147,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/2bac7de14d05fa8f.png",
+      "https://cdn.tdgamestudio.com/landing/behance/2bac7de14d05fa8f.png",
     appreciations: "1.1K",
     views: "12.2K",
   },
@@ -158,7 +158,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
+      "https://cdn.tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
     appreciations: "261",
     views: "3.0K",
   },
@@ -169,7 +169,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/011ed49edb1767f3.png",
+      "https://cdn.tdgamestudio.com/landing/behance/011ed49edb1767f3.png",
     appreciations: "627",
     views: "6.0K",
   },
@@ -180,7 +180,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/807956f4ca57c6ed.jpg",
+      "https://cdn.tdgamestudio.com/landing/behance/807956f4ca57c6ed.jpg",
     appreciations: "89",
     views: "1.7K",
   },
@@ -191,7 +191,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/4974242912a7c2f1.png",
+      "https://cdn.tdgamestudio.com/landing/behance/4974242912a7c2f1.png",
     appreciations: "193",
     views: "2.5K",
   },
@@ -202,7 +202,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/9fed6d92877b5d19.png",
+      "https://cdn.tdgamestudio.com/landing/behance/9fed6d92877b5d19.png",
     appreciations: "112",
     views: "1.9K",
   },
@@ -213,7 +213,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://tdgamestudio.com/landing/behance/d4011a345f6c4002.png",
+      "https://cdn.tdgamestudio.com/landing/behance/d4011a345f6c4002.png",
     appreciations: "218",
     views: "3.2K",
   },

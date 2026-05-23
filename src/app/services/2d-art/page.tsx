@@ -22,7 +22,7 @@ export default function Service2DArtPage() {
         </>
       }
       hero={{
-        image: "https://tdgamestudio.com/landing/images/summoners.png",
+        image: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
         titleTop: "2D GAME ART",
         titleMain: "PRODUCTION",
         subheading: "2D Art outsource",
@@ -41,34 +41,34 @@ export default function Service2DArtPage() {
             title: "Slot Art",
             description:
               "Slot-ready visual sets with readable symbols and style consistency.",
-            image: "https://tdgamestudio.com/landing/images/Slot_Art-1024x683.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/Slot_Art-1024x683.jpg",
           },
           {
             title: "Casual Characters",
             description: "Stylized character sets for casual and social game worlds.",
-            image: "https://tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
           },
           {
             title: "Character Concept",
             description:
               "Unique character design from concept exploration to final lineup.",
-            image: "https://tdgamestudio.com/landing/images/Character_Concept-1024x683.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/Character_Concept-1024x683.jpg",
           },
           {
             title: "Environment Art",
             description: "Stunning painted environments and scenic world-building.",
-            image: "https://tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
           },
           {
             title: "Isometry Art",
             description: "Isometric assets and building sets for gameplay readability.",
-            image: "https://tdgamestudio.com/landing/images/Isometry_art-1024x683.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/Isometry_art-1024x683.jpg",
           },
           {
             title: "Casual Art Props",
             description:
               "Prop packs and icon-ready objects tailored for casual game style.",
-            image: "https://tdgamestudio.com/landing/images/Casual_Art_Props-1024x683.jpg",
+            image: "https://cdn.tdgamestudio.com/landing/images/Casual_Art_Props-1024x683.jpg",
           },
         ],
       }}

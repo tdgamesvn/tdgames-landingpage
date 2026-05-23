@@ -48,6 +48,7 @@ supabase/.temp/
 # script backups
 .media-replace-backup.json
 scripts/.gif-to-mp4-map.json
+.commit-msg.tmp
 
 # Ignore local media assets (hosted on Cloudflare R2)
 public/images/

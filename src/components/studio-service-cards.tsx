@@ -62,10 +62,10 @@ export function StudioServiceIcon({
 }) {
   const iconSrc =
     type === "art"
-      ? "https://tdgamestudio.com/landing/images/art.png"
+      ? "https://cdn.tdgamestudio.com/landing/images/art.png"
       : type === "animation"
-        ? "https://tdgamestudio.com/landing/images/running.png"
-        : "https://tdgamestudio.com/landing/images/sparkling.png";
+        ? "https://cdn.tdgamestudio.com/landing/images/running.png"
+        : "https://cdn.tdgamestudio.com/landing/images/sparkling.png";
 
   return (
     <span
