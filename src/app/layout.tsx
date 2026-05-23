@@ -35,9 +35,32 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "TD Games — 2D Art & Animation Studio",
+  title: {
+    default: "TD Games — 2D Art & Animation Studio",
+    template: "%s | TD Games",
+  },
   description:
     "TD Games is a Vietnam-based outsourcing studio specializing in 2D Art, Animation, and VFX for mobile games.",
+  metadataBase: new URL("https://www.tdgamestudio.com"),
+  openGraph: {
+    title: "TD Games — 2D Art & Animation Studio",
+    description:
+      "Vietnam-based outsourcing studio specializing in 2D Art, Animation, and VFX for mobile games.",
+    url: "https://www.tdgamestudio.com",
+    siteName: "TD Games",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TD Games — 2D Art & Animation Studio",
+    description: "Vietnam-based outsourcing studio for 2D Art, Animation, and VFX.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
 };
 
 export const viewport: Viewport = {
