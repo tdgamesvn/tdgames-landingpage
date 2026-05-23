@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:behance": "node --env-file=.env.local scripts/migrate-behance-to-r2.mjs",
+    "migrate:behance:apply": "node --env-file=.env.local scripts/migrate-behance-to-r2.mjs --apply",
+    "replace-urls": "node scripts/replace-media-urls.mjs",
+    "replace-urls:apply": "node scripts/replace-media-urls.mjs --apply"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1052.0",
