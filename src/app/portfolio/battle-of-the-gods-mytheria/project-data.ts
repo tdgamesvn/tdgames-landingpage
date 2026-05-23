@@ -85,24 +85,24 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     id: "m02",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/9b5f1c1d1afd22ba.gif",
-      "https://tdgamestudio.com/landing/behance/5368f113ff98620f.gif",
+      "https://tdgamestudio.com/landing/behance/9b5f1c1d1afd22ba.mp4",
+      "https://tdgamestudio.com/landing/behance/5368f113ff98620f.mp4",
     ],
   },
   {
     id: "m03",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/3846b38b0d867e83.gif",
-      "https://tdgamestudio.com/landing/behance/245c18e68debcb47.gif",
+      "https://tdgamestudio.com/landing/behance/3846b38b0d867e83.mp4",
+      "https://tdgamestudio.com/landing/behance/245c18e68debcb47.mp4",
     ],
   },
   {
     id: "m04",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/e218031f21515246.gif",
-      "https://tdgamestudio.com/landing/behance/ed6d29efdb417726.gif",
+      "https://tdgamestudio.com/landing/behance/e218031f21515246.mp4",
+      "https://tdgamestudio.com/landing/behance/ed6d29efdb417726.mp4",
     ],
   },
   {

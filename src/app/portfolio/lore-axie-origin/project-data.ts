@@ -97,48 +97,48 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     id: "m04",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/f3a0364ce0acd210.gif",
-      "https://tdgamestudio.com/landing/behance/c61527bde30b7ac0.gif",
+      "https://tdgamestudio.com/landing/behance/f3a0364ce0acd210.mp4",
+      "https://tdgamestudio.com/landing/behance/c61527bde30b7ac0.mp4",
     ],
   },
   {
     id: "m05",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/785dcae683a82ac4.gif",
-      "https://tdgamestudio.com/landing/behance/cc18566033b16338.gif",
+      "https://tdgamestudio.com/landing/behance/785dcae683a82ac4.mp4",
+      "https://tdgamestudio.com/landing/behance/cc18566033b16338.mp4",
     ],
   },
   {
     id: "m06",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/e57e2e8bcc766a79.gif",
-      "https://tdgamestudio.com/landing/behance/4219cdbe69a069e2.gif",
+      "https://tdgamestudio.com/landing/behance/e57e2e8bcc766a79.mp4",
+      "https://tdgamestudio.com/landing/behance/4219cdbe69a069e2.mp4",
     ],
   },
   {
     id: "m07",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/8137e68e15121f35.gif",
-      "https://tdgamestudio.com/landing/behance/c24c7a68c6a70caa.gif",
+      "https://tdgamestudio.com/landing/behance/8137e68e15121f35.mp4",
+      "https://tdgamestudio.com/landing/behance/c24c7a68c6a70caa.mp4",
     ],
   },
   {
     id: "m08",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/185cfbcd615a49c6.gif",
-      "https://tdgamestudio.com/landing/behance/ca0b182522cfc283.gif",
+      "https://tdgamestudio.com/landing/behance/185cfbcd615a49c6.mp4",
+      "https://tdgamestudio.com/landing/behance/ca0b182522cfc283.mp4",
     ],
   },
   {
     id: "m09",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/33e5612d8f46230a.gif",
-      "https://tdgamestudio.com/landing/behance/4d2a41ee1a8b0fd0.gif",
+      "https://tdgamestudio.com/landing/behance/33e5612d8f46230a.mp4",
+      "https://tdgamestudio.com/landing/behance/4d2a41ee1a8b0fd0.mp4",
     ],
   },
   {
@@ -149,7 +149,7 @@ export const showcaseModules: readonly ShowcaseModule[] = [
   {
     id: "m11",
     variant: "fullGif",
-    src: "https://tdgamestudio.com/landing/behance/aa7665fd9f35e181.gif",
+    src: "https://tdgamestudio.com/landing/behance/aa7665fd9f35e181.mp4",
   },
 ];
 

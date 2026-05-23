@@ -80,26 +80,26 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "m01", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/728e2b4bd0ee1812.gif" },
+  { id: "m01", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/728e2b4bd0ee1812.mp4" },
   { id: "m02", variant: "banner", src: "https://tdgamestudio.com/landing/behance/7be1c929387344e1.png" },
   { id: "m03", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m04", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/6a566ab48bcb4809.gif" },
+  { id: "m04", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/6a566ab48bcb4809.mp4" },
   { id: "m05", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m06", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/542c64f1e55c771c.gif" },
+  { id: "m06", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/542c64f1e55c771c.mp4" },
   { id: "m07", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m08", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/44a5819fe5bf0ab6.gif" },
+  { id: "m08", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/44a5819fe5bf0ab6.mp4" },
   { id: "m09", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m10", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/caba6aa6de22d63a.gif" },
+  { id: "m10", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/caba6aa6de22d63a.mp4" },
   { id: "m11", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m12", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/4d89acbb15424e64.gif" },
+  { id: "m12", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/4d89acbb15424e64.mp4" },
   { id: "m13", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m14", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/71b3c5bb1d896037.gif" },
+  { id: "m14", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/71b3c5bb1d896037.mp4" },
   { id: "m15", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m16", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/8d6c7382a60e4c7b.gif" },
+  { id: "m16", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/8d6c7382a60e4c7b.mp4" },
   { id: "m17", variant: "banner", src: "https://tdgamestudio.com/landing/behance/c4f544c3bca1d3e0.png" },
-  { id: "m18", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/886cdb0e0cd67309.gif" },
+  { id: "m18", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/886cdb0e0cd67309.mp4" },
   { id: "m19", variant: "banner", src: "https://tdgamestudio.com/landing/behance/8a5db7fe874d57cc.png" },
-  { id: "m20", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/8c5d418101a286f6.gif" },
+  { id: "m20", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/8c5d418101a286f6.mp4" },
 ] as const;
 
 export const relatedProjects: readonly RelatedProject[] = [

@@ -5,7 +5,7 @@
         "id": "1",
         "name": "MALEFICA",
         "label": "Skin 2 – I",
-        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/1big.gif",
+        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/1big.mp4",
         "path": "https://tdgamestudio.com/landing/video/CutScene_SE/video1.mp4",
         "isBgVideo": true,
         "isIframe": false
@@ -14,7 +14,7 @@
         "id": "2",
         "name": "VESTA",
         "label": "Skin 2 – III",
-        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/2big.gif",
+        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/2big.mp4",
         "path": "https://tdgamestudio.com/landing/video/CutScene_SE/video_summoner_3_skill_1_skin_2.mp4",
         "isBgVideo": true,
         "isIframe": false
@@ -23,7 +23,7 @@
         "id": "3",
         "name": "FABER",
         "label": "Skin 2 – IV",
-        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/3big.gif",
+        "thumbnail": "https://tdgamestudio.com/landing/video/CutScene_SE/3big.mp4",
         "path": "https://tdgamestudio.com/landing/video/CutScene_SE/video_summoner_4_skill_1_skin_2.mp4",
         "isBgVideo": true,
         "isIframe": false

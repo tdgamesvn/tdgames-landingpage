@@ -1,0 +1,33 @@
+/* Admin-only overrides for native form controls.
+   Forces dark scheme for OS-rendered popups (select dropdown, date pickers,
+   autofill, etc.) regardless of user's OS theme. */
+
+[data-admin-root] {
+  color-scheme: dark;
+}
+
+[data-admin-root] select {
+  color-scheme: dark;
+  background-color: #18181b;
+  color: #fff;
+}
+
+[data-admin-root] select option,
+[data-admin-root] select optgroup {
+  background-color: #18181b;
+  color: #fff;
+}
+
+[data-admin-root] input,
+[data-admin-root] textarea {
+  color-scheme: dark;
+}
+
+/* Chrome autofill bg fix */
+[data-admin-root] input:-webkit-autofill,
+[data-admin-root] input:-webkit-autofill:hover,
+[data-admin-root] input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #18181b inset;
+  caret-color: #fff;
+}

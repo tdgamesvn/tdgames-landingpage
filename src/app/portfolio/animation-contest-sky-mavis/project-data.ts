@@ -84,10 +84,10 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     variant: "video",
     src: "https://player.vimeo.com/video/642207661?h=f7b128ae87&badge=0&autopause=0",
   },
-  { id: "m03", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/690506509663163c.gif" },
-  { id: "m04", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/d4181d65cfde15fe.gif" },
-  { id: "m05", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/541884549eb61421.gif" },
-  { id: "m06", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/2a2f49888589fa22.gif" },
+  { id: "m03", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/690506509663163c.mp4" },
+  { id: "m04", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/d4181d65cfde15fe.mp4" },
+  { id: "m05", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/541884549eb61421.mp4" },
+  { id: "m06", variant: "fullGif", src: "https://tdgamestudio.com/landing/behance/2a2f49888589fa22.mp4" },
 ];
 
 export const relatedProjects: readonly RelatedProject[] = [

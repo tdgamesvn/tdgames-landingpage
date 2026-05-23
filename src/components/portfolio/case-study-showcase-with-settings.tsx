@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 
+import { AutoLoopMedia } from "./auto-loop-media";
 import type { ProjectTheme, ShowcaseModule } from "./case-study-types";
 import { hexToRgba } from "./portfolio-color-utils";
 
@@ -411,8 +412,7 @@ function GifClickableCell({
         }}
       >
         <div className={cellInner}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <AutoLoopMedia
             src={src}
             alt={alt}
             className={`${gifImgClass} w-full`}
@@ -460,8 +460,7 @@ function GifClickableCell({
         }}
       >
         <div className={cellInner}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <AutoLoopMedia
             src={src}
             alt={alt}
             className="h-full w-full max-w-full object-contain"
@@ -699,8 +698,7 @@ function ShowcaseRenderer({
               className="flex justify-center px-4 py-3"
               style={{ backgroundColor: labelBg }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <AutoLoopMedia
                 src={module.src}
                 alt={altBase}
                 className="block h-auto w-full rounded-lg"
@@ -719,8 +717,7 @@ function ShowcaseRenderer({
               className="flex justify-center px-4 py-6 md:py-10"
               style={{ backgroundColor: panelBg }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <AutoLoopMedia
                 src={module.src}
                 alt={altBase}
                 className="block h-auto w-full"
@@ -803,8 +800,7 @@ function ShowcaseRenderer({
             className="w-full"
             style={{ backgroundColor: mediaCanvas }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <AutoLoopMedia
               src={module.src}
               alt={altBase}
               className="block h-auto w-full"

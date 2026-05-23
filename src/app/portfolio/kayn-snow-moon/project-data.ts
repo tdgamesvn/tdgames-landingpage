@@ -86,17 +86,17 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     id: "m03",
     variant: "trio",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/5ceff1ff190e5e09.gif",
-      "https://tdgamestudio.com/landing/behance/f6227a38caa288eb.gif",
-      "https://tdgamestudio.com/landing/behance/481838b85dc79aa6.gif",
+      "https://tdgamestudio.com/landing/behance/5ceff1ff190e5e09.mp4",
+      "https://tdgamestudio.com/landing/behance/f6227a38caa288eb.mp4",
+      "https://tdgamestudio.com/landing/behance/481838b85dc79aa6.mp4",
     ],
   },
   {
     id: "m04",
     variant: "duo",
     srcs: [
-      "https://tdgamestudio.com/landing/behance/9a3d71cd0be5e2fa.gif",
-      "https://tdgamestudio.com/landing/behance/f3a0235c9fb342a4.gif",
+      "https://tdgamestudio.com/landing/behance/9a3d71cd0be5e2fa.mp4",
+      "https://tdgamestudio.com/landing/behance/f3a0235c9fb342a4.mp4",
     ],
   },
   {
