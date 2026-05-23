@@ -6,6 +6,7 @@ import { CreateTab } from "./_components/CreateTab";
 import { MediaTab } from "./_components/MediaTab";
 import { ProjectContentTab } from "./_components/ProjectContentTab";
 import { ProjectsTab } from "./_components/ProjectsTab";
+import { TeamTab } from "./_components/TeamTab";
 import type { AdminTab } from "./_lib/types";
 
 const TABS: { id: AdminTab; label: string; description: string }[] = [
@@ -33,6 +34,11 @@ const TABS: { id: AdminTab; label: string; description: string }[] = [
     id: "bulk",
     label: "5. Bulk replace",
     description: "Chạy script replace URL hàng loạt (advanced)",
+  },
+  {
+    id: "team",
+    label: "6. Team",
+    description: "Quản lý thành viên: ảnh, tên, chức danh tại trang /about",
   },
 ];
 
@@ -162,6 +168,7 @@ export default function AdminPage() {
           <CreateTab adminKey={adminKey} onCreated={() => setTab("projects")} />
         ) : null}
         {tab === "bulk" ? <BulkTab adminKey={adminKey} /> : null}
+        {tab === "team" ? <TeamTab adminKey={adminKey} /> : null}
       </main>
     </div>
   );

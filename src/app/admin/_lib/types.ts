@@ -31,7 +31,14 @@ export type MediaAsset = {
   updated_at: string;
 };
 
-export type AdminTab = "projects" | "content" | "media" | "create" | "bulk";
+export type AdminTab = "projects" | "content" | "media" | "create" | "bulk" | "team";
+
+export type TeamMember = {
+  id: string;
+  name: string;
+  title: string;
+  photo: string;
+};
 
 export type ProjectSlot = {
   source: "cover" | "module";

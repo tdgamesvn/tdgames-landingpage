@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
+import siteContent from "@/content/site.json";
 
 export default function AboutPage() {
   return (
@@ -481,19 +482,32 @@ export default function AboutPage() {
             </h2>
 
             <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[
-                "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80",
-                "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80",
-                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
-                "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&q=80",
-              ].map((img, i) => (
-                <div key={i} className="relative aspect-square overflow-hidden rounded-lg">
+              {siteContent.team.map((member) => (
+                <div key={member.id} className="group relative aspect-square overflow-hidden rounded-lg">
                   <Image
-                    src={img}
-                    alt={`Team member ${i + 1}`}
+                    src={member.photo}
+                    alt={member.name}
                     fill
-                    className="object-cover grayscale transition-all duration-300 hover:grayscale-0"
+                    className="object-cover grayscale transition-all duration-300 group-hover:grayscale-0"
                   />
+                  {/* Name & title overlay — visible on hover */}
+                  <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <p
+                      className="text-sm font-black uppercase tracking-wide text-white"
+                      style={{ fontFamily: "var(--font-rajdhani)" }}
+                    >
+                      {member.name}
+                    </p>
+                    <p className="mt-0.5 text-xs font-medium uppercase tracking-widest text-[#f59e0b]">
+                      {member.title}
+                    </p>
+                  </div>
+                  {/* Always-visible name strip at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2 translate-y-0 group-hover:opacity-0 transition-opacity duration-300">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-white/80">
+                      {member.title}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
