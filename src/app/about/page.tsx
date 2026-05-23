@@ -488,7 +488,7 @@ export default function AboutPage() {
                     src={member.photo}
                     alt={member.name}
                     fill
-                    className="object-cover grayscale transition-all duration-300 group-hover:grayscale-0"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   {/* Name & title overlay — visible on hover */}
                   <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
