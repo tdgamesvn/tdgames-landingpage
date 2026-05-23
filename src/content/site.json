@@ -136,5 +136,189 @@
         "image": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/sinspired/Game_Animation-min-1024x612.jpg"
       }
     ]
+  },
+  "blog": {
+    "posts": [
+      {
+        "slug": "how-to-create-a-game-character",
+        "date": "22.01.2024",
+        "title": "How to Create a Game Character",
+        "excerpt": "In order to craft an effective game character, artists must balance visual appeal with functional design that serves gameplay.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80",
+        "views": 1606,
+        "body": [
+          "Creating a compelling game character is one of the most challenging and rewarding tasks in game art. The process begins long before any pixels are placed — it starts with understanding who the character is, what role they play in the game world, and how players will relate to them emotionally.",
+          "The silhouette is your first tool. A strong character reads instantly at thumbnail size: their outline should communicate personality, power, and role without any detail. A hulking warrior needs a different silhouette than a nimble rogue or a mystical mage. At TD Games, our character artists spend significant time refining silhouettes in grayscale before adding color and texture.",
+          "Color theory drives character differentiation and storytelling. Warm tones suggest aggression or power; cool tones convey calm or mystery. High saturation signals importance — your protagonist should command more visual weight than background NPCs. We use limited palettes of three to five colors per character to maintain visual clarity, especially in busy combat scenes.",
+          "Finally, functionality must drive every design decision. A character's anatomy needs to support the animation rig, their costume must allow believable movement, and their visual complexity should match their screen time. Characters that appear briefly need simpler designs; main heroes justify more detail. The goal is always to serve the game experience, not just create beautiful artwork in isolation."
+        ]
+      },
+      {
+        "slug": "high-poly-and-low-poly-modeling",
+        "date": "22.01.2024",
+        "title": "High Poly and Low Poly Modeling",
+        "excerpt": "As the field of 3D modeling continues to evolve, understanding the difference between high poly and low poly is essential.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
+        "views": 1405,
+        "body": [
+          "High poly and low poly modeling represent two fundamentally different approaches to creating 3D assets, each serving a specific purpose in the production pipeline. Understanding when and why to use each is a core skill for any serious game artist.",
+          "High poly models contain millions of polygons and capture every surface detail — skin pores, fabric weaves, metal scratches. They are never used directly in games because the polygon count would destroy frame rates, but they are indispensable for baking: the process of transferring surface detail from the high poly mesh onto texture maps (normal maps, ambient occlusion maps) that then wrap around the low poly version.",
+          "Low poly models are what actually run in the game engine. Modern AAA characters range from 10,000 to 80,000 polygons; mobile games often target 1,000 to 5,000. The skill in low poly work is distributing polygons intelligently — dense topology where the mesh needs to deform (joints, face) and sparse geometry on flat surfaces. A well-built low poly mesh deforms cleanly under animation and bakes detail beautifully from its high poly counterpart.",
+          "The workflow at TD Games follows industry standard: sculpt high poly in ZBrush or Blender, retopologize to production-ready low poly, UV unwrap, bake maps, then paint textures in Substance Painter. This pipeline consistently delivers assets that look hand-sculpted while remaining fully game-ready."
+        ]
+      },
+      {
+        "slug": "animation-outsourcing-guide",
+        "date": "22.01.2024",
+        "title": "Animation Outsourcing: A Guide for Success",
+        "excerpt": "Animation outsourcing involves delegating animation tasks to external studios or freelancers to optimize production.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=800&q=80",
+        "views": 1252,
+        "body": [
+          "Animation outsourcing has become a standard part of game development at every scale. Indie studios outsource to access skills they can't afford to hire full-time; AAA studios outsource to scale output without expanding headcount. Done correctly, outsourcing accelerates production without sacrificing quality.",
+          "The most critical step is documentation. Before sending any work to an external team, create a style guide that covers: reference art, color palettes, animation principles (how exaggerated should movement be?), naming conventions, and technical specs (frame rate, export format, rigging standards). Ambiguity at the brief stage becomes expensive revision cycles later.",
+          "Communication rhythm matters as much as the brief itself. Weekly check-ins with milestone reviews catch problems early. Share work-in-progress openly — waiting until delivery to give feedback wastes everyone's time. Use a shared project management tool and establish clear approval chains so the outsource team always knows who has final sign-off.",
+          "TD Games approaches every outsourcing partnership with a trial batch: a small set of assets that lets both teams calibrate expectations before committing to full production. This protects the client's timeline and gives us the chance to tune our pipeline to their needs. The goal is a collaboration where the client's players can't tell which assets were made in-house and which were outsourced."
+        ]
+      },
+      {
+        "slug": "complete-guide-game-art-outsourcing",
+        "date": "22.01.2024",
+        "title": "Complete 2024 Guide to Game Art Outsourcing",
+        "excerpt": "Developing a game is a complex process that requires a wide range of skills and expertise across multiple disciplines.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=800&q=80",
+        "views": 2268,
+        "body": [
+          "Game art outsourcing in 2024 looks very different from even five years ago. Remote collaboration tools have matured, global studios have raised their quality bars, and the range of services available — from concept to final deliverable — has expanded dramatically. For studios of any size, understanding the outsourcing landscape is now a competitive necessity.",
+          "When evaluating an outsourcing partner, look beyond the portfolio reel. Ask about their revision process, their communication tools, and their experience with your specific art style. A studio that excels at realistic AAA environments may not be the right fit for a stylized mobile RPG. Request a trial project and pay for it — any professional studio will accept paid trial work, and it tells you everything the portfolio can't.",
+          "Pricing models vary: per-asset rates work for discrete deliverables like character models; hourly rates suit ongoing work where scope is fluid; retainer agreements make sense for studios that need a consistent output level across many months. Be wary of unusually low bids — they often signal either quality shortcuts or scope misunderstandings that will surface during production.",
+          "The future of outsourcing increasingly blends human artistry with AI-assisted tools. Studios that have integrated AI into their workflows for concept iteration, texture generation, and animation cleanup can deliver more iterations faster without sacrificing the artistic judgment that makes game art compelling. At TD Games, we use AI as a tool to amplify our artists, not replace them."
+        ]
+      },
+      {
+        "slug": "different-game-art-styles",
+        "date": "22.01.2024",
+        "title": "Different Game Art Styles",
+        "excerpt": "Video games represent a canvas for artistic expression, with each title showcasing a unique visual language.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
+        "views": 2272,
+        "body": [
+          "Art style is one of the most consequential decisions a game makes. It shapes player expectations, defines the emotional tone of the experience, and determines the entire production pipeline. Choosing the wrong style for your game's genre, budget, or team is a mistake that's nearly impossible to fix mid-production.",
+          "Realistic styles aim to replicate real-world lighting, materials, and anatomy. They require the largest teams, the longest production times, and the most sophisticated tools. The payoff is immersion — when executed well, players forget they're looking at polygons. The risk is the uncanny valley and the difficulty of aging gracefully; a realistic game from five years ago often looks dated in ways a stylized game does not.",
+          "Stylized art spans an enormous range — from the watercolor softness of Gris to the geometric boldness of Cuphead to the cel-shaded anime aesthetic of countless mobile RPGs. Stylized work trades photorealism for memorability. A distinctive stylized look is often more recognizable and more cost-effective to produce than realism, making it the dominant choice for indie games and mobile titles.",
+          "2D art styles — pixel art, hand-drawn animation, and illustrated environments — have experienced a major revival driven by indie developers and nostalgia. At TD Games, our 2D specialization lets us move quickly in stylized spaces where artistic clarity and character expression matter more than polygon counts. The medium is constraints; the art is what you do within them."
+        ]
+      },
+      {
+        "slug": "impact-animation-education",
+        "date": "22.01.2024",
+        "title": "The Impact of Animation on Education and E-Learning",
+        "excerpt": "Animation has evolved beyond entertainment to become a powerful educational tool in modern learning environments.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+        "views": 2208,
+        "body": [
+          "Animation's entry into education has transformed how complex concepts are taught. Where static diagrams once struggled to convey motion, process, and causality, animation makes these relationships immediately legible. A short animated explainer can communicate in thirty seconds what a textbook paragraph takes five minutes to convey — and the retention rates are dramatically higher.",
+          "The cognitive science behind this is well-established. Humans process visual information roughly sixty thousand times faster than text. Animation engages both visual and auditory processing channels simultaneously, a phenomenon researchers call the dual-coding effect. When learners see and hear a concept explained at the same time, memory encoding is significantly stronger than text-only or audio-only instruction.",
+          "For e-learning specifically, animation solves the engagement problem that plagues passive video content. Interactive animations — where learners control playback, make choices, or trigger different outcomes — transform watching into doing. Game-based learning, which sits at the intersection of game design and education, uses animation to make feedback loops immediate and emotionally engaging.",
+          "The production demands of educational animation differ meaningfully from game animation. Clarity takes absolute priority: every visual element must serve the explanation. Stylistic choices that might work in a game can confuse learners if they draw attention away from the concept being taught. TD Games' experience with clean, readable 2D animation translates well to educational contexts where communication is the core goal."
+        ]
+      },
+      {
+        "slug": "animation-is-not-just-for-children",
+        "date": "22.01.2024",
+        "title": "Animation Is Not Just for Children",
+        "excerpt": "The perception that animation is solely for children has long been challenged by studios pushing creative boundaries.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80",
+        "views": 2135,
+        "body": [
+          "The idea that animation is a children's medium is a cultural artifact of mid-twentieth-century American television, not an inherent truth about the art form. Japan's anime industry demolished this misconception decades ago, producing works that grapple with war, mortality, identity, and political power with more nuance than most live-action film.",
+          "In games, the connection between animation and children's content has been even weaker. From the earliest days of the medium, games used animated characters to explore themes that were anything but childlike — violence, betrayal, loss, moral ambiguity. Today, some of the most technically sophisticated animation work in the world happens inside game engines, serving stories aimed squarely at adult audiences.",
+          "The commercial case for adult animation is now undeniable. Streaming platforms have invested hundreds of millions in animated series for adults, recognizing that animation offers creative freedom that live-action simply cannot match — fantastical worlds, impossible physics, visual metaphors made literal. For brands and game studios, adult-oriented animation communicates sophistication, edge, and creative ambition.",
+          "At TD Games, we work across the full tonal spectrum. Some of our clients need bright, safe, family-friendly characters; others need dark, complex animation for mature audiences. The craft demands are different but equally serious. What doesn't change is our commitment to animation that serves the story, respects the audience, and achieves its intended emotional effect."
+        ]
+      },
+      {
+        "slug": "rendering-in-3d-animation",
+        "date": "22.01.2024",
+        "title": "Rendering in 3D Animation Production",
+        "excerpt": "In the realm of 3D animation, rendering is the final step that transforms digital models into polished visual output.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1617802690992-15d93263d3a9?w=800&q=80",
+        "views": 2019,
+        "body": [
+          "Rendering is the computational process of converting a 3D scene — geometry, textures, lighting, camera settings — into a final 2D image or sequence of images. It is the last step in the 3D pipeline and often the most time-consuming. Understanding rendering is essential for any producer managing 3D animation projects, because render time is directly related to cost and deadline.",
+          "Two rendering paradigms dominate production: rasterization and ray tracing. Rasterization, used by real-time game engines, projects 3D geometry onto a 2D screen extremely quickly by using clever approximations of light behavior. Ray tracing simulates how light actually behaves in the physical world — bouncing off surfaces, casting accurate shadows, producing physically correct reflections — at the cost of significant computation time.",
+          "Real-time rendering in modern game engines has narrowed the gap dramatically. Unreal Engine 5's Lumen and Nanite systems bring near-photorealistic lighting and geometry detail to real-time contexts that would have required offline rendering pipelines just five years ago. For game cinematic work, the line between pre-rendered and real-time output has effectively disappeared.",
+          "For game studios choosing between real-time and offline rendering for cinematics and marketing material, the calculus depends on iteration speed and visual target. Real-time rendering allows instant feedback and infinite revision; offline rendering offers higher visual ceiling but slower turnaround. Most studios now use real-time rendering for in-engine work and reserve offline rendering for trailers and key art where maximum quality is non-negotiable."
+        ]
+      },
+      {
+        "slug": "color-correction-3d-animation",
+        "date": "22.01.2024",
+        "title": "Color Correction Process in 3D Animation",
+        "excerpt": "Color correction is a crucial step in 3D animation that ensures visual consistency and emotional impact.",
+        "tag": "Pipeline",
+        "image": "https://images.unsplash.com/photo-1561736778-92e52a7769ef?w=800&q=80",
+        "views": 1924,
+        "body": [
+          "Color correction in 3D animation serves two distinct purposes: technical correction and creative grading. Technical correction fixes objective problems — clipping highlights, crushed shadows, color casts from lighting setups. Creative grading applies intentional color treatment to reinforce mood, establish time of day, or create visual consistency across a sequence. Skilled colorists do both simultaneously, but the distinction matters for understanding the workflow.",
+          "The process begins with a linear light render — raw output from the renderer without any color management applied. This preserves the full dynamic range of the scene and gives the colorist maximum latitude to push and pull exposure, contrast, and color without degrading image quality. Working with gamma-corrected or already-processed footage limits the colorist's options significantly.",
+          "LUTs (Look-Up Tables) are the primary tool for establishing a visual style quickly. A LUT maps input color values to output values and can replicate film stock characteristics, enforce a specific color palette, or match the look of reference footage. Studios often develop house LUTs that define their visual signature and apply them as a starting point across all projects.",
+          "For game studios producing animated trailers or cinematics, color grading is often the last step before delivery and the one that most dramatically transforms the perceived quality of the work. A well-graded sequence looks intentional and cinematic; an ungraded render, no matter how technically accomplished, looks flat and unfinished. Budget for color work — it pays dividends in perceived quality that far exceed its production cost."
+        ]
+      },
+      {
+        "slug": "animation-storyboard",
+        "date": "22.01.2024",
+        "title": "Animation Storyboard: Everything You Should Know",
+        "excerpt": "In professional animation studios, storyboarding is the backbone of every successful production pipeline.",
+        "tag": "Pipeline",
+        "image": "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=800&q=80",
+        "views": 1720,
+        "body": [
+          "A storyboard is a sequence of drawings that maps out an animation shot by shot, panel by panel. It is the first place where timing, camera angles, character staging, and narrative pacing are tested — and crucially, it is the cheapest place to make major changes. Fixing a story problem in the storyboard stage costs an artist a few hours; fixing the same problem after scenes are animated can cost weeks.",
+          "Professional storyboards communicate far more than composition. Each panel includes camera movement notation (pans, zooms, cuts), character action descriptions, timing in seconds or frames, and dialogue or sound cues. A storyboard artist is simultaneously thinking like a cinematographer, an editor, and a storyteller — understanding how each cut will feel to an audience watching in motion.",
+          "For game cinematics specifically, storyboards must account for real-time rendering constraints that film storyboards ignore. A camera move that looks great on paper may be prohibitively expensive to render or may fight against the game engine's lighting system. Experienced game storyboard artists internalize these constraints and design shots that are both visually compelling and technically achievable.",
+          "Animatics — rough video cut together from storyboard panels with timing and temporary audio — bridge the gap between storyboard and final animation. They allow directors and clients to experience the sequence in motion before expensive animation work begins. At TD Games, we produce animatics for all cinematic projects to ensure alignment on pacing and storytelling before committing to final production."
+        ]
+      },
+      {
+        "slug": "vfx-in-3d-animation",
+        "date": "22.01.2024",
+        "title": "VFX in 3D Animation",
+        "excerpt": "When delving into visual effects in 3D animation, artists must master the interplay between physics and artistry.",
+        "tag": "VFX",
+        "image": "https://images.unsplash.com/photo-1536240478700-b869ad10e128?w=800&q=80",
+        "views": 1628,
+        "body": [
+          "Visual effects in 3D animation encompass everything that isn't character animation or static environment: fire, water, smoke, explosions, magical energy, weather, cloth simulation, and destruction. VFX is the layer that makes animated worlds feel alive and physically plausible, even in highly stylized contexts where realism is not the goal.",
+          "Simulation-based VFX uses physics solvers to generate realistic behavior automatically. Fluid simulations calculate how liquids flow and splash; cloth sims compute how fabric responds to movement and wind; rigid body systems handle how objects break and scatter. Simulation produces results that are physically convincing but often require significant computation time and skilled artists to art-direct toward the desired look.",
+          "In game production, real-time VFX constraints push artists toward particle systems and shader-based effects that achieve visual impact with minimal performance cost. A well-crafted particle system can suggest the complexity of a full fluid simulation while running at sixty frames per second. The craft is knowing exactly how much visual information the eye needs to read 'fire' or 'magic' and delivering precisely that — no more.",
+          "TD Games specializes in 2D VFX for game animation: skill bursts, hit reactions, elemental effects, and screen-space accents. Our approach prioritizes readability at any scale — effects that communicate clearly on a phone screen and still impress on a monitor. The best VFX is invisible in the sense that players feel its impact without consciously noticing the artistry behind it."
+        ]
+      },
+      {
+        "slug": "what-is-3d-animation-layout",
+        "date": "22.01.2024",
+        "title": "What is a 3D Animation Layout and Why Does It Matter?",
+        "excerpt": "As the 3D animation journey begins, layout serves as the critical bridge between storyboard and final animation.",
+        "tag": "Blog",
+        "image": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80",
+        "views": 1599,
+        "body": [
+          "Layout is the production phase where storyboard drawings become rough 3D scenes. Layout artists place characters and cameras in the 3D environment, block out primary character movements, and establish the timing of each shot. It is the translation layer between the 2D planning stage and the detailed 3D animation that follows.",
+          "The layout phase answers practical questions that storyboards can only approximate: Does the camera angle actually work when the characters are full 3D geometry? Does the character's blocking feel natural at the intended speed? Is there enough space in the environment for the action to read clearly? Layout catches these problems before animators invest hours in detailed performance.",
+          "Camera work is central to layout. Where storyboards suggest camera angles, layout commits to them — focal length, height, angle, and movement are all specified. Good layout camera work enhances character performance: a low camera angle makes a character feel powerful; a high angle makes them feel vulnerable. Layout artists must understand both cinematography and character acting to make effective choices.",
+          "For games, layout thinking applies to both cinematics and gameplay-driven camera systems. Real-time cinematics need layout to ensure characters hit their marks relative to dynamic camera positions that the player doesn't directly control. Even in gameplay, 'camera layout' thinking — anticipating where the camera will be when key actions occur — shapes how game spaces are designed and how character animations are prioritized."
+        ]
+      }
+    ]
   }
 }
