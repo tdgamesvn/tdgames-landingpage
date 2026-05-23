@@ -85,30 +85,30 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     id: "m02",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c93cb1134047127.61cc8d2109d9f.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/9acf03134047127.61cc8d210963c.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/9b5f1c1d1afd22ba.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/5368f113ff98620f.gif",
     ],
   },
   {
     id: "m03",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/cc307d134047127.61cc8d221c65f.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/960fcf134047127.61cc8d221ca32.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/3846b38b0d867e83.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/245c18e68debcb47.gif",
     ],
   },
   {
     id: "m04",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/5841f2134047127.61cc8d22e8351.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/bb3efc134047127.61cc8d22e7ddc.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/e218031f21515246.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/ed6d29efdb417726.gif",
     ],
   },
   {
     id: "m05",
     variant: "full",
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/489aca134047127.61cdce85c2c17.png",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/e9d811fc324f0296.png",
   },
 ];
 

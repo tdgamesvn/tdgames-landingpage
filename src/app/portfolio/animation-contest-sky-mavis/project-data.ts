@@ -78,16 +78,16 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "m01", variant: "banner", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/a11525130561969.6182bc9d17db5.png" },
+  { id: "m01", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/e73dc01ec786d788.png" },
   {
     id: "m02",
     variant: "video",
     src: "https://player.vimeo.com/video/642207661?h=f7b128ae87&badge=0&autopause=0",
   },
-  { id: "m03", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/bba1b6130561969.61840263c5a08.gif" },
-  { id: "m04", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/8c1bc0130561969.61840263c50e3.gif" },
-  { id: "m05", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/aa18d4130561969.61840263c4916.gif" },
-  { id: "m06", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/31cb6e130561969.61840263c67c3.gif" },
+  { id: "m03", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/690506509663163c.gif" },
+  { id: "m04", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/d4181d65cfde15fe.gif" },
+  { id: "m05", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/541884549eb61421.gif" },
+  { id: "m06", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/2a2f49888589fa22.gif" },
 ];
 
 export const relatedProjects: readonly RelatedProject[] = [

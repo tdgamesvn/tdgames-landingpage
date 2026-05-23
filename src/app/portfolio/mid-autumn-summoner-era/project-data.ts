@@ -98,8 +98,8 @@ export const showcaseModules: readonly ShowcaseModule[] = [
   { id: "m16", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/8d6c7382a60e4c7b.gif" },
   { id: "m17", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
   { id: "m18", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/886cdb0e0cd67309.gif" },
-  { id: "m19", variant: "banner", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/48734f112053013.600ee18d71ef6.png" },
-  { id: "m20", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/source/3da343112053013.600ee18d72524.gif" },
+  { id: "m19", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/8a5db7fe874d57cc.png" },
+  { id: "m20", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/8c5d418101a286f6.gif" },
 ] as const;
 
 export const relatedProjects: readonly RelatedProject[] = [
