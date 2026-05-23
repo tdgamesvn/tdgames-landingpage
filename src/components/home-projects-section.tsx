@@ -6,75 +6,11 @@ import { motion } from "framer-motion";
 import { useRef, useState } from "react";
 
 import { AccentHighlight } from "./accent-highlight";
+import siteContent from "@/content/site.json";
 
 const ACCENT = "var(--hero-btn-bg, #f59e0b)";
 
-const featuredProjects = [
-  {
-    title: "Kayn Snow Moon - League of Legends",
-    category: "Login Screen Animation",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Screenshot 2026-05-13 232709.png",
-    slug: "kayn-snow-moon",
-    className: "md:col-span-2",
-  },
-  {
-    title: "Axie Infinity Origins",
-    category: "Game Animation",
-    image: "https://mir-s3-cdn-cf.behance.net/projects/max_808/924075153491527.Y3JvcCwxOTgxLDE1NTAsOSww.png",
-    slug: "axie-infinity-origins",
-    className: "",
-  },
-  {
-    title: "Boss Animation - The Twins",
-    category: "Character Animation",
-    image: "https://mir-s3-cdn-cf.behance.net/projects/404/9e2264152981257.Y3JvcCwxOTgxLDE1NTAsOSww.png",
-    slug: "boss-animation",
-    className: "",
-  },
-  {
-    title: "Summoner Era - Heroes Light/Dark",
-    category: "2D Animation & VFX",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/summonerDetail.png",
-    slug: "summoner-era",
-    className: "",
-  },
-  {
-    title: "Horse Racing - Splash Art",
-    category: "Splash Art Animation",
-    image: "https://mir-s3-cdn-cf.behance.net/projects/404/cad425183792791.Y3JvcCwyMzkyLDE4NzAsMCww.jpg",
-    slug: "horse-racing",
-    className: "",
-  },
-  {
-    title: "Battle of the Gods | Mytheria",
-    category: "Login Screen",
-    image: "https://mir-s3-cdn-cf.behance.net/projects/max_808/d5b456134047127.Y3JvcCwyMzkyLDE4NzAsMCww.png",
-    slug: "battle-of-the-gods-mytheria",
-    className: "",
-  },
-  {
-    title: "Animation Contest - Sky Mavis",
-    category: "Animation & VFX",
-    image: "https://mir-s3-cdn-cf.behance.net/projects/max_808/33e83e130561969.Y3JvcCwxOTgxLDE1NTAsOSww.png",
-    slug: "animation-contest-sky-mavis",
-    className: "",
-  },
-  {
-    title: "Reaper & Lady - Project OverDrive",
-    category: "Game Animation",
-    image: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/2bd1c365344203.5f702ed1b2566.png",
-    slug: "reaper-lady-project-overdrive",
-    className: "",
-  },
-  {
-    title: "Art Study Collection",
-    category: "Character Design",
-    image: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/3a9c4e56034977.599d9bd554857.jpg",
-    slug: "art-study",
-    className: "",
-  },
-];
-
+const featuredProjects = siteContent.home.featuredProjects;
 const projects = featuredProjects.slice(0, 9);
 
 const basePositions: Array<{ col: number; row: number }> = [

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect } from "react";
+import siteContent from "@/content/site.json";
 
 type HeroMode = "studio" | "cyber";
 type QuoteStyle = "amber-clip" | "white-round" | "outline-amber" | "glow-pulse";
@@ -31,53 +32,8 @@ export type MediaItem = {
   isIframe?: boolean;
 };
 
-export const defaultMediaList: MediaItem[] = [
-  {
-    id: "1",
-    name: "MALEFICA",
-    label: "Skin 2 â€” I",
-    thumbnail: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/1big.gif",
-    path: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/video1.mp4",
-    isBgVideo: true,
-    isIframe: false,
-  },
-  {
-    id: "2",
-    name: "VESTA",
-    label: "Skin 2 â€” III",
-    thumbnail: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/2big.gif",
-    path: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/video_summoner_3_skill_1_skin_2.mp4",
-    isBgVideo: true,
-    isIframe: false,
-  },
-  {
-    id: "3",
-    name: "FABER",
-    label: "Skin 2 â€” IV",
-    thumbnail: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/3big.gif",
-    path: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/video_summoner_4_skill_1_skin_2.mp4",
-    isBgVideo: true,
-    isIframe: false,
-  },
-  {
-    id: "4",
-    name: "BIGBY",
-    label: "Long Arm",
-    thumbnail: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/4.png",
-    path: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/Super_Move/BIGBY-Long Arm of the Law_Closed.mp4",
-    isBgVideo: true,
-    isIframe: false,
-  },
-  {
-    id: "5",
-    name: "???",
-    label: "On Your Knees",
-    thumbnail: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/5.png",
-    path: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/Super_Move/On_Your_Knees.mp4",
-    isBgVideo: true,
-    isIframe: false,
-  },
-];
+/** Hero media list loaded from src/content/site.json */
+export const defaultMediaList: MediaItem[] = siteContent.hero.media as MediaItem[];
 
 export function useMediaListListener(): MediaItem[] {
   const [list, setList] = useState<MediaItem[]>(defaultMediaList);

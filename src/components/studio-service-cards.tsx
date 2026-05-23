@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import siteContent from "@/content/site.json";
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 const EASE_SOFT = [0.33, 1, 0.68, 1] as const;
@@ -48,39 +49,9 @@ export type StudioServiceCard = {
   image: string;
 };
 
-/** Same card data as the home Our Services section (original URLs). */
-export const studioServiceCards: StudioServiceCard[] = [
-  {
-    title: "2D Animation",
-    icon: "animation",
-    href: "/services/2d-animation",
-    statValue: "50+",
-    statLabel: "Completed projects",
-    description:
-      "Stylized attack loops, promo motion, idle cycles, and lightweight animated sequences built for game readability.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/service-animation.jpg",
-  },
-  {
-    title: "2D Art",
-    icon: "art",
-    href: "/services/2d-art",
-    statValue: "50+",
-    statLabel: "Completed projects",
-    description:
-      "Character sheets, splash illustrations, UI-support art, and painted assets tuned for a cleaner, friendlier game look.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/sinspired/character_6-min-1024x970.jpg",
-  },
-  {
-    title: "2D VFX",
-    icon: "vfx",
-    href: "/services/2d-vfx",
-    statValue: "50+",
-    statLabel: "Completed projects",
-    description:
-      "Skill bursts, hit flashes, elemental trails, and screen-space accents that add energy without pushing the style too hard.",
-    image: "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/sinspired/Game_Animation-min-1024x612.jpg",
-  },
-];
+/** Service card data loaded from src/content/site.json */
+export const studioServiceCards: StudioServiceCard[] =
+  siteContent.services.cards as StudioServiceCard[];
 
 export function StudioServiceIcon({
   type,

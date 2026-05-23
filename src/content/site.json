@@ -1,0 +1,140 @@
+{
+  "hero": {
+    "media": [
+      {
+        "id": "1",
+        "name": "MALEFICA",
+        "label": "Skin 2 – I",
+        "thumbnail": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/1big.gif",
+        "path": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/video1.mp4",
+        "isBgVideo": true,
+        "isIframe": false
+      },
+      {
+        "id": "2",
+        "name": "VESTA",
+        "label": "Skin 2 – III",
+        "thumbnail": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/2big.gif",
+        "path": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/video_summoner_3_skill_1_skin_2.mp4",
+        "isBgVideo": true,
+        "isIframe": false
+      },
+      {
+        "id": "3",
+        "name": "FABER",
+        "label": "Skin 2 – IV",
+        "thumbnail": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/3big.gif",
+        "path": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/video_summoner_4_skill_1_skin_2.mp4",
+        "isBgVideo": true,
+        "isIframe": false
+      },
+      {
+        "id": "4",
+        "name": "BIGBY",
+        "label": "Long Arm",
+        "thumbnail": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/4.png",
+        "path": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/Super_Move/BIGBY-Long Arm of the Law_Closed.mp4",
+        "isBgVideo": true,
+        "isIframe": false
+      },
+      {
+        "id": "5",
+        "name": "???",
+        "label": "On Your Knees",
+        "thumbnail": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/CutScene_SE/5.png",
+        "path": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/video/Super_Move/On_Your_Knees.mp4",
+        "isBgVideo": true,
+        "isIframe": false
+      }
+    ]
+  },
+  "home": {
+    "featuredProjects": [
+      {
+        "title": "Kayn Snow Moon - League of Legends",
+        "category": "Login Screen Animation",
+        "image": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/Screenshot 2026-05-13 232709.png",
+        "slug": "kayn-snow-moon"
+      },
+      {
+        "title": "Axie Infinity Origins",
+        "category": "Game Animation",
+        "image": "https://mir-s3-cdn-cf.behance.net/projects/max_808/924075153491527.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+        "slug": "axie-infinity-origins"
+      },
+      {
+        "title": "Boss Animation - The Twins",
+        "category": "Character Animation",
+        "image": "https://mir-s3-cdn-cf.behance.net/projects/404/9e2264152981257.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+        "slug": "boss-animation"
+      },
+      {
+        "title": "Summoner Era - Heroes Light/Dark",
+        "category": "2D Animation & VFX",
+        "image": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/summonerDetail.png",
+        "slug": "summoner-era"
+      },
+      {
+        "title": "Horse Racing - Splash Art",
+        "category": "Splash Art Animation",
+        "image": "https://mir-s3-cdn-cf.behance.net/projects/404/cad425183792791.Y3JvcCwyMzkyLDE4NzAsMCww.jpg",
+        "slug": "horse-racing"
+      },
+      {
+        "title": "Battle of the Gods | Mytheria",
+        "category": "Login Screen",
+        "image": "https://mir-s3-cdn-cf.behance.net/projects/max_808/d5b456134047127.Y3JvcCwyMzkyLDE4NzAsMCww.png",
+        "slug": "battle-of-the-gods-mytheria"
+      },
+      {
+        "title": "Animation Contest - Sky Mavis",
+        "category": "Animation & VFX",
+        "image": "https://mir-s3-cdn-cf.behance.net/projects/max_808/33e83e130561969.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+        "slug": "animation-contest-sky-mavis"
+      },
+      {
+        "title": "Reaper & Lady - Project OverDrive",
+        "category": "Game Animation",
+        "image": "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/2bd1c365344203.5f702ed1b2566.png",
+        "slug": "reaper-lady-project-overdrive"
+      },
+      {
+        "title": "Art Study Collection",
+        "category": "Character Design",
+        "image": "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/3a9c4e56034977.599d9bd554857.jpg",
+        "slug": "art-study"
+      }
+    ]
+  },
+  "services": {
+    "cards": [
+      {
+        "title": "2D Animation",
+        "icon": "animation",
+        "href": "/services/2d-animation",
+        "statValue": "50+",
+        "statLabel": "Completed projects",
+        "description": "Stylized attack loops, promo motion, idle cycles, and lightweight animated sequences built for game readability.",
+        "image": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/images/service-animation.jpg"
+      },
+      {
+        "title": "2D Art",
+        "icon": "art",
+        "href": "/services/2d-art",
+        "statValue": "50+",
+        "statLabel": "Completed projects",
+        "description": "Character sheets, splash illustrations, UI-support art, and painted assets tuned for a cleaner, friendlier game look.",
+        "image": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/sinspired/character_6-min-1024x970.jpg"
+      },
+      {
+        "title": "2D VFX",
+        "icon": "vfx",
+        "href": "/services/2d-vfx",
+        "statValue": "50+",
+        "statLabel": "Completed projects",
+        "description": "Skill bursts, hit flashes, elemental trails, and screen-space accents that add energy without pushing the style too hard.",
+        "image": "https://pub-97eae399068b4753bb314896c009c27e.r2.dev/landing/sinspired/Game_Animation-min-1024x612.jpg"
+      }
+    ]
+  }
+}
