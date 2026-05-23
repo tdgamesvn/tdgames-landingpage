@@ -4,8 +4,6 @@ import type {
   ShowcaseModule,
 } from "@/components/portfolio/case-study-types";
 
-const DISP = "https://mir-s3-cdn-cf.behance.net/project_modules/disp";
-const W1400 = "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp";
 
 export const projectMeta: ProjectMeta = {
   title: "Battle of the Gods | Mytheria - Login Screen",
@@ -87,30 +85,30 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     id: "m02",
     variant: "duo",
     srcs: [
-      `${DISP}/c93cb1134047127.61cc8d2109d9f.gif`,
-      `${DISP}/9acf03134047127.61cc8d210963c.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c93cb1134047127.61cc8d2109d9f.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/9acf03134047127.61cc8d210963c.gif",
     ],
   },
   {
     id: "m03",
     variant: "duo",
     srcs: [
-      `${DISP}/cc307d134047127.61cc8d221c65f.gif`,
-      `${DISP}/960fcf134047127.61cc8d221ca32.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/cc307d134047127.61cc8d221c65f.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/960fcf134047127.61cc8d221ca32.gif",
     ],
   },
   {
     id: "m04",
     variant: "duo",
     srcs: [
-      `${DISP}/5841f2134047127.61cc8d22e8351.gif`,
-      `${DISP}/bb3efc134047127.61cc8d22e7ddc.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/5841f2134047127.61cc8d22e8351.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/bb3efc134047127.61cc8d22e7ddc.gif",
     ],
   },
   {
     id: "m05",
     variant: "full",
-    src: `${W1400}/489aca134047127.61cdce85c2c17.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/489aca134047127.61cdce85c2c17.png",
   },
 ];
 

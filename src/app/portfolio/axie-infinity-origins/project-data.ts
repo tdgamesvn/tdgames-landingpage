@@ -4,8 +4,6 @@ import type {
   ShowcaseModule,
 } from "@/components/portfolio/case-study-types";
 
-const M = "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200";
-const D = "https://mir-s3-cdn-cf.behance.net/project_modules/disp";
 
 export const projectMeta: ProjectMeta = {
   title: "AXIE INFINITY - ORIGINS | ANIMATION",
@@ -81,241 +79,241 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules = [
-  { id: "m01", variant: "fullGif", src: `${M}/ed13a1153491527.63312627874d6.gif` },
+  { id: "m01", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/ed13a1153491527.63312627874d6.gif" },
   {
     id: "m02",
     variant: "full",
-    src: `${M}/5199c8153491527.6331262811cd3.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/5199c8153491527.6331262811cd3.png",
   },
   {
     id: "m03",
     variant: "full",
-    src: `${M}/611f6b153491527.633126286340d.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/611f6b153491527.633126286340d.png",
   },
   {
     id: "m04",
     variant: "trio",
     srcs: [
-      `${D}/d17d07153491527.63312628beefc.gif`,
-      `${D}/08e30d153491527.63312628be81b.gif`,
-      `${D}/98d247153491527.63312628bf596.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/d17d07153491527.63312628beefc.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/08e30d153491527.63312628be81b.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/98d247153491527.63312628bf596.gif",
     ],
   },
   {
     id: "m05",
     variant: "trio",
     srcs: [
-      `${D}/3c7763153491527.63312629855ac.gif`,
-      `${D}/a37c1f153491527.6331262984c04.gif`,
-      `${D}/c99571153491527.6331262984211.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/3c7763153491527.63312629855ac.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/a37c1f153491527.6331262984c04.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c99571153491527.6331262984211.gif",
     ],
   },
   {
     id: "m06",
     variant: "trio",
     srcs: [
-      `${D}/c2035f153491527.6331262a3f8a6.gif`,
-      `${D}/b50b3c153491527.6331262a3fdaa.gif`,
-      `${D}/aff609153491527.6331262a4025f.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c2035f153491527.6331262a3f8a6.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/b50b3c153491527.6331262a3fdaa.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/aff609153491527.6331262a4025f.gif",
     ],
   },
   {
     id: "m07",
     variant: "trio",
     srcs: [
-      `${D}/6d900e153491527.6331262ab6b88.gif`,
-      `${D}/e4a655153491527.6331262ab71bd.gif`,
-      `${D}/8e799d153491527.6331262ab6501.png`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/6d900e153491527.6331262ab6b88.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/e4a655153491527.6331262ab71bd.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/8e799d153491527.6331262ab6501.png",
     ],
   },
   {
     id: "m08",
     variant: "full",
-    src: `${M}/9c381b153491527.6331262b5f01d.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/9c381b153491527.6331262b5f01d.png",
   },
   {
     id: "m09",
     variant: "trio",
     srcs: [
-      `${D}/cb3206153491527.6331262bb27ee.gif`,
-      `${D}/84ad62153491527.6331262bb2076.gif`,
-      `${D}/ad17cb153491527.6331262bb2f00.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/cb3206153491527.6331262bb27ee.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/84ad62153491527.6331262bb2076.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/ad17cb153491527.6331262bb2f00.gif",
     ],
   },
   {
     id: "m10",
     variant: "trio",
     srcs: [
-      `${D}/6ca496153491527.6331262c73543.gif`,
-      `${D}/d27aeb153491527.6331262c74452.gif`,
-      `${D}/6f0240153491527.6331262c73e41.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/6ca496153491527.6331262c73543.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/d27aeb153491527.6331262c74452.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/6f0240153491527.6331262c73e41.gif",
     ],
   },
   {
     id: "m11",
     variant: "trio",
     srcs: [
-      `${D}/04a104153491527.6331262d04814.gif`,
-      `${D}/af4064153491527.6331262d03fde.gif`,
-      `${D}/b2e914153491527.6331262d0513c.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/04a104153491527.6331262d04814.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/af4064153491527.6331262d03fde.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/b2e914153491527.6331262d0513c.gif",
     ],
   },
   {
     id: "m12",
     variant: "full",
-    src: `${M}/0c85fd153491527.6331262d6d51f.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/0c85fd153491527.6331262d6d51f.png",
   },
   {
     id: "m13",
     variant: "trio",
     srcs: [
-      `${D}/1ee7b8153491527.6331262db2417.gif`,
-      `${D}/85e0bc153491527.6331262db1d7f.gif`,
-      `${D}/9e8724153491527.6331262db15ea.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/1ee7b8153491527.6331262db2417.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/85e0bc153491527.6331262db1d7f.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/9e8724153491527.6331262db15ea.gif",
     ],
   },
   {
     id: "m14",
     variant: "trio",
     srcs: [
-      `${D}/43ca3f153491527.6331262e69908.gif`,
-      `${D}/e66cdf153491527.6331262e689f5.gif`,
-      `${D}/c7fc99153491527.6331262e6913b.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/43ca3f153491527.6331262e69908.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/e66cdf153491527.6331262e689f5.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c7fc99153491527.6331262e6913b.gif",
     ],
   },
   {
     id: "m15",
     variant: "trio",
     srcs: [
-      `${D}/af88e7153491527.6331262f45bd0.gif`,
-      `${D}/2c3c04153491527.6331262f45421.gif`,
-      `${D}/2a1bd5153491527.6331262f44c65.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/af88e7153491527.6331262f45bd0.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/2c3c04153491527.6331262f45421.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/2a1bd5153491527.6331262f44c65.gif",
     ],
   },
   {
     id: "m16",
     variant: "full",
-    src: `${M}/9c7f5a153491527.6331262fbbf0a.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/9c7f5a153491527.6331262fbbf0a.png",
   },
   {
     id: "m17",
     variant: "trio",
     srcs: [
-      `${D}/ac7244153491527.6331263011c0c.gif`,
-      `${D}/a2cd2e153491527.633126301271d.gif`,
-      `${D}/5ef93d153491527.6331263013259.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/ac7244153491527.6331263011c0c.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/a2cd2e153491527.633126301271d.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/5ef93d153491527.6331263013259.gif",
     ],
   },
   {
     id: "m18",
     variant: "trio",
     srcs: [
-      `${D}/295d87153491527.63312630c2dc7.gif`,
-      `${D}/dbcee9153491527.63312630c3930.gif`,
-      `${D}/ecf623153491527.63312630c33f8.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/295d87153491527.63312630c2dc7.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/dbcee9153491527.63312630c3930.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/ecf623153491527.63312630c33f8.gif",
     ],
   },
   {
     id: "m19",
     variant: "trio",
     srcs: [
-      `${D}/a91ee1153491527.6331263170cce.gif`,
-      `${D}/91bde4153491527.63312631719ea.gif`,
-      `${D}/e5944e153491527.6331263171368.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/a91ee1153491527.6331263170cce.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/91bde4153491527.63312631719ea.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/e5944e153491527.6331263171368.gif",
     ],
   },
   {
     id: "m20",
     variant: "full",
-    src: `${M}/892557153491527.63312631c4038.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/892557153491527.63312631c4038.png",
   },
   {
     id: "m21",
     variant: "trio",
     srcs: [
-      `${D}/af3122153491527.633126323b714.gif`,
-      `${D}/a6d2ea153491527.633126323b025.gif`,
-      `${D}/d48db1153491527.6331263239ae1.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/af3122153491527.633126323b714.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/a6d2ea153491527.633126323b025.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/d48db1153491527.6331263239ae1.gif",
     ],
   },
   {
     id: "m22",
     variant: "trio",
     srcs: [
-      `${D}/6c8d83153491527.6331263295a3a.gif`,
-      `${D}/03649e153491527.6331263295568.gif`,
-      `${D}/4048de153491527.63312632950bd.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/6c8d83153491527.6331263295a3a.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/03649e153491527.6331263295568.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/4048de153491527.63312632950bd.gif",
     ],
   },
   {
     id: "m23",
     variant: "trio",
     srcs: [
-      `${D}/abe93b153491527.6331263317afb.gif`,
-      `${D}/d8d81f153491527.6331263318584.gif`,
-      `${D}/d681c0153491527.63312633172d6.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/abe93b153491527.6331263317afb.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/d8d81f153491527.6331263318584.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/d681c0153491527.63312633172d6.gif",
     ],
   },
   {
     id: "m24",
     variant: "trio",
     srcs: [
-      `${D}/c8d004153491527.6331263374b36.gif`,
-      `${D}/a1663f153491527.6331263374648.gif`,
-      `${D}/6fb14d153491527.6331263374fd3.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c8d004153491527.6331263374b36.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/a1663f153491527.6331263374648.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/6fb14d153491527.6331263374fd3.gif",
     ],
   },
   {
     id: "m25",
     variant: "full",
-    src: `${M}/aa08b7153491527.633126342142b.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/aa08b7153491527.633126342142b.png",
   },
   {
     id: "m26",
     variant: "trio",
     srcs: [
-      `${D}/c67e14153491527.6331263471ab4.gif`,
-      `${D}/e22aa6153491527.6331263471386.gif`,
-      `${D}/7c6c1a153491527.63312634721a5.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c67e14153491527.6331263471ab4.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/e22aa6153491527.6331263471386.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/7c6c1a153491527.63312634721a5.gif",
     ],
   },
   {
     id: "m27",
     variant: "trio",
     srcs: [
-      `${D}/35fa77153491527.633126351a930.gif`,
-      `${D}/038f76153491527.633126351b31c.gif`,
-      `${D}/cec9b9153491527.633126351ae47.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/35fa77153491527.633126351a930.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/038f76153491527.633126351b31c.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/cec9b9153491527.633126351ae47.gif",
     ],
   },
   {
     id: "m28",
     variant: "trio",
     srcs: [
-      `${D}/250823153491527.63312635ae3e8.gif`,
-      `${D}/d62413153491527.63312635aebbf.gif`,
-      `${D}/7ace1f153491527.63312635adc1f.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/250823153491527.63312635ae3e8.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/d62413153491527.63312635aebbf.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/7ace1f153491527.63312635adc1f.gif",
     ],
   },
   {
     id: "m29",
     variant: "trio",
     srcs: [
-      `${D}/b47683153491527.633126362a3d3.gif`,
-      `${D}/7195c7153491527.633126362ab8f.gif`,
-      `${D}/61efa1153491527.6331263629bee.gif`,
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/b47683153491527.633126362a3d3.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/7195c7153491527.633126362ab8f.gif",
+      "https://mir-s3-cdn-cf.behance.net/project_modules/disp/61efa1153491527.6331263629bee.gif",
     ],
   },
-  { id: "m30", variant: "fullGif", src: `${M}/dca524153491527.63312636b521b.gif` },
+  { id: "m30", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/dca524153491527.63312636b521b.gif" },
   {
     id: "m31",
     variant: "full",
-    src: `${M}/15faa4153491527.6331263759c1e.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/15faa4153491527.6331263759c1e.png",
   },
   {
     id: "m32",
     variant: "full",
-    src: `${M}/efda81153491527.633126378f26c.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/efda81153491527.633126378f26c.png",
   },
   {
     id: "m33",
@@ -327,7 +325,7 @@ export const showcaseModules = [
   {
     id: "m34",
     variant: "full",
-    src: `${M}/a70bd6153491527.63312637cde8c.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/a70bd6153491527.63312637cde8c.png",
   },
   {
     id: "m35",
@@ -339,7 +337,7 @@ export const showcaseModules = [
   {
     id: "m36",
     variant: "full",
-    src: `${M}/9a09bc153491527.633126381334c.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/9a09bc153491527.633126381334c.png",
   },
   {
     id: "m37",
@@ -351,7 +349,7 @@ export const showcaseModules = [
   {
     id: "m38",
     variant: "full",
-    src: `${M}/a40656153491527.63313250af951.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/a40656153491527.63313250af951.png",
   },
 ] as readonly ShowcaseModule[];
 

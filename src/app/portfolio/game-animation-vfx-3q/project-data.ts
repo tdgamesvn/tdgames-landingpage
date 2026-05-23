@@ -4,9 +4,6 @@ import type {
   ShowcaseModule,
 } from "@/components/portfolio/case-study-types";
 
-const B = "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp";
-const G14 = "https://mir-s3-cdn-cf.behance.net/project_modules/1400";
-const G632 = "https://mir-s3-cdn-cf.behance.net/project_modules/max_632";
 
 export const projectMeta: ProjectMeta = {
   title: "GAME ANIMATION/VFX - 3Q",
@@ -86,21 +83,21 @@ export const showcaseModules: readonly ShowcaseModule[] = [
   {
     id: "m01",
     variant: "fullGif",
-    src: `${B}/3c060e143388227.627b7de67c6a3.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/3c060e143388227.627b7de67c6a3.png",
   },
-  { id: "m02", variant: "fullGif", src: `${G14}/03be1c143388227.627b7de67e2a0.gif` },
-  { id: "m03", variant: "fullGif", src: `${G14}/e0a486143388227.627b7de67d986.gif` },
-  { id: "m04", variant: "fullGif", src: `${G632}/b9f241143388227.627b7de67ce22.gif` },
-  { id: "m05", variant: "fullGif", src: `${G632}/83b47e143388227.627bb9b9e8511.gif` },
-  { id: "m06", variant: "fullGif", src: `${G14}/d81809143388227.627bb9b9e8cf8.gif` },
-  { id: "m07", variant: "fullGif", src: `${G632}/b9b814143388227.627bb9b9e95fb.gif` },
-  { id: "m08", variant: "fullGif", src: `${G632}/2db16d143388227.627c95d9648f4.gif` },
-  { id: "m09", variant: "fullGif", src: `${G14}/380bd7143388227.627c95d965068.gif` },
-  { id: "m10", variant: "fullGif", src: `${G14}/381ef0143388227.627c95d96575d.gif` },
+  { id: "m02", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/03be1c143388227.627b7de67e2a0.gif" },
+  { id: "m03", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/e0a486143388227.627b7de67d986.gif" },
+  { id: "m04", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_632/b9f241143388227.627b7de67ce22.gif" },
+  { id: "m05", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_632/83b47e143388227.627bb9b9e8511.gif" },
+  { id: "m06", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/d81809143388227.627bb9b9e8cf8.gif" },
+  { id: "m07", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_632/b9b814143388227.627bb9b9e95fb.gif" },
+  { id: "m08", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/max_632/2db16d143388227.627c95d9648f4.gif" },
+  { id: "m09", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/380bd7143388227.627c95d965068.gif" },
+  { id: "m10", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/381ef0143388227.627c95d96575d.gif" },
   {
     id: "m11",
     variant: "fullGif",
-    src: `${B}/1a686d143388227.627b7de67be94.png`,
+    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/1a686d143388227.627b7de67be94.png",
   },
 ];
 

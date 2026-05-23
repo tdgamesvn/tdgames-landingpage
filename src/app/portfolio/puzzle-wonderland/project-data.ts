@@ -4,9 +4,6 @@ import type {
   ShowcaseModule,
 } from "@/components/portfolio/case-study-types";
 
-const M = "https://mir-s3-cdn-cf.behance.net/project_modules/1400";
-const MW = "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp";
-const HD = "https://mir-s3-cdn-cf.behance.net/project_modules/hd";
 
 export const projectMeta: ProjectMeta = {
   title: "Character animation for Puzzle Wonderland",
@@ -50,7 +47,7 @@ export const projectMeta: ProjectMeta = {
     "https://www.behance.net/gallery/67614633/Character-animation-for-Puzzle-Wonderland",
   madeForLabel: "AnimVFX Clan",
   madeForUrl: "https://www.behance.net/AnimVFXClan",
-  coverImage: `${MW}/c93a5b67614633.5fbd2e1664ce9.png`,
+  coverImage: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/0658c26a43e63dc4.png",
   credits: [
     { role: "Artist", name: "Hung Ngo" },
     { role: "Animator", name: "Toan Dang" },
@@ -83,7 +80,7 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "m01", variant: "banner", src: `${MW}/c93a5b67614633.5fbd2e1664ce9.png` },
+  { id: "m01", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/0658c26a43e63dc4.png" },
   { id: "m02", variant: "sectionLabel", label: "Login Screen" },
   {
     id: "m03",
@@ -92,19 +89,19 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     aspect: 619 / 1200,
   },
   { id: "m04", variant: "sectionLabel", label: "Player" },
-  { id: "m05", variant: "fullGif", src: `${M}/1e081567614633.5fbd2e1664099.gif` },
-  { id: "m06", variant: "fullGif", src: `${M}/96425a67614633.5fbd2e1662a6d.gif` },
-  { id: "m07", variant: "fullGif", src: `${M}/b8312567614633.5fbd2e166721b.gif` },
-  { id: "m08", variant: "fullGif", src: `${M}/71996467614633.5fbd2e1666aae.gif` },
-  { id: "m09", variant: "fullGif", src: `${M}/cbb08a67614633.5fbd2e1661937.gif` },
-  { id: "m10", variant: "fullGif", src: `${M}/7ea70b67614633.5fbd2e1662059.gif` },
-  { id: "m11", variant: "fullGif", src: `${M}/fa5e1067614633.5fbd2e16632b3.gif` },
+  { id: "m05", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/ca575c9ff27edbf6.gif" },
+  { id: "m06", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c616af44787d814c.gif" },
+  { id: "m07", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/4cbeae6956d68586.gif" },
+  { id: "m08", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/1cdf92e397fb9ab2.gif" },
+  { id: "m09", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/40b55d20223e14fc.gif" },
+  { id: "m10", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/ae8666d3edccf0d1.gif" },
+  { id: "m11", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/86d4a31151121f93.gif" },
   { id: "m12", variant: "sectionLabel", label: "Boss" },
-  { id: "m13", variant: "square", src: `${HD}/294bc567614633.5fbd2e1665952.gif` },
-  { id: "m14", variant: "square", src: `${HD}/ec138c67614633.5fbd2e16663c5.gif` },
-  { id: "m15", variant: "square", src: `${HD}/a7aa3067614633.5fbd2e166479a.gif` },
-  { id: "m16", variant: "square", src: `${HD}/04b04567614633.5fbd2e1665e99.gif` },
-  { id: "m17", variant: "square", src: `${HD}/47661867614633.5fbd2e1665283.gif` },
+  { id: "m13", variant: "square", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/7741aa930b977aea.gif" },
+  { id: "m14", variant: "square", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/3fd13caec1338033.gif" },
+  { id: "m15", variant: "square", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/178fd1acf0fb915b.gif" },
+  { id: "m16", variant: "square", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/6b2ac3972fe981e8.gif" },
+  { id: "m17", variant: "square", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/65513b96d4eeb59d.gif" },
 ];
 
 export const relatedProjects: readonly RelatedProject[] = [

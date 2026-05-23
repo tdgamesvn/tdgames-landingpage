@@ -5,9 +5,6 @@ import type {
 } from "@/components/portfolio/case-study-types";
 import type { SavedShowcaseUiV4 } from "@/components/portfolio/case-study-showcase-with-settings";
 
-const M = "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200";
-const D = "https://mir-s3-cdn-cf.behance.net/project_modules/disp";
-const MW = "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp";
 
 export const projectMeta: ProjectMeta = {
   title: "Game Animation - Reaper & Lady - Project: OverDrive",
@@ -51,7 +48,7 @@ export const projectMeta: ProjectMeta = {
     "https://www.behance.net/gallery/65344203/Game-Animation-Reaper-Lady-Project-OverDrive",
   madeForLabel: "AnimVFX Clan",
   madeForUrl: "https://www.behance.net/AnimVFXClan",
-  coverImage: `${MW}/2bd1c365344203.5f702ed1b2566.png`,
+  coverImage: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/52c6beca311ad4e9.png",
   credits: [
     { role: "Animator", name: "Toan Dang" },
     { role: "Studio", name: "TD GAMES" },
@@ -84,44 +81,44 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "m01", variant: "banner", src: `${MW}/2bd1c365344203.5f702ed1b2566.png` },
-  { id: "m02", variant: "banner", src: `${MW}/a5159465344203.5f702ed1b1aa9.png` },
+  { id: "m01", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/52c6beca311ad4e9.png" },
+  { id: "m02", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/fb7c2b25f6fca594.png" },
   {
     id: "m03",
     variant: "trio",
     srcs: [
-      `${M}/b9682465344203.5af1516c11e2e.gif`,
-      `${M}/c590be65344203.5af1516c115dc.gif`,
-      `${M}/81246f65344203.5af1516c10977.gif`,
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/b30ab9f5655e133c.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/d9c2593a3acbbfb0.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/11499d8ec89b2a22.gif",
     ],
   },
   {
     id: "m04",
     variant: "duo",
     srcs: [
-      `${D}/66f7a565344203.5f702ed174490.gif`,
-      `${D}/f25a0765344203.5f702ed173f7f.gif`,
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/1780e345d1845238.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/d266f5fd986bf2fd.gif",
     ],
   },
-  { id: "m05", variant: "banner", src: `${MW}/1309dd65344203.5f702ed1b2050.png` },
+  { id: "m05", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/1c27f626497209a5.png" },
   {
     id: "m06",
     variant: "trio",
     srcs: [
-      `${M}/64f49f65344203.5af1516ceea6b.gif`,
-      `${D}/38cf7765344203.5af1516cee55a.gif`,
-      `${M}/9eb29065344203.5af1516cef83f.gif`,
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/252ad2550b085a28.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/7d04b1d659a5d728.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/97b85bf54d89eadc.gif",
     ],
   },
   {
     id: "m07",
     variant: "duo",
     srcs: [
-      `${M}/368e6d65344203.5af1516cef172.gif`,
-      `${D}/39eba165344203.5af1516cedec1.gif`,
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/06d1ed2ad3e442e2.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c5486f3565bac197.gif",
     ],
   },
-  { id: "m08", variant: "banner", src: `${MW}/13c8a965344203.5f702ed1b1519.png` },
+  { id: "m08", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c32a1c7ed523f594.png" },
 ];
 
 /** Default for first load (when no localStorage showcase exists). */

@@ -4,9 +4,6 @@ import type {
   ShowcaseModule,
 } from "@/components/portfolio/case-study-types";
 
-const D = "https://mir-s3-cdn-cf.behance.net/project_modules/disp";
-const MW = "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp";
-const SRC = "https://mir-s3-cdn-cf.behance.net/project_modules/source";
 
 export const projectMeta: ProjectMeta = {
   title: "Mid Autumn Animation for Summoner Era",
@@ -83,26 +80,26 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "m01", variant: "fullGif", src: `${D}/888d70112053013.600da2b1df5ce.gif` },
-  { id: "m02", variant: "banner", src: `${MW}/f7f4c1112053013.600ee941bbde7.png` },
-  { id: "m03", variant: "banner", src: `${MW}/421297112053013.600da2b406e26.png` },
-  { id: "m04", variant: "fullGif", src: `${D}/730148112053013.600da2b2611dc.gif` },
-  { id: "m05", variant: "banner", src: `${MW}/cd91a9112053013.600da2b407e4c.png` },
-  { id: "m06", variant: "fullGif", src: `${D}/70df63112053013.600da2b2b1531.gif` },
-  { id: "m07", variant: "banner", src: `${MW}/cdbbf6112053013.600da2b408828.png` },
-  { id: "m08", variant: "fullGif", src: `${D}/aea1f4112053013.600ebd84966f1.gif` },
-  { id: "m09", variant: "banner", src: `${MW}/1ba1b5112053013.600da2b40745a.png` },
-  { id: "m10", variant: "fullGif", src: `${D}/1116fb112053013.600ebd84edcfe.gif` },
-  { id: "m11", variant: "banner", src: `${MW}/38623b112053013.600ebd86476f0.png` },
-  { id: "m12", variant: "fullGif", src: `${D}/a6c9c2112053013.600ebd8548772.gif` },
-  { id: "m13", variant: "banner", src: `${MW}/904756112053013.600ebd8646fcc.png` },
-  { id: "m14", variant: "fullGif", src: `${D}/c9e1e4112053013.600ebd85c8f67.gif` },
-  { id: "m15", variant: "banner", src: `${MW}/97f4b0112053013.600ebd864627e.png` },
-  { id: "m16", variant: "fullGif", src: `${D}/ae50e5112053013.600da2b30c391.gif` },
-  { id: "m17", variant: "banner", src: `${MW}/5dff53112053013.600ebd8647d06.png` },
-  { id: "m18", variant: "fullGif", src: `${D}/0f3505112053013.600da2b393c42.gif` },
-  { id: "m19", variant: "banner", src: `${MW}/48734f112053013.600ee18d71ef6.png` },
-  { id: "m20", variant: "fullGif", src: `${SRC}/3da343112053013.600ee18d72524.gif` },
+  { id: "m01", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/728e2b4bd0ee1812.gif" },
+  { id: "m02", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/7be1c929387344e1.png" },
+  { id: "m03", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m04", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/6a566ab48bcb4809.gif" },
+  { id: "m05", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m06", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/542c64f1e55c771c.gif" },
+  { id: "m07", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m08", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/44a5819fe5bf0ab6.gif" },
+  { id: "m09", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m10", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/caba6aa6de22d63a.gif" },
+  { id: "m11", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m12", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/4d89acbb15424e64.gif" },
+  { id: "m13", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m14", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/71b3c5bb1d896037.gif" },
+  { id: "m15", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m16", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/8d6c7382a60e4c7b.gif" },
+  { id: "m17", variant: "banner", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/c4f544c3bca1d3e0.png" },
+  { id: "m18", variant: "fullGif", src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/tdgames-landingpage/landing/behance/886cdb0e0cd67309.gif" },
+  { id: "m19", variant: "banner", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/48734f112053013.600ee18d71ef6.png" },
+  { id: "m20", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/source/3da343112053013.600ee18d72524.gif" },
 ] as const;
 
 export const relatedProjects: readonly RelatedProject[] = [

@@ -4,8 +4,6 @@ import type {
   ShowcaseModule,
 } from "@/components/portfolio/case-study-types";
 
-const M = "https://mir-s3-cdn-cf.behance.net/project_modules/1400";
-const MW = "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp";
 
 export const projectMeta: ProjectMeta = {
   title: "Animation Contest - Sky Mavis",
@@ -80,16 +78,16 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "m01", variant: "banner", src: `${MW}/a11525130561969.6182bc9d17db5.png` },
+  { id: "m01", variant: "banner", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/a11525130561969.6182bc9d17db5.png" },
   {
     id: "m02",
     variant: "video",
     src: "https://player.vimeo.com/video/642207661?h=f7b128ae87&badge=0&autopause=0",
   },
-  { id: "m03", variant: "fullGif", src: `${M}/bba1b6130561969.61840263c5a08.gif` },
-  { id: "m04", variant: "fullGif", src: `${M}/8c1bc0130561969.61840263c50e3.gif` },
-  { id: "m05", variant: "fullGif", src: `${M}/aa18d4130561969.61840263c4916.gif` },
-  { id: "m06", variant: "fullGif", src: `${M}/31cb6e130561969.61840263c67c3.gif` },
+  { id: "m03", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/bba1b6130561969.61840263c5a08.gif" },
+  { id: "m04", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/8c1bc0130561969.61840263c50e3.gif" },
+  { id: "m05", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/aa18d4130561969.61840263c4916.gif" },
+  { id: "m06", variant: "fullGif", src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/31cb6e130561969.61840263c67c3.gif" },
 ];
 
 export const relatedProjects: readonly RelatedProject[] = [
