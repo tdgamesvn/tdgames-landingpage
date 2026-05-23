@@ -61,6 +61,11 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true },
   },
+  icons: {
+    icon: "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td_notext.png",
+    shortcut: "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td_notext.png",
+    apple: "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td_notext.png",
+  },
 };
 
 export const viewport: Viewport = {

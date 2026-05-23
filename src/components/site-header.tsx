@@ -255,7 +255,7 @@ export default function SiteHeader() {
             aria-label="TD Games home"
           >
             <Image
-              src="https://cdn.tdgamestudio.com/landing/video/logo/logo_td2.png"
+              src="https://cdn.tdgamestudio.com/landing/logoCompany/logo_td_notext.png"
               alt=""
               width={260}
               height={76}
