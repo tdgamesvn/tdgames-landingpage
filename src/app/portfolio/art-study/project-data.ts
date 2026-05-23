@@ -37,7 +37,7 @@ export const projectMeta = {
   madeForLabel: "Personal Study",
   madeForUrl: "#",
   coverImage:
-    "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/3a9c4e56034977.599d9bd554857.jpg",
+    "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/2e9463653cd72994.jpg",
   tools: ["Photoshop"] as const,
   fields: ["Digital Art", "Character Design", "Illustration"] as const,
   tags: [
@@ -78,37 +78,37 @@ export const showcaseModules = [
   {
     id: "img01",
     variant: "image" as const,
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/3a9c4e56034977.599d9bd554857.jpg",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/2e9463653cd72994.jpg",
     caption: "Character Study 01",
   },
   {
     id: "img02",
     variant: "image" as const,
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/5389e156034977.599d9bd555aab.jpg",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/fc155f68bfc34b54.jpg",
     caption: "Character Study 02",
   },
   {
     id: "img03",
     variant: "image" as const,
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/88ac8656034977.599d9bd5556ff.jpg",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/a286c6ce7084463f.jpg",
     caption: "Character Study 03",
   },
   {
     id: "img04",
     variant: "image" as const,
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/26f08a56034977.599d9bd554d6f.jpg",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/d88bb4eedc86271f.jpg",
     caption: "Character Study 04",
   },
   {
     id: "img05",
     variant: "image" as const,
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/9f38a956034977.599d9bd555db6.jpg",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/47797ac9ea5b2164.jpg",
     caption: "Character Study 05",
   },
   {
     id: "img06",
     variant: "image" as const,
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/760af856034977.599d9bd5551fb.jpg",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/adb3314f89b2e4f0.jpg",
     caption: "Character Study 06",
   },
   {
@@ -126,7 +126,7 @@ export const relatedProjects = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/a8f476199358443.Y3JvcCwxOTgxLDE1NTAsOSww.jpg",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/7b463f2be013bcd3.jpg",
     appreciations: "208",
     views: "2.3K",
   },
@@ -137,7 +137,7 @@ export const relatedProjects = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/cad425183792791.Y3JvcCwyMzkyLDE4NzAsMCww.jpg",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/50a462dee6f25801.jpg",
     appreciations: "143",
     views: "1.7K",
   },
@@ -148,7 +148,7 @@ export const relatedProjects = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/501fca163362313.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/bcd3c09a543c36d3.png",
     appreciations: "138",
     views: "1.8K",
   },
@@ -159,7 +159,7 @@ export const relatedProjects = [
     internal: true as const,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/924075153491527.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/2bac7de14d05fa8f.png",
     appreciations: "1.1K",
     views: "12.2K",
   },

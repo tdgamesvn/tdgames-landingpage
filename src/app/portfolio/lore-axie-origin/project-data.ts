@@ -43,7 +43,7 @@ export const projectMeta: ProjectMeta = {
   madeForLabel: "AnimVFX Clan",
   madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
-    "https://mir-s3-cdn-cf.behance.net/project_modules/fs_webp/9d5c36163362313.63e48c008691b.png",
+    "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/7255b2f8d869fd9b.png",
   tools: [],
   fields: ["Storyboarding"],
   tags: [
@@ -79,7 +79,7 @@ export const showcaseModules: readonly ShowcaseModule[] = [
   {
     id: "m01",
     variant: "full",
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/fs_webp/9d5c36163362313.63e48c008691b.png",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/7255b2f8d869fd9b.png",
   },
   {
     id: "m02",
@@ -91,65 +91,65 @@ export const showcaseModules: readonly ShowcaseModule[] = [
   {
     id: "m03",
     variant: "full",
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/fs_webp/3a4660163362313.63e48c0087f51.png",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/bffb747d4fe74a2c.png",
   },
   {
     id: "m04",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/d5e804163362313.63e48bfb14d39.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/98fb7a163362313.63e48bfb15ba4.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/f3a0364ce0acd210.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/c61527bde30b7ac0.gif",
     ],
   },
   {
     id: "m05",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/1e45f2163362313.63e48bfbc3e82.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/c6f720163362313.63e48bfbc4df2.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/785dcae683a82ac4.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/cc18566033b16338.gif",
     ],
   },
   {
     id: "m06",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/4c8ad3163362313.63e48bfc90be9.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/1e7d63163362313.63e48bfc92564.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/e57e2e8bcc766a79.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/4219cdbe69a069e2.gif",
     ],
   },
   {
     id: "m07",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/f0a1e0163362313.63e48bfd57f81.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/8e3963163362313.63e48bfd58f38.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/8137e68e15121f35.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/c24c7a68c6a70caa.gif",
     ],
   },
   {
     id: "m08",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/191a20163362313.63e48bfdd7132.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/49f25a163362313.63e48bfdd8595.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/185cfbcd615a49c6.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/ca0b182522cfc283.gif",
     ],
   },
   {
     id: "m09",
     variant: "duo",
     srcs: [
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/6aa7a5163362313.63e48bfee5c18.gif",
-      "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/ee3318163362313.63e48bfee527e.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/33e5612d8f46230a.gif",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/4d2a41ee1a8b0fd0.gif",
     ],
   },
   {
     id: "m10",
     variant: "full",
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/3a475f163362313.63e48bff7a44c.png",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/04fe503d78e71d97.png",
   },
   {
     id: "m11",
     variant: "fullGif",
-    src: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/fb059d163362313.63e48bffe60e7.gif",
+    src: "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/aa7665fd9f35e181.gif",
   },
 ];
 
@@ -161,7 +161,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/a8f476199358443.Y3JvcCwxOTgxLDE1NTAsOSww.jpg",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/7b463f2be013bcd3.jpg",
     appreciations: "208",
     views: "2.3K",
   },
@@ -172,7 +172,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/cad425183792791.Y3JvcCwyMzkyLDE4NzAsMCww.jpg",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/50a462dee6f25801.jpg",
     appreciations: "143",
     views: "1.7K",
   },
@@ -183,7 +183,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/5ad036149524063.Y3JvcCwxOTgxLDE1NTAsMCww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/0a0b35cf8d5e9eb6.png",
     appreciations: "446",
     views: "7.5K",
   },
@@ -194,7 +194,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/924075153491527.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/2bac7de14d05fa8f.png",
     appreciations: "1.1K",
     views: "12.2K",
   },
@@ -205,7 +205,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/9e2264152981257.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/379f981b88c6a84f.png",
     appreciations: "261",
     views: "3.0K",
   },
@@ -216,7 +216,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/d50de7152527397.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/011ed49edb1767f3.png",
     appreciations: "627",
     views: "6.0K",
   },
@@ -227,7 +227,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/1efef4144430837.Y3JvcCwxOTgxLDE1NTAsOSww.jpg",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/807956f4ca57c6ed.jpg",
     appreciations: "89",
     views: "1.7K",
   },
@@ -238,7 +238,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/c4e25d143388227.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/4974242912a7c2f1.png",
     appreciations: "193",
     views: "2.5K",
   },
@@ -249,7 +249,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/d5b456134047127.Y3JvcCwyMzkyLDE4NzAsMCww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/9fed6d92877b5d19.png",
     appreciations: "112",
     views: "1.9K",
   },
@@ -260,7 +260,7 @@ export const relatedProjects: readonly RelatedProject[] = [
     internal: true,
     badge: "Case study",
     image:
-      "https://mir-s3-cdn-cf.behance.net/projects/404/33e83e130561969.Y3JvcCwxOTgxLDE1NTAsOSww.png",
+      "https://pub-642ba1c41caae845c62667d7810b4eb9.r2.dev/landing/behance/d4011a345f6c4002.png",
     appreciations: "218",
     views: "3.2K",
   },

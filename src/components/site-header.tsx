@@ -218,7 +218,7 @@ function QuoteButton({
         animation: "glow-ping 2s ease-in-out infinite",
       }}
     >
-      Get a Quote â†’
+      Get a Quote →
     </Link>
   );
 }
