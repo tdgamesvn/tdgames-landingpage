@@ -8,6 +8,18 @@ import path from "node:path";
 export const dynamic = "force-dynamic";
 
 type TeamMember = { id: string; name: string; title: string; photo: string };
+type WorkspaceImage = { src: string; alt: string };
+type AboutData = { heroImage: string; workspace: WorkspaceImage[] };
+
+async function getAbout(): Promise<AboutData> {
+  const filePath = path.join(process.cwd(), "src", "content", "site.json");
+  const raw = await fs.readFile(filePath, "utf8");
+  const data = JSON.parse(raw);
+  return data.about ?? {
+    heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80",
+    workspace: [],
+  };
+}
 
 async function getTeam(): Promise<TeamMember[]> {
   const filePath = path.join(process.cwd(), "src", "content", "site.json");
@@ -18,6 +30,7 @@ async function getTeam(): Promise<TeamMember[]> {
 
 export default async function AboutPage() {
   const team = await getTeam();
+  const about = await getAbout();
   return (
     <>
       <SiteHeader />
@@ -26,7 +39,7 @@ export default async function AboutPage() {
         <section className="relative flex h-screen items-center overflow-hidden border-b border-white/10">
           <div className="absolute inset-0">
             <Image
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80"
+              src={about.heroImage}
               alt="TD Games Team"
               fill
               className="object-cover opacity-30"
@@ -215,38 +228,16 @@ export default async function AboutPage() {
             </h2>
 
             <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-lg">
-                <Image
-                  src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80"
-                  alt="Studio workspace"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="relative aspect-[4/3] overflow-hidden rounded-lg">
-                <Image
-                  src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80"
-                  alt="Team collaboration"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="relative aspect-[4/3] overflow-hidden rounded-lg">
-                <Image
-                  src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&q=80"
-                  alt="Creative process"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="relative aspect-[4/3] overflow-hidden rounded-lg">
-                <Image
-                  src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&q=80"
-                  alt="Team meeting"
-                  fill
-                  className="object-cover"
-                />
-              </div>
+              {about.workspace.map((img) => (
+                <div key={img.src} className="relative aspect-[4/3] overflow-hidden rounded-lg">
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </section>
