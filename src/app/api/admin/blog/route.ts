@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 
@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   if (req.headers.get("x-admin-key") !== ADMIN_SECRET) return unauthorized();
 
   try {
-    const supabase = createSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
     const { data, error, count } = await supabase
       .from("blog_posts")
       .select("*", { count: "exact" })
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "slug and title are required" }, { status: 400 });
     }
 
-    const supabase = createSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("blog_posts")
       .insert({

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 
@@ -17,7 +17,7 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    const supabase = createSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
 
     const { data, error } = await supabase
       .from("blog_posts")
@@ -43,7 +43,7 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const supabase = createSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
     const { error } = await supabase.from("blog_posts").delete().eq("id", id);
     if (error) throw error;
     return NextResponse.json({ ok: true });

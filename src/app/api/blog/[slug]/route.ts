@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,7 @@ export async function GET(
   const { slug } = await params;
 
   try {
-    const supabase = createSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
 
     // Fetch post (service role bypasses RLS — we check published manually)
     const { data: post, error } = await supabase

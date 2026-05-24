@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const supabase = createSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
     const { data, error, count } = await supabase
       .from("blog_posts")
       .select("id, slug, title, excerpt, tag, cover_image, published, views, author, created_at", { count: "exact" })
