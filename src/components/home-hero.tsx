@@ -187,12 +187,23 @@ function FantasyOrnateCard({ video, isActive, onClick, index, cardDim, cardVigne
 
         {/* Image Container */}
         <div className="absolute inset-2 rounded-lg overflow-hidden bg-black">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={video.thumbnail}
-            alt={video.name}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-          />
+          {video?.thumbnailIsVideo || isProbablyVideoSrc(video?.thumbnail) ? (
+            <video
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              src={video.thumbnail}
+              muted
+              playsInline
+              loop
+              autoPlay
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={video.thumbnail}
+              alt={video.name}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            />
+          )}
           <div className={`absolute inset-0 transition-colors duration-300`} style={!isActive ? { backgroundColor: `rgba(0,0,0,${cardDim / 100})` } : {}} />
           {cardVignette && <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 to-transparent" />}
         </div>
