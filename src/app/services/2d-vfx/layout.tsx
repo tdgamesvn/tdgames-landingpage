@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "2D VFX Services — TD Games Studio",
     description: "Eye-catching 2D game visual effects and particle systems from TD Games.",
-    url: "https://www.tdgamestudio.com/services/2d-vfx",
+    url: "https://tdgamestudio.com/services/2d-vfx",
     siteName: "TD Games",
     type: "website",
   },

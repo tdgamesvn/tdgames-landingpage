@@ -41,12 +41,12 @@ export const metadata: Metadata = {
   },
   description:
     "TD Games is a Vietnam-based outsourcing studio specializing in 2D Art, Animation, and VFX for mobile games.",
-  metadataBase: new URL("https://www.tdgamestudio.com"),
+  metadataBase: new URL("https://tdgamestudio.com"),
   openGraph: {
     title: "TD Games — 2D Art & Animation Studio",
     description:
       "Vietnam-based outsourcing studio specializing in 2D Art, Animation, and VFX for mobile games.",
-    url: "https://www.tdgamestudio.com",
+    url: "https://tdgamestudio.com",
     siteName: "TD Games",
     type: "website",
     locale: "en_US",

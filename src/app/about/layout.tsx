@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "About Us — TD Games Studio",
     description:
       "Learn about TD Games — a Vietnam-based studio delivering high-quality 2D art, animation, and VFX for game developers worldwide.",
-    url: "https://www.tdgamestudio.com/about",
+    url: "https://tdgamestudio.com/about",
     siteName: "TD Games",
     type: "website",
   },

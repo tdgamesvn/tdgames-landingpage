@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Careers at TD Games Studio",
     description:
       "We're looking for passionate 2D artists and animators. Join our team in Hanoi, Vietnam.",
-    url: "https://www.tdgamestudio.com/careers",
+    url: "https://tdgamestudio.com/careers",
     siteName: "TD Games",
     type: "website",
   },

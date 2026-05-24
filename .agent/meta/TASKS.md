@@ -5,11 +5,6 @@ _(empty)_
 
 ## To do
 
-
-- [ ] Blog — thêm content thật
-  - `src/content/site.json` → blog.posts hiện dùng placeholder text
-  - Done when: ít nhất 1 bài viết thật, ảnh thật
-
 - [ ] Team — thay ảnh/tên placeholder bằng thật
   - Vào `/admin` → tab "6. Team" → upload ảnh + sửa tên/chức danh
 
@@ -44,3 +39,4 @@ _(empty)_
 - [x] Convert GIFs to MP4, admin Project Content tab, fix DB URLs (commit 4a7fc7c)
 - [x] Team feature: site.json team[], about/page.tsx overlay, Admin tab "6. Team", API route (commit 9e14234)
 - [x] Careers feature — DB (jobs + applications tables), public API (GET /api/jobs, POST /api/applications + Telegram notify), admin API (CRUD jobs, GET+PATCH applications), Careers page UI (listing, filter, detail panel, apply form), Admin tab "7. Careers" (commit c4565b2)
+- [x] Blog feature — DB (blog_posts table), public API (GET /api/blog, GET /api/blog/[slug] + view increment), admin API (CRUD /api/admin/blog), Admin tab "8. Blog", seeded 8 real posts (commit 8ba7635)

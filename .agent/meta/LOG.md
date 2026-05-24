@@ -1,5 +1,28 @@
 # LOG
 
+## 2026-05-24 (session 11)
+### Task
+Blog feature — deploy và fix build error
+
+### Work Done
+- Phát hiện: Blog API routes (`/api/blog`, `/api/admin/blog`) chưa được commit từ session trước → production không có blog
+- Committed toàn bộ blog feature: API routes, BlogTab admin, updated blog pages, migration file (commit 1fed8d5)
+- Build fail do 4 files dùng `createSupabaseAdmin` (không tồn tại) thay vì `getSupabaseAdmin`
+- Fix import trong 4 files, commit + push (commit 8ba7635)
+- Deploy VPS: build 43 pages ✅, PM2 online ✅
+- Seeded 8 bài blog thật vào Supabase `blog_posts` (published=true)
+
+### Result
+- `GET /api/blog` trả về 8 posts ✅ (verified production)
+- `/blog` page hiển thị 8 bài với filter tags: Animation, Art Pipeline, VFX, Case Study, Studio Life, Art Direction, Guide
+- Admin tab "8. Blog" live tại /admin
+
+### Next Step
+- Team: thay ảnh/tên placeholder qua `/admin` tab "6. Team"
+- About: ảnh studio workspace thật
+
+---
+
 ## 2026-05-24 (session 10)
 ### Task
 Careers feature — implement end-to-end

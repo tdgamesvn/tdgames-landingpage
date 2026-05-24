@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Portfolio — TD Games Studio",
     description:
       "Explore our award-winning 2D game art, character animation, and VFX case studies.",
-    url: "https://www.tdgamestudio.com/portfolio",
+    url: "https://tdgamestudio.com/portfolio",
     siteName: "TD Games",
     type: "website",
   },

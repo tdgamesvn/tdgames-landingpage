@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "2D Art Services — TD Games Studio",
     description: "High-quality 2D character design, concept art, and game UI from Vietnam's top art studio.",
-    url: "https://www.tdgamestudio.com/services/2d-art",
+    url: "https://tdgamestudio.com/services/2d-art",
     siteName: "TD Games",
     type: "website",
   },
