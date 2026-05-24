@@ -7,6 +7,7 @@ import { MediaTab } from "./_components/MediaTab";
 import { ProjectContentTab } from "./_components/ProjectContentTab";
 import { ProjectsTab } from "./_components/ProjectsTab";
 import { TeamTab } from "./_components/TeamTab";
+import { CareersTab } from "./_components/CareersTab";
 import type { AdminTab } from "./_lib/types";
 
 const TABS: { id: AdminTab; label: string; description: string }[] = [
@@ -39,6 +40,11 @@ const TABS: { id: AdminTab; label: string; description: string }[] = [
     id: "team",
     label: "6. Team",
     description: "Quản lý thành viên: ảnh, tên, chức danh tại trang /about",
+  },
+  {
+    id: "careers",
+    label: "7. Careers",
+    description: "Quản lý job listings và đơn ứng tuyển từ /careers",
   },
 ];
 
@@ -169,6 +175,7 @@ export default function AdminPage() {
         ) : null}
         {tab === "bulk" ? <BulkTab adminKey={adminKey} /> : null}
         {tab === "team" ? <TeamTab adminKey={adminKey} /> : null}
+        {tab === "careers" ? <CareersTab adminKey={adminKey} /> : null}
       </main>
     </div>
   );

@@ -31,7 +31,7 @@ export type MediaAsset = {
   updated_at: string;
 };
 
-export type AdminTab = "projects" | "content" | "media" | "create" | "bulk" | "team";
+export type AdminTab = "projects" | "content" | "media" | "create" | "bulk" | "team" | "careers";
 
 export type TeamMember = {
   id: string;
@@ -54,6 +54,51 @@ export type ProjectContent = {
   filePath: string;
   coverImage: string | null;
   modules: ProjectSlot[];
+};
+
+export type JobType = "fulltime" | "parttime" | "remote" | "freelancer";
+export type ApplicationStatus = "new" | "reviewing" | "interview" | "offer" | "rejected";
+
+export type Job = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  type: JobType;
+  location: string;
+  level: string;
+  salary: string;
+  rate_per_hour: string | null;
+  categories: string[];
+  image_url: string;
+  summary: string;
+  responsibilities: string[];
+  requirements: string[];
+  nice_to_have: string[];
+  skills: string[];
+  is_active: boolean;
+  created_at: string;
+};
+
+export type Application = {
+  id: string;
+  job_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  work_type: string;
+  years_experience: number | null;
+  cv_url: string | null;
+  portfolio_url: string | null;
+  linkedin_url: string | null;
+  website_url: string | null;
+  expected_salary: string | null;
+  available_from: string | null;
+  rate_per_hour: string | null;
+  status: ApplicationStatus;
+  admin_notes: string | null;
+  created_at: string;
+  jobs?: { title: string; slug: string };
 };
 
 export type SlotPreset = {
