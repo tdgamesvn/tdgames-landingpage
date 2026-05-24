@@ -1,7 +1,22 @@
 # Agent Rules — tdgames-landingpage
 
-Đây là project Next.js 16 landing page cho TD Games. Mọi session phải tuân theo
-quy trình dưới đây. **Đây là project instructions — ưu tiên cao hơn default behavior.**
+Next.js 16 App Router landing page cho TD Games Studio. Production: https://www.tdgamestudio.com
+
+**Stack:** Next.js 16, Tailwind v4 (CSS variables, không có tailwind.config.js), TypeScript, Supabase (PostgreSQL), Cloudflare R2 CDN (`cdn.tdgamestudio.com`), Framer Motion, PM2 trên VPS.
+
+---
+
+## Task hiện tại (đọc `.agent/meta/TASKS.md` để biết chi tiết)
+
+**Next priority — Careers feature:**
+- DB: `jobs` + `applications` tables (Supabase migration chưa tạo)
+- Public API: `GET /api/jobs`, `POST /api/applications`
+- Admin API: `CRUD /api/admin/jobs`, `GET+PATCH /api/admin/applications`
+- Careers page: đọc DB, job detail panel + apply form inline
+- Admin tab "7. Careers"
+- Telegram notification khi có ứng viên mới
+
+**Tasks nhỏ còn lại:** Blog content thật, Team ảnh/tên thật, About workspace ảnh thật.
 
 ---
 
@@ -9,10 +24,11 @@ quy trình dưới đây. **Đây là project instructions — ưu tiên cao hơ
 
 Thực hiện theo thứ tự:
 
-1. Đọc context tự động từ SessionStart hook (PROJECT.md, TASKS.md, LOG.md)
-2. Chạy `npx gitnexus status` để xác nhận index còn mới
+1. Đọc `.agent/meta/LOG.md` (entry cuối = context session trước)
+2. Đọc `.agent/meta/TASKS.md` (xem Doing trước, rồi To do)
+3. Chạy `npx gitnexus status` để xác nhận index còn mới
    - Nếu stale: chạy `npx gitnexus analyze` để reindex
-3. Invoke skill **`superpowers:using-superpowers`** để xác nhận skills có sẵn
+4. Invoke skill **`superpowers:using-superpowers`** để xác nhận skills có sẵn
 
 ---
 

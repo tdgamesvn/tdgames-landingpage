@@ -1,0 +1,54 @@
+import { NextResponse } from "next/server";
+import { createSupabaseAdmin } from "@/lib/supabase-admin";
+
+const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
+
+function unauthorized() {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (req.headers.get("x-admin-key") !== ADMIN_SECRET) return unauthorized();
+
+  const { id } = await params;
+
+  try {
+    const body = await req.json();
+    const supabase = createSupabaseAdmin();
+
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .update(body)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return NextResponse.json({ post: data });
+  } catch (err) {
+    console.error(`[PATCH /api/admin/blog/${id}]`, err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (req.headers.get("x-admin-key") !== ADMIN_SECRET) return unauthorized();
+
+  const { id } = await params;
+
+  try {
+    const supabase = createSupabaseAdmin();
+    const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+    if (error) throw error;
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error(`[DELETE /api/admin/blog/${id}]`, err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

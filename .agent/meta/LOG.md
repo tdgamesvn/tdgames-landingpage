@@ -1,5 +1,52 @@
 # LOG
 
+## 2026-05-24 (session 10)
+### Task
+Careers feature — implement end-to-end
+
+### Work Done
+- Xác nhận DB: `jobs` + `applications` tables đã tồn tại trong Supabase ✅
+- Lưu migration file: `supabase/migrations/20260524120000_careers_schema.sql`
+- Tạo `src/app/admin/_components/CareersTab.tsx` — 2 sub-tabs:
+  - **Jobs**: CRUD (create/edit/delete/toggle active), form với tất cả fields (title, slug, type, location, level, salary, categories, description, summary, responsibilities, requirements, nice_to_have, skills)
+  - **Applications**: list với filter theo status, expand row xem detail, update status (new/reviewing/interview/offer/rejected), edit admin notes
+- Wire vào `src/app/admin/page.tsx`: import `CareersTab`, thêm tab "7. Careers", render khi `tab === "careers"`
+- Build ✅ (Next.js 44 pages, 0 errors)
+- Commit `c4565b2`, push GitHub ✅
+- Deploy VPS: git pull + build + `pm2 restart tdgames-landingpage` ✅
+
+### Result
+- `/careers` page: hiển thị 6 jobs thật từ DB (verified production API trả về JSON đúng)
+- Admin `/admin` tab "7. Careers": Jobs CRUD + Applications management live
+- `GET /api/jobs` → public, `POST /api/applications` → ghi DB + Telegram notify
+- Admin API: `GET/POST /api/admin/jobs`, `PATCH/DELETE /api/admin/jobs/[id]`, `GET /api/admin/applications`, `PATCH /api/admin/applications/[id]`
+
+### Next Step
+- Blog: thêm content thật vào `src/content/site.json` → `blog.posts`
+- Team: thay ảnh/tên placeholder qua `/admin` tab "6. Team"
+- About: ảnh studio workspace thật
+
+---
+
+## 2026-05-23 (session 9)
+### Task
+Thay logo header, footer và favicon browser tab
+
+### Work Done
+- `site-header.tsx`: logo_td2.png → logo_td_notext.png ✅
+- `site-footer.tsx`: logo_td2.png → logo_td_notext.png ✅
+- `layout.tsx`: thêm `icons` block → favicon trỏ logo_td_notext.png ✅
+- Phát hiện `src/app/favicon.ico` (default Next.js) override metadata icons → xóa bỏ
+- Thêm `src/app/icon.png` (logo_td_notext) theo Next.js App Router file convention
+- Commit `07ea262` + `9094509`, push GitHub, deploy VPS (build 43 pages ✅, PM2 online ✅)
+
+### Result
+- Tab browser: logo TD Games (cam) ✅
+- Header + Footer: logo_td_notext ✅
+- Favicon cache browser: user hard refresh / incognito để thấy ngay
+
+---
+
 ## 2026-05-23 (session 8)
 ### Task
 Cập nhật bộ nhớ agent + fix quy trình quên ngữ cảnh
