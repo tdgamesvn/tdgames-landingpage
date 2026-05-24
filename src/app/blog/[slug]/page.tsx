@@ -7,6 +7,7 @@ import { marked } from "marked";
 
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const nunitoSans = Nunito_Sans({
   weight: ["400", "600", "700"],
@@ -15,14 +16,25 @@ const nunitoSans = Nunito_Sans({
 
 type Props = { params: Promise<{ slug: string }> };
 
-const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-
 async function getPost(slug: string) {
   try {
-    const res = await fetch(`${BASE}/api/blog/${slug}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.post ?? null;
+    const supabase = getSupabaseAdmin();
+    const { data: post, error } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .eq("slug", slug)
+      .eq("published", true)
+      .single();
+
+    if (error || !post) return null;
+
+    // Increment views (fire-and-forget)
+    void supabase
+      .from("blog_posts")
+      .update({ views: post.views + 1 })
+      .eq("id", post.id);
+
+    return post;
   } catch {
     return null;
   }
