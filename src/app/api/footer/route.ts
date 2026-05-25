@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const SITE_JSON = path.join(process.cwd(), "src", "content", "site.json");
-
 export async function GET() {
-  const raw = await fs.readFile(SITE_JSON, "utf8");
-  const data = JSON.parse(raw);
-  return NextResponse.json({ footer: data.footer ?? {} });
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("site_config")
+    .select("value")
+    .eq("key", "footer")
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ footer: data?.value ?? {} });
 }

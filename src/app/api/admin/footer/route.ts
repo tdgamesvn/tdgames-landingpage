@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const SITE_JSON = path.join(process.cwd(), "src", "content", "site.json");
 
 function requireAdmin(req: Request) {
   const secret = process.env.ADMIN_SECRET;
@@ -15,14 +12,23 @@ function requireAdmin(req: Request) {
   return null;
 }
 
+// GET /api/admin/footer
 export async function GET(req: Request) {
   const err = requireAdmin(req);
   if (err) return err;
-  const raw = await fs.readFile(SITE_JSON, "utf8");
-  const data = JSON.parse(raw);
-  return NextResponse.json({ footer: data.footer ?? {} });
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("site_config")
+    .select("value")
+    .eq("key", "footer")
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ footer: data?.value ?? {} });
 }
 
+// PUT /api/admin/footer
 export async function PUT(req: Request) {
   const err = requireAdmin(req);
   if (err) return err;
@@ -31,10 +37,11 @@ export async function PUT(req: Request) {
   if (!body.footer || typeof body.footer !== "object")
     return NextResponse.json({ error: "body.footer must be an object" }, { status: 400 });
 
-  const raw = await fs.readFile(SITE_JSON, "utf8");
-  const data = JSON.parse(raw);
-  data.footer = body.footer;
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("site_config")
+    .upsert({ key: "footer", value: body.footer, updated_at: new Date().toISOString() });
 
-  await fs.writeFile(SITE_JSON, JSON.stringify(data, null, 2) + "\n", "utf8");
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
