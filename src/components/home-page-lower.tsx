@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { AccentHighlight } from "./accent-highlight";
@@ -11,6 +12,106 @@ import { AutoLoopMedia } from "./portfolio/auto-loop-media";
 const ACCENT = "var(--hero-btn-bg, #f59e0b)" as const;
 
 const accentStyle = { color: ACCENT };
+
+// ── Hardcoded fallback khi chưa có bài blog thật ─────────────────────────────
+const FALLBACK_POSTS = [
+  {
+    slug: "",
+    title: "How to create a game character",
+    date: "01.22.2024",
+    cover_image: "https://cdn.tdgamestudio.com/landing/images/blog-1.jpg",
+  },
+  {
+    slug: "",
+    title: "High poly and low poly modeling",
+    date: "01.22.2024",
+    cover_image: "https://cdn.tdgamestudio.com/landing/images/blog-2.jpg",
+  },
+  {
+    slug: "",
+    title: "Animation outsourcing: a guide for success",
+    date: "01.22.2024",
+    cover_image: "https://cdn.tdgamestudio.com/landing/images/blog-1.jpg",
+  },
+];
+
+function BlogPreviewGrid() {
+  const [posts, setPosts] = useState(FALLBACK_POSTS);
+
+  useEffect(() => {
+    fetch("/api/blog")
+      .then((r) => r.json())
+      .then((data) => {
+        const fetched = (data.posts ?? []).slice(0, 3).map((p: {
+          slug: string;
+          title: string;
+          created_at: string;
+          cover_image?: string;
+        }) => ({
+          slug: p.slug,
+          title: p.title,
+          date: new Date(p.created_at).toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+          }).replace(/\//g, "."),
+          cover_image: p.cover_image || "https://cdn.tdgamestudio.com/landing/images/blog-1.jpg",
+        }));
+        if (fetched.length > 0) setPosts(fetched);
+      })
+      .catch(() => { /* giữ fallback */ });
+  }, []);
+
+  return (
+    <div className="grid gap-6 md:grid-cols-3">
+      {posts.map((post, idx) => {
+        const href = post.slug ? `/blog/${post.slug}` : "/blog";
+        return (
+          <motion.article
+            key={post.slug || post.title}
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.45, delay: idx * 0.05, ease: "easeOut" }}
+            className="group overflow-hidden rounded-2xl border border-white/10 bg-[#141418] shadow-[0_18px_70px_rgba(0,0,0,0.55)]"
+          >
+            <Link href={href} className="block">
+              <div className="relative aspect-16/10 overflow-hidden">
+                <Image
+                  src={post.cover_image}
+                  alt={post.title}
+                  fill
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                  sizes="(max-width: 768px) 100vw, 420px"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/20 to-transparent" />
+              </div>
+              <div className="p-5">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
+                  {post.date}
+                </div>
+                <div
+                  className="mt-2 line-clamp-2 text-base font-black uppercase tracking-tight text-white"
+                  style={{ fontFamily: "var(--font-rajdhani)" }}
+                >
+                  {post.title}
+                </div>
+                <div className="mt-4">
+                  <span
+                    className="inline-flex items-center justify-center rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-black transition-transform group-hover:scale-[1.02]"
+                    style={{ backgroundColor: ACCENT }}
+                  >
+                    Read more
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </motion.article>
+        );
+      })}
+    </div>
+  );
+}
 
 function StudioSectionTitle({
   sectionNum,
@@ -915,68 +1016,7 @@ export default function HomePageLower() {
             className="mt-16 mb-10 md:mb-12"
           />
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {[
-              {
-                title: "How to create a game character",
-                date: "01.22.2024",
-                image: "https://cdn.tdgamestudio.com/landing/images/blog-1.jpg",
-              },
-              {
-                title: "High poly and low poly modeling",
-                date: "01.22.2024",
-                image: "https://cdn.tdgamestudio.com/landing/images/blog-2.jpg",
-              },
-              {
-                title: "Animation outsourcing: a guide for success",
-                date: "01.22.2024",
-                image: "https://cdn.tdgamestudio.com/landing/images/blog-1.jpg",
-              },
-            ].map((post, idx) => (
-              <motion.article
-                key={post.title}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{
-                  duration: 0.45,
-                  delay: idx * 0.05,
-                  ease: "easeOut",
-                }}
-                className="group overflow-hidden rounded-2xl border border-white/10 bg-[#141418] shadow-[0_18px_70px_rgba(0,0,0,0.55)]"
-              >
-                <div className="relative aspect-16/10 overflow-hidden">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                    sizes="(max-width: 768px) 100vw, 420px"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/20 to-transparent" />
-                </div>
-                <div className="p-5">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
-                    {post.date}
-                  </div>
-                  <div
-                    className="mt-2 line-clamp-2 text-base font-black uppercase tracking-tight text-white"
-                    style={{ fontFamily: "var(--font-rajdhani)" }}
-                  >
-                    {post.title}
-                  </div>
-                  <div className="mt-4">
-                    <button
-                      className="inline-flex items-center justify-center rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-black transition-transform hover:scale-[1.02]"
-                      style={{ backgroundColor: ACCENT }}
-                    >
-                      Read more
-                    </button>
-                  </div>
-                </div>
-              </motion.article>
-            ))}
-          </div>
+          <BlogPreviewGrid />
 
           <div className="mt-14 grid gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 md:grid-cols-[1fr_180px] md:items-center md:p-10">
             <div>
