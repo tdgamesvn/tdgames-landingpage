@@ -8,11 +8,23 @@
  * - SpinePlayer khởi tạo lazy trong useEffect → không crash SSR
  * - Mỗi instance dùng 1 WebGL context → giới hạn khoảng 8-12 instance/page
  *
+ * Scale / position:
+ *   scale    — CSS scale transform (default 1.0). >1 phóng to, <1 thu nhỏ.
+ *   offsetX  — dịch ngang (px hoặc "10%"), dương = phải, âm = trái
+ *   offsetY  — dịch dọc (px hoặc "10%"), dương = xuống, âm = lên
+ *
+ * Premultiplied alpha:
+ *   premultipliedAlpha — set true nếu texture export với premultiply alpha
+ *   (fix viền đen bao quanh sprite). Default: true (phù hợp với hầu hết game assets)
+ *
  * Usage:
  *   <SpineCharacter
- *     jsonUrl="https://cdn.tdgamestudio.com/landing/spine/hero/hero.json"
- *     atlasUrl="https://cdn.tdgamestudio.com/landing/spine/hero/hero.atlas"
+ *     jsonUrl="/cdn-proxy/landing/spine/hero/hero.json"
+ *     atlasUrl="/cdn-proxy/landing/spine/hero/hero.atlas"
  *     animation="idle"
+ *     scale={1.2}
+ *     offsetX={-20}
+ *     offsetY={30}
  *     className="h-[500px] w-full"
  *   />
  */
@@ -34,8 +46,26 @@ export type SpineCharacterProps = {
   animation?: string;
   /** Tên skin (nếu skeleton có nhiều skin) */
   skin?: string;
-  /** Premultiplied alpha — bật nếu texture export với premultiply */
+  /**
+   * Premultiplied alpha — set true nếu texture export với premultiply alpha.
+   * Fix viền đen bao quanh sprite. Default true (phù hợp hầu hết game assets).
+   */
   premultipliedAlpha?: boolean;
+  /**
+   * CSS scale transform — phóng to/thu nhỏ nhân vật.
+   * Default 1. Ví dụ: 1.3 = to hơn 30%, 0.8 = nhỏ hơn 20%.
+   */
+  scale?: number;
+  /**
+   * Dịch ngang tính từ center (px).
+   * Dương = phải, âm = trái. Ví dụ: offsetX={-40} dịch sang trái 40px.
+   */
+  offsetX?: number;
+  /**
+   * Dịch dọc tính từ center (px).
+   * Dương = xuống, âm = lên. Ví dụ: offsetY={20} dịch xuống 20px.
+   */
+  offsetY?: number;
   className?: string;
   style?: CSSProperties;
   /** Callback khi load thành công */
@@ -50,7 +80,10 @@ export function SpineCharacter({
   atlasUrl,
   animation = "idle",
   skin,
-  premultipliedAlpha = false,
+  premultipliedAlpha = true,
+  scale = 1,
+  offsetX = 0,
+  offsetY = 0,
   className,
   style,
   onSuccess,
@@ -85,7 +118,7 @@ export function SpineCharacter({
         animation,
         skin,
 
-        // Render transparent
+        // Render transparent — premultipliedAlpha:true fix viền đen
         alpha: true,
         backgroundColor: "#00000000",
         premultipliedAlpha,
@@ -113,5 +146,20 @@ export function SpineCharacter({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jsonUrl, binaryUrl, atlasUrl, animation, skin, premultipliedAlpha]);
 
-  return <div ref={containerRef} className={className} style={style} />;
+  // Tính transform string từ scale + offset
+  const transformParts: string[] = [];
+  if (offsetX !== 0 || offsetY !== 0) transformParts.push(`translate(${offsetX}px, ${offsetY}px)`);
+  if (scale !== 1) transformParts.push(`scale(${scale})`);
+  const transform = transformParts.length > 0 ? transformParts.join(" ") : undefined;
+
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={{
+        ...style,
+        ...(transform ? { transform, transformOrigin: "center center" } : {}),
+      }}
+    />
+  );
 }

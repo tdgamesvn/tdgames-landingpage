@@ -905,6 +905,10 @@ export default function HomePageLower() {
                       atlasUrl={careersCharacter.atlas_url}
                       animation={careersCharacter.animation ?? "idle"}
                       skin={careersCharacter.skin ?? undefined}
+                      premultipliedAlpha={true}
+                      scale={1.0}
+                      offsetX={0}
+                      offsetY={0}
                       className="h-full w-full"
                     />
                   ) : (
