@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 type FooterConfig = {
   description1: string;
   description2: string;
-  socials: { linkedin: string; facebook: string; instagram: string; behance: string };
+  socials: { linkedin: string; facebook: string; instagram: string; behance: string; artstation: string };
   contacts: { address: string; discord: string; email: string };
 };
 
@@ -18,7 +18,7 @@ const FOOTER_DEFAULT: FooterConfig = {
     "Founded in 2019, TD Games emerged from a shared passion for creating visually stunning game experiences. What started as a small team of artists has grown into a full-service game art studio trusted by developers worldwide.",
   description2:
     "We believe that great art is the foundation of memorable games. Our mission is to help developers bring their creative visions to life with professional-grade assets that enhance gameplay and captivate players.",
-  socials: { linkedin: "", facebook: "", instagram: "", behance: "" },
+  socials: { linkedin: "", facebook: "", instagram: "", behance: "", artstation: "" },
   contacts: {
     address: "505 Minh Khai, Hanoi, Vietnam",
     discord: "https://discord.com",
@@ -140,6 +140,14 @@ export default function SiteFooter() {
                       <path d="M14.6 10.1h6.2V8.3h-6.2v1.8z" />
                       <path d="M18.4 10.9c-3.2 0-5.3 2.3-5.3 6.1 0 3.9 2 6.1 5.4 6.1 2.6 0 4.4-1.4 4.9-3.7h-2.3c-.3 1-1.1 1.6-2.5 1.6-1.7 0-2.7-1.1-2.8-3.1h7.6c.2-3.9-1.7-7-5-7zm2.6 5h-5.2c.2-1.9 1.2-3 2.6-3 1.6 0 2.5 1 2.6 3z" />
                     </>
+                  ),
+                },
+                {
+                  id: "as",
+                  label: "ArtStation",
+                  href: cfg.socials.artstation,
+                  icon: (
+                    <path d="M0 17.723l2.027 3.505h.001a2.424 2.424 0 0 0 2.164 1.333h13.457l-2.792-4.838H0zm24 .025c0-.484-.143-.935-.388-1.314L15.728 2.728A2.424 2.424 0 0 0 13.564 1.4H9.419L21.598 22.54l1.92-3.325c.378-.637.482-.919.482-1.467zM13.589 9.03l4.941 8.557H8.648z" />
                   ),
                 },
               ].map((s) => (

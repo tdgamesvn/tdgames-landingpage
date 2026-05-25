@@ -10,6 +10,7 @@ type FooterConfig = {
     facebook: string;
     instagram: string;
     behance: string;
+    artstation: string;
   };
   contacts: {
     address: string;
@@ -21,7 +22,7 @@ type FooterConfig = {
 const DEFAULT: FooterConfig = {
   description1: "",
   description2: "",
-  socials: { linkedin: "", facebook: "", instagram: "", behance: "" },
+  socials: { linkedin: "", facebook: "", instagram: "", behance: "", artstation: "" },
   contacts: { address: "", discord: "", email: "" },
 };
 
@@ -125,6 +126,7 @@ export function FooterTab({ adminKey }: { adminKey: string }) {
             { key: "facebook" as const, label: "Facebook URL" },
             { key: "instagram" as const, label: "Instagram URL" },
             { key: "behance" as const, label: "Behance URL" },
+            { key: "artstation" as const, label: "ArtStation URL" },
           ] as const
         ).map(({ key, label }) => (
           <div key={key}>
