@@ -361,6 +361,12 @@ type SpineCharacterData = {
   skin: string | null;
 };
 
+/** Rewrite cdn.tdgamestudio.com URLs through the same-origin proxy to avoid CORS */
+function proxyCdnUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return url.replace("https://cdn.tdgamestudio.com/", "/cdn-proxy/");
+}
+
 function useCareersCharacter() {
   const [character, setCharacter] = useState<SpineCharacterData | null>(null);
 
@@ -369,7 +375,14 @@ function useCareersCharacter() {
       .then((r) => r.json())
       .then((data: { characters: SpineCharacterData[] }) => {
         const found = (data.characters ?? []).find((c) => c.slug === "careers-hero");
-        if (found) setCharacter(found);
+        if (found) {
+          // Proxy CDN URLs through same origin so Spine player XHR requests don't hit CORS
+          setCharacter({
+            ...found,
+            json_url: proxyCdnUrl(found.json_url) ?? found.json_url,
+            atlas_url: proxyCdnUrl(found.atlas_url) ?? found.atlas_url,
+          });
+        }
       })
       .catch(() => { /* silently fall back to placeholder */ });
   }, []);

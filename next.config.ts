@@ -4,6 +4,16 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["framer-motion"],
   },
+  // Proxy CDN assets through same origin to avoid CORS when fetched via XHR/fetch
+  // (e.g. Spine player loads .json + .atlas + textures via XMLHttpRequest)
+  async rewrites() {
+    return [
+      {
+        source: "/cdn-proxy/:path*",
+        destination: "https://cdn.tdgamestudio.com/:path*",
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
