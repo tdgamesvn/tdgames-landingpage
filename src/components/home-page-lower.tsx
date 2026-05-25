@@ -1080,7 +1080,7 @@ export default function HomePageLower() {
 
           <BlogPreviewGrid />
 
-          <div className="mt-14 grid gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 md:grid-cols-[1fr_240px_160px] md:items-center md:p-10">
+          <div className="mt-14 grid gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 md:grid-cols-[1fr_240px] md:items-center md:p-10">
             {/* Text + buttons */}
             <div>
               <StudioSectionTitle
@@ -1127,16 +1127,6 @@ export default function HomePageLower() {
               ) : null}
             </div>
 
-            {/* Game logo */}
-            <div className="relative mx-auto h-[160px] w-[160px]">
-              <Image
-                src="https://cdn.tdgamestudio.com/landing/logoCompany/5-min-1-1024x970.jpg"
-                alt="Mascot"
-                fill
-                className="rounded-2xl object-cover"
-                sizes="160px"
-              />
-            </div>
           </div>
         </div>
       </motion.section>
