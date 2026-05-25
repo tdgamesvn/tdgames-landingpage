@@ -11,6 +11,11 @@ _(empty)_
 - [ ] About page — ảnh studio workspace thật (section "Our Workspace")
   - Hiện đang dùng Unsplash placeholder
 
+- [ ] Footer social links — điền URL thật (LinkedIn, Facebook, Instagram, Behance, ArtStation)
+  - Vào `/admin` → tab "9. Footer" → điền URL → Lưu
+
+- [ ] Careers section — Spine character: test premultipliedAlpha toggle trong admin nếu còn viền đen/sáng
+
 ## Done
 
 - [x] Bootstrap project + agent memory
@@ -40,3 +45,4 @@ _(empty)_
 - [x] Team feature: site.json team[], about/page.tsx overlay, Admin tab "6. Team", API route (commit 9e14234)
 - [x] Careers feature — DB (jobs + applications tables), public API (GET /api/jobs, POST /api/applications + Telegram notify), admin API (CRUD jobs, GET+PATCH applications), Careers page UI (listing, filter, detail panel, apply form), Admin tab "7. Careers" (commit c4565b2)
 - [x] Blog feature — DB (blog_posts table), public API (GET /api/blog, GET /api/blog/[slug] + view increment), admin API (CRUD /api/admin/blog), Admin tab "8. Blog", seeded 8 real posts (commit 8ba7635)
+- [x] Spine visual controls — DB (scale/offset_x/offset_y/premultiplied_alpha), API, SpineTab sliders, home-page-lower reads from DB

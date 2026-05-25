@@ -46,13 +46,17 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("spine_characters")
     .insert([{
-      name:      body.name,
-      slug:      body.slug,
-      json_url:  body.json_url  ?? null,
-      atlas_url: body.atlas_url ?? null,
-      animation: body.animation ?? "idle",
-      skin:      body.skin      ?? null,
-      active:    body.active    ?? true,
+      name:                body.name,
+      slug:                body.slug,
+      json_url:            body.json_url            ?? null,
+      atlas_url:           body.atlas_url           ?? null,
+      animation:           body.animation           ?? "idle",
+      skin:                body.skin                ?? null,
+      active:              body.active              ?? true,
+      scale:               body.scale               ?? 1.0,
+      offset_x:            body.offset_x            ?? 0,
+      offset_y:            body.offset_y            ?? 0,
+      premultiplied_alpha: body.premultiplied_alpha ?? true,
     }])
     .select()
     .single();

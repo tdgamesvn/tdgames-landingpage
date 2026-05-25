@@ -20,6 +20,10 @@ type FormState = {
   animation: string;
   skin: string;
   active: boolean;
+  scale: number;
+  offset_x: number;
+  offset_y: number;
+  premultiplied_alpha: boolean;
 };
 
 const BLANK: FormState = {
@@ -30,6 +34,10 @@ const BLANK: FormState = {
   animation: "idle",
   skin: "",
   active: true,
+  scale: 1.0,
+  offset_x: 0,
+  offset_y: 0,
+  premultiplied_alpha: true,
 };
 
 function toSlug(s: string) {
@@ -83,6 +91,10 @@ export function SpineTab({ adminKey }: Props) {
       animation: c.animation,
       skin: c.skin ?? "",
       active: c.active,
+      scale: c.scale ?? 1.0,
+      offset_x: c.offset_x ?? 0,
+      offset_y: c.offset_y ?? 0,
+      premultiplied_alpha: c.premultiplied_alpha ?? true,
     });
     clearFiles();
   }
@@ -161,6 +173,10 @@ export function SpineTab({ adminKey }: Props) {
         animation: form.animation.trim() || "idle",
         skin: form.skin.trim() || undefined,
         active: form.active,
+        scale: form.scale,
+        offset_x: form.offset_x,
+        offset_y: form.offset_y,
+        premultiplied_alpha: form.premultiplied_alpha,
       };
 
       if (editId === "__new__") {
@@ -299,6 +315,14 @@ export function SpineTab({ adminKey }: Props) {
                   <span className="text-[10px] text-white/35">anim: {c.animation}</span>
                   {c.skin && (
                     <span className="text-[10px] text-white/35">skin: {c.skin}</span>
+                  )}
+                  <span className="text-[10px] text-white/25">
+                    {(c.scale ?? 1).toFixed(2)}× ({c.offset_x ?? 0},{c.offset_y ?? 0})
+                  </span>
+                  {!(c.premultiplied_alpha ?? true) && (
+                    <span className="rounded bg-sky-500/20 px-1 py-0.5 text-[9px] font-bold text-sky-400">
+                      straight-α
+                    </span>
                   )}
                 </div>
                 <div className="mt-0.5 flex gap-3 text-[10px] text-white/30 truncate">
@@ -475,22 +499,131 @@ export function SpineTab({ adminKey }: Props) {
               />
             </div>
 
-            {/* Active toggle */}
-            <label className="flex cursor-pointer items-center gap-3">
-              <div
-                onClick={() => setForm((f) => ({ ...f, active: !f.active }))}
-                className={`relative h-5 w-9 rounded-full transition-colors ${
-                  form.active ? "bg-amber-500" : "bg-white/20"
-                }`}
-              >
-                <div
-                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                    form.active ? "translate-x-4" : "translate-x-0.5"
-                  }`}
-                />
+            {/* ── Visual Controls ───────────────────────────────────────────── */}
+            <div className="space-y-3 border-t border-white/8 pt-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                Visual Controls
+              </p>
+
+              {/* Scale */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Scale</span>
+                  <span className="font-mono text-xs text-amber-400">{form.scale.toFixed(2)}×</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={0.3} max={3.0} step={0.05}
+                    value={form.scale}
+                    onChange={(e) => setForm((f) => ({ ...f, scale: parseFloat(e.target.value) }))}
+                    className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/15 accent-amber-500"
+                  />
+                  <input
+                    type="number"
+                    min={0.3} max={3.0} step={0.05}
+                    value={form.scale}
+                    onChange={(e) => setForm((f) => ({ ...f, scale: Math.max(0.3, Math.min(3.0, parseFloat(e.target.value) || 1)) }))}
+                    className="w-16 rounded border border-white/15 bg-white/5 px-2 py-1 text-center text-xs text-white focus:border-amber-500 focus:outline-none font-mono"
+                  />
+                </div>
               </div>
-              <span className="text-sm text-white/70">Active (hiển thị trên site)</span>
-            </label>
+
+              {/* Offset X */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Offset X</span>
+                  <span className="font-mono text-xs text-amber-400">{form.offset_x}px</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={-400} max={400} step={1}
+                    value={form.offset_x}
+                    onChange={(e) => setForm((f) => ({ ...f, offset_x: parseInt(e.target.value) }))}
+                    className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/15 accent-amber-500"
+                  />
+                  <input
+                    type="number"
+                    min={-400} max={400} step={1}
+                    value={form.offset_x}
+                    onChange={(e) => setForm((f) => ({ ...f, offset_x: Math.max(-400, Math.min(400, parseInt(e.target.value) || 0)) }))}
+                    className="w-16 rounded border border-white/15 bg-white/5 px-2 py-1 text-center text-xs text-white focus:border-amber-500 focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Offset Y */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Offset Y</span>
+                  <span className="font-mono text-xs text-amber-400">{form.offset_y}px</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={-400} max={400} step={1}
+                    value={form.offset_y}
+                    onChange={(e) => setForm((f) => ({ ...f, offset_y: parseInt(e.target.value) }))}
+                    className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/15 accent-amber-500"
+                  />
+                  <input
+                    type="number"
+                    min={-400} max={400} step={1}
+                    value={form.offset_y}
+                    onChange={(e) => setForm((f) => ({ ...f, offset_y: Math.max(-400, Math.min(400, parseInt(e.target.value) || 0)) }))}
+                    className="w-16 rounded border border-white/15 bg-white/5 px-2 py-1 text-center text-xs text-white focus:border-amber-500 focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Reset button */}
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, scale: 1.0, offset_x: 0, offset_y: 0 }))}
+                className="text-[10px] text-white/30 transition hover:text-white/60"
+              >
+                ↺ Reset scale &amp; offset
+              </button>
+            </div>
+
+            {/* Active + Premultiplied Alpha toggles */}
+            <div className="space-y-3 border-t border-white/8 pt-3">
+              <label className="flex cursor-pointer items-center gap-3">
+                <div
+                  onClick={() => setForm((f) => ({ ...f, active: !f.active }))}
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                    form.active ? "bg-amber-500" : "bg-white/20"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                      form.active ? "translate-x-4" : "translate-x-0.5"
+                    }`}
+                  />
+                </div>
+                <span className="text-sm text-white/70">Active (hiển thị trên site)</span>
+              </label>
+
+              <label className="flex cursor-pointer items-center gap-3">
+                <div
+                  onClick={() => setForm((f) => ({ ...f, premultiplied_alpha: !f.premultiplied_alpha }))}
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                    form.premultiplied_alpha ? "bg-amber-500" : "bg-white/20"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                      form.premultiplied_alpha ? "translate-x-4" : "translate-x-0.5"
+                    }`}
+                  />
+                </div>
+                <div>
+                  <span className="text-sm text-white/70">Premultiplied Alpha</span>
+                  <p className="text-[10px] text-white/30">Tắt nếu texture bị viền đen (straight alpha)</p>
+                </div>
+              </label>
+            </div>
 
             {msg && <p className="text-xs text-amber-400">{msg}</p>}
 

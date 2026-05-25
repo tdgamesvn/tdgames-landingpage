@@ -1,5 +1,75 @@
 # LOG
 
+## 2026-05-25 (session — Spine visual controls)
+### Task
+Thêm admin controls cho SpineCharacter: scale, offsetX/Y, premultipliedAlpha — fix viền đen
+
+### Work Done
+- DB migration: thêm 4 cột vào `spine_characters` (`scale`, `offset_x`, `offset_y`, `premultiplied_alpha`)
+- `/api/spine/route.ts`: cập nhật SELECT include 4 cột mới
+- `/api/admin/spine/[id]/route.ts`: thêm 4 fields vào `PATCHABLE`
+- `/api/admin/spine/route.ts`: thêm 4 fields vào POST insert
+- `_lib/types.ts`: cập nhật `SpineCharacter` type
+- `_lib/api.ts`: cập nhật `createSpineCharacter` payload type
+- `SpineTab.tsx`: thêm section "Visual Controls" — slider + number input cho scale (0.3–3.0), offsetX/Y (±400px), toggle premultiplied_alpha; badge trong list row
+- `home-page-lower.tsx`: cập nhật `SpineCharacterData` type + truyền giá trị từ DB vào `<SpineCharacter>`; default `premultiplied_alpha` = `false` (fix viền đen cho straight-alpha textures)
+
+### Result
+- Admin `/spine` tab: có thể kéo slider điều chỉnh scale/vị trí nhân vật và save → site apply ngay
+- Default premultipliedAlpha đổi thành `false` (fix viền đen nếu texture export straight alpha)
+- Nếu texture dùng premultiplied alpha → bật lại toggle trong admin
+
+### Next Step
+- Test trên browser: kéo slider scale/offset → Lưu → xem site có apply đúng không
+- Kiểm tra viền đen: nếu hết → premultipliedAlpha=false đúng; nếu có viền sáng → bật lại toggle
+
+## 2026-05-25 (session — Spine integration)
+### Task
+Tích hợp Spine 4.2 Web Player vào landing page (Careers section)
+
+### Work Done
+- Tư vấn phương án: mix-blend-mode / WebM alpha / Spine Web Player / PNG
+- Xác nhận: user có file .json/.skel + .atlas + texture PNG, Spine 4.2 + physics
+- Cài `@esotericsoftware/spine-player@~4.2` (latest: 4.2.119)
+- Tạo `src/components/spine-character.tsx` — reusable, SSR-safe, transparent background, physics auto
+- Cập nhật `src/components/home-page-lower.tsx` Careers section: thay AutoLoopMedia (mp4) → SpineCharacter
+- Build pass, không có lỗi
+
+### Result
+- Component SpineCharacter sẵn sàng dùng ở mọi section
+- URL placeholder: `cdn.tdgamestudio.com/landing/spine/careers/character.json` (cần thay bằng URL thật)
+
+### Next Step
+- User upload file Spine lên R2 CDN (spine/careers/ và các character khác)
+- Thay URL placeholder trong SpineCharacter props
+- Xác nhận tên animation đúng (hiện đang dùng "idle")
+- Test physics trên browser
+
+## 2026-05-25 (session 12–17)
+### Task
+Footer editable qua Admin + Social links + Blog section homepage
+
+### Work Done
+- **Blog homepage section**: `BlogPreviewGrid` component fetch `/api/blog` trả 3 bài mới nhất; fallback posts; cards link `/blog/[slug]`; fix JSX structure bug (closing `</div>` sai chỗ). Commit `e839e20`
+- **Footer editable (Admin tab 9)**:
+  - `site.json`: thêm `footer` section (description1/2, socials, contacts)
+  - `GET /api/footer`: public endpoint đọc site.json
+  - `GET/PUT /api/admin/footer`: admin-auth CRUD
+  - `FooterTab.tsx`: form edit đầy đủ — descriptions, social URLs, contacts
+  - `admin/page.tsx`: thêm tab "9. Footer"
+  - `site-footer.tsx`: fetch `/api/footer` on mount, tất cả text/link dynamic. Commit `969b71f`
+- **ArtStation social link**: thêm icon + URL field vào footer và FooterTab. Commit `4c788b1`
+
+### Validation
+- `npm run build` ✅ (43 pages, 0 TypeScript errors) — mỗi commit
+- Pushed origin/main → GitHub Actions deployed VPS
+
+### Result
+- Homepage blog section hiển thị bài thật từ DB
+- Footer: địa chỉ, email, Discord, LinkedIn/Facebook/Instagram/Behance/ArtStation đều edit được qua `/admin` → "9. Footer"
+
+---
+
 ## 2026-05-24 (session 11)
 ### Task
 Blog feature — deploy và fix build error

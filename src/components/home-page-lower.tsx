@@ -359,6 +359,10 @@ type SpineCharacterData = {
   atlas_url: string | null;
   animation: string;
   skin: string | null;
+  scale: number;
+  offset_x: number;
+  offset_y: number;
+  premultiplied_alpha: boolean;
 };
 
 /** Rewrite cdn.tdgamestudio.com URLs through the same-origin proxy to avoid CORS */
@@ -905,10 +909,10 @@ export default function HomePageLower() {
                       atlasUrl={careersCharacter.atlas_url}
                       animation={careersCharacter.animation ?? "idle"}
                       skin={careersCharacter.skin ?? undefined}
-                      premultipliedAlpha={true}
-                      scale={1.0}
-                      offsetX={0}
-                      offsetY={0}
+                      premultipliedAlpha={careersCharacter.premultiplied_alpha ?? false}
+                      scale={careersCharacter.scale ?? 1.0}
+                      offsetX={careersCharacter.offset_x ?? 0}
+                      offsetY={careersCharacter.offset_y ?? 0}
                       className="h-full w-full"
                     />
                   ) : (

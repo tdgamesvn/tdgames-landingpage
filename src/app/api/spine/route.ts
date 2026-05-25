@@ -8,7 +8,7 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("spine_characters")
-    .select("id, name, slug, json_url, atlas_url, animation, skin")
+    .select("id, name, slug, json_url, atlas_url, animation, skin, scale, offset_x, offset_y, premultiplied_alpha")
     .eq("active", true)
     .order("created_at", { ascending: true });
 

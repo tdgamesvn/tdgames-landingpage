@@ -42,6 +42,10 @@ export type SpineCharacter = {
   animation: string;
   skin: string | null;
   active: boolean;
+  scale: number;
+  offset_x: number;
+  offset_y: number;
+  premultiplied_alpha: boolean;
   created_at: string;
   updated_at: string;
 };

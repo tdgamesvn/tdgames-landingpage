@@ -196,6 +196,10 @@ export async function createSpineCharacter(args: {
     animation?: string;
     skin?: string;
     active?: boolean;
+    scale?: number;
+    offset_x?: number;
+    offset_y?: number;
+    premultiplied_alpha?: boolean;
   };
 }): Promise<SpineCharacter> {
   const res = await fetch(`/api/admin/spine`, {
