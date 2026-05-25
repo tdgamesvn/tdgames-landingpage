@@ -4,10 +4,27 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
-/** Set `NEXT_PUBLIC_DISCORD_INVITE_URL` (e.g. https://discord.gg/your-code). */
-const DISCORD_INVITE =
-  process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ?? "https://discord.com";
+type FooterConfig = {
+  description1: string;
+  description2: string;
+  socials: { linkedin: string; facebook: string; instagram: string; behance: string };
+  contacts: { address: string; discord: string; email: string };
+};
+
+const FOOTER_DEFAULT: FooterConfig = {
+  description1:
+    "Founded in 2019, TD Games emerged from a shared passion for creating visually stunning game experiences. What started as a small team of artists has grown into a full-service game art studio trusted by developers worldwide.",
+  description2:
+    "We believe that great art is the foundation of memorable games. Our mission is to help developers bring their creative visions to life with professional-grade assets that enhance gameplay and captivate players.",
+  socials: { linkedin: "", facebook: "", instagram: "", behance: "" },
+  contacts: {
+    address: "505 Minh Khai, Hanoi, Vietnam",
+    discord: "https://discord.com",
+    email: "contact@tdgames.vn",
+  },
+};
 
 function ContactIconBox({
   children,
@@ -27,6 +44,24 @@ function ContactIconBox({
 }
 
 export default function SiteFooter() {
+  const [cfg, setCfg] = useState<FooterConfig>(FOOTER_DEFAULT);
+
+  useEffect(() => {
+    fetch("/api/footer")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.footer && typeof d.footer === "object") {
+          setCfg({
+            ...FOOTER_DEFAULT,
+            ...d.footer,
+            socials: { ...FOOTER_DEFAULT.socials, ...d.footer.socials },
+            contacts: { ...FOOTER_DEFAULT.contacts, ...d.footer.contacts },
+          });
+        }
+      })
+      .catch(() => {/* giữ default */});
+  }, []);
+
   return (
     <motion.footer
       initial={{ opacity: 0, y: 22 }}
@@ -58,22 +93,19 @@ export default function SiteFooter() {
               }}
             />
             <p className="mt-5 text-sm leading-7 text-white/58">
-              Founded in 2019, TD Games emerged from a shared passion for creating
-              visually stunning game experiences. What started as a small team of
-              artists has grown into a full-service game art studio trusted by
-              developers worldwide.
+              {cfg.description1}
             </p>
-            <p className="mt-4 text-sm leading-7 text-white/58">
-              We believe that great art is the foundation of memorable games. Our
-              mission is to help developers bring their creative visions to life
-              with professional-grade assets that enhance gameplay and captivate
-              players.
-            </p>
+            {cfg.description2 ? (
+              <p className="mt-4 text-sm leading-7 text-white/58">
+                {cfg.description2}
+              </p>
+            ) : null}
             <div className="mt-8 flex flex-wrap items-center gap-3">
               {[
                 {
                   id: "in",
                   label: "LinkedIn",
+                  href: cfg.socials.linkedin,
                   icon: (
                     <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5C0 2.12 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8.5h4V23h-4V8.5zM8.5 8.5h3.8v2h.1c.53-1 1.84-2.1 3.79-2.1 4.05 0 4.8 2.67 4.8 6.14V23h-4v-7.32c0-1.75-.03-4-2.44-4-2.44 0-2.81 1.9-2.81 3.87V23h-4V8.5z" />
                   ),
@@ -81,6 +113,7 @@ export default function SiteFooter() {
                 {
                   id: "fb",
                   label: "Facebook",
+                  href: cfg.socials.facebook,
                   icon: (
                     <path d="M13.5 24v-8.7h2.9l.4-3.4h-3.3V9.7c0-1 .3-1.7 1.8-1.7h1.6V5c-.3 0-1.5-.1-2.9-.1-2.9 0-4.9 1.8-4.9 5v2.9H6.4v3.4h2.7V24h4.4z" />
                   ),
@@ -88,6 +121,7 @@ export default function SiteFooter() {
                 {
                   id: "ig",
                   label: "Instagram",
+                  href: cfg.socials.instagram,
                   icon: (
                     <>
                       <path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9A5.5 5.5 0 0 1 16.5 22h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2zm0 2A3.5 3.5 0 0 0 4 7.5v9A3.5 3.5 0 0 0 7.5 20h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 16.5 4h-9z" />
@@ -99,6 +133,7 @@ export default function SiteFooter() {
                 {
                   id: "be",
                   label: "Behance",
+                  href: cfg.socials.behance,
                   icon: (
                     <>
                       <path d="M10.8 12.1c1.1-.6 1.8-1.7 1.8-3 0-2.4-1.8-3.6-4.3-3.6H2V23h6.6c3 0 4.9-1.3 4.9-4.2 0-1.9-1.1-3.4-2.7-3.9zm-6.5-4h3.8c1.3 0 2 .5 2 1.6 0 1.2-.8 1.7-2.1 1.7H4.3V8.1zm4.2 12.3H4.3v-5.2h4.3c1.6 0 2.4.8 2.4 2.6 0 1.8-.9 2.6-2.5 2.6z" />
@@ -110,7 +145,9 @@ export default function SiteFooter() {
               ].map((s) => (
                 <a
                   key={s.id}
-                  href="#"
+                  href={s.href || "#"}
+                  target={s.href ? "_blank" : undefined}
+                  rel={s.href ? "noopener noreferrer" : undefined}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/75 transition-colors hover:border-[#ff8c3a]/45 hover:text-white"
                   aria-label={s.label}
                   title={s.label}
@@ -159,7 +196,7 @@ export default function SiteFooter() {
                     </svg>
                   </ContactIconBox>
                   <span className="min-w-0 pt-1.5 leading-snug">
-                    505 Minh Khai, Hanoi, Vietnam
+                    {cfg.contacts.address}
                   </span>
                 </li>
                 <li>
@@ -189,7 +226,7 @@ export default function SiteFooter() {
                 </li>
                 <li>
                   <a
-                    href={DISCORD_INVITE}
+                    href={cfg.contacts.discord || "https://discord.com"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group flex min-w-0 items-start gap-3 text-white/65 transition-colors hover:text-[#5865F2]"
@@ -211,7 +248,7 @@ export default function SiteFooter() {
                 </li>
                 <li className="min-w-0">
                   <a
-                    href="mailto:contact@tdgames.vn"
+                    href={`mailto:${cfg.contacts.email}`}
                     className="group flex min-w-0 items-start gap-3 transition-colors hover:text-white"
                   >
                     <ContactIconBox>
@@ -230,7 +267,7 @@ export default function SiteFooter() {
                       </svg>
                     </ContactIconBox>
                     <span className="pt-1.5 leading-snug underline-offset-2 group-hover:underline">
-                      contact@tdgames.vn
+                      {cfg.contacts.email}
                     </span>
                   </a>
                 </li>
