@@ -108,6 +108,10 @@ export function SpineTab({ adminKey }: Props) {
     clearFiles();
     resetParsed();
     setShowReplaceFiles(false);
+    // Auto-fetch JSON từ CDN để populate skin dropdown + animation picker
+    if (c.json_url?.endsWith(".json")) {
+      void fetchAndParseJsonUrl(c.json_url);
+    }
   }
 
   function closeEditor() {
@@ -132,39 +136,59 @@ export function SpineTab({ adminKey }: Props) {
   }
 
   // ── Parse Spine JSON client-side ────────────────────────────────────────────
+
+  function applyParsedSpineData(text: string, keepExistingAnimations = false) {
+    const data = JSON.parse(text) as {
+      skins?: Array<{ name: string } | string>;
+      animations?: Record<string, unknown>;
+    };
+
+    const skins: string[] = (data.skins ?? []).map((s) =>
+      typeof s === "string" ? s : s.name
+    ).filter(Boolean);
+
+    const animationNames: string[] = Object.keys(data.animations ?? {});
+
+    setParsedSkins(skins);
+    setParsedAnimations(animationNames);
+
+    setForm((f) => {
+      const validCurrent = f.animations.filter((a) => animationNames.includes(a));
+      return {
+        ...f,
+        // Nếu keepExistingAnimations: giữ list hiện tại (khi load edit)
+        // Nếu không: reset nếu không còn valid (khi chọn file mới)
+        animations: validCurrent.length > 0
+          ? validCurrent
+          : (keepExistingAnimations ? f.animations : []),
+        skin: f.skin || (skins.includes("default") ? "default" : (skins[0] ?? "")),
+      };
+    });
+  }
+
   async function parseSpineJson(file: File) {
     try {
       const text = await file.text();
-      const data = JSON.parse(text) as {
-        skins?: Array<{ name: string } | string>;
-        animations?: Record<string, unknown>;
-      };
-
-      // Skins: Spine JSON có thể lưu dạng [{name: "default"}] hoặc ["default"]
-      const skins: string[] = (data.skins ?? []).map((s) =>
-        typeof s === "string" ? s : s.name
-      ).filter(Boolean);
-
-      const animationNames: string[] = Object.keys(data.animations ?? {});
-
-      setParsedSkins(skins);
-      setParsedAnimations(animationNames);
-
-      // Auto-select: giữ animations hiện tại nếu chúng tồn tại trong parsed list
-      // Nếu không, reset về danh sách rỗng (user tự chọn)
-      setForm((f) => {
-        const validCurrent = f.animations.filter((a) => animationNames.includes(a));
-        return {
-          ...f,
-          animations: validCurrent.length > 0 ? validCurrent : [],
-          // Auto-set skin nếu chưa có và có default skin
-          skin: f.skin || (skins.includes("default") ? "default" : (skins[0] ?? "")),
-        };
-      });
+      applyParsedSpineData(text, false);
     } catch {
       setParsedSkins([]);
       setParsedAnimations([]);
       setMsg("⚠️ Không parse được file JSON — có thể không phải Spine JSON. Dùng text input thủ công.");
+    }
+  }
+
+  async function fetchAndParseJsonUrl(jsonUrl: string) {
+    if (!jsonUrl.endsWith(".json")) return;
+    try {
+      const res = await fetch(
+        `/api/admin/spine-json?url=${encodeURIComponent(jsonUrl)}`,
+        { headers: { "x-admin-key": adminKey } }
+      );
+      if (!res.ok) return;
+      const text = await res.text();
+      applyParsedSpineData(text, true);
+    } catch {
+      // Silently fail — user can still edit manually
     }
   }
 
