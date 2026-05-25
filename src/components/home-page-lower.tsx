@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { AccentHighlight } from "./accent-highlight";
 import CharacterMarquee from "./character-marquee";
 import type { CharacterMarqueeProps } from "./character-marquee";
-import { AutoLoopMedia } from "./portfolio/auto-loop-media";
+import { SpineCharacter } from "./spine-character";
 
 const ACCENT = "var(--hero-btn-bg, #f59e0b)" as const;
 
@@ -352,8 +352,34 @@ const characterMarqueeFilters: MarqueeFilter[] = [
   },
 ];
 
+type SpineCharacterData = {
+  id: string;
+  slug: string;
+  json_url: string | null;
+  atlas_url: string | null;
+  animation: string;
+  skin: string | null;
+};
+
+function useCareersCharacter() {
+  const [character, setCharacter] = useState<SpineCharacterData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/spine")
+      .then((r) => r.json())
+      .then((data: { characters: SpineCharacterData[] }) => {
+        const found = (data.characters ?? []).find((c) => c.slug === "careers-hero");
+        if (found) setCharacter(found);
+      })
+      .catch(() => { /* silently fall back to placeholder */ });
+  }, []);
+
+  return character;
+}
+
 export default function HomePageLower() {
   const [activeMarqueeFilter, setActiveMarqueeFilter] = useState(characterMarqueeFilters[0]);
+  const careersCharacter = useCareersCharacter();
 
   return (
     <>
@@ -860,11 +886,20 @@ export default function HomePageLower() {
             <div className="relative grid min-h-[380px] gap-8 md:min-h-[460px] md:grid-cols-[1.25fr_1fr] md:items-center md:gap-10">
               <div className="relative mx-auto flex w-full max-w-[520px] items-center justify-center md:max-w-none md:justify-end">
                 <div className="relative h-[min(420px,78vw)] w-full max-w-[420px] md:h-[520px] md:max-w-[480px]">
-                  <AutoLoopMedia
-                    src="https://cdn.tdgamestudio.com/landing/video/CutScene_SE/1.mp4"
-                    alt="Character"
-                    className="absolute inset-0 h-full w-full object-contain"
-                  />
+                  {careersCharacter?.json_url && careersCharacter?.atlas_url ? (
+                    <SpineCharacter
+                      jsonUrl={careersCharacter.json_url}
+                      atlasUrl={careersCharacter.atlas_url}
+                      animation={careersCharacter.animation ?? "idle"}
+                      skin={careersCharacter.skin ?? undefined}
+                      className="h-full w-full"
+                    />
+                  ) : (
+                    /* placeholder until character is uploaded via admin */
+                    <div className="h-full w-full rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center">
+                      <span className="text-xs text-white/20">Character coming soon</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

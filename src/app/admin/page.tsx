@@ -10,6 +10,7 @@ import { TeamTab } from "./_components/TeamTab";
 import { CareersTab } from "./_components/CareersTab";
 import { BlogTab } from "./_components/BlogTab";
 import { FooterTab } from "./_components/FooterTab";
+import { SpineTab } from "./_components/SpineTab";
 import type { AdminTab } from "./_lib/types";
 
 const TABS: { id: AdminTab; label: string; description: string }[] = [
@@ -57,6 +58,11 @@ const TABS: { id: AdminTab; label: string; description: string }[] = [
     id: "footer",
     label: "9. Footer",
     description: "Chỉnh sửa mô tả công ty, social links và thông tin liên hệ ở footer",
+  },
+  {
+    id: "spine",
+    label: "10. Spine",
+    description: "Upload Spine 4.2 characters (.json/.skel + .atlas + PNG) và gán slug",
   },
 ];
 
@@ -190,6 +196,7 @@ export default function AdminPage() {
         {tab === "careers" ? <CareersTab adminKey={adminKey} /> : null}
         {tab === "blog" ? <BlogTab adminKey={adminKey} /> : null}
         {tab === "footer" ? <FooterTab adminKey={adminKey} /> : null}
+        {tab === "spine" ? <SpineTab adminKey={adminKey} /> : null}
       </main>
     </div>
   );

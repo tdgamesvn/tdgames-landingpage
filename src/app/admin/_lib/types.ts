@@ -31,7 +31,20 @@ export type MediaAsset = {
   updated_at: string;
 };
 
-export type AdminTab = "projects" | "content" | "media" | "create" | "bulk" | "team" | "careers" | "blog" | "footer";
+export type AdminTab = "projects" | "content" | "media" | "create" | "bulk" | "team" | "careers" | "blog" | "footer" | "spine";
+
+export type SpineCharacter = {
+  id: string;
+  name: string;
+  slug: string;
+  json_url: string | null;
+  atlas_url: string | null;
+  animation: string;
+  skin: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 export type BlogPost = {
   id: string;

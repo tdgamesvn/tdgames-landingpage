@@ -1,6 +1,6 @@
 "use client";
 
-import type { MediaAsset, MediaKind, Project, ProjectContent } from "./types";
+import type { MediaAsset, MediaKind, Project, ProjectContent, SpineCharacter } from "./types";
 
 /**
  * Thin client wrappers around the admin/public REST endpoints used by the
@@ -173,6 +173,85 @@ export async function runBulkReplace(args: {
     body: JSON.stringify({ mode: args.mode }),
   });
   return jsonOrThrow(res);
+}
+
+// ──────────────────────────────────────────────────────────── Spine admin API
+
+export async function fetchSpineCharacters(adminKey: string): Promise<SpineCharacter[]> {
+  const res = await fetch(`/api/admin/spine`, {
+    headers: { "x-admin-key": adminKey },
+    cache: "no-store",
+  });
+  const data = await jsonOrThrow<{ characters: SpineCharacter[] }>(res);
+  return data.characters ?? [];
+}
+
+export async function createSpineCharacter(args: {
+  adminKey: string;
+  payload: {
+    name: string;
+    slug: string;
+    json_url?: string;
+    atlas_url?: string;
+    animation?: string;
+    skin?: string;
+    active?: boolean;
+  };
+}): Promise<SpineCharacter> {
+  const res = await fetch(`/api/admin/spine`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-admin-key": args.adminKey,
+    },
+    body: JSON.stringify(args.payload),
+  });
+  const data = await jsonOrThrow<{ character: SpineCharacter }>(res);
+  return data.character;
+}
+
+export async function patchSpineCharacter(args: {
+  adminKey: string;
+  id: string;
+  updates: Partial<Omit<SpineCharacter, "id" | "created_at" | "updated_at">>;
+}): Promise<SpineCharacter> {
+  const res = await fetch(`/api/admin/spine/${encodeURIComponent(args.id)}`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      "x-admin-key": args.adminKey,
+    },
+    body: JSON.stringify(args.updates),
+  });
+  const data = await jsonOrThrow<{ character: SpineCharacter }>(res);
+  return data.character;
+}
+
+export async function deleteSpineCharacter(args: {
+  adminKey: string;
+  id: string;
+}): Promise<void> {
+  const res = await fetch(`/api/admin/spine/${encodeURIComponent(args.id)}`, {
+    method: "DELETE",
+    headers: { "x-admin-key": args.adminKey },
+  });
+  await jsonOrThrow<{ success: true }>(res);
+}
+
+export async function uploadSpineFile(args: {
+  adminKey: string;
+  file: File;
+  slug: string;
+}): Promise<{ key: string; url: string; size: number }> {
+  const fd = new FormData();
+  fd.append("file", args.file);
+  fd.append("slug", args.slug);
+  const res = await fetch(`/api/admin/spine/upload`, {
+    method: "POST",
+    headers: { "x-admin-key": args.adminKey },
+    body: fd,
+  });
+  return jsonOrThrow<{ key: string; url: string; size: number }>(res);
 }
 
 // ──────────────────────────────────────────────────────────────────── Helpers
