@@ -193,7 +193,7 @@ export async function createSpineCharacter(args: {
     slug: string;
     json_url?: string;
     atlas_url?: string;
-    animation?: string;
+    animations?: string[];
     skin?: string;
     active?: boolean;
     scale?: number;

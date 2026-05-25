@@ -39,7 +39,7 @@ export type SpineCharacter = {
   slug: string;
   json_url: string | null;
   atlas_url: string | null;
-  animation: string;
+  animations: string[];
   skin: string | null;
   active: boolean;
   scale: number;

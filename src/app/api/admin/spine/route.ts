@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       slug:                body.slug,
       json_url:            body.json_url            ?? null,
       atlas_url:           body.atlas_url           ?? null,
-      animation:           body.animation           ?? "idle",
+      animations:          body.animations          ?? ["idle"],
       skin:                body.skin                ?? null,
       active:              body.active              ?? true,
       scale:               body.scale               ?? 1.0,
