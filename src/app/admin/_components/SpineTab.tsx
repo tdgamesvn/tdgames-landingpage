@@ -17,7 +17,7 @@ type FormState = {
   slug: string;
   json_url: string;
   atlas_url: string;
-  animation: string;
+  animations: string[];
   skin: string;
   active: boolean;
   scale: number;
@@ -31,7 +31,7 @@ const BLANK: FormState = {
   slug: "",
   json_url: "",
   atlas_url: "",
-  animation: "idle",
+  animations: ["idle"],
   skin: "",
   active: true,
   scale: 1.0,
@@ -52,6 +52,10 @@ export function SpineTab({ adminKey }: Props) {
   // editor
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(BLANK);
+
+  // parsed from Spine JSON file
+  const [parsedSkins, setParsedSkins] = useState<string[]>([]);
+  const [parsedAnimations, setParsedAnimations] = useState<string[]>([]);
 
   // file uploads
   const [jsonFile, setJsonFile] = useState<File | null>(null);
@@ -79,6 +83,7 @@ export function SpineTab({ adminKey }: Props) {
     setEditId("__new__");
     setForm(BLANK);
     clearFiles();
+    resetParsed();
   }
 
   function openEdit(c: SpineCharacter) {
@@ -88,7 +93,7 @@ export function SpineTab({ adminKey }: Props) {
       slug: c.slug,
       json_url: c.json_url ?? "",
       atlas_url: c.atlas_url ?? "",
-      animation: c.animation,
+      animations: c.animations && c.animations.length > 0 ? c.animations : ["idle"],
       skin: c.skin ?? "",
       active: c.active,
       scale: c.scale ?? 1.0,
@@ -97,12 +102,14 @@ export function SpineTab({ adminKey }: Props) {
       premultiplied_alpha: c.premultiplied_alpha ?? true,
     });
     clearFiles();
+    resetParsed();
   }
 
   function closeEditor() {
     setEditId(null);
     setForm(BLANK);
     clearFiles();
+    resetParsed();
     setMsg("");
   }
 
@@ -113,25 +120,64 @@ export function SpineTab({ adminKey }: Props) {
     setPngFiles([]);
   }
 
+  function resetParsed() {
+    setParsedSkins([]);
+    setParsedAnimations([]);
+  }
+
+  // ── Parse Spine JSON client-side ────────────────────────────────────────────
+  async function parseSpineJson(file: File) {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text) as {
+        skins?: Array<{ name: string } | string>;
+        animations?: Record<string, unknown>;
+      };
+
+      // Skins: Spine JSON có thể lưu dạng [{name: "default"}] hoặc ["default"]
+      const skins: string[] = (data.skins ?? []).map((s) =>
+        typeof s === "string" ? s : s.name
+      ).filter(Boolean);
+
+      const animationNames: string[] = Object.keys(data.animations ?? {});
+
+      setParsedSkins(skins);
+      setParsedAnimations(animationNames);
+
+      // Auto-select: giữ animations hiện tại nếu chúng tồn tại trong parsed list
+      // Nếu không, reset về danh sách rỗng (user tự chọn)
+      setForm((f) => {
+        const validCurrent = f.animations.filter((a) => animationNames.includes(a));
+        return {
+          ...f,
+          animations: validCurrent.length > 0 ? validCurrent : [],
+          // Auto-set skin nếu chưa có và có default skin
+          skin: f.skin || (skins.includes("default") ? "default" : (skins[0] ?? "")),
+        };
+      });
+    } catch {
+      setParsedSkins([]);
+      setParsedAnimations([]);
+      setMsg("⚠️ Không parse được file JSON — có thể không phải Spine JSON. Dùng text input thủ công.");
+    }
+  }
+
   async function handleUploadFiles(): Promise<{ jsonUrl: string; atlasUrl: string }> {
     const slug = form.slug.trim();
     let jsonUrl = form.json_url;
     let atlasUrl = form.atlas_url;
 
-    // Upload JSON or SKEL
     const skeletonFile = skelFile ?? jsonFile;
     if (skeletonFile) {
       const res = await uploadSpineFile({ adminKey, file: skeletonFile, slug });
       jsonUrl = res.url;
     }
 
-    // Upload atlas
     if (atlasFile) {
       const res = await uploadSpineFile({ adminKey, file: atlasFile, slug });
       atlasUrl = res.url;
     }
 
-    // Upload PNGs (fire and forget — URLs will be referenced by atlas)
     for (const png of pngFiles) {
       await uploadSpineFile({ adminKey, file: png, slug });
     }
@@ -170,7 +216,7 @@ export function SpineTab({ adminKey }: Props) {
         slug: form.slug.trim(),
         json_url: jsonUrl || undefined,
         atlas_url: atlasUrl || undefined,
-        animation: form.animation.trim() || "idle",
+        animations: form.animations.length > 0 ? form.animations : ["idle"],
         skin: form.skin.trim() || undefined,
         active: form.active,
         scale: form.scale,
@@ -218,6 +264,33 @@ export function SpineTab({ adminKey }: Props) {
     } catch (e) {
       setMsg(`❌ ${e instanceof Error ? e.message : "lỗi"}`);
     }
+  }
+
+  // ── Animation helpers ────────────────────────────────────────────────────────
+  function toggleAnimation(anim: string) {
+    setForm((f) => {
+      if (f.animations.includes(anim)) {
+        return { ...f, animations: f.animations.filter((a) => a !== anim) };
+      }
+      return { ...f, animations: [...f.animations, anim] };
+    });
+  }
+
+  function moveAnimation(index: number, direction: -1 | 1) {
+    setForm((f) => {
+      const arr = [...f.animations];
+      const target = index + direction;
+      if (target < 0 || target >= arr.length) return f;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      return { ...f, animations: arr };
+    });
+  }
+
+  function removeAnimation(index: number) {
+    setForm((f) => ({
+      ...f,
+      animations: f.animations.filter((_, i) => i !== index),
+    }));
   }
 
   // ── File drop zone ─────────────────────────────────────────────────────────
@@ -307,12 +380,14 @@ export function SpineTab({ adminKey }: Props) {
 
               {/* info */}
               <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-bold text-white">{c.name}</span>
                   <code className="rounded bg-white/8 px-1.5 py-0.5 text-[10px] text-amber-400">
                     {c.slug}
                   </code>
-                  <span className="text-[10px] text-white/35">anim: {c.animation}</span>
+                  <span className="text-[10px] text-white/35">
+                    anim: {c.animations?.join(" → ") || "idle"}
+                  </span>
                   {c.skin && (
                     <span className="text-[10px] text-white/35">skin: {c.skin}</span>
                   )}
@@ -404,32 +479,6 @@ export function SpineTab({ adminKey }: Props) {
               </label>
             </div>
 
-            {/* Animation + Skin */}
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                  Animation
-                </span>
-                <input
-                  value={form.animation}
-                  onChange={(e) => setForm((f) => ({ ...f, animation: e.target.value }))}
-                  placeholder="idle"
-                  className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 focus:border-amber-500 focus:outline-none font-mono"
-                />
-              </label>
-              <label className="block space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                  Skin (tuỳ chọn)
-                </span>
-                <input
-                  value={form.skin}
-                  onChange={(e) => setForm((f) => ({ ...f, skin: e.target.value }))}
-                  placeholder="default"
-                  className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 focus:border-amber-500 focus:outline-none font-mono"
-                />
-              </label>
-            </div>
-
             {/* File upload zones */}
             <div className="space-y-2">
               <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
@@ -441,8 +490,12 @@ export function SpineTab({ adminKey }: Props) {
                   accept=".json,.skel"
                   file={skelFile ?? jsonFile}
                   onPick={(f) => {
-                    if (f.name.endsWith(".skel")) setSkelFile(f);
-                    else setJsonFile(f);
+                    if (f.name.endsWith(".skel")) {
+                      setSkelFile(f);
+                    } else {
+                      setJsonFile(f);
+                      void parseSpineJson(f);
+                    }
                   }}
                   hint=".json hoặc .skel"
                 />
@@ -478,6 +531,156 @@ export function SpineTab({ adminKey }: Props) {
                   }}
                 />
               </label>
+
+              {parsedAnimations.length > 0 && (
+                <p className="text-[10px] text-emerald-400/80">
+                  ✓ Parsed {parsedAnimations.length} animations, {parsedSkins.length} skins từ JSON
+                </p>
+              )}
+            </div>
+
+            {/* ── Skin picker ───────────────────────────────────────────────── */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                Skin {parsedSkins.length > 0 ? `(${parsedSkins.length} available)` : "(tuỳ chọn)"}
+              </span>
+              {parsedSkins.length > 0 ? (
+                <select
+                  value={form.skin}
+                  onChange={(e) => setForm((f) => ({ ...f, skin: e.target.value }))}
+                  className="w-full rounded-lg border border-white/15 bg-[#1a1a1a] px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none font-mono"
+                >
+                  <option value="">(skin mặc định)</option>
+                  {parsedSkins.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  value={form.skin}
+                  onChange={(e) => setForm((f) => ({ ...f, skin: e.target.value }))}
+                  placeholder="default (hoặc để trống)"
+                  className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 focus:border-amber-500 focus:outline-none font-mono"
+                />
+              )}
+            </div>
+
+            {/* ── Animation picker ──────────────────────────────────────────── */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                Animations {parsedAnimations.length > 0 ? `(${parsedAnimations.length} available)` : ""}
+              </span>
+
+              {parsedAnimations.length > 0 ? (
+                <div className="space-y-2">
+                  {/* Available animations — checkbox list */}
+                  <div className="rounded-lg border border-white/10 bg-white/3 p-2">
+                    <p className="mb-1.5 text-[9px] font-bold uppercase tracking-wider text-white/30">
+                      Available (tick để thêm)
+                    </p>
+                    <div className="max-h-32 overflow-y-auto space-y-0.5">
+                      {parsedAnimations.map((anim) => {
+                        const selected = form.animations.includes(anim);
+                        return (
+                          <label
+                            key={anim}
+                            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 transition hover:bg-white/5"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={() => toggleAnimation(anim)}
+                              className="accent-amber-500"
+                            />
+                            <span className={`font-mono text-xs ${selected ? "text-amber-400" : "text-white/60"}`}>
+                              {anim}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Selected animations — ordered list with reorder */}
+                  {form.animations.length > 0 && (
+                    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-2">
+                      <p className="mb-1.5 text-[9px] font-bold uppercase tracking-wider text-amber-400/60">
+                        Selected (thứ tự phát)
+                      </p>
+                      <div className="space-y-1">
+                        {form.animations.map((anim, idx) => (
+                          <div
+                            key={`${anim}-${idx}`}
+                            className="flex items-center gap-1.5 rounded bg-white/5 px-2 py-1"
+                          >
+                            <span className="text-[10px] font-mono text-white/30 w-4 text-right shrink-0">
+                              {idx + 1}.
+                            </span>
+                            <span className="flex-1 font-mono text-xs text-white/80 truncate">{anim}</span>
+                            <div className="flex shrink-0 gap-0.5">
+                              <button
+                                type="button"
+                                onClick={() => moveAnimation(idx, -1)}
+                                disabled={idx === 0}
+                                className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-white/40 transition hover:text-white disabled:opacity-20"
+                                title="Lên"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveAnimation(idx, 1)}
+                                disabled={idx === form.animations.length - 1}
+                                className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-white/40 transition hover:text-white disabled:opacity-20"
+                                title="Xuống"
+                              >
+                                ↓
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeAnimation(idx)}
+                                className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-red-400 transition hover:text-red-300"
+                                title="Xóa khỏi danh sách"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {form.animations.length > 1 && (
+                        <p className="mt-1.5 text-[9px] text-white/25">
+                          Sẽ phát tuần tự: {form.animations.join(" → ")} → (loop)
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {form.animations.length === 0 && (
+                    <p className="text-[10px] text-amber-400/60">
+                      ⚠️ Chọn ít nhất 1 animation. Mặc định "idle" sẽ được dùng.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                /* Fallback: text input khi chưa parse được JSON */
+                <div className="space-y-1">
+                  <input
+                    value={form.animations[0] ?? ""}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        animations: e.target.value ? [e.target.value] : ["idle"],
+                      }))
+                    }
+                    placeholder="idle"
+                    className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/25 focus:border-amber-500 focus:outline-none font-mono"
+                  />
+                  <p className="text-[9px] text-white/25">
+                    Upload file .json để mở skin/animation picker · Có thể nhập thủ công tên animation
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Manual URL fallback */}

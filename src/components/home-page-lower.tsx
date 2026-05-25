@@ -357,7 +357,7 @@ type SpineCharacterData = {
   slug: string;
   json_url: string | null;
   atlas_url: string | null;
-  animation: string;
+  animations: string[];
   skin: string | null;
   scale: number;
   offset_x: number;
@@ -913,7 +913,7 @@ export default function HomePageLower() {
                     <SpineCharacter
                       jsonUrl={careersCharacter.json_url}
                       atlasUrl={careersCharacter.atlas_url}
-                      animation={careersCharacter.animation ?? "idle"}
+                      animations={careersCharacter.animations ?? ["idle"]}
                       skin={careersCharacter.skin ?? undefined}
                       premultipliedAlpha={careersCharacter.premultiplied_alpha ?? false}
                       scale={careersCharacter.scale ?? 1.0}
@@ -1116,7 +1116,7 @@ export default function HomePageLower() {
                 <SpineCharacter
                   jsonUrl={contactCharacter.json_url}
                   atlasUrl={contactCharacter.atlas_url}
-                  animation={contactCharacter.animation ?? "idle"}
+                  animations={contactCharacter.animations ?? ["idle"]}
                   skin={contactCharacter.skin ?? undefined}
                   premultipliedAlpha={contactCharacter.premultiplied_alpha ?? false}
                   scale={contactCharacter.scale ?? 1.0}

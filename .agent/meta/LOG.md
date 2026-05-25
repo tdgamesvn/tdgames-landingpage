@@ -1,5 +1,46 @@
 # LOG
 
+## 2026-05-25 (session — audit Spine Animation & Skin Picker spec)
+### Task
+Kiểm tra xem spec `docs/superpowers/specs/2026-05-25-spine-animation-skin-picker-design.md` đã được implement chưa
+
+### Work Done
+- Đọc spec + kiểm tra từng file liên quan
+- Xác nhận: toàn bộ spec đã được implement đầy đủ trong các session trước
+- DB: `animations JSONB` column tồn tại trong `spine_characters` (default `'["idle"]'`)
+- Code: `types.ts`, `spine-character.tsx`, API routes, `SpineTab.tsx`, `home-page-lower.tsx` đều dùng `animations`
+- Cập nhật TASKS.md: thêm task vào Done
+
+### Result
+- Không cần làm thêm gì — feature đã complete
+- Spec chỉ thiếu entry trong TASKS.md
+
+### Next Step
+- Verify trên browser: upload file Spine JSON thật → kiểm tra skin dropdown + animation picker hoạt động
+- Test premultipliedAlpha toggle nếu còn viền đen
+
+## 2026-05-25 (session — migrate team + footer to Supabase)
+### Task
+Migrate `team[]` và `footer` từ `site.json` (git-tracked) sang Supabase để tránh bị reset mỗi lần deploy
+
+### Work Done
+- Supabase migration: tạo `team_members` + `site_config` tables, seed data từ site.json
+- Tạo `GET /api/team` public endpoint từ Supabase
+- Sửa `GET/PUT /api/admin/team` dùng Supabase thay fs
+- Sửa `GET/PUT /api/admin/footer` dùng Supabase thay fs
+- Sửa `GET /api/footer` public dùng Supabase thay fs
+- Sửa `about/page.tsx` `getTeam()` dùng Supabase thay fs.readFile
+- Cleanup: xoá `team[]` + `footer` khỏi `site.json`
+- Push all commits lên GitHub (auto-deploy)
+
+### Result
+- Team và Footer data không còn bị reset khi deploy
+- Admin UI → tab Team/Footer: save là persistent, không bị mất
+- Build pass, 5 commits đã push
+
+### Next Step
+- Verify production sau khi deploy xong: https://www.tdgamestudio.com
+
 ## 2026-05-25 (session — Spine visual controls)
 ### Task
 Thêm admin controls cho SpineCharacter: scale, offsetX/Y, premultipliedAlpha — fix viền đen

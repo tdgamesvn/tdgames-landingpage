@@ -42,8 +42,10 @@ export type SpineCharacterProps = {
   binaryUrl?: string;
   /** URL tới file .atlas */
   atlasUrl: string;
-  /** Tên animation mặc định (vd: "idle", "run", "attack") */
+  /** Tên animation mặc định (vd: "idle", "run", "attack") — kept for backwards compat */
   animation?: string;
+  /** Danh sách animations để loop tuần tự — ưu tiên hơn animation */
+  animations?: string[];
   /** Tên skin (nếu skeleton có nhiều skin) */
   skin?: string;
   /**
@@ -78,7 +80,8 @@ export function SpineCharacter({
   jsonUrl,
   binaryUrl,
   atlasUrl,
-  animation = "idle",
+  animation,
+  animations,
   skin,
   premultipliedAlpha = true,
   scale = 1,
@@ -114,8 +117,7 @@ export function SpineCharacter({
         binaryUrl,
         atlasUrl,
 
-        // Animation & skin
-        animation,
+        // Skin — animation controlled via success callback
         skin,
 
         // Render transparent — premultipliedAlpha:true fix viền đen
@@ -129,7 +131,43 @@ export function SpineCharacter({
         showLoading: false,
 
         // Callbacks
-        success: onSuccess ? () => onSuccess() : undefined,
+        success: (_player) => {
+          const anims =
+            animations && animations.length > 0
+              ? animations
+              : animation
+              ? [animation]
+              : ["idle"];
+
+          const state = (_player as any).animationState;
+          if (!state) {
+            onSuccess?.();
+            return;
+          }
+
+          if (anims.length === 1) {
+            state.setAnimation(0, anims[0], true);
+          } else {
+            state.setAnimation(0, anims[0], false);
+            for (let i = 1; i < anims.length; i++) {
+              state.addAnimation(0, anims[i], false, 0);
+            }
+            state.addListener({
+              complete: (entry: any) => {
+                if (
+                  entry.trackIndex === 0 &&
+                  entry.animation?.name === anims[anims.length - 1]
+                ) {
+                  state.setAnimation(0, anims[0], false);
+                  for (let i = 1; i < anims.length; i++) {
+                    state.addAnimation(0, anims[i], false, 0);
+                  }
+                }
+              },
+            });
+          }
+          onSuccess?.();
+        },
         error: onError ? (_player: unknown, msg: string) => onError(msg) : undefined,
       });
     });
@@ -144,7 +182,7 @@ export function SpineCharacter({
       playerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jsonUrl, binaryUrl, atlasUrl, animation, skin, premultipliedAlpha]);
+  }, [jsonUrl, binaryUrl, atlasUrl, animation, animations, skin, premultipliedAlpha]);
 
   // Tính transform string từ scale + offset
   const transformParts: string[] = [];

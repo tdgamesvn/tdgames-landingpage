@@ -76,15 +76,28 @@ Key cần nhập: giá trị của `ADMIN_SECRET` trong `.env.local`
 
 ---
 
-## Git
+## Git & Deploy
 
 ```bash
 # Check status
 git status
 git log --oneline -10
 
-# Push lên GitHub
+# Push lên GitHub → tự động trigger GitHub Action deploy lên VPS
 git push origin main
+```
+
+> ⚡ **Auto-deploy:** `git push origin main` sẽ trigger GitHub Actions workflow tự động build + deploy lên VPS. **Không cần** SSH vào VPS chạy tay nữa.
+
+---
+
+## VPS (chỉ khi cần can thiệp thủ công)
+
+```bash
+tailscale ssh root@vps6core
+cd /opt/tdgames-landingpage
+pm2 status
+pm2 logs tdgames-landingpage --lines 50
 ```
 
 ---
