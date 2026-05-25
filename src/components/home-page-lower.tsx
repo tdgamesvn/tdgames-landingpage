@@ -371,32 +371,38 @@ function proxyCdnUrl(url: string | null | undefined): string | undefined {
   return url.replace("https://cdn.tdgamestudio.com/", "/cdn-proxy/");
 }
 
-function useCareersCharacter() {
-  const [character, setCharacter] = useState<SpineCharacterData | null>(null);
+/** Fetch tất cả active Spine characters 1 lần, proxy CDN URLs */
+function useSpineCharacters() {
+  const [characters, setCharacters] = useState<SpineCharacterData[]>([]);
 
   useEffect(() => {
     fetch("/api/spine")
       .then((r) => r.json())
       .then((data: { characters: SpineCharacterData[] }) => {
-        const found = (data.characters ?? []).find((c) => c.slug === "careers-hero");
-        if (found) {
-          // Proxy CDN URLs through same origin so Spine player XHR requests don't hit CORS
-          setCharacter({
-            ...found,
-            json_url: proxyCdnUrl(found.json_url) ?? found.json_url,
-            atlas_url: proxyCdnUrl(found.atlas_url) ?? found.atlas_url,
-          });
-        }
+        setCharacters(
+          (data.characters ?? []).map((c) => ({
+            ...c,
+            json_url: proxyCdnUrl(c.json_url) ?? c.json_url,
+            atlas_url: proxyCdnUrl(c.atlas_url) ?? c.atlas_url,
+          }))
+        );
       })
-      .catch(() => { /* silently fall back to placeholder */ });
+      .catch(() => { /* silently fall back to empty */ });
   }, []);
 
-  return character;
+  return characters;
+}
+
+/** Helper tìm character theo slug */
+function findCharacter(list: SpineCharacterData[], slug: string) {
+  return list.find((c) => c.slug === slug) ?? null;
 }
 
 export default function HomePageLower() {
   const [activeMarqueeFilter, setActiveMarqueeFilter] = useState(characterMarqueeFilters[0]);
-  const careersCharacter = useCareersCharacter();
+  const spineCharacters = useSpineCharacters();
+  const careersCharacter = findCharacter(spineCharacters, "careers-hero");
+  const contactCharacter = findCharacter(spineCharacters, "contact-mascot");
 
   return (
     <>
@@ -1074,7 +1080,8 @@ export default function HomePageLower() {
 
           <BlogPreviewGrid />
 
-          <div className="mt-14 grid gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 md:grid-cols-[1fr_180px] md:items-center md:p-10">
+          <div className="mt-14 grid gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 md:grid-cols-[1fr_240px_160px] md:items-center md:p-10">
+            {/* Text + buttons */}
             <div>
               <StudioSectionTitle
                 sectionNum="// 08"
@@ -1102,6 +1109,25 @@ export default function HomePageLower() {
                 </a>
               </div>
             </div>
+
+            {/* Spine character — center column */}
+            <div className="relative hidden h-[220px] w-full md:block">
+              {contactCharacter?.json_url && contactCharacter?.atlas_url ? (
+                <SpineCharacter
+                  jsonUrl={contactCharacter.json_url}
+                  atlasUrl={contactCharacter.atlas_url}
+                  animation={contactCharacter.animation ?? "idle"}
+                  skin={contactCharacter.skin ?? undefined}
+                  premultipliedAlpha={contactCharacter.premultiplied_alpha ?? false}
+                  scale={contactCharacter.scale ?? 1.0}
+                  offsetX={contactCharacter.offset_x ?? 0}
+                  offsetY={contactCharacter.offset_y ?? 0}
+                  className="h-full w-full"
+                />
+              ) : null}
+            </div>
+
+            {/* Game logo */}
             <div className="relative mx-auto h-[160px] w-[160px]">
               <Image
                 src="https://cdn.tdgamestudio.com/landing/logoCompany/5-min-1-1024x970.jpg"
