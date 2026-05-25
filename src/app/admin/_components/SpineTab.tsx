@@ -65,6 +65,9 @@ export function SpineTab({ adminKey }: Props) {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // UI: show/hide replace-file section when editing existing character
+  const [showReplaceFiles, setShowReplaceFiles] = useState(false);
+
   useEffect(() => { void load(); }, []); // eslint-disable-line
 
   async function load() {
@@ -84,6 +87,7 @@ export function SpineTab({ adminKey }: Props) {
     setForm(BLANK);
     clearFiles();
     resetParsed();
+    setShowReplaceFiles(false);
   }
 
   function openEdit(c: SpineCharacter) {
@@ -103,6 +107,7 @@ export function SpineTab({ adminKey }: Props) {
     });
     clearFiles();
     resetParsed();
+    setShowReplaceFiles(false);
   }
 
   function closeEditor() {
@@ -111,6 +116,7 @@ export function SpineTab({ adminKey }: Props) {
     clearFiles();
     resetParsed();
     setMsg("");
+    setShowReplaceFiles(false);
   }
 
   function clearFiles() {
@@ -479,65 +485,174 @@ export function SpineTab({ adminKey }: Props) {
               </label>
             </div>
 
-            {/* File upload zones */}
-            <div className="space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                Files Spine (upload → R2 tự động)
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <FileZone
-                  label="JSON (hoặc SKEL)"
-                  accept=".json,.skel"
-                  file={skelFile ?? jsonFile}
-                  onPick={(f) => {
-                    if (f.name.endsWith(".skel")) {
-                      setSkelFile(f);
-                    } else {
-                      setJsonFile(f);
-                      void parseSpineJson(f);
+            {/* File upload zones — new vs edit */}
+            {editId === "__new__" ? (
+              /* ── CREATE MODE: show upload zones ───────────────────────────── */
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Files Spine (upload → R2 tự động)
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <FileZone
+                    label="JSON (hoặc SKEL)"
+                    accept=".json,.skel"
+                    file={skelFile ?? jsonFile}
+                    onPick={(f) => {
+                      if (f.name.endsWith(".skel")) {
+                        setSkelFile(f);
+                      } else {
+                        setJsonFile(f);
+                        void parseSpineJson(f);
+                      }
+                    }}
+                    hint=".json hoặc .skel"
+                  />
+                  <FileZone
+                    label="Atlas"
+                    accept=".atlas"
+                    file={atlasFile}
+                    onPick={setAtlasFile}
+                    hint=".atlas"
+                  />
+                </div>
+                <label className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-white/20 bg-white/3 px-3 py-3 text-center transition hover:border-amber-500/50 hover:bg-white/5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                    Texture PNGs (có thể chọn nhiều)
+                  </span>
+                  {pngFiles.length > 0 ? (
+                    <span className="text-xs text-amber-400">
+                      {pngFiles.map((f) => f.name).join(", ")}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-white/25">.png</span>
+                  )}
+                  <input
+                    type="file"
+                    accept=".png,.webp"
+                    multiple
+                    className="sr-only"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      if (files.length) setPngFiles(files);
+                    }}
+                  />
+                </label>
+                {parsedAnimations.length > 0 && (
+                  <p className="text-[10px] text-emerald-400/80">
+                    ✓ Parsed {parsedAnimations.length} animations, {parsedSkins.length} skins từ JSON
+                  </p>
+                )}
+              </div>
+            ) : (
+              /* ── EDIT MODE: show existing files + collapsible replace section */
+              <div className="space-y-2">
+                {/* Current file status */}
+                <div className="rounded-lg border border-white/10 bg-white/3 px-3 py-2.5 space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">
+                    Files hiện tại
+                  </p>
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 shrink-0 text-xs leading-4">✓</span>
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-white/40 font-bold uppercase">JSON/SKEL</span>
+                      {form.json_url ? (
+                        <p className="font-mono text-[11px] text-white/60 truncate" title={form.json_url}>
+                          {form.json_url.split("/").pop()}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-red-400/60">Chưa có file</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 shrink-0 text-xs leading-4">✓</span>
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-white/40 font-bold uppercase">Atlas</span>
+                      {form.atlas_url ? (
+                        <p className="font-mono text-[11px] text-white/60 truncate" title={form.atlas_url}>
+                          {form.atlas_url.split("/").pop()}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-red-400/60">Chưa có file</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Toggle replace section */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReplaceFiles((v) => !v);
+                    if (showReplaceFiles) {
+                      clearFiles();
+                      resetParsed();
                     }
                   }}
-                  hint=".json hoặc .skel"
-                />
-                <FileZone
-                  label="Atlas"
-                  accept=".atlas"
-                  file={atlasFile}
-                  onPick={setAtlasFile}
-                  hint=".atlas"
-                />
-              </div>
+                  className="flex w-full items-center gap-2 rounded-lg border border-dashed border-white/15 px-3 py-2 text-[11px] text-white/40 transition hover:border-amber-500/40 hover:text-white/60"
+                >
+                  <span>{showReplaceFiles ? "✕ Huỷ thay thế file" : "↑ Thay thế file (tuỳ chọn)"}</span>
+                </button>
 
-              {/* PNG textures */}
-              <label className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-white/20 bg-white/3 px-3 py-3 text-center transition hover:border-amber-500/50 hover:bg-white/5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                  Texture PNGs (có thể chọn nhiều)
-                </span>
-                {pngFiles.length > 0 ? (
-                  <span className="text-xs text-amber-400">
-                    {pngFiles.map((f) => f.name).join(", ")}
-                  </span>
-                ) : (
-                  <span className="text-[11px] text-white/25">.png</span>
+                {showReplaceFiles && (
+                  <div className="space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/3 p-3">
+                    <p className="text-[10px] text-amber-400/70">
+                      Chọn file mới để thay thế. Để trống = giữ nguyên file cũ.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <FileZone
+                        label="JSON (hoặc SKEL)"
+                        accept=".json,.skel"
+                        file={skelFile ?? jsonFile}
+                        onPick={(f) => {
+                          if (f.name.endsWith(".skel")) {
+                            setSkelFile(f);
+                          } else {
+                            setJsonFile(f);
+                            void parseSpineJson(f);
+                          }
+                        }}
+                        hint=".json hoặc .skel"
+                      />
+                      <FileZone
+                        label="Atlas"
+                        accept=".atlas"
+                        file={atlasFile}
+                        onPick={setAtlasFile}
+                        hint=".atlas"
+                      />
+                    </div>
+                    <label className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-white/20 bg-white/3 px-3 py-3 text-center transition hover:border-amber-500/50 hover:bg-white/5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                        Texture PNGs (có thể chọn nhiều)
+                      </span>
+                      {pngFiles.length > 0 ? (
+                        <span className="text-xs text-amber-400">
+                          {pngFiles.map((f) => f.name).join(", ")}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-white/25">.png</span>
+                      )}
+                      <input
+                        type="file"
+                        accept=".png,.webp"
+                        multiple
+                        className="sr-only"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files ?? []);
+                          if (files.length) setPngFiles(files);
+                        }}
+                      />
+                    </label>
+                    {parsedAnimations.length > 0 && (
+                      <p className="text-[10px] text-emerald-400/80">
+                        ✓ Parsed {parsedAnimations.length} animations, {parsedSkins.length} skins từ JSON
+                      </p>
+                    )}
+                  </div>
                 )}
-                <input
-                  type="file"
-                  accept=".png,.webp"
-                  multiple
-                  className="sr-only"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files ?? []);
-                    if (files.length) setPngFiles(files);
-                  }}
-                />
-              </label>
-
-              {parsedAnimations.length > 0 && (
-                <p className="text-[10px] text-emerald-400/80">
-                  ✓ Parsed {parsedAnimations.length} animations, {parsedSkins.length} skins từ JSON
-                </p>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* ── Skin picker ───────────────────────────────────────────────── */}
             <div className="space-y-1">
@@ -683,24 +798,26 @@ export function SpineTab({ adminKey }: Props) {
               )}
             </div>
 
-            {/* Manual URL fallback */}
-            <div className="space-y-2 border-t border-white/8 pt-3">
-              <p className="text-[10px] text-white/30">
-                Hoặc nhập URL CDN trực tiếp (nếu đã upload thủ công):
-              </p>
-              <input
-                value={form.json_url}
-                onChange={(e) => setForm((f) => ({ ...f, json_url: e.target.value }))}
-                placeholder="https://cdn.tdgamestudio.com/landing/spine/…/character.json"
-                className="w-full rounded-lg border border-white/10 bg-white/3 px-3 py-2 text-[11px] text-white/60 placeholder-white/20 focus:border-amber-500 focus:outline-none font-mono"
-              />
-              <input
-                value={form.atlas_url}
-                onChange={(e) => setForm((f) => ({ ...f, atlas_url: e.target.value }))}
-                placeholder="https://cdn.tdgamestudio.com/landing/spine/…/character.atlas"
-                className="w-full rounded-lg border border-white/10 bg-white/3 px-3 py-2 text-[11px] text-white/60 placeholder-white/20 focus:border-amber-500 focus:outline-none font-mono"
-              />
-            </div>
+            {/* Manual URL — only show when creating new */}
+            {editId === "__new__" && (
+              <div className="space-y-2 border-t border-white/8 pt-3">
+                <p className="text-[10px] text-white/30">
+                  Hoặc nhập URL CDN trực tiếp (nếu đã upload thủ công):
+                </p>
+                <input
+                  value={form.json_url}
+                  onChange={(e) => setForm((f) => ({ ...f, json_url: e.target.value }))}
+                  placeholder="https://cdn.tdgamestudio.com/landing/spine/…/character.json"
+                  className="w-full rounded-lg border border-white/10 bg-white/3 px-3 py-2 text-[11px] text-white/60 placeholder-white/20 focus:border-amber-500 focus:outline-none font-mono"
+                />
+                <input
+                  value={form.atlas_url}
+                  onChange={(e) => setForm((f) => ({ ...f, atlas_url: e.target.value }))}
+                  placeholder="https://cdn.tdgamestudio.com/landing/spine/…/character.atlas"
+                  className="w-full rounded-lg border border-white/10 bg-white/3 px-3 py-2 text-[11px] text-white/60 placeholder-white/20 focus:border-amber-500 focus:outline-none font-mono"
+                />
+              </div>
+            )}
 
             {/* ── Visual Controls ───────────────────────────────────────────── */}
             <div className="space-y-3 border-t border-white/8 pt-4">
