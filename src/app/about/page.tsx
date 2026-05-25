@@ -22,10 +22,19 @@ async function getAbout(): Promise<AboutData> {
 }
 
 async function getTeam(): Promise<TeamMember[]> {
-  const filePath = path.join(process.cwd(), "src", "content", "site.json");
-  const raw = await fs.readFile(filePath, "utf8");
-  const data = JSON.parse(raw);
-  return data.team ?? [];
+  try {
+    const { getSupabaseAdmin } = await import("@/lib/supabase-admin");
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("team_members")
+      .select("id, name, title, photo")
+      .eq("active", true)
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  } catch {
+    return [];
+  }
 }
 
 export default async function AboutPage() {
