@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
-import { zipSync } from "fflate";
+import { execFile } from "child_process";
+import { promisify } from "util";
+import { writeFile, mkdir, rm } from "fs/promises";
+import path from "path";
+import os from "os";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const execFileAsync = promisify(execFile);
 
 // ---------------------------------------------------------------------------
 // Auth helper
@@ -56,7 +62,6 @@ function buildHtml(
 
   const anims = JSON.stringify(animations);
 
-  // Build animation sequence JS — mirrors spine-character.tsx logic
   const animScript = `
     var anims = ${anims};
     var state = player.animationState;
@@ -89,7 +94,6 @@ function buildHtml(
       ? `background: #${bgColor.replace(/^#/, "")};`
       : "background: transparent;";
 
-  // CSS transform — mirrors spine-character.tsx transform logic
   const transformParts: string[] = [];
   if (char.offset_x !== 0 || char.offset_y !== 0)
     transformParts.push(`translate(${char.offset_x}px, ${char.offset_y}px)`);
@@ -169,7 +173,7 @@ export async function POST(
     const text = await request.text();
     if (text.trim()) body = JSON.parse(text) as RequestBody;
   } catch {
-    // Empty or non-JSON body is fine — all fields optional
+    // Empty or non-JSON body is fine
   }
 
   const bgType = body.bgType ?? "none";
@@ -195,101 +199,91 @@ export async function POST(
 
   if (!char.itchio_game_id) {
     return NextResponse.json(
-      { error: "itchio_game_id is not set for this character. Set it in Admin → Spine first." },
+      { error: "itchio_game_id is not set. Set it in Admin → Spine → Edit character first." },
       { status: 400 }
     );
   }
 
-  // 4. Get current itch.io user
+  // 4. Get itch.io username (for embed URL construction)
   const meRes = await fetch(`https://itch.io/api/1/${apiKey}/me`);
   if (!meRes.ok) {
-    const text = await meRes.text().catch(() => meRes.statusText);
-    return NextResponse.json({ error: `itch.io API error: ${text}` }, { status: 502 });
+    return NextResponse.json(
+      { error: `itch.io auth failed (HTTP ${meRes.status}). Check ITCHIO_API_KEY.` },
+      { status: 502 }
+    );
   }
-  const meJson = await meRes.json() as { errors?: string[]; user?: { username: string; url?: string } };
+  const meJson = await meRes.json() as { errors?: string[]; user?: { username: string } };
   if (meJson.errors?.length) {
-    return NextResponse.json({ error: `itch.io API error: ${meJson.errors.join(", ")}` }, { status: 502 });
+    return NextResponse.json({ error: `itch.io API: ${meJson.errors.join(", ")}` }, { status: 502 });
   }
   const username = meJson.user?.username ?? "";
 
-  // 5. Verify game exists on itch.io
+  // 5. Get game slug to construct embed URL
   const gameRes = await fetch(`https://itch.io/api/1/${apiKey}/game/${char.itchio_game_id}`);
-  if (gameRes.status === 404) {
+  if (!gameRes.ok) {
     return NextResponse.json(
-      { error: "Game not found on itch.io. Check itchio_game_id." },
+      { error: `Game ${char.itchio_game_id} not found on itch.io. Check itchio_game_id.` },
       { status: 400 }
     );
   }
-  if (!gameRes.ok) {
-    const text = await gameRes.text().catch(() => gameRes.statusText);
-    return NextResponse.json({ error: `itch.io game API error: ${text}` }, { status: 502 });
-  }
   const gameJson = await gameRes.json() as {
     errors?: string[];
-    game?: { id: number; url: string; title: string; slug?: string };
+    game?: { url: string; title: string };
   };
   if (gameJson.errors?.length) {
-    return NextResponse.json({ error: `itch.io game API error: ${gameJson.errors.join(", ")}` }, { status: 502 });
+    return NextResponse.json({ error: `itch.io: ${gameJson.errors.join(", ")}` }, { status: 502 });
   }
 
-  // Extract game URL — prefer explicit url field, fallback to constructed URL
-  const gameUrl: string =
-    gameJson.game?.url ||
-    `https://${username}.itch.io/${char.slug}`;
+  // Derive slug from game URL: "https://tdgamesvn.itch.io/tdgames-spine-character" → "tdgames-spine-character"
+  const gameUrl = gameJson.game?.url ?? `https://${username}.itch.io/${char.slug}`;
+  const gameSlug = gameUrl.split("/").filter(Boolean).pop() ?? char.slug;
 
   // 6. Generate HTML
   const htmlContent = buildHtml(char, bgType, bgColor);
 
-  // 7. Create ZIP using fflate
-  const encoded = new TextEncoder().encode(htmlContent);
-  const zipBuffer = zipSync({ "index.html": encoded });
-
-  // 8. Upload to itch.io
-  const form = new FormData();
-  form.append(
-    "uploadFile",
-    new Blob([zipBuffer], { type: "application/zip" }),
-    "game.zip"
-  );
-  form.append("channel_name", "html5");
-  form.append("user_version", String(Date.now()));
-
-  const uploadRes = await fetch(
-    `https://itch.io/api/1/${apiKey}/game/${char.itchio_game_id}/upload`,
-    { method: "POST", body: form }
-  );
-
-  let uploadJson: Record<string, unknown>;
+  // 7. Write to temp dir & butler push
+  const tmpDir = path.join(os.tmpdir(), `spine-publish-${id}-${Date.now()}`);
   try {
-    uploadJson = await uploadRes.json() as Record<string, unknown>;
-  } catch {
-    const text = await uploadRes.text().catch(() => uploadRes.statusText);
-    return NextResponse.json({ error: `itch.io upload response parse error: ${text}` }, { status: 502 });
+    await mkdir(tmpDir, { recursive: true });
+    await writeFile(path.join(tmpDir, "index.html"), htmlContent, "utf-8");
+
+    // butler push <dir> <user>/<game>:<channel> --api-key <key>
+    const butlerTarget = `${username}/${gameSlug}:html5`;
+    const { stdout, stderr } = await execFileAsync(
+      "butler",
+      ["push", tmpDir, butlerTarget, "--api-key", apiKey],
+      {
+        timeout: 120_000,                  // 2 min max
+        env: { ...process.env, HOME: "/root" }, // butler needs HOME for cache
+      }
+    );
+
+    console.log("[butler push] stdout:", stdout);
+    if (stderr) console.warn("[butler push] stderr:", stderr);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { error: `butler push failed: ${msg}` },
+      { status: 500 }
+    );
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
 
-  if (!uploadRes.ok || (uploadJson.errors as string[] | undefined)?.length) {
-    const errMsg = Array.isArray(uploadJson.errors)
-      ? (uploadJson.errors as string[]).join(", ")
-      : uploadRes.statusText;
-    return NextResponse.json({ error: `itch.io upload failed: ${errMsg}` }, { status: 502 });
-  }
+  // 8. Build embed URL (itch.io embed iframe format)
+  const embedUrl = `https://itch.io/embed/${char.itchio_game_id}`;
 
-  // 9. Derive embed URL
-  // itch.io embed URL pattern: https://{username}.itch.io/{game-slug}
-  // The embed URL for iframe use is typically the game URL itself.
-  const embedUrl = gameUrl;
-
-  // 10. Update DB with embed URL
+  // 9. Save embed URL to DB
   await supabase
     .from("spine_characters")
     .update({ itchio_embed_url: embedUrl, updated_at: new Date().toISOString() })
     .eq("id", id);
 
-  // 11. Return success
+  // 10. Return success
   return NextResponse.json({
     success: true,
     embed_url: embedUrl,
     game_url: gameUrl,
-    upload: uploadJson,
+    butler_target: `${username}/${gameSlug}:html5`,
   });
 }
