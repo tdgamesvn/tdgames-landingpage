@@ -41,6 +41,10 @@ export async function POST(request: Request) {
       env: {
         ...process.env,
         ADMIN_KEY: adminSecret,
+        // Ensure script fetches from the correct port (process.env.PORT set by PM2)
+        MAPPING_API_URL:
+          process.env.MAPPING_API_URL ??
+          `http://localhost:${process.env.PORT ?? 3000}/api/admin/media/mapping`,
       },
     });
 
