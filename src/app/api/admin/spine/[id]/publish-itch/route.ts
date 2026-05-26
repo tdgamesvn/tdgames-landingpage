@@ -247,14 +247,15 @@ export async function POST(
     await mkdir(tmpDir, { recursive: true });
     await writeFile(path.join(tmpDir, "index.html"), htmlContent, "utf-8");
 
-    // butler push <dir> <user>/<game>:<channel> --api-key <key>
+    // butler push <dir> <user>/<game>:<channel>
+    // Auth via BUTLER_API_KEY env var (--api-key flag removed in butler v15+)
     const butlerTarget = `${username}/${gameSlug}:html5`;
     const { stdout, stderr } = await execFileAsync(
       "butler",
-      ["push", tmpDir, butlerTarget, "--api-key", apiKey],
+      ["push", tmpDir, butlerTarget],
       {
         timeout: 120_000,                  // 2 min max
-        env: { ...process.env, HOME: "/root" }, // butler needs HOME for cache
+        env: { ...process.env, HOME: "/root", BUTLER_API_KEY: apiKey },
       }
     );
 
