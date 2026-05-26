@@ -68,6 +68,18 @@ export function SpineTab({ adminKey }: Props) {
   // UI: show/hide replace-file section when editing existing character
   const [showReplaceFiles, setShowReplaceFiles] = useState(false);
 
+  // ── Embed URL Builder state ──────────────────────────────────────────────────
+  const [embedSlug, setEmbedSlug] = useState("");
+  const [embedBgType, setEmbedBgType] = useState<"none" | "color" | "image">("none");
+  const [embedBgColor, setEmbedBgColor] = useState("0a0a0a");
+  const [embedBgImageUrl, setEmbedBgImageUrl] = useState("");
+  const [embedBgSize, setEmbedBgSize] = useState("cover");
+  const [embedBgPos, setEmbedBgPos] = useState("center");
+  const [embedScale, setEmbedScale] = useState("");
+  const [embedX, setEmbedX] = useState("");
+  const [embedY, setEmbedY] = useState("");
+  const [embedCopied, setEmbedCopied] = useState(false);
+
   useEffect(() => { void load(); }, []); // eslint-disable-line
 
   async function load() {
@@ -331,6 +343,31 @@ export function SpineTab({ adminKey }: Props) {
     });
   }
 
+  // ── Embed URL builder ───────────────────────────────────────────────────────
+  function buildEmbedUrl(slug: string) {
+    if (!slug) return "";
+    const base = `https://www.tdgamestudio.com/spine-demo/${slug}`;
+    const params = new URLSearchParams();
+    if (embedBgType !== "none") params.set("bg", embedBgType);
+    if (embedBgType === "color") params.set("c", embedBgColor.replace(/^#/, ""));
+    if (embedBgType === "image" && embedBgImageUrl) params.set("img", embedBgImageUrl);
+    if (embedBgType === "image" && embedBgSize !== "cover") params.set("bgs", embedBgSize);
+    if (embedBgType === "image" && embedBgPos !== "center") params.set("bgp", embedBgPos);
+    if (embedScale) params.set("scale", embedScale);
+    if (embedX) params.set("x", embedX);
+    if (embedY) params.set("y", embedY);
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+  }
+
+  async function copyEmbedUrl() {
+    const url = buildEmbedUrl(embedSlug);
+    if (!url) return;
+    await navigator.clipboard.writeText(url);
+    setEmbedCopied(true);
+    setTimeout(() => setEmbedCopied(false), 2000);
+  }
+
   // ── File drop zone ─────────────────────────────────────────────────────────
   function FileZone({
     label,
@@ -473,6 +510,189 @@ export function SpineTab({ adminKey }: Props) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── Embed URL Builder ────────────────────────────────────────────────── */}
+      {characters.length > 0 && (
+        <div className="rounded-xl border border-white/10 bg-white/3 p-4 space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-white">Embed URL Builder</h3>
+            <p className="mt-0.5 text-[11px] text-white/40">
+              Tạo link demo để nhúng vào Behance / portfolio qua iframe
+            </p>
+          </div>
+
+          {/* Character selector */}
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Character</span>
+            <select
+              value={embedSlug}
+              onChange={(e) => {
+                const slug = e.target.value;
+                setEmbedSlug(slug);
+                // Pre-fill scale/offset from DB
+                const char = characters.find((c) => c.slug === slug);
+                if (char) {
+                  setEmbedScale(String(char.scale ?? 1));
+                  setEmbedX(String(char.offset_x ?? 0));
+                  setEmbedY(String(char.offset_y ?? 0));
+                }
+              }}
+              className="w-full rounded-lg border border-white/15 bg-[#1a1a1a] px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
+            >
+              <option value="">-- Chọn character --</option>
+              {characters.filter((c) => c.active).map((c) => (
+                <option key={c.slug} value={c.slug}>{c.name} ({c.slug})</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Background type */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Background</span>
+            <div className="flex gap-2">
+              {(["none", "color", "image"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setEmbedBgType(t)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition ${
+                    embedBgType === t
+                      ? "bg-amber-500 text-black"
+                      : "border border-white/15 text-white/50 hover:text-white"
+                  }`}
+                >
+                  {t === "none" ? "Transparent" : t === "color" ? "Màu trơn" : "Ảnh"}
+                </button>
+              ))}
+            </div>
+
+            {/* Color picker */}
+            {embedBgType === "color" && (
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={`#${embedBgColor}`}
+                  onChange={(e) => setEmbedBgColor(e.target.value.replace("#", ""))}
+                  className="h-9 w-9 cursor-pointer rounded border border-white/15 bg-transparent p-0.5"
+                />
+                <input
+                  value={`#${embedBgColor}`}
+                  onChange={(e) => setEmbedBgColor(e.target.value.replace(/^#/, ""))}
+                  placeholder="#0a0a0a"
+                  className="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 font-mono text-sm text-white focus:border-amber-500 focus:outline-none"
+                />
+                <div
+                  className="h-9 w-9 shrink-0 rounded border border-white/20"
+                  style={{ background: `#${embedBgColor}` }}
+                />
+              </div>
+            )}
+
+            {/* Image URL + size/position */}
+            {embedBgType === "image" && (
+              <div className="space-y-2">
+                <input
+                  value={embedBgImageUrl}
+                  onChange={(e) => setEmbedBgImageUrl(e.target.value)}
+                  placeholder="https://cdn.tdgamestudio.com/... hoặc URL ảnh bất kỳ"
+                  className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 font-mono text-xs text-white placeholder-white/25 focus:border-amber-500 focus:outline-none"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-white/35">Size</span>
+                    <select
+                      value={embedBgSize}
+                      onChange={(e) => setEmbedBgSize(e.target.value)}
+                      className="w-full rounded-lg border border-white/15 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none"
+                    >
+                      <option value="cover">cover (cắt vừa khung)</option>
+                      <option value="contain">contain (thu vừa khung)</option>
+                      <option value="100% 100%">stretch (kéo giãn)</option>
+                      <option value="auto">auto (giữ nguyên)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-white/35">Position</span>
+                    <select
+                      value={embedBgPos}
+                      onChange={(e) => setEmbedBgPos(e.target.value)}
+                      className="w-full rounded-lg border border-white/15 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none"
+                    >
+                      <option value="center">center</option>
+                      <option value="top center">top center</option>
+                      <option value="bottom center">bottom center</option>
+                      <option value="left center">left center</option>
+                      <option value="right center">right center</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Character position overrides */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+              Vị trí nhân vật (override DB)
+            </span>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Scale", value: embedScale, set: setEmbedScale, placeholder: "1.0" },
+                { label: "Offset X", value: embedX, set: setEmbedX, placeholder: "0" },
+                { label: "Offset Y", value: embedY, set: setEmbedY, placeholder: "0" },
+              ].map(({ label, value, set, placeholder }) => (
+                <div key={label} className="space-y-1">
+                  <span className="text-[10px] text-white/35">{label}</span>
+                  <input
+                    value={value}
+                    onChange={(e) => set(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-center font-mono text-xs text-white placeholder-white/25 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="text-[9px] text-white/25">
+              Để trống = dùng giá trị đã lưu trong DB của character đó
+            </p>
+          </div>
+
+          {/* Generated URL + actions */}
+          {embedSlug && (
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">URL</span>
+              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2">
+                <code className="flex-1 break-all font-mono text-[11px] text-amber-400/90">
+                  {buildEmbedUrl(embedSlug)}
+                </code>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void copyEmbedUrl()}
+                  className="flex-1 rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-black transition hover:bg-amber-400"
+                >
+                  {embedCopied ? "✓ Đã copy!" : "Copy URL"}
+                </button>
+                <a
+                  href={buildEmbedUrl(embedSlug)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-white/15 px-4 py-2 text-xs text-white/60 transition hover:text-white"
+                >
+                  Preview ↗
+                </a>
+              </div>
+              <div className="rounded-lg border border-white/8 bg-white/3 px-3 py-2">
+                <p className="text-[10px] font-bold text-white/40 mb-1">Behance iframe code</p>
+                <code className="break-all font-mono text-[10px] text-white/50">
+                  {`<iframe src="${buildEmbedUrl(embedSlug)}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`}
+                </code>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
