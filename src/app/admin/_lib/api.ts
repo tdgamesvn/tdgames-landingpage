@@ -258,6 +258,23 @@ export async function uploadSpineFile(args: {
   return jsonOrThrow<{ key: string; url: string; size: number }>(res);
 }
 
+export async function publishToItch(args: {
+  adminKey: string;
+  id: string;
+  bgType?: "none" | "color";
+  bgColor?: string;
+}): Promise<{ success: boolean; embed_url: string; game_url: string }> {
+  const res = await fetch(`/api/admin/spine/${encodeURIComponent(args.id)}/publish-itch`, {
+    method: "POST",
+    headers: {
+      "x-admin-key": args.adminKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ bgType: args.bgType, bgColor: args.bgColor }),
+  });
+  return jsonOrThrow<{ success: boolean; embed_url: string; game_url: string }>(res);
+}
+
 // ──────────────────────────────────────────────────────────────────── Helpers
 
 const IMAGE_EXT = /\.(png|jpe?g|webp|gif|avif|svg)(\?.*)?$/i;

@@ -7,6 +7,7 @@ import {
   patchSpineCharacter,
   deleteSpineCharacter,
   uploadSpineFile,
+  publishToItch,
 } from "../_lib/api";
 import type { SpineCharacter } from "../_lib/types";
 
@@ -24,6 +25,7 @@ type FormState = {
   offset_x: number;
   offset_y: number;
   premultiplied_alpha: boolean;
+  itchio_game_id: string;
 };
 
 const BLANK: FormState = {
@@ -38,6 +40,7 @@ const BLANK: FormState = {
   offset_x: 0,
   offset_y: 0,
   premultiplied_alpha: true,
+  itchio_game_id: "",
 };
 
 function toSlug(s: string) {
@@ -80,6 +83,8 @@ export function SpineTab({ adminKey }: Props) {
   const [embedY, setEmbedY] = useState("");
   const [embedCopied, setEmbedCopied] = useState(false);
   const [itchCopied, setItchCopied] = useState(false);
+  const [publishing, setPublishing] = useState<string | null>(null); // character id being published
+  const [publishMsg, setPublishMsg] = useState<Record<string, string>>({}); // id → message
 
   useEffect(() => { void load(); }, []); // eslint-disable-line
 
@@ -117,6 +122,7 @@ export function SpineTab({ adminKey }: Props) {
       offset_x: c.offset_x ?? 0,
       offset_y: c.offset_y ?? 0,
       premultiplied_alpha: c.premultiplied_alpha ?? true,
+      itchio_game_id: c.itchio_game_id ?? "",
     });
     clearFiles();
     resetParsed();
@@ -266,6 +272,7 @@ export function SpineTab({ adminKey }: Props) {
         offset_x: form.offset_x,
         offset_y: form.offset_y,
         premultiplied_alpha: form.premultiplied_alpha,
+        itchio_game_id: form.itchio_game_id.trim() || undefined,
       };
 
       if (editId === "__new__") {
@@ -306,6 +313,32 @@ export function SpineTab({ adminKey }: Props) {
       setCharacters((prev) => prev.map((x) => (x.id === c.id ? updated : x)));
     } catch (e) {
       setMsg(`❌ ${e instanceof Error ? e.message : "lỗi"}`);
+    }
+  }
+
+  // ── Itch.io publish ─────────────────────────────────────────────────────────
+  async function handlePublishItch(c: SpineCharacter) {
+    if (!c.itchio_game_id) {
+      setPublishMsg((m) => ({ ...m, [c.id]: "❌ Chưa có Itch.io Game ID. Nhấn Edit → điền Game ID → Lưu trước." }));
+      return;
+    }
+    setPublishing(c.id);
+    setPublishMsg((m) => ({ ...m, [c.id]: "🚀 Đang publish lên itch.io…" }));
+    try {
+      const result = await publishToItch({ adminKey, id: c.id });
+      setCharacters((prev) =>
+        prev.map((x) =>
+          x.id === c.id ? { ...x, itchio_embed_url: result.embed_url } : x
+        )
+      );
+      setPublishMsg((m) => ({ ...m, [c.id]: `✅ Published! ${result.embed_url}` }));
+    } catch (e) {
+      setPublishMsg((m) => ({
+        ...m,
+        [c.id]: `❌ ${e instanceof Error ? e.message : "Lỗi không xác định"}`,
+      }));
+    } finally {
+      setPublishing(null);
     }
   }
 
@@ -596,22 +629,62 @@ export function SpineTab({ adminKey }: Props) {
                   ) : (
                     <span className="text-red-400/60">❌ Chưa có atlas</span>
                   )}
+                  {c.itchio_game_id && (
+                    <span className="text-purple-400/60">
+                      itch.io #{c.itchio_game_id}
+                    </span>
+                  )}
                 </div>
+                {/* Itch.io publish status + embed URL */}
+                {(c.itchio_embed_url || publishMsg[c.id]) && (
+                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+                    {publishMsg[c.id] && (
+                      <span className="text-[10px] text-white/50">{publishMsg[c.id]}</span>
+                    )}
+                    {c.itchio_embed_url && !publishMsg[c.id]?.startsWith("🚀") && (
+                      <>
+                        <span className="text-[10px] text-purple-400 truncate max-w-[200px]" title={c.itchio_embed_url}>
+                          🎮 {c.itchio_embed_url}
+                        </span>
+                        <button
+                          onClick={() => void navigator.clipboard.writeText(c.itchio_embed_url!)}
+                          className="text-[9px] rounded bg-purple-500/20 px-1.5 py-0.5 text-purple-400 hover:bg-purple-500/30 transition"
+                        >
+                          Copy URL
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* actions */}
-              <div className="flex shrink-0 gap-2">
+              <div className="flex shrink-0 flex-col gap-1.5 items-end">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openEdit(c)}
+                    className="rounded px-2 py-1 text-xs text-white/50 transition hover:text-white"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    onClick={() => void handleDelete(c)}
+                    className="rounded px-2 py-1 text-xs text-red-400 transition hover:text-red-300"
+                  >
+                    Xóa
+                  </button>
+                </div>
                 <button
-                  onClick={() => openEdit(c)}
-                  className="rounded px-2 py-1 text-xs text-white/50 transition hover:text-white"
+                  onClick={() => void handlePublishItch(c)}
+                  disabled={publishing === c.id}
+                  title={c.itchio_game_id ? "Publish / Update lên Itch.io" : "Cần điền Game ID trong Edit trước"}
+                  className={`rounded px-2 py-1 text-[10px] font-bold transition ${
+                    c.itchio_game_id
+                      ? "bg-purple-600/80 text-white hover:bg-purple-500"
+                      : "border border-white/10 text-white/25 cursor-not-allowed"
+                  } ${publishing === c.id ? "opacity-50 cursor-wait" : ""}`}
                 >
-                  Sửa
-                </button>
-                <button
-                  onClick={() => void handleDelete(c)}
-                  className="rounded px-2 py-1 text-xs text-red-400 transition hover:text-red-300"
-                >
-                  Xóa
+                  {publishing === c.id ? "⏳ Publishing…" : "🎮 Publish Itch.io"}
                 </button>
               </div>
             </div>
@@ -1225,6 +1298,30 @@ export function SpineTab({ adminKey }: Props) {
                 />
               </div>
             )}
+
+            {/* ── Itch.io ───────────────────────────────────────────────────── */}
+            <div className="space-y-2 border-t border-white/8 pt-4">
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Itch.io Game ID
+                </p>
+                <span className="rounded bg-purple-500/15 px-1.5 py-0.5 text-[9px] font-bold text-purple-400">
+                  Behance embed
+                </span>
+              </div>
+              <input
+                type="text"
+                value={form.itchio_game_id}
+                onChange={(e) => setForm((f) => ({ ...f, itchio_game_id: e.target.value }))}
+                placeholder="Ví dụ: 1234567  (lấy từ URL itch.io dashboard)"
+                className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 font-mono text-sm text-white placeholder-white/25 focus:border-purple-500 focus:outline-none"
+              />
+              <p className="text-[10px] text-white/30 leading-relaxed">
+                Tạo project trên <span className="text-purple-400">itch.io</span> (New project → HTML5 → Save) → lấy số ID từ URL dashboard{" "}
+                <code className="text-white/40">itch.io/dashboard/game/<strong className="text-purple-300">1234567</strong>/edit</code>
+                {" "}→ paste vào đây → Lưu → nhấn nút <strong className="text-purple-300">🎮 Publish Itch.io</strong> trong danh sách.
+              </p>
+            </div>
 
             {/* ── Visual Controls ───────────────────────────────────────────── */}
             <div className="space-y-3 border-t border-white/8 pt-4">

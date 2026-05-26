@@ -46,6 +46,8 @@ export type SpineCharacter = {
   offset_x: number;
   offset_y: number;
   premultiplied_alpha: boolean;
+  itchio_game_id: string | null;
+  itchio_embed_url: string | null;
   created_at: string;
   updated_at: string;
 };

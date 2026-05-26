@@ -12,7 +12,7 @@ function requireAdmin(req: Request) {
   return null;
 }
 
-const PATCHABLE = ["name", "slug", "json_url", "atlas_url", "animations", "skin", "active", "scale", "offset_x", "offset_y", "premultiplied_alpha"] as const;
+const PATCHABLE = ["name", "slug", "json_url", "atlas_url", "animations", "skin", "active", "scale", "offset_x", "offset_y", "premultiplied_alpha", "itchio_game_id", "itchio_embed_url"] as const;
 
 export async function PATCH(
   request: Request,
