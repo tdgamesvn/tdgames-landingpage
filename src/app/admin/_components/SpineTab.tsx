@@ -323,6 +323,14 @@ export function SpineTab({ adminKey }: Props) {
     }));
   }
 
+  function duplicateAnimation(index: number) {
+    setForm((f) => {
+      const arr = [...f.animations];
+      arr.splice(index + 1, 0, arr[index]);
+      return { ...f, animations: arr };
+    });
+  }
+
   // ── File drop zone ─────────────────────────────────────────────────────────
   function FileZone({
     label,
@@ -774,6 +782,14 @@ export function SpineTab({ adminKey }: Props) {
                                 title="Xuống"
                               >
                                 ↓
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => duplicateAnimation(idx)}
+                                className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-amber-400/60 transition hover:text-amber-300"
+                                title="Duplicate (chèn thêm 1 bản copy phía dưới)"
+                              >
+                                ⊕
                               </button>
                               <button
                                 type="button"
