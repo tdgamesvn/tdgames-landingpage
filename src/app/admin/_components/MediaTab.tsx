@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchMedia, uploadFile } from "../_lib/api";
+import { fetchMedia, patchMediaAsset, uploadFile } from "../_lib/api";
 import { getPresetById } from "../_lib/sizes";
 import type { MediaAsset, MediaKind, MediaSource } from "../_lib/types";
 import { MediaPreview } from "./MediaPreview";
@@ -39,6 +39,9 @@ export function MediaTab({ adminKey }: Props) {
 
   const [scanning, setScanning] = useState(false);
   const [scanMsg, setScanMsg] = useState("");
+
+  const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
+  const [labelDraft, setLabelDraft] = useState("");
 
   const pickedMedia = useMemo(
     () => media.find((m) => m.id === pickedMediaId) ?? null,
@@ -185,6 +188,24 @@ export function MediaTab({ adminKey }: Props) {
       setTimeout(() => setCopyMsg(""), 1500);
     } catch {
       setCopyMsg("Copy failed");
+    }
+  }
+
+  async function handleSaveLabel(assetId: string) {
+    const trimmed = labelDraft.trim();
+    try {
+      const updated = await patchMediaAsset({
+        adminKey,
+        id: assetId,
+        updates: { label: trimmed || null },
+      });
+      setMedia((prev) =>
+        prev.map((m) => (m.id === assetId ? { ...m, label: updated.label } : m)),
+      );
+    } catch (e) {
+      console.error("Label save failed", e);
+    } finally {
+      setEditingLabelId(null);
     }
   }
 
@@ -429,6 +450,34 @@ export function MediaTab({ adminKey }: Props) {
                       {item.used_by.length > 2 ? `, +${item.used_by.length - 2}` : ""}
                     </p>
                   ) : null}
+                  {/* Label editor */}
+                  <div className="mt-1">
+                    {editingLabelId === item.id ? (
+                      <input
+                        autoFocus
+                        value={labelDraft}
+                        onChange={(e) => setLabelDraft(e.target.value)}
+                        onBlur={() => handleSaveLabel(item.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveLabel(item.id);
+                          if (e.key === "Escape") setEditingLabelId(null);
+                        }}
+                        placeholder="label (vd: about-hero)"
+                        className="w-full rounded border border-amber-400/40 bg-zinc-800 px-1.5 py-0.5 text-[10px] text-amber-300 outline-none"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingLabelId(item.id);
+                          setLabelDraft(item.label ?? "");
+                        }}
+                        className={`text-[10px] ${item.label ? "text-amber-400" : "text-white/30 hover:text-white/60"}`}
+                        title="Click để đặt label"
+                      >
+                        {item.label ? `🏷 ${item.label}` : "+ label"}
+                      </button>
+                    )}
+                  </div>
                   <button
                     onClick={() => {
                       const next = isPicked ? "" : item.id;
