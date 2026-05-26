@@ -250,18 +250,40 @@ export async function POST(
     // butler push <dir> <user>/<game>:<channel>
     // Auth via BUTLER_API_KEY env var (--api-key flag removed in butler v15+)
     const butlerTarget = `${username}/${gameSlug}:html5`;
-    const { stdout, stderr } = await execFileAsync(
-      "butler",
-      ["push", tmpDir, butlerTarget],
-      {
-        timeout: 120_000,                  // 2 min max
-        env: { ...process.env, HOME: "/root", BUTLER_API_KEY: apiKey },
-      }
-    );
+    let stdout = "", stderr = "";
+    try {
+      ({ stdout, stderr } = await execFileAsync(
+        "butler",
+        ["push", tmpDir, butlerTarget],
+        {
+          timeout: 120_000,                  // 2 min max
+          env: { ...process.env, HOME: "/root", BUTLER_API_KEY: apiKey },
+        }
+      ));
+    } catch (err: unknown) {
+      // execFileAsync throws on non-zero exit — capture stderr from error object
+      const e = err as Error & { stderr?: string; stdout?: string };
+      stderr = e.stderr ?? "";
+      stdout = e.stdout ?? "";
+      const combined = [stderr, stdout, e.message].filter(Boolean).join("\n");
+      return NextResponse.json(
+        { error: `butler push failed: ${combined}` },
+        { status: 500 }
+      );
+    }
 
     console.log("[butler push] stdout:", stdout);
     if (stderr) console.warn("[butler push] stderr:", stderr);
+
+    // Butler may exit 0 but still print errors to stderr (itch.io API errors)
+    if (stderr && /error/i.test(stderr)) {
+      return NextResponse.json(
+        { error: `butler push error: ${stderr.trim()}` },
+        { status: 502 }
+      );
+    }
   } catch (err: unknown) {
+    // Outer catch — should not normally be reached
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
       { error: `butler push failed: ${msg}` },
