@@ -47,13 +47,24 @@ export default async function AboutPage() {
         {/* Hero Section */}
         <section className="relative flex h-screen items-center overflow-hidden border-b border-white/10">
           <div className="absolute inset-0">
-            <Image
-              src={about.heroImage}
-              alt="TD Games Team"
-              fill
-              className="object-cover opacity-30"
-              priority
-            />
+            {/\.(mp4|webm|mov)(\?.*)?$/i.test(about.heroImage) ? (
+              <video
+                src={about.heroImage}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="h-full w-full object-cover opacity-30"
+              />
+            ) : (
+              <Image
+                src={about.heroImage}
+                alt="TD Games Team"
+                fill
+                className="object-cover opacity-30"
+                priority
+              />
+            )}
             <div className="absolute inset-0 bg-black/50" />
           </div>
 

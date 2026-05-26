@@ -24,6 +24,7 @@ export function MediaTab({ adminKey }: Props) {
   const [kindFilter, setKindFilter] = useState<"all" | MediaKind>("all");
   const [sourceFilter, setSourceFilter] = useState<"all" | MediaSource>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "archived">("all");
+  const [pageFilter, setPageFilter] = useState("all");
   const [page, setPage] = useState(0);
 
   const [pickedMediaId, setPickedMediaId] = useState("");
@@ -73,12 +74,36 @@ export function MediaTab({ adminKey }: Props) {
     }
   }
 
+  // Map page filter value → substring to match in used_by paths
+  const PAGE_FILTER_OPTIONS = [
+    { id: "all",         label: "Tất cả trang" },
+    { id: "home",        label: "Home",         match: "home-page" },
+    { id: "about",       label: "About",        match: "/about/" },
+    { id: "portfolio",   label: "Portfolio",    match: "/portfolio/" },
+    { id: "services",    label: "Services",     match: "/services/" },
+    { id: "careers",     label: "Careers",      match: "/careers/" },
+    { id: "blog",        label: "Blog",         match: "/blog/" },
+    { id: "contact",     label: "Contact",      match: "/contact/" },
+    { id: "spine-demo",  label: "Spine Demo",   match: "spine-demo" },
+    { id: "no-page",     label: "Chưa dùng ở đâu", match: null },
+  ] as const;
+
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
+    const pageOpt = PAGE_FILTER_OPTIONS.find((o) => o.id === pageFilter);
     return media.filter((m) => {
       if (kindFilter !== "all" && m.kind !== kindFilter) return false;
       if (sourceFilter !== "all" && m.source_type !== sourceFilter) return false;
       if (statusFilter !== "all" && m.status !== statusFilter) return false;
+      // Page filter
+      if (pageFilter !== "all" && pageOpt) {
+        if (pageOpt.id === "no-page") {
+          if ((m.used_by ?? []).length > 0) return false;
+        } else if ("match" in pageOpt && pageOpt.match) {
+          const usedByStr = (m.used_by ?? []).join(" ").toLowerCase();
+          if (!usedByStr.includes(pageOpt.match)) return false;
+        }
+      }
       if (!kw) return true;
       const haystack = [
         m.original_url,
@@ -90,11 +115,11 @@ export function MediaTab({ adminKey }: Props) {
         .toLowerCase();
       return haystack.includes(kw);
     });
-  }, [media, keyword, kindFilter, sourceFilter, statusFilter]);
+  }, [media, keyword, kindFilter, sourceFilter, statusFilter, pageFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setPage(0);
-  }, [keyword, kindFilter, sourceFilter, statusFilter]);
+  }, [keyword, kindFilter, sourceFilter, statusFilter, pageFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
@@ -292,6 +317,23 @@ export function MediaTab({ adminKey }: Props) {
                   { id: "archived", label: "Archived" },
                 ]}
               />
+              {/* Page filter */}
+              <div className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1">
+                <span className="text-[10px] uppercase tracking-wide text-white/40">Page</span>
+                <select
+                  value={pageFilter}
+                  onChange={(e) => setPageFilter(e.target.value)}
+                  className={`rounded bg-transparent px-1 py-0.5 text-[11px] outline-none cursor-pointer ${
+                    pageFilter !== "all" ? "text-amber-400" : "text-white/60"
+                  }`}
+                >
+                  {PAGE_FILTER_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id} className="bg-zinc-900 text-white">
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="flex items-center justify-between text-xs text-white/60">
               <span>
