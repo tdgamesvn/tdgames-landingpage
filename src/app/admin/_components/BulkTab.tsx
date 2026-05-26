@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { runBulkReplace } from "../_lib/api";
 
 type Props = {
   adminKey: string;
@@ -20,9 +19,21 @@ export function BulkTab({ adminKey }: Props) {
     setErrorMsg("");
     setResult("");
     try {
-      const data = await runBulkReplace({ adminKey, mode });
-      setResult(JSON.stringify(data, null, 2));
-      setStatusMsg(`${mode} thành công`);
+      const res = await fetch(`/api/admin/media/replace-run`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ mode }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        // Show full error details including stderr/stdout from the script
+        setErrorMsg(data.error ?? `${mode} failed`);
+        setResult(JSON.stringify({ exitCode: data.exitCode, stderr: data.stderr, stdout: data.stdout }, null, 2));
+        setStatusMsg("");
+      } else {
+        setResult(JSON.stringify(data, null, 2));
+        setStatusMsg(`${mode} thành công`);
+      }
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : `${mode} failed`);
       setStatusMsg("");
