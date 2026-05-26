@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
+import { resolveMediaUrl } from "@/lib/resolve-media";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -15,10 +16,15 @@ async function getAbout(): Promise<AboutData> {
   const filePath = path.join(process.cwd(), "src", "content", "site.json");
   const raw = await fs.readFile(filePath, "utf8");
   const data = JSON.parse(raw);
-  return data.about ?? {
+  const siteAbout = data.about ?? {
     heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80",
     workspace: [],
   };
+
+  // Resolve heroImage từ DB nếu có label "about-hero", fallback về site.json
+  const heroImage = await resolveMediaUrl("about-hero", siteAbout.heroImage);
+
+  return { ...siteAbout, heroImage };
 }
 
 async function getTeam(): Promise<TeamMember[]> {
