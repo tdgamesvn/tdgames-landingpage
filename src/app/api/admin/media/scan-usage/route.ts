@@ -64,18 +64,13 @@ export async function POST(request: Request) {
     results.push({ id: asset.id, used_by: usedBy });
   }
 
-  // 4. Batch update in groups of 50
-  const BATCH = 50;
-  for (let i = 0; i < results.length; i += BATCH) {
-    const batch = results.slice(i, i + BATCH);
-    for (const { id, used_by } of batch) {
-      const { error } = await supabase
-        .from("media_assets")
-        .update({ used_by })
-        .eq("id", id);
-      if (!error) updated++;
-    }
-  }
+  // 4. Run all updates concurrently (parallel instead of sequential)
+  const updateResults = await Promise.all(
+    results.map(({ id, used_by }) =>
+      supabase.from("media_assets").update({ used_by }).eq("id", id),
+    ),
+  );
+  updated = updateResults.filter((r) => !r.error).length;
 
   return NextResponse.json({
     updated,
