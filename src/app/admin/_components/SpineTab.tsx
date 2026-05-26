@@ -79,6 +79,7 @@ export function SpineTab({ adminKey }: Props) {
   const [embedX, setEmbedX] = useState("");
   const [embedY, setEmbedY] = useState("");
   const [embedCopied, setEmbedCopied] = useState(false);
+  const [itchCopied, setItchCopied] = useState(false);
 
   useEffect(() => { void load(); }, []); // eslint-disable-line
 
@@ -366,6 +367,111 @@ export function SpineTab({ adminKey }: Props) {
     await navigator.clipboard.writeText(url);
     setEmbedCopied(true);
     setTimeout(() => setEmbedCopied(false), 2000);
+  }
+
+  // ── Itch.io HTML builder ────────────────────────────────────────────────────
+  function buildItchHtml(slug: string): string {
+    const char = characters.find((c) => c.slug === slug);
+    if (!char) return "";
+
+    const jsonUrl = char.json_url ?? "";
+    const atlasUrl = char.atlas_url ?? "";
+    const animations = char.animations?.length ? char.animations : ["idle"];
+    const premultiplied = char.premultiplied_alpha ?? false;
+    const scale = parseFloat(embedScale) || char.scale || 1;
+    const offsetX = parseInt(embedX) || char.offset_x || 0;
+    const offsetY = parseInt(embedY) || char.offset_y || 0;
+    const skin = char.skin ? `skin: ${JSON.stringify(char.skin)},` : "";
+
+    // Background style
+    let bgStyle = "background: transparent;";
+    if (embedBgType === "color") bgStyle = `background: #${embedBgColor};`;
+    else if (embedBgType === "image" && embedBgImageUrl) {
+      bgStyle = `background-image: url('${embedBgImageUrl}'); background-size: ${embedBgSize}; background-position: ${embedBgPos}; background-repeat: no-repeat;`;
+    }
+
+    const animJson = JSON.stringify(animations);
+    const transformParts: string[] = [];
+    if (offsetX !== 0 || offsetY !== 0) transformParts.push(`translate(${offsetX}px, ${offsetY}px)`);
+    if (scale !== 1) transformParts.push(`scale(${scale})`);
+    const transform = transformParts.length ? transformParts.join(" ") : "none";
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${char.name}</title>
+  <link rel="stylesheet" href="https://unpkg.com/@esotericsoftware/spine-player@4.2/dist/spine-player.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; ${bgStyle} }
+    #player {
+      width: 100%; height: 100%;
+      transform: ${transform};
+      transform-origin: center center;
+    }
+  </style>
+</head>
+<body>
+  <div id="player"></div>
+  <script src="https://unpkg.com/@esotericsoftware/spine-player@4.2/dist/iife/spine-player.js"></script>
+  <script>
+    var animations = ${animJson};
+    new spine.SpinePlayer("player", {
+      jsonUrl: ${JSON.stringify(jsonUrl)},
+      atlasUrl: ${JSON.stringify(atlasUrl)},
+      ${skin}
+      alpha: true,
+      backgroundColor: "#00000000",
+      premultipliedAlpha: ${premultiplied},
+      showControls: false,
+      showLoading: false,
+      success: function(player) {
+        var state = player.animationState;
+        if (animations.length === 1) {
+          state.setAnimation(0, animations[0], true);
+        } else {
+          state.setAnimation(0, animations[0], false);
+          for (var i = 1; i < animations.length; i++) {
+            state.addAnimation(0, animations[i], false, 0);
+          }
+          state.addListener({
+            complete: function(entry) {
+              if (entry.trackIndex === 0 && entry.next === null) {
+                state.setAnimation(0, animations[0], false);
+                for (var i = 1; i < animations.length; i++) {
+                  state.addAnimation(0, animations[i], false, 0);
+                }
+              }
+            }
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>`;
+  }
+
+  function downloadItchHtml(slug: string) {
+    const html = buildItchHtml(slug);
+    if (!html) return;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `spine-${slug}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyItchHtml(slug: string) {
+    const html = buildItchHtml(slug);
+    if (!html) return;
+    await navigator.clipboard.writeText(html);
+    setItchCopied(true);
+    setTimeout(() => setItchCopied(false), 2000);
   }
 
   // ── File drop zone ─────────────────────────────────────────────────────────
@@ -690,6 +796,47 @@ export function SpineTab({ adminKey }: Props) {
                 <code className="break-all font-mono text-[10px] text-white/50">
                   {`<iframe src="${buildEmbedUrl(embedSlug)}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`}
                 </code>
+              </div>
+
+              {/* Itch.io section */}
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-amber-400">🎮 Itch.io → Behance</span>
+                  <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-400/80">
+                    Behance chấp nhận
+                  </span>
+                </div>
+                <p className="text-[10px] text-white/40 leading-relaxed">
+                  Behance không cho embed domain tự do, nhưng hỗ trợ <strong className="text-white/60">Itch.io</strong>.
+                  Tải file HTML này → upload lên itch.io (HTML5 project) → copy itch.io embed URL vào Behance.
+                </p>
+                <div className="rounded-md border border-white/8 bg-black/30 px-2 py-1.5">
+                  <p className="text-[9px] text-white/30 mb-1 font-bold uppercase tracking-wider">Yêu cầu trước</p>
+                  <p className="text-[10px] text-white/45">
+                    Cloudflare R2 → bucket → Settings → CORS Policy → AllowedOrigins: <code className="text-amber-400/70">["*"]</code>
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => downloadItchHtml(embedSlug)}
+                    className="flex-1 rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-black transition hover:bg-amber-400"
+                  >
+                    ⬇ Download HTML
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void copyItchHtml(embedSlug)}
+                    className="rounded-lg border border-white/15 px-3 py-2 text-xs text-white/60 transition hover:text-white"
+                  >
+                    {itchCopied ? "✓ Copied!" : "Copy HTML"}
+                  </button>
+                </div>
+                <div className="text-[9px] text-white/25 space-y-0.5">
+                  <p>1. Download HTML → upload lên itch.io (New project → HTML)</p>
+                  <p>2. Itch.io → Embed → copy URL dạng <code>https://itch.io/embed/...</code></p>
+                  <p>3. Behance → Add Media → Embed → paste URL itch.io</p>
+                </div>
               </div>
             </div>
           )}
