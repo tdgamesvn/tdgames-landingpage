@@ -1,5 +1,26 @@
 # LOG
 
+## 2026-05-26 (session — Spine Demo embed + bug fix)
+### Task
+Build `/spine-demo/[slug]` embed page + Embed URL Builder trong admin SpineTab
+
+### Work Done
+- Tạo `src/app/spine-demo/layout.tsx` — bare layout cho iframe embed
+- Tạo `src/app/spine-demo/[slug]/page.tsx` — server component: fetch character từ DB theo slug, đọc URL params (bg, c, img, scale, x, y)
+- Tạo `src/app/spine-demo/[slug]/_client.tsx` — client render SpineCharacter + background layer
+- Cập nhật `SpineTab.tsx` — thêm section "Embed URL Builder": chọn character, chọn bg (transparent/color/image), override scale/offset, generate URL + copy + preview + iframe code
+- Fix bug: `spine-demo/layout.tsx` có `<html><body>` sai — nested layout không được có root HTML tags → đổi thành `<>{children}</>`
+- Commit: `26d8eeb feat(spine): add /spine-demo embed page + admin Embed URL Builder`
+
+### Result
+- `/spine-demo/<slug>?bg=color&c=141414&scale=1.2` hoạt động như embed page
+- Admin tab Spine → Embed URL Builder: generate URL + iframe code sẵn paste vào Behance
+- layout.tsx bug fixed, build sẽ pass
+
+### Next Step
+- Test thực tế: upload Spine file thật → dùng Embed Builder tạo URL → nhúng vào Behance iframe
+- Quyết định feature tiếp theo (hỏi user)
+
 ## 2026-05-25 (session — audit Spine Animation & Skin Picker spec)
 ### Task
 Kiểm tra xem spec `docs/superpowers/specs/2026-05-25-spine-animation-skin-picker-design.md` đã được implement chưa

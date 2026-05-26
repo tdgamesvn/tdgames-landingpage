@@ -47,3 +47,4 @@ _(empty)_
 - [x] Blog feature — DB (blog_posts table), public API (GET /api/blog, GET /api/blog/[slug] + view increment), admin API (CRUD /api/admin/blog), Admin tab "8. Blog", seeded 8 real posts (commit 8ba7635)
 - [x] Spine visual controls — DB (scale/offset_x/offset_y/premultiplied_alpha), API, SpineTab sliders, home-page-lower reads from DB
 - [x] Spine Animation & Skin Picker — DB `animations JSONB`, SpineCharacter sequence loop, Admin skin dropdown + animation multi-select + reorder UI
+- [x] Spine Demo embed page — `/spine-demo/[slug]` bare iframe page, URL params (bg/color/image/scale/x/y), Admin Embed URL Builder + iframe code generator (commit 26d8eeb)
