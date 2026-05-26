@@ -154,10 +154,11 @@ export function SpineCharacter({
             }
             state.addListener({
               complete: (entry: any) => {
-                if (
-                  entry.trackIndex === 0 &&
-                  entry.animation?.name === anims[anims.length - 1]
-                ) {
+                // Dùng entry.next === null thay vì so tên animation,
+                // để hỗ trợ duplicate animations trong sequence.
+                // entry.next === null nghĩa là không còn animation nào
+                // được queue phía sau → đây thực sự là animation cuối.
+                if (entry.trackIndex === 0 && entry.next === null) {
                   state.setAnimation(0, anims[0], false);
                   for (let i = 1; i < anims.length; i++) {
                     state.addAnimation(0, anims[i], false, 0);
