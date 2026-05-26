@@ -74,18 +74,19 @@ export function MediaTab({ adminKey }: Props) {
     }
   }
 
-  // Map page filter value → substring to match in used_by paths
+  // Map page filter value → substring to match in used_by FILE PATHS
+  // used_by stores source file paths like "src/app/about/page.tsx"
   const PAGE_FILTER_OPTIONS = [
-    { id: "all",         label: "Tất cả trang" },
-    { id: "home",        label: "Home",         match: "home-page" },
-    { id: "about",       label: "About",        match: "/about/" },
-    { id: "portfolio",   label: "Portfolio",    match: "/portfolio/" },
-    { id: "services",    label: "Services",     match: "/services/" },
-    { id: "careers",     label: "Careers",      match: "/careers/" },
-    { id: "blog",        label: "Blog",         match: "/blog/" },
-    { id: "contact",     label: "Contact",      match: "/contact/" },
-    { id: "spine-demo",  label: "Spine Demo",   match: "spine-demo" },
-    { id: "no-page",     label: "Chưa dùng ở đâu", match: null },
+    { id: "all",        label: "Tất cả trang" },
+    { id: "home",       label: "Home",         match: "home-projects-section" },
+    { id: "about",      label: "About",        match: "src/app/about/" },
+    { id: "portfolio",  label: "Portfolio",    match: "src/app/portfolio/" },
+    { id: "services",   label: "Services",     match: "src/app/services/" },
+    { id: "careers",    label: "Careers",      match: "src/app/careers/" },
+    { id: "blog",       label: "Blog",         match: "src/app/blog/" },
+    { id: "contact",    label: "Contact",      match: "src/app/contact/" },
+    { id: "spine-demo", label: "Spine Demo",   match: "spine-demo" },
+    { id: "no-page",    label: "Chưa dùng ở đâu", match: null },
   ] as const;
 
   const filtered = useMemo(() => {
