@@ -8,6 +8,21 @@ export const runtime = "nodejs";
 type Params = { slug: string };
 type SearchParams = Record<string, string | string[] | undefined>;
 
+/**
+ * Rewrite CDN URLs through /api/cdn-proxy to avoid browser CORS errors.
+ * SpinePlayer fetches .json/.atlas/textures via XHR — browser blocks
+ * cross-origin requests to cdn.tdgamestudio.com without CORS headers.
+ * Proxying through Next.js (same origin) sidesteps the issue entirely.
+ */
+function proxyCdnUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  const CDN_PREFIX = "https://cdn.tdgamestudio.com/";
+  if (url.startsWith(CDN_PREFIX)) {
+    return `/api/cdn-proxy/${url.slice(CDN_PREFIX.length)}`;
+  }
+  return url;
+}
+
 function sp(v: string | string[] | undefined): string {
   return typeof v === "string" ? v : "";
 }
@@ -46,8 +61,8 @@ export default async function SpineDemoPage({
   const bgPosition = sp(sp_["bgp"]) || "center";
 
   const config: DemoConfig = {
-    jsonUrl: data.json_url ?? undefined,
-    atlasUrl: data.atlas_url ?? "",
+    jsonUrl: proxyCdnUrl(data.json_url),
+    atlasUrl: proxyCdnUrl(data.atlas_url) ?? "",
     animations: data.animations ?? ["idle"],
     skin: data.skin ?? undefined,
     premultipliedAlpha: data.premultiplied_alpha ?? true,
