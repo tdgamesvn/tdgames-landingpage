@@ -57,6 +57,7 @@ export async function POST(request: Request) {
       offset_x:            body.offset_x            ?? 0,
       offset_y:            body.offset_y            ?? 0,
       premultiplied_alpha: body.premultiplied_alpha ?? true,
+      mix_duration:        body.mix_duration        ?? 0.0,
     }])
     .select()
     .single();

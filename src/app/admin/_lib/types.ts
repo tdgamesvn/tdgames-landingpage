@@ -46,6 +46,7 @@ export type SpineCharacter = {
   offset_x: number;
   offset_y: number;
   premultiplied_alpha: boolean;
+  mix_duration: number;
   created_at: string;
   updated_at: string;
 };

@@ -24,6 +24,7 @@ type FormState = {
   offset_x: number;
   offset_y: number;
   premultiplied_alpha: boolean;
+  mix_duration: number;
 };
 
 const BLANK: FormState = {
@@ -38,6 +39,7 @@ const BLANK: FormState = {
   offset_x: 0,
   offset_y: 0,
   premultiplied_alpha: true,
+  mix_duration: 0.0,
 };
 
 function toSlug(s: string) {
@@ -104,6 +106,7 @@ export function SpineTab({ adminKey }: Props) {
       offset_x: c.offset_x ?? 0,
       offset_y: c.offset_y ?? 0,
       premultiplied_alpha: c.premultiplied_alpha ?? true,
+      mix_duration: c.mix_duration ?? 0.0,
     });
     clearFiles();
     resetParsed();
@@ -253,6 +256,7 @@ export function SpineTab({ adminKey }: Props) {
         offset_x: form.offset_x,
         offset_y: form.offset_y,
         premultiplied_alpha: form.premultiplied_alpha,
+        mix_duration: form.mix_duration,
       };
 
       if (editId === "__new__") {
@@ -950,6 +954,37 @@ export function SpineTab({ adminKey }: Props) {
               >
                 ↺ Reset scale &amp; offset
               </button>
+
+              {/* Mix Duration */}
+              <div className="space-y-1 border-t border-white/8 pt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                    Animation Mix
+                  </span>
+                  <span className="font-mono text-xs text-amber-400">
+                    {form.mix_duration === 0 ? "Off (hard cut)" : `${form.mix_duration.toFixed(2)}s`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={0} max={1.0} step={0.05}
+                    value={form.mix_duration}
+                    onChange={(e) => setForm((f) => ({ ...f, mix_duration: parseFloat(e.target.value) }))}
+                    className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-white/15 accent-amber-500"
+                  />
+                  <input
+                    type="number"
+                    min={0} max={1.0} step={0.05}
+                    value={form.mix_duration}
+                    onChange={(e) => setForm((f) => ({ ...f, mix_duration: Math.max(0, Math.min(1.0, parseFloat(e.target.value) || 0)) }))}
+                    className="w-16 rounded border border-white/15 bg-white/5 px-2 py-1 text-center text-xs text-white focus:border-amber-500 focus:outline-none font-mono"
+                  />
+                </div>
+                <p className="text-[9px] text-white/25">
+                  0 = hard cut. 0.2–0.4s thường đủ mượt. Chỉ ảnh hưởng khi có nhiều animation.
+                </p>
+              </div>
             </div>
 
             {/* Active + Premultiplied Alpha toggles */}

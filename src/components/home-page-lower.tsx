@@ -363,6 +363,7 @@ type SpineCharacterData = {
   offset_x: number;
   offset_y: number;
   premultiplied_alpha: boolean;
+  mix_duration: number;
 };
 
 /** Rewrite cdn.tdgamestudio.com URLs through the same-origin proxy to avoid CORS */
@@ -916,6 +917,7 @@ export default function HomePageLower() {
                       animations={careersCharacter.animations ?? ["idle"]}
                       skin={careersCharacter.skin ?? undefined}
                       premultipliedAlpha={careersCharacter.premultiplied_alpha ?? false}
+                      mixDuration={careersCharacter.mix_duration ?? 0}
                       scale={careersCharacter.scale ?? 1.0}
                       offsetX={careersCharacter.offset_x ?? 0}
                       offsetY={careersCharacter.offset_y ?? 0}

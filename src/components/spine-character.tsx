@@ -70,6 +70,11 @@ export type SpineCharacterProps = {
   offsetY?: number;
   className?: string;
   style?: CSSProperties;
+  /**
+   * Thời gian crossfade giữa các animations trong sequence (giây).
+   * 0 = hard cut (không mix). 0.2 = blend mượt 200ms. Default: 0.
+   */
+  mixDuration?: number;
   /** Callback khi load thành công */
   onSuccess?: () => void;
   /** Callback khi load lỗi */
@@ -84,6 +89,7 @@ export function SpineCharacter({
   animations,
   skin,
   premultipliedAlpha = true,
+  mixDuration = 0,
   scale = 1,
   offsetX = 0,
   offsetY = 0,
@@ -143,6 +149,11 @@ export function SpineCharacter({
           if (!state) {
             onSuccess?.();
             return;
+          }
+
+          // Set crossfade duration between animations
+          if (mixDuration > 0 && state.data) {
+            state.data.defaultMix = mixDuration;
           }
 
           if (anims.length === 1) {
