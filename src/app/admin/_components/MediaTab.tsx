@@ -37,6 +37,9 @@ export function MediaTab({ adminKey }: Props) {
   const [lastUploadedUrl, setLastUploadedUrl] = useState("");
   const [copyMsg, setCopyMsg] = useState("");
 
+  const [scanning, setScanning] = useState(false);
+  const [scanMsg, setScanMsg] = useState("");
+
   const pickedMedia = useMemo(
     () => media.find((m) => m.id === pickedMediaId) ?? null,
     [media, pickedMediaId],
@@ -153,6 +156,27 @@ export function MediaTab({ adminKey }: Props) {
     }
   }
 
+  async function handleScanUsage() {
+    if (!adminKey) return;
+    setScanning(true);
+    setScanMsg("Đang scan…");
+    try {
+      const res = await fetch("/api/admin/media/scan-usage", {
+        method: "POST",
+        headers: { "x-admin-key": adminKey },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed");
+      setScanMsg(`✓ Đã update ${json.updated}/${json.total} assets (quét ${json.scannedFiles} files)`);
+      await load(); // Reload media list with fresh used_by data
+    } catch (e) {
+      setScanMsg(`✗ ${e instanceof Error ? e.message : "Error"}`);
+    } finally {
+      setScanning(false);
+      setTimeout(() => setScanMsg(""), 6000);
+    }
+  }
+
   async function handleCopy() {
     if (!lastUploadedUrl) return;
     try {
@@ -177,6 +201,14 @@ export function MediaTab({ adminKey }: Props) {
         >
           {loading ? "Loading…" : `Refresh (${media.length})`}
         </button>
+        <button
+          onClick={handleScanUsage}
+          disabled={scanning || loading}
+          className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300 disabled:opacity-40"
+        >
+          {scanning ? "Scanning…" : "Scan Usage"}
+        </button>
+        {scanMsg ? <span className="text-xs text-white/70">{scanMsg}</span> : null}
         {errorMsg ? <span className="text-xs text-rose-300">{errorMsg}</span> : null}
       </header>
 
