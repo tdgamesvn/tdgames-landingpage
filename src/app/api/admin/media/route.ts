@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from("media_assets")
-    .select("id,kind,source_type,original_url,current_url,r2_key,r2_url,status,used_by,created_at,updated_at")
+    .select("id,kind,source_type,original_url,current_url,r2_key,r2_url,status,label,used_by,created_at,updated_at")
     .order("updated_at", { ascending: false });
 
   if (sourceType) query = query.eq("source_type", sourceType);
@@ -39,13 +39,15 @@ export async function PATCH(request: Request) {
   const updates: Record<string, unknown> = {};
   if (typeof body.current_url === "string") updates.current_url = body.current_url;
   if (typeof body.status === "string") updates.status = body.status;
+  if (typeof body.label === "string") updates.label = body.label || null;
+  // body.label = "" → removes label (set null); body.label = "about-hero" → sets label
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("media_assets")
     .update(updates)
     .eq("id", id)
-    .select("id,kind,source_type,original_url,current_url,r2_key,r2_url,status,used_by,created_at,updated_at")
+    .select("id,kind,source_type,original_url,current_url,r2_key,r2_url,status,label,used_by,created_at,updated_at")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

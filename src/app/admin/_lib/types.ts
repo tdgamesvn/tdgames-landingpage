@@ -26,6 +26,7 @@ export type MediaAsset = {
   r2_key?: string | null;
   r2_url?: string | null;
   status: MediaStatus;
+  label?: string | null;
   used_by?: string[];
   created_at: string;
   updated_at: string;

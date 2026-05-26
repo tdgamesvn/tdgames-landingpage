@@ -102,6 +102,23 @@ export async function fetchMedia(adminKey: string): Promise<MediaAsset[]> {
   return data.items ?? [];
 }
 
+export async function patchMediaAsset(args: {
+  adminKey: string;
+  id: string;
+  updates: { label?: string | null; current_url?: string; status?: string };
+}): Promise<MediaAsset> {
+  const res = await fetch(`/api/admin/media`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      "x-admin-key": args.adminKey,
+    },
+    body: JSON.stringify({ id: args.id, ...args.updates }),
+  });
+  const data = await jsonOrThrow<{ item: MediaAsset }>(res);
+  return data.item;
+}
+
 export async function uploadFile(args: {
   adminKey: string;
   file: File;
