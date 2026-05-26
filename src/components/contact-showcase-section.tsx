@@ -196,7 +196,7 @@ export default function ContactShowcaseSection({
             </button>
             {sentHint ? (
               <p className="text-sm text-[#ffcc8e]/90 md:text-base">
-                Opening your email appâ€¦ If nothing opens, write us at{" "}
+                Opening your email app… If nothing opens, write us at{" "}
                 {CONTACT_EMAIL}
               </p>
             ) : null}

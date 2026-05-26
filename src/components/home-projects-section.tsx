@@ -356,7 +356,7 @@ export default function HomeProjectsSection() {
                             : "text-[10px] text-[#9a9aaa]"
                         }
                       >
-                        2024 â€¢ {project.category}
+                        2024 • {project.category}
                       </span>
                       {isActive ? (
                         <Link

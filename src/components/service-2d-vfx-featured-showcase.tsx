@@ -41,7 +41,7 @@ export default function Service2DVfxFeaturedShowcase() {
       sectionStep="// 03"
       railLabel="Showcase"
       titleAccent="2D VFX"
-      description="Sample frames and library-style cards for VFX workâ€”using placeholder art from the repo to mirror the 2D Art page layout."
+      description="Sample frames and library-style cards for VFX work—using placeholder art from the repo to mirror the 2D Art page layout."
       cards={cards}
     />
   );

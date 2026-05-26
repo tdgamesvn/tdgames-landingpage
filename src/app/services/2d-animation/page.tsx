@@ -27,7 +27,7 @@ export default function Service2DAnimationPage() {
         titleMain: "ANIMATION",
         subheading: "2D Animation outsource",
         description:
-          "TD Games delivers production-ready 2D animationâ€”from idle and locomotion to combat sets and UI motionâ€”with timing, exports, and integration notes built for real shipping schedules.",
+          "TD Games delivers production-ready 2D animation—from idle and locomotion to combat sets and UI motion—with timing, exports, and integration notes built for real shipping schedules.",
         ctaLabel: "Consult with our experts",
       }}
       capabilities={{

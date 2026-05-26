@@ -27,7 +27,7 @@ export default function Service2DVfxPage() {
         titleMain: "VFX",
         subheading: "2D VFX outsource",
         description:
-          "TD Games authors sprite and flipbook VFX with gameplay readability firstâ€”hits, skills, auras, and UI-safe flashesâ€”packed and timed for production builds.",
+          "TD Games authors sprite and flipbook VFX with gameplay readability first—hits, skills, auras, and UI-safe flashes—packed and timed for production builds.",
         ctaLabel: "Consult with our experts",
       }}
       capabilities={{

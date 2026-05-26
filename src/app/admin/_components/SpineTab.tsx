@@ -7,7 +7,6 @@ import {
   patchSpineCharacter,
   deleteSpineCharacter,
   uploadSpineFile,
-  publishToItch,
 } from "../_lib/api";
 import type { SpineCharacter } from "../_lib/types";
 
@@ -25,7 +24,6 @@ type FormState = {
   offset_x: number;
   offset_y: number;
   premultiplied_alpha: boolean;
-  itchio_game_id: string;
 };
 
 const BLANK: FormState = {
@@ -40,7 +38,6 @@ const BLANK: FormState = {
   offset_x: 0,
   offset_y: 0,
   premultiplied_alpha: true,
-  itchio_game_id: "",
 };
 
 function toSlug(s: string) {
@@ -70,21 +67,6 @@ export function SpineTab({ adminKey }: Props) {
 
   // UI: show/hide replace-file section when editing existing character
   const [showReplaceFiles, setShowReplaceFiles] = useState(false);
-
-  // ── Embed URL Builder state ──────────────────────────────────────────────────
-  const [embedSlug, setEmbedSlug] = useState("");
-  const [embedBgType, setEmbedBgType] = useState<"none" | "color" | "image">("none");
-  const [embedBgColor, setEmbedBgColor] = useState("0a0a0a");
-  const [embedBgImageUrl, setEmbedBgImageUrl] = useState("");
-  const [embedBgSize, setEmbedBgSize] = useState("cover");
-  const [embedBgPos, setEmbedBgPos] = useState("center");
-  const [embedScale, setEmbedScale] = useState("");
-  const [embedX, setEmbedX] = useState("");
-  const [embedY, setEmbedY] = useState("");
-  const [embedCopied, setEmbedCopied] = useState(false);
-  const [itchCopied, setItchCopied] = useState(false);
-  const [publishing, setPublishing] = useState<string | null>(null); // character id being published
-  const [publishMsg, setPublishMsg] = useState<Record<string, string>>({}); // id → message
 
   useEffect(() => { void load(); }, []); // eslint-disable-line
 
@@ -122,7 +104,6 @@ export function SpineTab({ adminKey }: Props) {
       offset_x: c.offset_x ?? 0,
       offset_y: c.offset_y ?? 0,
       premultiplied_alpha: c.premultiplied_alpha ?? true,
-      itchio_game_id: c.itchio_game_id ?? "",
     });
     clearFiles();
     resetParsed();
@@ -272,7 +253,6 @@ export function SpineTab({ adminKey }: Props) {
         offset_x: form.offset_x,
         offset_y: form.offset_y,
         premultiplied_alpha: form.premultiplied_alpha,
-        itchio_game_id: form.itchio_game_id.trim() || undefined,
       };
 
       if (editId === "__new__") {
@@ -316,32 +296,6 @@ export function SpineTab({ adminKey }: Props) {
     }
   }
 
-  // ── Itch.io publish ─────────────────────────────────────────────────────────
-  async function handlePublishItch(c: SpineCharacter) {
-    if (!c.itchio_game_id) {
-      setPublishMsg((m) => ({ ...m, [c.id]: "❌ Chưa có Itch.io Game ID. Nhấn Edit → điền Game ID → Lưu trước." }));
-      return;
-    }
-    setPublishing(c.id);
-    setPublishMsg((m) => ({ ...m, [c.id]: "🚀 Đang publish lên itch.io…" }));
-    try {
-      const result = await publishToItch({ adminKey, id: c.id });
-      setCharacters((prev) =>
-        prev.map((x) =>
-          x.id === c.id ? { ...x, itchio_embed_url: result.embed_url } : x
-        )
-      );
-      setPublishMsg((m) => ({ ...m, [c.id]: `✅ Published! ${result.embed_url}` }));
-    } catch (e) {
-      setPublishMsg((m) => ({
-        ...m,
-        [c.id]: `❌ ${e instanceof Error ? e.message : "Lỗi không xác định"}`,
-      }));
-    } finally {
-      setPublishing(null);
-    }
-  }
-
   // ── Animation helpers ────────────────────────────────────────────────────────
   function toggleAnimation(anim: string) {
     setForm((f) => {
@@ -375,136 +329,6 @@ export function SpineTab({ adminKey }: Props) {
       arr.splice(index + 1, 0, arr[index]);
       return { ...f, animations: arr };
     });
-  }
-
-  // ── Embed URL builder ───────────────────────────────────────────────────────
-  function buildEmbedUrl(slug: string) {
-    if (!slug) return "";
-    const base = `https://www.tdgamestudio.com/spine-demo/${slug}`;
-    const params = new URLSearchParams();
-    if (embedBgType !== "none") params.set("bg", embedBgType);
-    if (embedBgType === "color") params.set("c", embedBgColor.replace(/^#/, ""));
-    if (embedBgType === "image" && embedBgImageUrl) params.set("img", embedBgImageUrl);
-    if (embedBgType === "image" && embedBgSize !== "cover") params.set("bgs", embedBgSize);
-    if (embedBgType === "image" && embedBgPos !== "center") params.set("bgp", embedBgPos);
-    if (embedScale) params.set("scale", embedScale);
-    if (embedX) params.set("x", embedX);
-    if (embedY) params.set("y", embedY);
-    const qs = params.toString();
-    return qs ? `${base}?${qs}` : base;
-  }
-
-  async function copyEmbedUrl() {
-    const url = buildEmbedUrl(embedSlug);
-    if (!url) return;
-    await navigator.clipboard.writeText(url);
-    setEmbedCopied(true);
-    setTimeout(() => setEmbedCopied(false), 2000);
-  }
-
-  // ── Itch.io HTML builder ────────────────────────────────────────────────────
-  function buildItchHtml(slug: string): string {
-    const char = characters.find((c) => c.slug === slug);
-    if (!char) return "";
-
-    const jsonUrl = char.json_url ?? "";
-    const atlasUrl = char.atlas_url ?? "";
-    const animations = char.animations?.length ? char.animations : ["idle"];
-    const premultiplied = char.premultiplied_alpha ?? false;
-    const scale = parseFloat(embedScale) || char.scale || 1;
-    const offsetX = parseInt(embedX) || char.offset_x || 0;
-    const offsetY = parseInt(embedY) || char.offset_y || 0;
-    const skin = char.skin ? `skin: ${JSON.stringify(char.skin)},` : "";
-
-    // Background style
-    let bgStyle = "background: transparent;";
-    if (embedBgType === "color") bgStyle = `background: #${embedBgColor};`;
-    else if (embedBgType === "image" && embedBgImageUrl) {
-      bgStyle = `background-image: url('${embedBgImageUrl}'); background-size: ${embedBgSize}; background-position: ${embedBgPos}; background-repeat: no-repeat;`;
-    }
-
-    const animJson = JSON.stringify(animations);
-    const transformParts: string[] = [];
-    if (offsetX !== 0 || offsetY !== 0) transformParts.push(`translate(${offsetX}px, ${offsetY}px)`);
-    if (scale !== 1) transformParts.push(`scale(${scale})`);
-    const transform = transformParts.length ? transformParts.join(" ") : "none";
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${char.name}</title>
-  <link rel="stylesheet" href="https://unpkg.com/@esotericsoftware/spine-player@4.2/dist/spine-player.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; ${bgStyle} }
-    #player {
-      width: 100%; height: 100%;
-      transform: ${transform};
-      transform-origin: center center;
-    }
-  </style>
-</head>
-<body>
-  <div id="player"></div>
-  <script src="https://unpkg.com/@esotericsoftware/spine-player@4.2/dist/iife/spine-player.js"></script>
-  <script>
-    var animations = ${animJson};
-    new spine.SpinePlayer("player", {
-      jsonUrl: ${JSON.stringify(jsonUrl)},
-      atlasUrl: ${JSON.stringify(atlasUrl)},
-      ${skin}
-      alpha: true,
-      backgroundColor: "#00000000",
-      premultipliedAlpha: ${premultiplied},
-      showControls: false,
-      showLoading: false,
-      success: function(player) {
-        var state = player.animationState;
-        if (animations.length === 1) {
-          state.setAnimation(0, animations[0], true);
-        } else {
-          state.setAnimation(0, animations[0], false);
-          for (var i = 1; i < animations.length; i++) {
-            state.addAnimation(0, animations[i], false, 0);
-          }
-          state.addListener({
-            complete: function(entry) {
-              if (entry.trackIndex === 0 && entry.next === null) {
-                state.setAnimation(0, animations[0], false);
-                for (var i = 1; i < animations.length; i++) {
-                  state.addAnimation(0, animations[i], false, 0);
-                }
-              }
-            }
-          });
-        }
-      }
-    });
-  </script>
-</body>
-</html>`;
-  }
-
-  function downloadItchHtml(slug: string) {
-    const html = buildItchHtml(slug);
-    if (!html) return;
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `spine-${slug}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function copyItchHtml(slug: string) {
-    const html = buildItchHtml(slug);
-    if (!html) return;
-    await navigator.clipboard.writeText(html);
-    setItchCopied(true);
-    setTimeout(() => setItchCopied(false), 2000);
   }
 
   // ── File drop zone ─────────────────────────────────────────────────────────
@@ -629,33 +453,7 @@ export function SpineTab({ adminKey }: Props) {
                   ) : (
                     <span className="text-red-400/60">❌ Chưa có atlas</span>
                   )}
-                  {c.itchio_game_id && (
-                    <span className="text-purple-400/60">
-                      itch.io #{c.itchio_game_id}
-                    </span>
-                  )}
                 </div>
-                {/* Itch.io publish status + embed URL */}
-                {(c.itchio_embed_url || publishMsg[c.id]) && (
-                  <div className="mt-1 flex items-center gap-2 flex-wrap">
-                    {publishMsg[c.id] && (
-                      <span className="text-[10px] text-white/50">{publishMsg[c.id]}</span>
-                    )}
-                    {c.itchio_embed_url && !publishMsg[c.id]?.startsWith("🚀") && (
-                      <>
-                        <span className="text-[10px] text-purple-400 truncate max-w-[200px]" title={c.itchio_embed_url}>
-                          🎮 {c.itchio_embed_url}
-                        </span>
-                        <button
-                          onClick={() => void navigator.clipboard.writeText(c.itchio_embed_url!)}
-                          className="text-[9px] rounded bg-purple-500/20 px-1.5 py-0.5 text-purple-400 hover:bg-purple-500/30 transition"
-                        >
-                          Copy URL
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* actions */}
@@ -674,247 +472,12 @@ export function SpineTab({ adminKey }: Props) {
                     Xóa
                   </button>
                 </div>
-                <button
-                  onClick={() => void handlePublishItch(c)}
-                  disabled={publishing === c.id}
-                  title={c.itchio_game_id ? "Publish / Update lên Itch.io" : "Cần điền Game ID trong Edit trước"}
-                  className={`rounded px-2 py-1 text-[10px] font-bold transition ${
-                    c.itchio_game_id
-                      ? "bg-purple-600/80 text-white hover:bg-purple-500"
-                      : "border border-white/10 text-white/25 cursor-not-allowed"
-                  } ${publishing === c.id ? "opacity-50 cursor-wait" : ""}`}
-                >
-                  {publishing === c.id ? "⏳ Publishing…" : "🎮 Publish Itch.io"}
-                </button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* ── Embed URL Builder ────────────────────────────────────────────────── */}
-      {characters.length > 0 && (
-        <div className="rounded-xl border border-white/10 bg-white/3 p-4 space-y-4">
-          <div>
-            <h3 className="text-sm font-bold text-white">Embed URL Builder</h3>
-            <p className="mt-0.5 text-[11px] text-white/40">
-              Tạo link demo để nhúng vào Behance / portfolio qua iframe
-            </p>
-          </div>
-
-          {/* Character selector */}
-          <div className="space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Character</span>
-            <select
-              value={embedSlug}
-              onChange={(e) => {
-                const slug = e.target.value;
-                setEmbedSlug(slug);
-                // Pre-fill scale/offset from DB
-                const char = characters.find((c) => c.slug === slug);
-                if (char) {
-                  setEmbedScale(String(char.scale ?? 1));
-                  setEmbedX(String(char.offset_x ?? 0));
-                  setEmbedY(String(char.offset_y ?? 0));
-                }
-              }}
-              className="w-full rounded-lg border border-white/15 bg-[#1a1a1a] px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
-            >
-              <option value="">-- Chọn character --</option>
-              {characters.filter((c) => c.active).map((c) => (
-                <option key={c.slug} value={c.slug}>{c.name} ({c.slug})</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Background type */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Background</span>
-            <div className="flex gap-2">
-              {(["none", "color", "image"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setEmbedBgType(t)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition ${
-                    embedBgType === t
-                      ? "bg-amber-500 text-black"
-                      : "border border-white/15 text-white/50 hover:text-white"
-                  }`}
-                >
-                  {t === "none" ? "Transparent" : t === "color" ? "Màu trơn" : "Ảnh"}
-                </button>
-              ))}
-            </div>
-
-            {/* Color picker */}
-            {embedBgType === "color" && (
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={`#${embedBgColor}`}
-                  onChange={(e) => setEmbedBgColor(e.target.value.replace("#", ""))}
-                  className="h-9 w-9 cursor-pointer rounded border border-white/15 bg-transparent p-0.5"
-                />
-                <input
-                  value={`#${embedBgColor}`}
-                  onChange={(e) => setEmbedBgColor(e.target.value.replace(/^#/, ""))}
-                  placeholder="#0a0a0a"
-                  className="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 font-mono text-sm text-white focus:border-amber-500 focus:outline-none"
-                />
-                <div
-                  className="h-9 w-9 shrink-0 rounded border border-white/20"
-                  style={{ background: `#${embedBgColor}` }}
-                />
-              </div>
-            )}
-
-            {/* Image URL + size/position */}
-            {embedBgType === "image" && (
-              <div className="space-y-2">
-                <input
-                  value={embedBgImageUrl}
-                  onChange={(e) => setEmbedBgImageUrl(e.target.value)}
-                  placeholder="https://cdn.tdgamestudio.com/... hoặc URL ảnh bất kỳ"
-                  className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 font-mono text-xs text-white placeholder-white/25 focus:border-amber-500 focus:outline-none"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-white/35">Size</span>
-                    <select
-                      value={embedBgSize}
-                      onChange={(e) => setEmbedBgSize(e.target.value)}
-                      className="w-full rounded-lg border border-white/15 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none"
-                    >
-                      <option value="cover">cover (cắt vừa khung)</option>
-                      <option value="contain">contain (thu vừa khung)</option>
-                      <option value="100% 100%">stretch (kéo giãn)</option>
-                      <option value="auto">auto (giữ nguyên)</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-white/35">Position</span>
-                    <select
-                      value={embedBgPos}
-                      onChange={(e) => setEmbedBgPos(e.target.value)}
-                      className="w-full rounded-lg border border-white/15 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none"
-                    >
-                      <option value="center">center</option>
-                      <option value="top center">top center</option>
-                      <option value="bottom center">bottom center</option>
-                      <option value="left center">left center</option>
-                      <option value="right center">right center</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Character position overrides */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-              Vị trí nhân vật (override DB)
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: "Scale", value: embedScale, set: setEmbedScale, placeholder: "1.0" },
-                { label: "Offset X", value: embedX, set: setEmbedX, placeholder: "0" },
-                { label: "Offset Y", value: embedY, set: setEmbedY, placeholder: "0" },
-              ].map(({ label, value, set, placeholder }) => (
-                <div key={label} className="space-y-1">
-                  <span className="text-[10px] text-white/35">{label}</span>
-                  <input
-                    value={value}
-                    onChange={(e) => set(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-center font-mono text-xs text-white placeholder-white/25 focus:border-amber-500 focus:outline-none"
-                  />
-                </div>
-              ))}
-            </div>
-            <p className="text-[9px] text-white/25">
-              Để trống = dùng giá trị đã lưu trong DB của character đó
-            </p>
-          </div>
-
-          {/* Generated URL + actions */}
-          {embedSlug && (
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">URL</span>
-              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2">
-                <code className="flex-1 break-all font-mono text-[11px] text-amber-400/90">
-                  {buildEmbedUrl(embedSlug)}
-                </code>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => void copyEmbedUrl()}
-                  className="flex-1 rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-black transition hover:bg-amber-400"
-                >
-                  {embedCopied ? "✓ Đã copy!" : "Copy URL"}
-                </button>
-                <a
-                  href={buildEmbedUrl(embedSlug)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg border border-white/15 px-4 py-2 text-xs text-white/60 transition hover:text-white"
-                >
-                  Preview ↗
-                </a>
-              </div>
-              <div className="rounded-lg border border-white/8 bg-white/3 px-3 py-2">
-                <p className="text-[10px] font-bold text-white/40 mb-1">Behance iframe code</p>
-                <code className="break-all font-mono text-[10px] text-white/50">
-                  {`<iframe src="${buildEmbedUrl(embedSlug)}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`}
-                </code>
-              </div>
-
-              {/* Itch.io section */}
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-3 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-amber-400">🎮 Itch.io → Behance</span>
-                  <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-400/80">
-                    Behance chấp nhận
-                  </span>
-                </div>
-                <p className="text-[10px] text-white/40 leading-relaxed">
-                  Behance không cho embed domain tự do, nhưng hỗ trợ <strong className="text-white/60">Itch.io</strong>.
-                  Tải file HTML này → upload lên itch.io (HTML5 project) → copy itch.io embed URL vào Behance.
-                </p>
-                <div className="rounded-md border border-white/8 bg-black/30 px-2 py-1.5">
-                  <p className="text-[9px] text-white/30 mb-1 font-bold uppercase tracking-wider">Yêu cầu trước</p>
-                  <p className="text-[10px] text-white/45">
-                    Cloudflare R2 → bucket → Settings → CORS Policy → AllowedOrigins: <code className="text-amber-400/70">["*"]</code>
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => downloadItchHtml(embedSlug)}
-                    className="flex-1 rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-black transition hover:bg-amber-400"
-                  >
-                    ⬇ Download HTML
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void copyItchHtml(embedSlug)}
-                    className="rounded-lg border border-white/15 px-3 py-2 text-xs text-white/60 transition hover:text-white"
-                  >
-                    {itchCopied ? "✓ Copied!" : "Copy HTML"}
-                  </button>
-                </div>
-                <div className="text-[9px] text-white/25 space-y-0.5">
-                  <p>1. Download HTML → upload lên itch.io (New project → HTML)</p>
-                  <p>2. Itch.io → Embed → copy URL dạng <code>https://itch.io/embed/...</code></p>
-                  <p>3. Behance → Add Media → Embed → paste URL itch.io</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── Editor modal ─────────────────────────────────────────────────────── */}
       {editId !== null && (
@@ -1299,29 +862,7 @@ export function SpineTab({ adminKey }: Props) {
               </div>
             )}
 
-            {/* ── Itch.io ───────────────────────────────────────────────────── */}
-            <div className="space-y-2 border-t border-white/8 pt-4">
-              <div className="flex items-center gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                  Itch.io Game ID
-                </p>
-                <span className="rounded bg-purple-500/15 px-1.5 py-0.5 text-[9px] font-bold text-purple-400">
-                  Behance embed
-                </span>
-              </div>
-              <input
-                type="text"
-                value={form.itchio_game_id}
-                onChange={(e) => setForm((f) => ({ ...f, itchio_game_id: e.target.value }))}
-                placeholder="Ví dụ: 1234567  (lấy từ URL itch.io dashboard)"
-                className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 font-mono text-sm text-white placeholder-white/25 focus:border-purple-500 focus:outline-none"
-              />
-              <p className="text-[10px] text-white/30 leading-relaxed">
-                Tạo project trên <span className="text-purple-400">itch.io</span> (New project → HTML5 → Save) → lấy số ID từ URL dashboard{" "}
-                <code className="text-white/40">itch.io/dashboard/game/<strong className="text-purple-300">1234567</strong>/edit</code>
-                {" "}→ paste vào đây → Lưu → nhấn nút <strong className="text-purple-300">🎮 Publish Itch.io</strong> trong danh sách.
-              </p>
-            </div>
+
 
             {/* ── Visual Controls ───────────────────────────────────────────── */}
             <div className="space-y-3 border-t border-white/8 pt-4">

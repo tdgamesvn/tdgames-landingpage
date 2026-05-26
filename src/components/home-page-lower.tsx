@@ -466,7 +466,7 @@ export default function HomePageLower() {
         </div>
       </motion.section>
 
-      {/* Benefits â€” dark TD Games-style: layered title, 4 cards, stats bar */}
+      {/* Benefits — dark TD Games-style: layered title, 4 cards, stats bar */}
       <motion.section
         initial={{ opacity: 0, y: 22 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -670,7 +670,7 @@ export default function HomePageLower() {
         </div>
       </motion.section>
 
-      {/* Reviews + Join us â€” dark cards, avatars, stars; full-bleed CTA */}
+      {/* Reviews + Join us — dark cards, avatars, stars; full-bleed CTA */}
       <motion.section
         initial={{ opacity: 0, y: 22 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -775,7 +775,7 @@ export default function HomePageLower() {
                 <div className="flex shrink-0 gap-0.5 text-[#ff8c3a]">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <span key={s} className="text-sm" aria-hidden>
-                      â˜…
+                      ★
                     </span>
                   ))}
                 </div>
@@ -802,7 +802,7 @@ export default function HomePageLower() {
                 },
                 {
                   quote:
-                    "Worked with this team on a couple of titles â€” quality is smooth and consistent. Would recommend.",
+                    "Worked with this team on a couple of titles — quality is smooth and consistent. Would recommend.",
                   name: "Tom Johnson",
                   role: "Art director",
                   avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg",
@@ -810,7 +810,7 @@ export default function HomePageLower() {
                 },
                 {
                   quote:
-                    "Very short deadline for characters after our previous vendor slipped â€” you helped us ship on time.",
+                    "Very short deadline for characters after our previous vendor slipped — you helped us ship on time.",
                   name: "Peter Wilson",
                   role: "Studio lead",
                   avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg",
@@ -859,7 +859,7 @@ export default function HomePageLower() {
                     <div className="flex shrink-0 gap-0.5 text-[#ff8c3a]">
                       {Array.from({ length: 5 }, (_, i) => (
                         <span key={i} className="text-xs" aria-hidden>
-                          {i < r.stars ? "â˜…" : "â˜†"}
+                          {i < r.stars ? "★" : "☆"}
                         </span>
                       ))}
                     </div>
@@ -1023,12 +1023,12 @@ export default function HomePageLower() {
               className="mx-auto mt-6 max-w-lg px-4 text-center text-sm leading-7 text-white/55 md:mt-8 md:text-[15px]"
               style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
             >
-              Teams we&apos;ve shipped with â€” from rapid prototypes to live ops,
+              Teams we&apos;ve shipped with — from rapid prototypes to live ops,
               built on clarity, craft, and follow-through.
             </p>
           </motion.div>
 
-          {/* Logo marquee: full-bleed track + frosted â€œrailâ€ so it feels less flat */}
+          {/* Logo marquee: full-bleed track + frosted “rail” so it feels less flat */}
           <div className="relative mt-10 md:mt-14">
             <div className="pointer-events-none absolute -top-3 left-1/2 h-px w-[min(520px,88vw)] -translate-x-1/2 bg-linear-to-r from-transparent via-[color-mix(in_srgb,var(--hero-btn-bg,#f59e0b)_45%,transparent)] to-transparent opacity-80" />
             <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden border-y border-white/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,transparent_28%,transparent_72%,rgba(0,0,0,0.25)_100%)] py-10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] md:py-12">

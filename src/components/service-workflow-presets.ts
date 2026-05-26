@@ -73,7 +73,7 @@ export const service2DAnimationWorkflowConfig: ServiceWorkflowConfig = {
   titleAccent: "animation",
   stepsSubtitle: "7 steps from brief to shipped motion",
   description:
-    "A production-minded pipeline for rigs, timing, and exportâ€”so gameplay motion stays readable and your team can integrate fast.",
+    "A production-minded pipeline for rigs, timing, and export—so gameplay motion stays readable and your team can integrate fast.",
   stripTitle: "Our 2D animation workflow",
   defaultStepIndex: 2,
   steps: [
@@ -139,7 +139,7 @@ export const service2DVfxWorkflowConfig: ServiceWorkflowConfig = {
   titleAccent: "VFX",
   stepsSubtitle: "7 steps for readable, punchy effects",
   description:
-    "From concept frames to optimized atlasesâ€”effects that pop on screen without stealing clarity from characters and UI.",
+    "From concept frames to optimized atlases—effects that pop on screen without stealing clarity from characters and UI.",
   stripTitle: "Our 2D VFX workflow",
   defaultStepIndex: 3,
   steps: [

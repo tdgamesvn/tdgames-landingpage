@@ -1,0 +1,505 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "TD Games home" [ref=e5] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e6]:
+        - button "SERVICES" [ref=e8]:
+          - text: SERVICES
+          - img [ref=e9]
+        - link "PORTFOLIO" [ref=e11] [cursor=pointer]:
+          - /url: /portfolio
+        - link "ABOUT" [ref=e12] [cursor=pointer]:
+          - /url: /about
+        - link "BLOG" [ref=e13] [cursor=pointer]:
+          - /url: /blog
+        - link "CAREERS" [ref=e14] [cursor=pointer]:
+          - /url: /careers
+      - link "Get a Quote →" [ref=e16] [cursor=pointer]:
+        - /url: /contact
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e24]:
+        - generic [ref=e26]: 2D & 3D GAME
+        - generic [ref=e28]: ART STUDIO
+        - heading "Game art outsource" [level=3] [ref=e31]
+        - paragraph [ref=e32]: TD Games specializes in transforming creative ideas into vibrant art. We offer a range of services including professional game visuals, 2D stylized art, concept designs, environment art, illustrations, and 2D spine animation. Our skilled team uses advanced techniques to produce both 2D and 3D art, ensuring dynamic and interactive results.
+        - link "Get in touch" [ref=e34] [cursor=pointer]:
+          - /url: "#open-form"
+      - generic [ref=e37]:
+        - button "??? 05" [ref=e39]:
+          - generic [ref=e40]:
+            - img "???" [ref=e42]
+            - generic [ref=e54]: "05"
+        - button "BIGBY 04" [ref=e56]:
+          - generic [ref=e57]:
+            - img "BIGBY" [ref=e59]
+            - generic [ref=e71]: "04"
+        - button "03" [ref=e73]:
+          - generic [ref=e88]: "03"
+        - button "02" [ref=e90]:
+          - generic [ref=e105]: "02"
+        - button "01" [ref=e107]:
+          - generic [ref=e122]: "01"
+    - generic [ref=e124]:
+      - generic [ref=e126]:
+        - generic [ref=e127]:
+          - generic [ref=e128]: // 01
+          - generic [ref=e130]: Capabilities
+        - heading "OUR SERVICES" [level=2] [ref=e131]:
+          - text: OUR
+          - generic [ref=e132]: SERVICES
+        - paragraph [ref=e133]: This version keeps the brand energy but removes the hard AAA pressure. The layout follows a studio portfolio rhythm aligned with TD Games.
+      - generic [ref=e134]:
+        - article [ref=e136]:
+          - generic [ref=e137]:
+            - link "Open 2D Animation" [ref=e138] [cursor=pointer]:
+              - /url: /services/2d-animation
+            - generic [ref=e140]:
+              - heading "2D Animation" [level=3] [ref=e142]
+              - paragraph [ref=e145]: Stylized attack loops, promo motion, idle cycles, and lightweight animated sequences built for game readability.
+              - generic [ref=e146]:
+                - generic [ref=e147]:
+                  - generic [ref=e148]: 50+
+                  - generic [ref=e149]: Completed projects
+                - img [ref=e151]
+        - article [ref=e154]:
+          - generic [ref=e155]:
+            - link "Open 2D Art" [ref=e156] [cursor=pointer]:
+              - /url: /services/2d-art
+            - generic [ref=e158]:
+              - heading "2D Art" [level=3] [ref=e160]
+              - paragraph [ref=e163]: Character sheets, splash illustrations, UI-support art, and painted assets tuned for a cleaner, friendlier game look.
+              - generic [ref=e164]:
+                - generic [ref=e165]:
+                  - generic [ref=e166]: 50+
+                  - generic [ref=e167]: Completed projects
+                - img [ref=e169]
+        - article [ref=e172]:
+          - generic [ref=e173]:
+            - link "Open 2D VFX" [ref=e174] [cursor=pointer]:
+              - /url: /services/2d-vfx
+            - generic [ref=e176]:
+              - heading "2D VFX" [level=3] [ref=e178]
+              - paragraph [ref=e181]: Skill bursts, hit flashes, elemental trails, and screen-space accents that add energy without pushing the style too hard.
+              - generic [ref=e182]:
+                - generic [ref=e183]:
+                  - generic [ref=e184]: 50+
+                  - generic [ref=e185]: Completed projects
+                - img [ref=e187]
+    - generic [ref=e189]:
+      - img
+      - generic [ref=e190]:
+        - generic [ref=e192]:
+          - generic [ref=e193]:
+            - generic [ref=e194]: // 02
+            - generic [ref=e196]: Portfolio
+          - heading "OUR PROJECTS" [level=2] [ref=e197]:
+            - text: OUR
+            - generic [ref=e198]: PROJECTS
+          - paragraph [ref=e199]: We create immersive 2D animation, stunning game art, and eye-catching VFX that bring ideas to life and captivate players.
+        - generic [ref=e200]:
+          - article [ref=e201]:
+            - generic [ref=e202]:
+              - img "Kayn Snow Moon - League of Legends" [ref=e203]
+              - generic [ref=e206]: Featured Project
+              - generic [ref=e207]:
+                - paragraph [ref=e208]: LOGIN SCREEN ANIMATION
+                - heading "Kayn Snow Moon - League of Legends" [level=3] [ref=e209]
+                - generic [ref=e210]:
+                  - generic [ref=e211]: 2024 â€¢ Login Screen Animation
+                  - link "View Project" [ref=e212] [cursor=pointer]:
+                    - /url: /portfolio/kayn-snow-moon
+          - article [ref=e213]:
+            - generic [ref=e214]:
+              - img "Axie Infinity Origins" [ref=e215]
+              - generic [ref=e217]:
+                - paragraph [ref=e218]: GAME ANIMATION
+                - heading "Axie Infinity Origins" [level=3] [ref=e219]
+                - generic [ref=e220]:
+                  - generic [ref=e221]: 2024 â€¢ Game Animation
+                  - generic [ref=e222]: Demo
+          - article [ref=e223]:
+            - generic [ref=e224]:
+              - img "Boss Animation - The Twins" [ref=e225]
+              - generic [ref=e227]:
+                - paragraph [ref=e228]: CHARACTER ANIMATION
+                - heading "Boss Animation - The Twins" [level=3] [ref=e229]
+                - generic [ref=e230]:
+                  - generic [ref=e231]: 2024 â€¢ Character Animation
+                  - generic [ref=e232]: Demo
+          - article [ref=e233]:
+            - generic [ref=e234]:
+              - img "Summoner Era - Heroes Light/Dark" [ref=e235]
+              - generic [ref=e237]:
+                - paragraph [ref=e238]: 2D ANIMATION & VFX
+                - heading "Summoner Era - Heroes Light/Dark" [level=3] [ref=e239]
+                - generic [ref=e240]:
+                  - generic [ref=e241]: 2024 â€¢ 2D Animation & VFX
+                  - generic [ref=e242]: Demo
+          - article [ref=e243]:
+            - generic [ref=e244]:
+              - img "Horse Racing - Splash Art" [ref=e245]
+              - generic [ref=e247]:
+                - paragraph [ref=e248]: SPLASH ART ANIMATION
+                - heading "Horse Racing - Splash Art" [level=3] [ref=e249]
+                - generic [ref=e250]:
+                  - generic [ref=e251]: 2024 â€¢ Splash Art Animation
+                  - generic [ref=e252]: Demo
+          - article [ref=e253]:
+            - generic [ref=e254]:
+              - img "Battle of the Gods | Mytheria" [ref=e255]
+              - generic [ref=e257]:
+                - paragraph [ref=e258]: LOGIN SCREEN
+                - heading "Battle of the Gods | Mytheria" [level=3] [ref=e259]
+                - generic [ref=e260]:
+                  - generic [ref=e261]: 2024 â€¢ Login Screen
+                  - generic [ref=e262]: Demo
+          - article [ref=e263]:
+            - generic [ref=e264]:
+              - img "Animation Contest - Sky Mavis" [ref=e265]
+              - generic [ref=e267]:
+                - paragraph [ref=e268]: ANIMATION & VFX
+                - heading "Animation Contest - Sky Mavis" [level=3] [ref=e269]
+                - generic [ref=e270]:
+                  - generic [ref=e271]: 2024 â€¢ Animation & VFX
+                  - generic [ref=e272]: Demo
+          - article [ref=e273]:
+            - generic [ref=e274]:
+              - img "Reaper & Lady - Project OverDrive" [ref=e275]
+              - generic [ref=e277]:
+                - paragraph [ref=e278]: GAME ANIMATION
+                - heading "Reaper & Lady - Project OverDrive" [level=3] [ref=e279]
+                - generic [ref=e280]:
+                  - generic [ref=e281]: 2024 â€¢ Game Animation
+                  - generic [ref=e282]: Demo
+          - article [ref=e283]:
+            - generic [ref=e284]:
+              - img "Art Study Collection" [ref=e285]
+              - generic [ref=e287]:
+                - paragraph [ref=e288]: CHARACTER DESIGN
+                - heading "Art Study Collection" [level=3] [ref=e289]
+                - generic [ref=e290]:
+                  - generic [ref=e291]: 2024 â€¢ Character Design
+                  - generic [ref=e292]: Demo
+    - generic [ref=e294]:
+      - generic [ref=e295]:
+        - generic [ref=e296]:
+          - heading "CHARACTER SHOWCASE" [level=3] [ref=e297]:
+            - text: CHARACTER
+            - generic [ref=e298]: SHOWCASE
+          - paragraph [ref=e299]: Bringing game characters to life through expressive animation, dynamic poses, and polished visual effects.
+        - generic [ref=e300]:
+          - generic [ref=e301]: Drag
+          - generic [ref=e302]: Hover slow
+      - generic [ref=e303]:
+        - button "3D Characters" [ref=e304]
+        - button "3D Props" [ref=e305]
+        - button "Backgrounds" [ref=e306]
+        - button "Character design" [ref=e307]
+      - generic [ref=e310]:
+        - img "Character 1" [ref=e313]
+        - img "Character 2" [ref=e317]
+        - img "Character 3" [ref=e321]
+        - img "Character 4" [ref=e325]
+        - img "Character 5" [ref=e329]
+        - img "Character 1" [ref=e333]
+        - img "Character 2" [ref=e337]
+        - img "Character 3" [ref=e341]
+        - img "Character 4" [ref=e345]
+        - img "Character 5" [ref=e349]
+        - img "Character 1" [ref=e353]
+        - img "Character 2" [ref=e357]
+        - img "Character 3" [ref=e361]
+        - img "Character 4" [ref=e365]
+        - img "Character 5" [ref=e369]
+    - generic [ref=e372]:
+      - generic [ref=e374]:
+        - generic [ref=e375]:
+          - generic [ref=e376]: // 03
+          - generic [ref=e378]: Why us
+        - heading "WHY CHOOSE TD GAMES" [level=2] [ref=e379]:
+          - text: WHY CHOOSE
+          - generic [ref=e380]: TD GAMES
+        - paragraph [ref=e381]: We create immersive 2D animation, stunning game art, and eye-catching VFX that bring ideas to life and captivate players.
+      - generic [ref=e382]:
+        - article [ref=e383]:
+          - img [ref=e385]
+          - heading "HIGH QUALITY ART" [level=4] [ref=e387]
+          - paragraph [ref=e388]: Every asset is crafted with attention to detail, style consistency, and production-ready polish.
+        - article [ref=e389]:
+          - img [ref=e391]
+          - heading "REASONABLE PRICES" [level=4] [ref=e393]
+          - paragraph [ref=e394]: Clear scopes and predictable delivery so teams can plan budgets without surprises.
+        - article [ref=e395]:
+          - img [ref=e397]
+          - heading "STREAMLINED WORKFLOW" [level=4] [ref=e399]
+          - paragraph [ref=e400]: Fast feedback loops, organized handoffs, and milestones that keep production moving.
+        - article [ref=e401]:
+          - img [ref=e403]
+          - heading "PROTECTING YOUR IDEA" [level=4] [ref=e405]
+          - paragraph [ref=e406]: NDA-friendly process and careful handling of concepts, references, and unreleased work.
+      - generic [ref=e408]:
+        - generic [ref=e409]:
+          - img [ref=e411]
+          - generic [ref=e414]: 0+
+          - generic [ref=e415]: PROJECTS COMPLETED
+        - generic [ref=e416]:
+          - img [ref=e418]
+          - generic [ref=e421]: 0+
+          - generic [ref=e422]: HAPPY CLIENTS
+        - generic [ref=e423]:
+          - img [ref=e425]
+          - generic [ref=e428]: 0+
+          - generic [ref=e429]: ASSETS DELIVERED
+    - generic [ref=e430]:
+      - generic [ref=e431]:
+        - generic [ref=e433]:
+          - generic [ref=e434]:
+            - generic [ref=e435]: // 04
+            - generic [ref=e437]: Testimonials
+          - heading "WHAT ARE PEOPLE SAYING" [level=2] [ref=e438]:
+            - text: WHAT ARE PEOPLE
+            - generic [ref=e439]: SAYING
+        - generic [ref=e440]:
+          - article [ref=e441]:
+            - generic [ref=e442]: “
+            - paragraph [ref=e443]
+            - generic [ref=e444]:
+              - generic [ref=e446]:
+                - generic [ref=e447]: Jens Weinberg
+                - generic [ref=e448]: Animation lead
+              - generic [ref=e449]:
+                - generic [ref=e450]: â˜…
+                - generic [ref=e451]: â˜…
+                - generic [ref=e452]: â˜…
+                - generic [ref=e453]: â˜…
+                - generic [ref=e454]: â˜…
+          - generic [ref=e455]:
+            - article [ref=e456]:
+              - generic [ref=e457]: “
+              - paragraph
+              - generic [ref=e458]:
+                - generic [ref=e460]:
+                  - generic [ref=e461]: Tom Brunner
+                  - generic [ref=e462]: Indie dev
+                - generic [ref=e463]:
+                  - generic [ref=e464]: â˜…
+                  - generic [ref=e465]: â˜…
+                  - generic [ref=e466]: â˜…
+                  - generic [ref=e467]: â˜…
+                  - generic [ref=e468]: â˜…
+            - article [ref=e469]:
+              - generic [ref=e470]: “
+              - paragraph
+              - generic [ref=e471]:
+                - generic [ref=e473]:
+                  - generic [ref=e474]: Adel Wazir
+                  - generic [ref=e475]: Producer
+                - generic [ref=e476]:
+                  - generic [ref=e477]: â˜…
+                  - generic [ref=e478]: â˜…
+                  - generic [ref=e479]: â˜…
+                  - generic [ref=e480]: â˜…
+                  - generic [ref=e481]: â˜…
+            - article [ref=e482]:
+              - generic [ref=e483]: “
+              - paragraph
+              - generic [ref=e484]:
+                - generic [ref=e486]:
+                  - generic [ref=e487]: Tom Johnson
+                  - generic [ref=e488]: Art director
+                - generic [ref=e489]:
+                  - generic [ref=e490]: â˜…
+                  - generic [ref=e491]: â˜…
+                  - generic [ref=e492]: â˜…
+                  - generic [ref=e493]: â˜…
+                  - generic [ref=e494]: â˜†
+            - article [ref=e495]:
+              - generic [ref=e496]: “
+              - paragraph
+              - generic [ref=e497]:
+                - generic [ref=e499]:
+                  - generic [ref=e500]: Peter Wilson
+                  - generic [ref=e501]: Studio lead
+                - generic [ref=e502]:
+                  - generic [ref=e503]: â˜…
+                  - generic [ref=e504]: â˜…
+                  - generic [ref=e505]: â˜…
+                  - generic [ref=e506]: â˜…
+                  - generic [ref=e507]: â˜…
+      - generic [ref=e510]:
+        - generic [ref=e514]: Character coming soon
+        - generic [ref=e515]:
+          - generic [ref=e517]:
+            - generic [ref=e518]:
+              - generic [ref=e519]: // 05
+              - generic [ref=e521]: Careers
+            - heading "LET'S CREATE AMAZING GAMES TOGETHER" [level=2] [ref=e522]:
+              - text: LET'S CREATE
+              - generic [ref=e523]: AMAZING GAMES
+              - text: TOGETHER
+            - paragraph [ref=e524]: We're passionate, talented individuals. Join our team and help shape the future of game art.
+          - generic [ref=e525]:
+            - link "View vacancies" [ref=e526] [cursor=pointer]:
+              - /url: "#"
+              - text: View vacancies
+              - img [ref=e527]
+            - link "Contact us" [ref=e529] [cursor=pointer]:
+              - /url: "#"
+    - generic [ref=e531]:
+      - generic [ref=e532]:
+        - generic [ref=e533]:
+          - generic [ref=e534]: // 06
+          - generic [ref=e536]: Partners
+        - heading "TRUST OUR CLIENTS" [level=2] [ref=e537]:
+          - generic [ref=e538]: TRUST OUR
+          - generic [ref=e539]: CLIENTS
+        - paragraph [ref=e540]: Teams we've shipped with â€” from rapid prototypes to live ops, built on clarity, craft, and follow-through.
+      - generic [ref=e543]:
+        - img "Client logo" [ref=e545]
+        - img "Client logo" [ref=e547]
+        - img "Client logo" [ref=e549]
+        - img "Client logo" [ref=e551]
+        - img "Client logo" [ref=e553]
+        - img "Client logo" [ref=e555]
+        - img "Client logo" [ref=e557]
+        - img "Client logo" [ref=e559]
+        - img "Client logo" [ref=e561]
+        - img "Client logo" [ref=e563]
+      - generic [ref=e565]:
+        - generic [ref=e566]:
+          - generic [ref=e567]: // 07
+          - generic [ref=e569]: Insights
+        - heading "STAY INFORMED WITH OUR BLOG" [level=2] [ref=e570]:
+          - text: STAY INFORMED WITH
+          - generic [ref=e571]: OUR BLOG
+      - generic [ref=e572]:
+        - article [ref=e573]:
+          - link "How to create a game character 01.22.2024 How to create a game character Read more" [ref=e574] [cursor=pointer]:
+            - /url: /blog
+            - img "How to create a game character" [ref=e576]
+            - generic [ref=e578]:
+              - generic [ref=e579]: 01.22.2024
+              - generic [ref=e580]: How to create a game character
+              - generic [ref=e582]: Read more
+        - article [ref=e583]:
+          - link "High poly and low poly modeling 01.22.2024 High poly and low poly modeling Read more" [ref=e584] [cursor=pointer]:
+            - /url: /blog
+            - img "High poly and low poly modeling" [ref=e586]
+            - generic [ref=e588]:
+              - generic [ref=e589]: 01.22.2024
+              - generic [ref=e590]: High poly and low poly modeling
+              - generic [ref=e592]: Read more
+        - article [ref=e593]:
+          - 'link "Animation outsourcing: a guide for success 01.22.2024 Animation outsourcing: a guide for success Read more" [ref=e594] [cursor=pointer]':
+            - /url: /blog
+            - 'img "Animation outsourcing: a guide for success" [ref=e596]'
+            - generic [ref=e598]:
+              - generic [ref=e599]: 01.22.2024
+              - generic [ref=e600]: "Animation outsourcing: a guide for success"
+              - generic [ref=e602]: Read more
+      - generic [ref=e603]:
+        - generic [ref=e604]:
+          - generic [ref=e606]:
+            - generic [ref=e607]:
+              - generic [ref=e608]: // 08
+              - generic [ref=e610]: Contact
+            - heading "LET'S TALK" [level=2] [ref=e611]:
+              - text: LET'S
+              - generic [ref=e612]: TALK
+            - paragraph [ref=e613]: Ready to bring your vision to life?
+          - generic [ref=e614]:
+            - link "Get a quote" [ref=e615] [cursor=pointer]:
+              - /url: "#"
+            - link "Contact" [ref=e616] [cursor=pointer]:
+              - /url: "#"
+        - img "Mascot" [ref=e618]
+    - generic [ref=e620]:
+      - generic [ref=e621]:
+        - generic [ref=e622]:
+          - img "TD Games" [ref=e624]
+          - paragraph [ref=e626]: Founded in 2019, TD Games emerged from a shared passion for creating visually stunning game experiences. What started as a small team of artists has grown into a full-service game art studio trusted by developers worldwide.
+          - paragraph [ref=e627]: We believe that great art is the foundation of memorable games. Our mission is to help developers bring their creative visions to life with professional-grade assets that enhance gameplay and captivate players.
+          - generic [ref=e628]:
+            - link "LinkedIn" [ref=e629] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e630]
+            - link "Facebook" [ref=e632] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e633]
+            - link "Instagram" [ref=e635] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e636]
+            - link "Behance" [ref=e640] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e641]
+            - link "ArtStation" [ref=e645] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e646]
+        - generic [ref=e648]:
+          - generic [ref=e649]:
+            - generic [ref=e650]: Contacts
+            - list [ref=e651]:
+              - listitem [ref=e652]:
+                - img [ref=e654]
+                - generic [ref=e657]: 505 Minh Khai, Hanoi, Vietnam
+              - listitem [ref=e658]:
+                - link "Contact us" [ref=e659] [cursor=pointer]:
+                  - /url: /contact
+                  - img [ref=e661]
+                  - generic [ref=e663]: Contact us
+              - listitem [ref=e664]:
+                - link "Discord" [ref=e665] [cursor=pointer]:
+                  - /url: https://discord.com
+                  - img [ref=e667]
+                  - generic [ref=e669]: Discord
+              - listitem [ref=e670]:
+                - link "contact@tdgames.vn" [ref=e671] [cursor=pointer]:
+                  - /url: mailto:contact@tdgames.vn
+                  - img [ref=e673]
+                  - generic [ref=e675]: contact@tdgames.vn
+          - generic [ref=e676]:
+            - generic [ref=e677]: Services
+            - generic [ref=e678]:
+              - link "2D Art" [ref=e679] [cursor=pointer]:
+                - /url: /services/2d-art
+              - link "2D Animation" [ref=e680] [cursor=pointer]:
+                - /url: /services/2d-animation
+              - link "2D VFX" [ref=e681] [cursor=pointer]:
+                - /url: /services/2d-vfx
+              - link "Game UI" [ref=e682] [cursor=pointer]:
+                - /url: /contact
+          - generic [ref=e683]:
+            - generic [ref=e684]: Company
+            - generic [ref=e685]:
+              - link "Company" [ref=e686] [cursor=pointer]:
+                - /url: /
+              - link "Our projects" [ref=e687] [cursor=pointer]:
+                - /url: /portfolio
+              - link "Careers" [ref=e688] [cursor=pointer]:
+                - /url: /#careers
+              - link "Blog" [ref=e689] [cursor=pointer]:
+                - /url: /#blog
+          - generic [ref=e690]:
+            - generic [ref=e691]: Info
+            - generic [ref=e692]:
+              - link "Privacy policy" [ref=e693] [cursor=pointer]:
+                - /url: "#"
+              - link "Terms of use" [ref=e694] [cursor=pointer]:
+                - /url: "#"
+              - link "FAQ" [ref=e695] [cursor=pointer]:
+                - /url: "#"
+              - link "Glossary" [ref=e696] [cursor=pointer]:
+                - /url: "#"
+      - generic [ref=e697]:
+        - generic [ref=e698]: Â© 2026 TD Games. All rights reserved.
+        - generic [ref=e699]:
+          - text: Running icon by
+          - link "Freepik" [ref=e700] [cursor=pointer]:
+            - /url: https://www.flaticon.com/authors/freepik
+          - text: from
+          - link "Flaticon" [ref=e701] [cursor=pointer]:
+            - /url: https://www.flaticon.com/free-icons/runner
+          - text: .
+  - alert [ref=e702]

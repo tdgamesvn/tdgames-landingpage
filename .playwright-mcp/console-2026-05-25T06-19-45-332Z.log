@@ -1,0 +1,17 @@
+[     703ms] [ERROR] Access to image at 'https://cdn.tdgamestudio.com/landing/images/sparkling.png' from origin 'https://tdgamestudio.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://tdgamestudio.com/:1
+[     703ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://cdn.tdgamestudio.com/landing/images/sparkling.png:0
+[     703ms] [ERROR] Access to image at 'https://cdn.tdgamestudio.com/landing/images/art.png' from origin 'https://tdgamestudio.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://tdgamestudio.com/:1
+[     703ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://cdn.tdgamestudio.com/landing/images/art.png:0
+[     703ms] [ERROR] Access to image at 'https://cdn.tdgamestudio.com/landing/images/running.png' from origin 'https://tdgamestudio.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://tdgamestudio.com/:1
+[     704ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://cdn.tdgamestudio.com/landing/images/running.png:0
+[    3170ms] [ERROR] Access to XMLHttpRequest at 'https://cdn.tdgamestudio.com/landing/spine/devil-lord/awakened-ancestor-special-nebotus-evil-lord_3.atlas' from origin 'https://tdgamestudio.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://tdgamestudio.com/:0
+[    3172ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://cdn.tdgamestudio.com/landing/spine/devil-lord/awakened-ancestor-special-nebotus-evil-lord_3.atlas:0
+[    3199ms] [ERROR] Access to XMLHttpRequest at 'https://cdn.tdgamestudio.com/landing/spine/devil-lord/awakened-ancestor-special-nebotus-evil-lord_3.json' from origin 'https://tdgamestudio.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://tdgamestudio.com/:0
+[    3203ms] SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at https://tdgamestudio.com/_next/static/chunks/04z6ad5wp24f2.js:1:73670
+    at er.finish (https://tdgamestudio.com/_next/static/chunks/04z6ad5wp24f2.js:1:74361)
+    at XMLHttpRequest.a (https://tdgamestudio.com/_next/static/chunks/04z6ad5wp24f2.js:1:73552)
+[    3202ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://cdn.tdgamestudio.com/landing/spine/devil-lord/awakened-ancestor-special-nebotus-evil-lord_3.json:0
+[    6333ms] [WARNING] The resource https://tdgamestudio.com/_next/static/chunks/03jsf1we793_o.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://tdgamestudio.com/:0
+[    6333ms] [WARNING] The resource https://tdgamestudio.com/_next/static/chunks/0l0o-1rkwd5~n.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ https://tdgamestudio.com/:0

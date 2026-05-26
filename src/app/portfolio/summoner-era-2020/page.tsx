@@ -613,7 +613,7 @@ export default function SummonerEra2020DetailPage() {
                             {module.title}
                           </span>
                           <span className="ml-3" style={{ color: projectMeta.theme?.accent || "#22d3ee" }}>
-                            â€” {module.subtitle}
+                            — {module.subtitle}
                           </span>
                         </h3>
                         <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: projectMeta.theme?.accent || "#22d3ee" }}>
@@ -627,7 +627,7 @@ export default function SummonerEra2020DetailPage() {
                         >
                           <iframe
                             src={module.embedSrc}
-                            title={`${projectMeta.title} â€” ${module.title}`}
+                            title={`${projectMeta.title} — ${module.title}`}
                             className="absolute inset-0 h-full w-full border-0"
                             allow="autoplay; fullscreen; picture-in-picture"
                             allowFullScreen

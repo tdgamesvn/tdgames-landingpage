@@ -29,7 +29,7 @@ const featured2DArtShowcaseCards: StudioServiceCard[] = [
     statValue: "50+",
     statLabel: "Completed projects",
     description:
-      "Objects, symbols, and HUD-friendly assets that stay on-model with your gameâ€™s 2D visual language.",
+      "Objects, symbols, and HUD-friendly assets that stay on-model with your game’s 2D visual language.",
     image: "https://cdn.tdgamestudio.com/landing/images/Casual_Art_Props-1024x683.jpg",
   },
 ];
@@ -41,7 +41,7 @@ export default function Service2DArtFeaturedShowcase() {
       sectionStep="// 03"
       railLabel="Showcase"
       titleAccent="2D ART"
-      description="A focused look at recent 2D art deliveriesâ€”characters, worlds, and production-ready asset packsâ€”presented in the same confident TD Games palette with a relaxed, portfolio-style layout."
+      description="A focused look at recent 2D art deliveries—characters, worlds, and production-ready asset packs—presented in the same confident TD Games palette with a relaxed, portfolio-style layout."
       cards={featured2DArtShowcaseCards}
     />
   );

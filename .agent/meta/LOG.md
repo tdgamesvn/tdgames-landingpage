@@ -1,5 +1,64 @@
 # LOG
 
+## 2026-05-26 (session — Butler fix + itch.io publish working)
+### Task
+Fix publish-itch route: switch từ itch.io direct API sang Butler CLI, xử lý auth đúng
+
+### Work Done
+- Xác nhận Butler v15.27.0 đã có trên VPS (`/usr/local/bin/butler`)
+- Xác nhận `ITCHIO_API_KEY` load được từ `.env.local` (Next.js tự load tại runtime)
+- Phát hiện code cũ (commit 4da30f6) dùng `fflate` + itch.io REST upload API → lỗi "invalid api endpoint"
+- Commit `c1f3d65`: replace fflate/direct-API bằng `butler push` CLI
+- Phát hiện butler v15+ bỏ flag `--api-key` → dùng env var `BUTLER_API_KEY` thay thế
+- Commit `e5f85dd`: switch sang `BUTLER_API_KEY` env var
+- Improve error capture: `err.stderr` + check stderr pattern khi exit 0 nhưng có lỗi
+- Commit `ef42154`: better stderr capture
+- Fix git ref lock trên VPS: `git remote prune origin && git fetch && git reset --hard origin/main`
+- User verify itch.io email → publish thành công
+
+### Result
+- Wolf_Aquatic publish lên `tdgamesvn/tdgames-spine-character:html5` ✅
+- `itchio_embed_url = https://itch.io/embed/4614158` đã lưu vào DB ✅
+- Embed URL sẵn sàng paste vào Behance iframe
+
+### Next Step
+- ⚠️ Regenerate `ITCHIO_API_KEY` trên itch.io (key cũ đã lộ trong chat nhiều lần)
+- Test embed URL thật trên Behance: `<iframe src="https://itch.io/embed/4614158" ...>`
+- Publish Devil_Lord (careers-hero): cần set `itchio_game_id` trong Admin → Spine → Edit
+
+## 2026-05-26 (session — Itch.io auto-publish)
+### Task
+Auto-publish Spine characters lên itch.io từ admin panel (phương án B) để embed vào Behance
+
+### Work Done
+- Install `fflate` (ZIP library)
+- DB migration: thêm `itchio_game_id TEXT` + `itchio_embed_url TEXT` vào `spine_characters`
+- Tạo `POST /api/admin/spine/[id]/publish-itch/route.ts`:
+  - Xác thực admin key + ITCHIO_API_KEY env
+  - Fetch character từ DB, validate itchio_game_id
+  - Generate standalone HTML (Spine runtime từ unpkg CDN, animation loop)
+  - Tạo ZIP với fflate, upload lên itch.io API (`/game/{id}/upload`)
+  - Lưu `itchio_embed_url` về DB
+- Update PATCH API: thêm `itchio_game_id` + `itchio_embed_url` vào PATCHABLE
+- Update `types.ts`: thêm 2 fields mới vào `SpineCharacter`
+- Update `api.ts`: thêm `publishToItch()` client helper
+- Update `SpineTab.tsx`:
+  - FormState + BLANK + openEdit: thêm `itchio_game_id`
+  - Thêm `handlePublishItch()` async handler
+  - Edit modal: section "Itch.io Game ID" với hướng dẫn
+  - Character list row: nút 🎮 Publish Itch.io + status message + Copy URL
+- Commit: `4da30f6 feat(spine): auto-publish to itch.io from admin panel`
+
+### Result
+- Admin → Spine → Edit character → nhập Game ID → Lưu → Publish → URL tự lưu vào DB
+- Workflow cho Behance: Publish → copy URL từ admin → paste vào Behance embed
+- Không cần switch platform sau khi setup game ID 1 lần
+
+### Next Step
+- Thêm `ITCHIO_API_KEY` vào VPS environment (deploy sẽ cần)
+- User tạo itch.io account + game → nhập Game ID → test Publish
+- Regenerate itch.io API key (key cũ đã lộ trong chat)
+
 ## 2026-05-26 (session — Spine Demo embed + bug fix)
 ### Task
 Build `/spine-demo/[slug]` embed page + Embed URL Builder trong admin SpineTab

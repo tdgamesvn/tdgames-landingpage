@@ -41,7 +41,7 @@ export default function Service2DAnimationFeaturedShowcase() {
       sectionStep="// 03"
       railLabel="Showcase"
       titleAccent="2D ANIMATION"
-      description="Highlights from recent animation deliveriesâ€”loops, combat, and UI-adjacent motionâ€”using on-repo imagery as stand-ins while your production art is in flight."
+      description="Highlights from recent animation deliveries—loops, combat, and UI-adjacent motion—using on-repo imagery as stand-ins while your production art is in flight."
       cards={cards}
     />
   );

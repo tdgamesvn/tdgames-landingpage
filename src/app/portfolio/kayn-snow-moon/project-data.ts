@@ -8,7 +8,7 @@ export const projectMeta: ProjectMeta = {
   title: "Kayn Snow Moon | League of Legends - Login Screen",
   eyebrow: "Case study",
   summary:
-    "Login screen for Kayn Snow Moon â€” a fan-made League of Legends piece: looping hero motion, snow-moon atmosphere, and compositing tuned for a cinematic client-style login.",
+    "Login screen for Kayn Snow Moon — a fan-made League of Legends piece: looping hero motion, snow-moon atmosphere, and compositing tuned for a cinematic client-style login.",
   heroTitle: {
     primary: [
       { text: "Kayn", color: "accent" },
@@ -28,7 +28,7 @@ export const projectMeta: ProjectMeta = {
     "Compositing, VFX, and final grade",
   ],
   overview: {
-    body: "A fan-made login screen for Kaynâ€™s Snow Moon skin direction: stylized motion, cold moonlight, and VFX that read clearly at full-frame promo resolution.",
+    body: "A fan-made login screen for Kayn’s Snow Moon skin direction: stylized motion, cold moonlight, and VFX that read clearly at full-frame promo resolution.",
     stats: [
       { value: "446+", label: "Appreciations" },
       { value: "7.5K", label: "Views" },

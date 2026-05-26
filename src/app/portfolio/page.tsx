@@ -148,7 +148,7 @@ type InteractionState =
     }
   | null;
 
-/** Snapshot BG Right panel (+ bgright image scale). `boardFitScale` not saved â€” recalculated per viewport. */
+/** Snapshot BG Right panel (+ bgright image scale). `boardFitScale` not saved — recalculated per viewport. */
 type PortfolioBgRightInit = {
   widthVw: number;
   heightVh: number;
@@ -446,12 +446,12 @@ export default function PortfolioPage() {
 
   const bgrightSlotRef = useRef<HTMLDivElement>(null);
   const [boardFitScale, setBoardFitScale] = useState(1);
-  /** TrĂ¡nh frame Ä‘áº§u scale=1 sai â†’ nháº£y/giáº­t (nhĂ¬n nhÆ° bgright â€œxoayâ€) trÆ°á»›c khi Ä‘o slot xong. */
+  /** TrĂ¡nh frame Ä‘áº§u scale=1 sai â†’ nháº£y/giáº­t (nhĂ¬n nhÆ° bgright “xoay”) trÆ°á»›c khi Ä‘o slot xong. */
   const [boardFitLayoutReady, setBoardFitLayoutReady] = useState(false);
 
   /**
    * Canvas scale/topPad cá»‘ Ä‘á»‹nh trong lĂºc kĂ©o; khĂ´ng tĂ­nh láº¡i má»—i frame (trĂ¡nh cáº£ khá»‘i nháº£y).
-   * Báº¥m â€œRefit canvasâ€ sau khi dá»‹ch layout xa; Init JSON / localStorage khĂ´i phá»¥c designCanvas + bgRight.
+   * Báº¥m “Refit canvas” sau khi dá»‹ch layout xa; Init JSON / localStorage khĂ´i phá»¥c designCanvas + bgRight.
    */
   const [boardCanvas, setBoardCanvas] = useState({
     w: PORTFOLIO_PAGE_DEFAULTS.designCanvas.w,
@@ -518,7 +518,7 @@ export default function PortfolioPage() {
   }, [boardDesignSize.w, boardDesignSize.h]);
 
   const selectedCard = showcaseCards[selectedCardIndex];
-  /** Card Ä‘ang hover â€” áº£nh dĂ¹ng lĂ m ná»n full-page (má»i card). */
+  /** Card Ä‘ang hover — áº£nh dĂ¹ng lĂ m ná»n full-page (má»i card). */
   const hoveredHeroCard = useMemo(
     () =>
       hoveredCardIndex !== null
@@ -953,7 +953,7 @@ export default function PortfolioPage() {
             if (ENABLE_PORTFOLIO_HOVER_FX) setHoveredCardIndex(null);
           }}
         >
-          {/* Global background â€” hover báº¥t ká»³ card: áº£nh card lĂ m ná»n + bá» phá»§ + scale nháº¹ */}
+          {/* Global background — hover báº¥t ká»³ card: áº£nh card lĂ m ná»n + bá» phá»§ + scale nháº¹ */}
           <div className="pointer-events-none absolute inset-0 z-0">
             {bgImage && !/bgright\.png/i.test(bgImage) ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -1535,7 +1535,7 @@ export default function PortfolioPage() {
                   </strong>{" "}
                   vĂ  layout ná»n.{" "}
                   <strong className="text-emerald-200/90">boardFitScale</strong>{" "}
-                  theo khung trĂ¬nh duyá»‡t â€” khĂ´ng export, F5 váº«n Ä‘Ăºng náº¿u lÆ°u
+                  theo khung trĂ¬nh duyá»‡t — khĂ´ng export, F5 váº«n Ä‘Ăºng náº¿u lÆ°u
                   Init.
                 </p>
                 <div className="mb-1 flex flex-wrap items-center justify-end gap-1">
@@ -2075,7 +2075,7 @@ export default function PortfolioPage() {
             </div>
           </section>
 
-          {/* Dock Overlay â€” 4 thumbnails hiá»‡n khi hover card, náº±m ngoĂ i rotated board */}
+          {/* Dock Overlay — 4 thumbnails hiá»‡n khi hover card, náº±m ngoĂ i rotated board */}
           <div
             className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 flex items-end justify-center pb-6"
             style={{
@@ -2167,7 +2167,7 @@ export default function PortfolioPage() {
                 Selected <AccentHighlight>Works</AccentHighlight>
               </h2>
               <p className="mt-4 max-w-xl text-left text-sm leading-relaxed text-white/65 md:text-base">
-                Featured game art projects from TD Games â€” 2D Art, Animation, Concept Art, and Environment Design.
+                Featured game art projects from TD Games — 2D Art, Animation, Concept Art, and Environment Design.
               </p>
             </header>
 
