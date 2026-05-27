@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+
+const isVideoUrl = (url: string) => /\.(mp4|webm|mov)(\?|$)/i.test(url);
 import { Changa_One, Nunito_Sans } from "next/font/google";
 
 import ServiceCapabilitiesGrid, {
@@ -69,14 +71,25 @@ export default function ServicePageTemplate({
             className={`relative min-h-screen overflow-hidden border-b border-white/10 bg-[#0a0a0a] snap-start ${nunitoSans.className}`}
           >
             <div className="pointer-events-none absolute inset-0 z-0">
-              <Image
-                src={heroImageSrc}
-                alt={title}
-                fill
-                className="object-cover"
-                sizes="100vw"
-                priority
-              />
+              {isVideoUrl(heroImageSrc) ? (
+                <video
+                  src={heroImageSrc}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={heroImageSrc}
+                  alt={title}
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                  priority
+                />
+              )}
             </div>
 
             <div
