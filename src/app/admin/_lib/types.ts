@@ -32,7 +32,7 @@ export type MediaAsset = {
   updated_at: string;
 };
 
-export type AdminTab = "projects" | "content" | "media" | "create" | "bulk" | "team" | "careers" | "blog" | "footer" | "spine";
+export type AdminTab = "projects" | "content" | "media" | "create" | "bulk" | "team" | "careers" | "blog" | "footer" | "spine" | "page-slots";
 
 export type SpineCharacter = {
   id: string;

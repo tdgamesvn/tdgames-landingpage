@@ -11,6 +11,7 @@ import { CareersTab } from "./_components/CareersTab";
 import { BlogTab } from "./_components/BlogTab";
 import { FooterTab } from "./_components/FooterTab";
 import { SpineTab } from "./_components/SpineTab";
+import { PageSlotsTab } from "./_components/PageSlotsTab";
 import type { AdminTab } from "./_lib/types";
 
 const TABS: { id: AdminTab; label: string; description: string }[] = [
@@ -63,6 +64,11 @@ const TABS: { id: AdminTab; label: string; description: string }[] = [
     id: "spine",
     label: "10. Spine",
     description: "Upload Spine 4.2 characters (.json/.skel + .atlas + PNG) và gán slug",
+  },
+  {
+    id: "page-slots",
+    label: "11. Page Slots",
+    description: "Quản lý media slots cho từng trang — swap URL ngay, không rebuild",
   },
 ];
 
