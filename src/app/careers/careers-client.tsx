@@ -16,6 +16,8 @@ const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
 });
 
+const isVideoUrl = (url: string) => /\.(mp4|webm|mov)(\?|$)/i.test(url);
+
 const FILTERS = ["All", "Art", "Production", "Marketing"] as const;
 type FilterType = (typeof FILTERS)[number];
 
@@ -291,14 +293,25 @@ export default function CareersClient({ heroUrl }: { heroUrl: string }) {
         {/* Hero Section */}
         <section className="relative h-[100vh] overflow-hidden border-b border-white/10">
           <div className="pointer-events-none absolute inset-0 z-0">
-            <Image
-              src={heroUrl}
-              alt=""
-              fill
-              className="object-cover object-[center_35%]"
-              sizes="100vw"
-              priority
-            />
+            {isVideoUrl(heroUrl) ? (
+              <video
+                src={heroUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="h-full w-full object-cover object-[center_35%]"
+              />
+            ) : (
+              <Image
+                src={heroUrl}
+                alt=""
+                fill
+                className="object-cover object-[center_35%]"
+                sizes="100vw"
+                priority
+              />
+            )}
           </div>
 
           <div
