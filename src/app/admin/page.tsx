@@ -203,6 +203,7 @@ export default function AdminPage() {
         {tab === "blog" ? <BlogTab adminKey={adminKey} /> : null}
         {tab === "footer" ? <FooterTab adminKey={adminKey} /> : null}
         {tab === "spine" ? <SpineTab adminKey={adminKey} /> : null}
+        {tab === "page-slots" ? <PageSlotsTab adminKey={adminKey} /> : null}
       </main>
     </div>
   );
