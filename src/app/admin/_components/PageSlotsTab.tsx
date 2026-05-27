@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type PageSlot = {
   id: number;
@@ -48,6 +48,46 @@ export function PageSlotsTab({ adminKey }: Props) {
   const [editName, setEditName] = useState("");
   const [editLabel, setEditLabel] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Upload state: which field is uploading
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadTarget = useRef<string | null>(null); // "editUrl"|"editThumb"|"addUrl"|"addThumb"
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !uploadTarget.current) return;
+    const field = uploadTarget.current;
+    setUploadingField(field);
+    setMsg("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "x-admin-key": adminKey },
+        body: fd,
+      });
+      const json = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !json.url) throw new Error(json.error ?? "Upload failed");
+      if (field === "editUrl") setEditUrl(json.url);
+      else if (field === "editThumb") setEditThumb(json.url);
+      else if (field === "addUrl") setAddUrl(json.url);
+      else if (field === "addThumb") setAddThumb(json.url);
+      setMsg("Uploaded ✓");
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Upload error");
+    } finally {
+      setUploadingField(null);
+      uploadTarget.current = null;
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  function triggerUpload(field: string) {
+    uploadTarget.current = field;
+    fileInputRef.current?.click();
+  }
 
   useEffect(() => {
     void loadSlots();
@@ -181,6 +221,14 @@ export function PageSlotsTab({ adminKey }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Hidden file input shared by all upload triggers */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-lg font-semibold">Page Slots</h2>
@@ -254,18 +302,40 @@ export function PageSlotsTab({ adminKey }: Props) {
                     <div className="min-w-0 flex-1">
                       {editingId === item.id ? (
                         <div className="space-y-2">
-                          <input
-                            value={editUrl}
-                            onChange={(e) => setEditUrl(e.target.value)}
-                            placeholder="URL (video/image) *"
-                            className="w-full rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
-                          />
-                          <input
-                            value={editThumb}
-                            onChange={(e) => setEditThumb(e.target.value)}
-                            placeholder="Thumbnail URL (optional)"
-                            className="w-full rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
-                          />
+                          {/* BG URL + upload */}
+                          <div className="flex gap-1.5">
+                            <input
+                              value={editUrl}
+                              onChange={(e) => setEditUrl(e.target.value)}
+                              placeholder="Background URL (video/image) *"
+                              className="flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => triggerUpload("editUrl")}
+                              disabled={uploadingField !== null}
+                              className="rounded border border-white/15 px-2 py-1 text-[10px] hover:bg-white/5 disabled:opacity-40"
+                            >
+                              {uploadingField === "editUrl" ? "…" : "↑ BG"}
+                            </button>
+                          </div>
+                          {/* Thumb URL + upload */}
+                          <div className="flex gap-1.5">
+                            <input
+                              value={editThumb}
+                              onChange={(e) => setEditThumb(e.target.value)}
+                              placeholder="Card thumbnail URL"
+                              className="flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => triggerUpload("editThumb")}
+                              disabled={uploadingField !== null}
+                              className="rounded border border-white/15 px-2 py-1 text-[10px] hover:bg-white/5 disabled:opacity-40"
+                            >
+                              {uploadingField === "editThumb" ? "…" : "↑ Card"}
+                            </button>
+                          </div>
                           <div className="flex gap-2">
                             <input
                               value={editName}
@@ -369,18 +439,40 @@ export function PageSlotsTab({ adminKey }: Props) {
             placeholder="slot name (e.g. hero)"
             className="w-36 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
           />
-          <input
-            value={addUrl}
-            onChange={(e) => setAddUrl(e.target.value)}
-            placeholder="URL (video/image) *"
-            className="min-w-48 flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
-          />
-          <input
-            value={addThumb}
-            onChange={(e) => setAddThumb(e.target.value)}
-            placeholder="Thumbnail URL"
-            className="min-w-48 flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
-          />
+          {/* BG URL + upload */}
+          <div className="flex min-w-48 flex-1 gap-1.5">
+            <input
+              value={addUrl}
+              onChange={(e) => setAddUrl(e.target.value)}
+              placeholder="URL (video/image) *"
+              className="flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
+            />
+            <button
+              type="button"
+              onClick={() => triggerUpload("addUrl")}
+              disabled={uploadingField !== null}
+              className="rounded border border-white/15 px-2 py-1 text-[10px] hover:bg-white/5 disabled:opacity-40"
+            >
+              {uploadingField === "addUrl" ? "…" : "↑ BG"}
+            </button>
+          </div>
+          {/* Thumb URL + upload */}
+          <div className="flex min-w-48 flex-1 gap-1.5">
+            <input
+              value={addThumb}
+              onChange={(e) => setAddThumb(e.target.value)}
+              placeholder="Thumbnail URL"
+              className="flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
+            />
+            <button
+              type="button"
+              onClick={() => triggerUpload("addThumb")}
+              disabled={uploadingField !== null}
+              className="rounded border border-white/15 px-2 py-1 text-[10px] hover:bg-white/5 disabled:opacity-40"
+            >
+              {uploadingField === "addThumb" ? "…" : "↑ Card"}
+            </button>
+          </div>
           <input
             value={addName}
             onChange={(e) => setAddName(e.target.value)}
