@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
-import { resolveMediaUrl } from "@/lib/resolve-media";
+import { resolveSlot } from "@/lib/page-slots";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -22,7 +22,7 @@ async function getAbout(): Promise<AboutData> {
   };
 
   // Resolve heroImage từ DB nếu có label "about-hero", fallback về site.json
-  const heroImage = await resolveMediaUrl("about-hero", siteAbout.heroImage);
+  const heroImage = await resolveSlot("about", "hero", siteAbout.heroImage);
 
   return { ...siteAbout, heroImage };
 }
