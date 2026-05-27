@@ -37,12 +37,52 @@ export const defaultMediaList: MediaItem[] = siteContent.hero.media as MediaItem
 
 export function useMediaListListener(): MediaItem[] {
   const [list, setList] = useState<MediaItem[]>(defaultMediaList);
+
+  // Fetch from DB on mount; fall back to site.json if error
+  useEffect(() => {
+    async function fetchSlots() {
+      try {
+        const res = await fetch(
+          "/api/page-slots?page=home&slot=hero-carousel",
+          { cache: "no-store" },
+        );
+        if (!res.ok) return;
+        const json = (await res.json()) as {
+          items: Array<{
+            id: number;
+            url: string;
+            thumb_url?: string | null;
+            display_name?: string | null;
+            display_label?: string | null;
+            sort_order: number;
+          }>;
+        };
+        if (!Array.isArray(json.items) || json.items.length === 0) return;
+        const mapped: MediaItem[] = json.items.map((item) => ({
+          id: String(item.id),
+          name: item.display_name ?? "",
+          label: item.display_label ?? "",
+          thumbnail: item.thumb_url ?? item.url,
+          path: item.url,
+          isBgVideo: true,
+          isIframe: false,
+        }));
+        setList(mapped);
+      } catch {
+        // keep defaultMediaList
+      }
+    }
+    void fetchSlots();
+  }, []);
+
+  // Support live-preview CustomEvent override (admin panel)
   useEffect(() => {
     const handler = (e: Event) =>
       setList((e as CustomEvent<MediaItem[]>).detail);
     window.addEventListener(MEDIA_LIST_EVENT, handler);
     return () => window.removeEventListener(MEDIA_LIST_EVENT, handler);
   }, []);
+
   return list;
 }
 
