@@ -4,8 +4,16 @@ import Service2DAnimationFeaturedShowcase from "@/components/service-2d-animatio
 import Service2DAnimationWorkflow from "@/components/service-2d-animation-workflow";
 import ServicePageTemplate from "@/components/service-page-template";
 import SiteFooter from "@/components/site-footer";
+import { resolveSlot } from "@/lib/page-slots";
 
-export default function Service2DAnimationPage() {
+export const dynamic = "force-dynamic";
+
+export default async function Service2DAnimationPage() {
+  const heroImage = await resolveSlot(
+    "services-2d-animation",
+    "hero",
+    "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
+  );
   return (
     <ServicePageTemplate
       eyebrow=""
@@ -22,7 +30,7 @@ export default function Service2DAnimationPage() {
         </>
       }
       hero={{
-        image: "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
+        image: heroImage,
         titleTop: "2D GAME",
         titleMain: "ANIMATION",
         subheading: "2D Animation outsource",

@@ -4,8 +4,16 @@ import Service2DVfxFeaturedShowcase from "@/components/service-2d-vfx-featured-s
 import Service2DVfxWorkflow from "@/components/service-2d-vfx-workflow";
 import ServicePageTemplate from "@/components/service-page-template";
 import SiteFooter from "@/components/site-footer";
+import { resolveSlot } from "@/lib/page-slots";
 
-export default function Service2DVfxPage() {
+export const dynamic = "force-dynamic";
+
+export default async function Service2DVfxPage() {
+  const heroImage = await resolveSlot(
+    "services-2d-vfx",
+    "hero",
+    "https://cdn.tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
+  );
   return (
     <ServicePageTemplate
       eyebrow=""
@@ -22,7 +30,7 @@ export default function Service2DVfxPage() {
         </>
       }
       hero={{
-        image: "https://cdn.tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
+        image: heroImage,
         titleTop: "2D GAME",
         titleMain: "VFX",
         subheading: "2D VFX outsource",

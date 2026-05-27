@@ -4,8 +4,16 @@ import Service2DArtFeaturedShowcase from "@/components/service-2d-art-featured-s
 import Service2DArtWorkflow from "@/components/service-2d-art-workflow";
 import ServicePageTemplate from "@/components/service-page-template";
 import SiteFooter from "@/components/site-footer";
+import { resolveSlot } from "@/lib/page-slots";
 
-export default function Service2DArtPage() {
+export const dynamic = "force-dynamic";
+
+export default async function Service2DArtPage() {
+  const heroImage = await resolveSlot(
+    "services-2d-art",
+    "hero",
+    "https://cdn.tdgamestudio.com/landing/images/summoners.png",
+  );
   return (
     <ServicePageTemplate
       eyebrow=""
@@ -22,7 +30,7 @@ export default function Service2DArtPage() {
         </>
       }
       hero={{
-        image: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
+        image: heroImage,
         titleTop: "2D GAME ART",
         titleMain: "PRODUCTION",
         subheading: "2D Art outsource",
