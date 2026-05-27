@@ -220,24 +220,33 @@ export function PageSlotsTab({ adminKey }: Props) {
                   className="space-y-3 rounded-lg border border-white/10 bg-zinc-900 p-4"
                 >
                   <div className="flex items-start gap-4">
-                    {/* Preview */}
-                    <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded bg-black">
-                      {isVideoUrl(item.thumb_url ?? item.url) ? (
-                        <video
-                          src={item.thumb_url ?? item.url}
-                          className="h-full w-full object-cover"
-                          muted
-                          playsInline
-                          autoPlay
-                          loop
-                        />
-                      ) : (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.thumb_url ?? item.url}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
+                    {/* Preview — show both bg + card thumbnail when both exist */}
+                    <div className="flex shrink-0 gap-2">
+                      {/* Background media */}
+                      <div className="space-y-0.5">
+                        <p className="text-center text-[9px] uppercase tracking-wider text-white/30">BG</p>
+                        <div className="flex h-16 w-24 items-center justify-center overflow-hidden rounded bg-black">
+                          {isVideoUrl(item.url) ? (
+                            <video src={item.url} className="h-full w-full object-cover" muted playsInline autoPlay loop />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={item.url} alt="" className="h-full w-full object-cover" />
+                          )}
+                        </div>
+                      </div>
+                      {/* Card thumbnail (only if different from url) */}
+                      {item.thumb_url && item.thumb_url !== item.url && (
+                        <div className="space-y-0.5">
+                          <p className="text-center text-[9px] uppercase tracking-wider text-white/30">Card</p>
+                          <div className="flex h-16 w-24 items-center justify-center overflow-hidden rounded bg-black">
+                            {isVideoUrl(item.thumb_url) ? (
+                              <video src={item.thumb_url} className="h-full w-full object-cover" muted playsInline autoPlay loop />
+                            ) : (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={item.thumb_url} alt="" className="h-full w-full object-cover" />
+                            )}
+                          </div>
+                        </div>
                       )}
                     </div>
 
