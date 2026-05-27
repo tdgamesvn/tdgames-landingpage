@@ -1,5 +1,67 @@
 # LOG
 
+## 2026-05-27 (session — Page Slots plan Tasks 7–12)
+### Task
+Hoàn thành plan Page Slots: tasks 7–12 (services pages, careers split, hero carousel, admin UI)
+
+### Work Done
+- Task 7: 3 services pages (2d-art, 2d-animation, 2d-vfx) → `resolveSlot` + `force-dynamic` (commit 2439e53)
+- Task 8: `careers/page.tsx` → Server wrapper + `careers-client.tsx` Client split (commit c7c85ae)
+- Task 9: `hero-layout-state.tsx` `useMediaListListener` → fetch `/api/page-slots?page=home&slot=hero-carousel` on mount, fallback site.json (commit f7f224b)
+- Task 10: Tạo `src/app/admin/_components/PageSlotsTab.tsx` — CRUD UI, preview, reorder ↑↓ (commit 9ff8eed)
+- Task 11: `AdminTab` type + import + register "11. Page Slots" trong admin/page.tsx (commit a88970e)
+- Task 12: `npm run build` pass ✅, push origin/main ✅
+
+### Result
+- Page Slots plan hoàn chỉnh 12/12 tasks ✅
+- Admin tab "11. Page Slots" sẵn sàng để swap hero media cho 6 trang không cần rebuild
+- Home hero carousel, About, Careers, 3 Services pages đều đọc từ `page_slots` DB
+
+## 2026-05-27 (session — Runtime Media URL Resolution, Task 6)
+### Task
+Implement Task 6: inline label editor trên Media Library asset cards
+
+### Work Done
+- `MediaTab.tsx`: thêm import `patchMediaAsset` từ `../_lib/api`
+- Thêm state: `editingLabelId` + `labelDraft`
+- Thêm handler: `handleSaveLabel(assetId)` → gọi `patchMediaAsset` → update local state
+- Thêm UI label trên mỗi asset card: click "+ label" → input inline → Enter/blur để save
+- Label amber nếu đã set (`🏷 about-hero`), trắng mờ nếu chưa (+ label)
+- `npm run build` pass ✅ (sandbox disable để fetch Google Fonts)
+- Commit `893ed6f`, push origin/main ✅
+
+### Result
+- Tasks 1–6 của plan Runtime Media URL Resolution đều done
+- Task 7 còn lại: user vào Admin → Media Library → tìm asset hero About → bấm "+ label" → gõ `about-hero` → Enter → verify https://www.tdgamestudio.com/about
+
+### Next Step
+- User thực hiện Task 7 (thủ công trong Admin)
+- Deploy VPS sẽ chạy tự động qua GitHub Actions
+
+## 2026-05-27 (session — Admin Media Library improvements)
+### Task
+Fix Media Library page filter, Scan Usage feature, BulkTab error details
+
+### Work Done
+- `about/page.tsx`: hero section auto-detect mp4/webm/mov → render `<video>` thay `<Image>`
+- `MediaTab.tsx`: thêm filter "Page" dropdown (lọc media theo page đang dùng)
+- Fix page filter: match strings sai (URL path) → đổi sang file path prefix (`src/app/about/` v.v.)
+- `POST /api/admin/media/scan-usage`: route mới quét toàn bộ source files, update `used_by[]` song song cho 431 assets
+- `MediaTab.tsx`: thêm nút "Scan Usage" (amber) + feedback message
+- Perf fix: đổi 431 sequential PATCH → Promise.all song song (giảm từ ~60s → ~2s)
+- `BulkTab.tsx`: fix hiển thị stderr/stdout khi bulk replace fail (trước chỉ show generic error)
+
+### Result
+- Filter theo Page hoạt động đúng sau khi bấm Scan Usage
+- Scan Usage: DB đã update used_by cho ~431 assets ✅
+- Bulk Replace vẫn đang lỗi "replace-media-urls command failed" — nguyên nhân chưa rõ, đã fix UI để show stderr/stdout để debug lần sau
+- about.heroImage vẫn là PNG trong site.json (chưa bulk replace được)
+
+### Next Step
+- Chạy Dry run trên admin → xem stderr/stdout chi tiết → fix bulk replace
+- Sau khi bulk replace OK → about heroImage sẽ tự update thành video URL
+- Xem xét thêm site.json vào page filter (hiện các asset trong site.json không bị catch bởi page filter)
+
 ## 2026-05-26 (session — Butler fix + itch.io publish working)
 ### Task
 Fix publish-itch route: switch từ itch.io direct API sang Butler CLI, xử lý auth đúng

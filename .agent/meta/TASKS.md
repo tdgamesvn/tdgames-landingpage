@@ -5,6 +5,13 @@ _(empty)_
 
 ## To do
 
+- [ ] **Bulk Replace** — debug lỗi "replace-media-urls command failed"
+  - UI đã fix để show stderr/stdout → thử Dry run và xem log chi tiết
+  - Nghi ngờ: script fetch `http://localhost:3000/api/admin/media/mapping` → cần check port VPS
+
+- [ ] About page hero — đang là PNG, cần update → video URL trong `site.json`
+  - Sau khi bulk replace OK sẽ tự update; hoặc edit thủ công `src/content/site.json`
+
 - [ ] Team — thay ảnh/tên placeholder bằng thật
   - Vào `/admin` → tab "6. Team" → upload ảnh + sửa tên/chức danh
 
@@ -18,6 +25,26 @@ _(empty)_
 
 ## Done
 
+- [x] Page Slots feature (plan 2026-05-27-page-slots):
+  - [x] Task 1–2: DB migration + seed 10 rows (home carousel + 5 single-slot pages)
+  - [x] Task 3: `src/lib/page-slots.ts` — `resolveSlot` / `resolveSlots` helpers
+  - [x] Task 4: Public API `GET /api/page-slots`
+  - [x] Task 5: Admin API CRUD `/api/admin/page-slots` (GET/POST/PATCH/DELETE/reorder)
+  - [x] Task 6: About page → `resolveSlot("about", "hero")`
+  - [x] Task 7: 3 services pages → `resolveSlot` + `force-dynamic` (commit 2439e53)
+  - [x] Task 8: Careers → Server wrapper + `careers-client.tsx` (commit c7c85ae)
+  - [x] Task 9: Home hero carousel fetches from `page_slots` API (commit f7f224b)
+  - [x] Task 10: `PageSlotsTab` admin UI component (commit 9ff8eed)
+  - [x] Task 11: Register tab "11. Page Slots" (commit a88970e)
+
+- [x] Runtime Media URL Resolution (plan 2026-05-27):
+  - [x] Task 1: DB migration — thêm cột `label` vào `media_assets`
+  - [x] Task 2: Helper `resolveMediaUrl` / `resolveMediaUrls` (`src/lib/resolve-media.ts`)
+  - [x] Task 3: About page dùng `resolveMediaUrl("about-hero")`
+  - [x] Task 4: API PATCH cho phép update `label`
+  - [x] Task 5: `MediaAsset.label` type + `patchMediaAsset` helper
+  - [x] Task 6: Admin UI — inline label editor trên asset card (commit 893ed6f)
+  - [ ] Task 7: Gán label "about-hero" thủ công trong Admin → verify site (cần user làm)
 - [x] Bootstrap project + agent memory
 - [x] Scaffold Next.js 16 + Tailwind v4
 - [x] Layout cơ bản (header, footer, fonts)
