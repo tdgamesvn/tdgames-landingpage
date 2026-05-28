@@ -27,6 +27,32 @@ function isProbablyVideoSrc(src: unknown) {
   return lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.startsWith("blob:");
 }
 
+// --- CARD VIDEO — lazy load + auto pause when not active ---
+function CardVideo({ src, isActive, className }: { src: string; isActive: boolean; className: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (isActive) {
+      el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [isActive]);
+  return (
+    <video
+      ref={ref}
+      className={className}
+      src={src}
+      muted
+      playsInline
+      loop
+      autoPlay={isActive}
+      preload={isActive ? "metadata" : "none"}
+    />
+  );
+}
+
 // --- 1. CLASSIC THUMBNAIL CARD ---
 function ClassicThumbnailCard({ video, isActive, onClick, index, cardDim, cardVignette }: any) {
   return (
@@ -40,17 +66,14 @@ function ClassicThumbnailCard({ video, isActive, onClick, index, cardDim, cardVi
       style={{ transform: "skewY(-4deg)" }}
     >
       <div className="absolute inset-0 overflow-hidden" style={{ clipPath: "polygon(25% 0%, 100% 0%, 100% 96%, 75% 100%, 0% 100%, 0% 4%)" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         {video?.thumbnailIsVideo || isProbablyVideoSrc(video?.thumbnail) ? (
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
+          <CardVideo
             src={video.thumbnail}
-            muted
-            playsInline
-            loop
-            autoPlay
+            isActive={isActive}
+            className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={video.thumbnail}
             alt={video.name}
@@ -131,17 +154,14 @@ function FancyThumbnailCard({ video, isActive, onClick, index, cardDim, cardVign
       <div className={`absolute inset-0 bg-[#0C0805] border-[3px] border-[#2A1B12] transition-shadow duration-300 ${isActive ? 'shadow-[0_0_25px_rgba(245,158,11,0.6)]' : 'shadow-xl'}`}>
         <div className="absolute inset-[3px] border border-amber-600/40 pointer-events-none z-10" />
         <div className="absolute inset-[6px] overflow-hidden bg-black">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           {video?.thumbnailIsVideo || isProbablyVideoSrc(video?.thumbnail) ? (
-            <video
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            <CardVideo
               src={video.thumbnail}
-              muted
-              playsInline
-              loop
-              autoPlay
+              isActive={isActive}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={video.thumbnail}
               alt={video.name}
@@ -188,13 +208,10 @@ function FantasyOrnateCard({ video, isActive, onClick, index, cardDim, cardVigne
         {/* Image Container */}
         <div className="absolute inset-2 rounded-lg overflow-hidden bg-black">
           {video?.thumbnailIsVideo || isProbablyVideoSrc(video?.thumbnail) ? (
-            <video
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            <CardVideo
               src={video.thumbnail}
-              muted
-              playsInline
-              loop
-              autoPlay
+              isActive={isActive}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
@@ -256,15 +273,13 @@ function ImageFrameThumbnailCard({ video, isActive, onClick, index, cardDim, car
 
         {/* IMAGE BACKGROUND */}
         {video?.thumbnailIsVideo || isProbablyVideoSrc(video?.thumbnail) ? (
-          <video
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
+          <CardVideo
             src={video.thumbnail}
-            muted
-            playsInline
-            loop
-            autoPlay
+            isActive={isActive}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
           />
         ) : (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={video.thumbnail}
             alt={video.name}
