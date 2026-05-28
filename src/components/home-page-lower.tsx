@@ -7,7 +7,13 @@ import { useEffect, useRef, useState } from "react";
 import { AccentHighlight } from "./accent-highlight";
 import CharacterMarquee from "./character-marquee";
 import type { CharacterMarqueeProps } from "./character-marquee";
-import { SpineCharacter } from "./spine-character";
+import dynamic from "next/dynamic";
+
+// Fix A: lazy-load Spine runtime (heavy WebGL) — only loads when component mounts
+const SpineCharacter = dynamic(
+  () => import("./spine-character").then((m) => ({ default: m.SpineCharacter })),
+  { ssr: false, loading: () => <div className="h-full w-full" /> },
+);
 
 const ACCENT = "var(--hero-btn-bg, #f59e0b)" as const;
 

@@ -6,7 +6,7 @@ import ServicePageTemplate from "@/components/service-page-template";
 import SiteFooter from "@/components/site-footer";
 import { resolveSlot } from "@/lib/page-slots";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function Service2DAnimationPage() {
   const heroImage = await resolveSlot(

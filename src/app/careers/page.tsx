@@ -1,7 +1,7 @@
 import { resolveSlot } from "@/lib/page-slots";
 import CareersClient from "./careers-client";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function CareersPage() {
   const heroUrl = await resolveSlot(

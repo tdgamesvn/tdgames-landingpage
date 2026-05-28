@@ -6,7 +6,7 @@ import { resolveSlot } from "@/lib/page-slots";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type TeamMember = { id: string; name: string; title: string; photo: string };
 type WorkspaceImage = { src: string; alt: string };
