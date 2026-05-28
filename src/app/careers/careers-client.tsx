@@ -314,8 +314,25 @@ export default function CareersClient({ heroUrl }: { heroUrl: string }) {
             )}
           </div>
 
+          {/* Subtle dark vignette — stronger on the left where text lives, dissolves toward center */}
           <div
-            className="relative z-10 mx-auto flex h-[100vh] items-end px-4 pb-16 pt-28 md:items-center md:pb-24 md:pt-32"
+            className="pointer-events-none absolute inset-0 z-[1]"
+            style={{
+              background:
+                "linear-gradient(100deg, rgba(9,10,16,0.82) 0%, rgba(9,10,16,0.55) 28%, rgba(9,10,16,0.18) 55%, transparent 78%)",
+            }}
+          />
+          {/* Bottom fade for mobile (text sits at bottom on small screens) */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-2/5 md:hidden"
+            style={{
+              background:
+                "linear-gradient(to top, rgba(9,10,16,0.75) 0%, transparent 100%)",
+            }}
+          />
+
+          <div
+            className="relative z-[2] mx-auto flex h-[100vh] items-end px-4 pb-16 pt-28 md:items-center md:pb-24 md:pt-32"
             style={{ width: "var(--layout-width, 75%)" }}
           >
             <div className="max-w-2xl">
