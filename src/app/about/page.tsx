@@ -52,7 +52,7 @@ export default async function AboutPage() {
       <main className="bg-[#0a0a0a] text-white">
         {/* Hero Section */}
         <section className="relative flex h-screen items-center overflow-hidden border-b border-white/10">
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 z-0">
             {/\.(mp4|webm|mov)(\?.*)?$/i.test(about.heroImage) ? (
               <video
                 src={about.heroImage}
@@ -60,22 +60,37 @@ export default async function AboutPage() {
                 muted
                 loop
                 playsInline
-                className="h-full w-full object-cover opacity-30"
+                className="h-full w-full object-cover"
               />
             ) : (
               <Image
                 src={about.heroImage}
                 alt="TD Games Team"
                 fill
-                className="object-cover opacity-30"
+                className="object-cover"
                 priority
               />
             )}
-            <div className="absolute inset-0 bg-black/50" />
           </div>
 
+          {/* Subtle dark vignette — stronger on the left where text lives, dissolves toward center */}
           <div
-            className="relative z-10 px-4"
+            className="pointer-events-none absolute inset-0 z-[1]"
+            style={{
+              background:
+                "linear-gradient(100deg, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.55) 28%, rgba(10,10,10,0.18) 55%, transparent 78%)",
+            }}
+          />
+          {/* Bottom fade for mobile */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-2/5 md:hidden"
+            style={{
+              background: "linear-gradient(to top, rgba(10,10,10,0.75) 0%, transparent 100%)",
+            }}
+          />
+
+          <div
+            className="relative z-[2] px-4"
             style={{ width: "min(90%, 1280px)", margin: "0 auto" }}
           >
             <div className="max-w-2xl">
