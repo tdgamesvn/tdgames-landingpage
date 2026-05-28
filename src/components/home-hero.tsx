@@ -524,6 +524,14 @@ export default function HomeHero() {
           />
         )}
         <div className="absolute inset-0 transition-opacity duration-300" style={{ backgroundColor: `rgba(0,0,0,${bgOverlay / 100})` }} />
+        {/* Directional vignette — darker on left where text lives, dissolves toward center */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(100deg, rgba(10,10,10,0.72) 0%, rgba(10,10,10,0.42) 28%, rgba(10,10,10,0.12) 55%, transparent 78%)",
+          }}
+        />
       </div>
 
       {/* Main Container */}
