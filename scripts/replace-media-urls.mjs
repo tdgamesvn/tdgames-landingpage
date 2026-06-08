@@ -4,13 +4,10 @@ import { globSync } from "glob";
 
 const API_URL = process.env.MAPPING_API_URL || "http://localhost:3000/api/admin/media/mapping";
 const ADMIN_KEY = process.env.ADMIN_KEY;
+const MAPPING_JSON = process.env.MAPPING_JSON; // injected by replace-run route (avoids self-HTTP call)
 const APPLY = process.argv.includes("--apply");
 const ROLLBACK = process.argv.includes("--rollback");
 const BACKUP_FILE = path.join(process.cwd(), ".media-replace-backup.json");
-
-if (!ADMIN_KEY) {
-  throw new Error("ADMIN_KEY is required");
-}
 
 const exts = ["ts", "tsx", "js", "jsx", "json", "md"];
 const files = globSync(`src/**/*.+(${exts.join("|")})`, { nodir: true });
@@ -27,16 +24,21 @@ if (ROLLBACK) {
   process.exit(0);
 }
 
-const res = await fetch(API_URL, {
-  headers: { "x-admin-key": ADMIN_KEY },
-});
-
-if (!res.ok) {
-  throw new Error(`Failed to fetch mapping: ${res.status}`);
+// Prefer injected mapping (no HTTP self-call needed) — fall back to HTTP fetch
+let rawMapping;
+if (MAPPING_JSON) {
+  rawMapping = JSON.parse(MAPPING_JSON);
+} else {
+  if (!ADMIN_KEY) throw new Error("ADMIN_KEY is required");
+  const res = await fetch(API_URL, {
+    headers: { "x-admin-key": ADMIN_KEY },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch mapping: ${res.status}`);
+  const payload = await res.json();
+  rawMapping = payload.mapping || [];
 }
 
-const payload = await res.json();
-const mapping = (payload.mapping || [])
+const mapping = rawMapping
   .filter((m) => typeof m.from === "string" && typeof m.to === "string" && m.from !== m.to)
   .sort((a, b) => b.from.length - a.from.length);
 

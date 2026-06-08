@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { spawn } from "node:child_process";
 import path from "node:path";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const SCRIPT_PATH = path.join(/* turbopackIgnore: true */ process.cwd(), "scripts", "replace-media-urls.mjs");
 
@@ -13,10 +14,13 @@ function requireAdmin(req: Request) {
 
 type Mode = "dry-run" | "apply" | "rollback";
 
+// Use the same Node.js binary running the server — avoids PATH issues on VPS/NVM
+const NODE_BIN = process.execPath;
+
 function commandForMode(mode: Mode) {
-  if (mode === "dry-run") return ["node", [SCRIPT_PATH]] as const;
-  if (mode === "apply") return ["node", [SCRIPT_PATH, "--apply"]] as const;
-  return ["node", [SCRIPT_PATH, "--rollback"]] as const;
+  if (mode === "dry-run") return [NODE_BIN, [SCRIPT_PATH]] as const;
+  if (mode === "apply") return [NODE_BIN, [SCRIPT_PATH, "--apply"]] as const;
+  return [NODE_BIN, [SCRIPT_PATH, "--rollback"]] as const;
 }
 
 export async function POST(request: Request) {
@@ -33,6 +37,21 @@ export async function POST(request: Request) {
   const adminSecret = process.env.ADMIN_SECRET;
   if (!adminSecret) return NextResponse.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
 
+  // Fetch mapping directly from Supabase — avoids the fragile HTTP self-call in the child process
+  let mappingJson: string;
+  if (mode !== "rollback") {
+    const supabase = getSupabaseAdmin();
+    const { data, error: dbErr } = await supabase
+      .from("media_assets")
+      .select("id,original_url,current_url")
+      .eq("status", "active");
+    if (dbErr) return NextResponse.json({ error: `DB error: ${dbErr.message}` }, { status: 500 });
+    const mapping = (data ?? []).map((r) => ({ from: r.original_url, to: r.current_url }));
+    mappingJson = JSON.stringify(mapping);
+  } else {
+    mappingJson = "[]";
+  }
+
   const [command, args] = commandForMode(mode);
 
   const output = await new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve) => {
@@ -41,10 +60,7 @@ export async function POST(request: Request) {
       env: {
         ...process.env,
         ADMIN_KEY: adminSecret,
-        // Ensure script fetches from the correct port (process.env.PORT set by PM2)
-        MAPPING_API_URL:
-          process.env.MAPPING_API_URL ??
-          `http://localhost:${process.env.PORT ?? 3000}/api/admin/media/mapping`,
+        MAPPING_JSON: mappingJson, // injected — no HTTP self-call needed
       },
     });
 
