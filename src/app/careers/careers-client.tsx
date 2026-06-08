@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Changa_One, Nunito_Sans } from "next/font/google";
 
 import SiteFooter from "@/components/site-footer";
@@ -726,11 +727,7 @@ type RoleDetailPanelProps = {
 
 function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
   const isOpen = role !== null;
-  const [showApply, setShowApply] = useState(false);
-
-  useEffect(() => {
-    if (!role) setShowApply(false);
-  }, [role]);
+  const router = useRouter();
 
   return (
     <>
@@ -755,13 +752,13 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
             <div className="flex items-center justify-between border-b border-white/10 bg-[#0a0a10] px-6 py-4">
               <button
                 type="button"
-                onClick={showApply ? () => setShowApply(false) : onClose}
+                onClick={onClose}
                 className="flex items-center gap-2 text-sm text-white/70 transition-colors hover:text-white"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                {showApply ? "Back to Job" : "Back"}
+                Back
               </button>
               <button
                 type="button"
@@ -775,10 +772,7 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
               </button>
             </div>
 
-            {showApply ? (
-              <ApplyForm job={role} onDone={onClose} />
-            ) : (
-              <>
+            <>
                 {/* Scrollable content */}
                 <div className="flex-1 overflow-y-auto">
                   {/* Hero image */}
@@ -911,7 +905,7 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setShowApply(true)}
+                      onClick={() => { onClose(); router.push(`/apply/${role.slug}`); }}
                       className="inline-flex items-center gap-2 rounded-lg bg-[#f59e0b] px-6 py-2.5 text-xs font-black uppercase tracking-[0.15em] text-black transition-colors hover:bg-[#ffb366]"
                     >
                       Apply Now
@@ -921,240 +915,11 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
                     </button>
                   </div>
                 </div>
-              </>
-            )}
+            </>
           </>
         )}
       </aside>
     </>
-  );
-}
-
-// ── ApplyForm ──────────────────────────────────────────────────────────────────
-
-type ApplyFormProps = {
-  job: Job;
-  onDone: () => void;
-};
-
-function ApplyForm({ job, onDone }: ApplyFormProps) {
-  const isFreelancer = job.type === "freelancer";
-
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    work_type: job.type as string,
-    years_experience: "",
-    portfolio_url: "",
-    linkedin_url: "",
-    expected_salary: "",
-    rate_per_hour: "",
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
-
-  function set(key: string, value: string) {
-    setForm((f) => ({ ...f, [key]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const payload = {
-        job_id: job.id,
-        full_name: form.full_name,
-        email: form.email,
-        phone: form.phone || null,
-        work_type: form.work_type,
-        years_experience: form.years_experience ? parseInt(form.years_experience) : null,
-        cv_url: null,
-        portfolio_url: form.portfolio_url || null,
-        linkedin_url: form.linkedin_url || null,
-        expected_salary: form.expected_salary || null,
-        rate_per_hour: form.rate_per_hour || null,
-      };
-
-      const res = await fetch("/api/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error ?? "Submit failed");
-      }
-
-      setSubmitted(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Submission failed. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  if (submitted) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-8 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f59e0b]/15">
-          <svg className="h-8 w-8 text-[#f59e0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h3 className="text-xl font-bold text-white">Application Sent!</h3>
-        <p className="text-sm text-white/60">
-          We&apos;ll review your application and get back to you soon.
-        </p>
-        <button
-          type="button"
-          onClick={onDone}
-          className="mt-2 rounded-lg border border-white/20 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white/80 hover:border-white/40"
-        >
-          Close
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-white/90">
-          Apply for {job.title}
-        </h3>
-
-        {/* Required */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Full Name *</label>
-            <input
-              required
-              value={form.full_name}
-              onChange={(e) => set("full_name", e.target.value)}
-              className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[#f59e0b]/50 focus:outline-none"
-              placeholder="Your full name"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Email *</label>
-            <input
-              required
-              type="email"
-              value={form.email}
-              onChange={(e) => set("email", e.target.value)}
-              className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[#f59e0b]/50 focus:outline-none"
-              placeholder="you@email.com"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Phone</label>
-            <input
-              value={form.phone}
-              onChange={(e) => set("phone", e.target.value)}
-              className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[#f59e0b]/50 focus:outline-none"
-              placeholder="+84..."
-            />
-          </div>
-        </div>
-
-        {/* Dynamic fields */}
-        {isFreelancer ? (
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Rate per Hour (USD)</label>
-            <input
-              value={form.rate_per_hour}
-              onChange={(e) => set("rate_per_hour", e.target.value)}
-              className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[#f59e0b]/50 focus:outline-none"
-              placeholder="e.g. $15/hr"
-            />
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Years Experience</label>
-              <input
-                type="number"
-                min={0}
-                value={form.years_experience}
-                onChange={(e) => set("years_experience", e.target.value)}
-                className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[#f59e0b]/50 focus:outline-none"
-                placeholder="2"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Expected Salary</label>
-              <input
-                value={form.expected_salary}
-                onChange={(e) => set("expected_salary", e.target.value)}
-                className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[#f59e0b]/50 focus:outline-none"
-                placeholder="Negotiate"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Links */}
-        <div>
-          <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">Portfolio URL</label>
-          <input
-            value={form.portfolio_url}
-            onChange={(e) => set("portfolio_url", e.target.value)}
-            className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[#f59e0b]/50 focus:outline-none"
-            placeholder="https://behance.net/you"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-bold uppercase tracking-wider text-white/50">LinkedIn</label>
-          <input
-            value={form.linkedin_url}
-            onChange={(e) => set("linkedin_url", e.target.value)}
-            className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-[#f59e0b]/50 focus:outline-none"
-            placeholder="https://linkedin.com/in/you"
-          />
-        </div>
-
-        {/* CV note */}
-        <p className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-xs text-white/50">
-          📎 To attach your CV, email it to{" "}
-          <a href="mailto:tdgames.vn@gmail.com" className="text-[#f59e0b]/80 hover:text-[#f59e0b]">
-            tdgames.vn@gmail.com
-          </a>{" "}
-          with subject: <em>{job.title} — Application</em>
-        </p>
-
-        {error && (
-          <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">{error}</p>
-        )}
-      </div>
-
-      {/* Form footer */}
-      <div className="border-t border-white/10 bg-[#0a0a10] px-6 py-4 flex justify-between gap-3">
-        <button
-          type="button"
-          onClick={onDone}
-          className="rounded-lg border border-white/15 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white/60 hover:border-white/30 hover:text-white/80"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#f59e0b] px-6 py-2.5 text-xs font-black uppercase tracking-[0.15em] text-black transition-colors hover:bg-[#ffb366] disabled:opacity-50"
-        >
-          {submitting ? "Sending…" : "Submit Application"}
-          {!submitting && (
-            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          )}
-        </button>
-      </div>
-    </form>
   );
 }
 
