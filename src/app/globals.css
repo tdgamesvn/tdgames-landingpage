@@ -38,6 +38,12 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Fix native <select> dropdown on dark theme — options inherit white bg */
+select option {
+  background: #1a1a20;
+  color: #f5f5f5;
+}
+
 /*
  * Cuộn mượt + bù fixed header khi bấm anchor / hash (SERVICES → FAQ, #contact, …).
  * prefers-reduced-motion: tắt smooth scroll theo khuyến nghị a11y.
