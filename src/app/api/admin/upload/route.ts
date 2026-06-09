@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB — videos can be large
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 function getAdminKey(req: Request) {
   return req.headers.get("x-admin-key");
