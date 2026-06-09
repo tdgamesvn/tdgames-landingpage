@@ -721,6 +721,8 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
 
 type View = "pipeline" | "kpi" | "jobs";
 
+const HR_KEY_STORAGE = "tdg.hr.key";
+
 export default function HRDashboard() {
   const [hrKey, setHrKey] = useState("");
   const [inputKey, setInputKey] = useState("");
@@ -731,6 +733,18 @@ export default function HRDashboard() {
   const [loading, setLoading] = useState(false);
   const [reminding, setReminding] = useState(false);
   const [remindMsg, setRemindMsg] = useState("");
+
+  // Auto-login from localStorage on mount
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem(HR_KEY_STORAGE) : null;
+    if (!saved) return;
+    setLoading(true);
+    loadData(saved)
+      .then(() => setHrKey(saved))
+      .catch(() => localStorage.removeItem(HR_KEY_STORAGE)) // stale / key changed
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadData(key: string) {
     const [appsRes, jobsRes] = await Promise.all([
@@ -749,11 +763,20 @@ export default function HRDashboard() {
     try {
       await loadData(inputKey);
       setHrKey(inputKey);
+      localStorage.setItem(HR_KEY_STORAGE, inputKey);
     } catch {
       setAuthError("Invalid key. Try again.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function signOut() {
+    setHrKey("");
+    setApps([]);
+    setJobs([]);
+    setInputKey("");
+    localStorage.removeItem(HR_KEY_STORAGE);
   }
 
   async function refresh() {
@@ -874,6 +897,15 @@ export default function HRDashboard() {
               className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-white/50 hover:text-white/80 disabled:opacity-40 transition-colors"
             >
               {loading ? "…" : "↺"}
+            </button>
+
+            {/* Sign out */}
+            <button
+              onClick={signOut}
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/30 hover:border-red-500/30 hover:text-red-400 transition-colors"
+              title="Sign out"
+            >
+              Sign out
             </button>
           </div>
         </div>
