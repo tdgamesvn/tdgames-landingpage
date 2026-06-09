@@ -1,5 +1,146 @@
 # LOG
 
+## 2026-06-09 (session — HR Dashboard)
+### Task
+Build standalone HR dashboard tại /hr — pipeline, KPI, Discord reminders
+
+### Work Done
+- `src/app/hr/page.tsx` — server page, force-dynamic
+- `src/app/hr/_components/HRDashboard.tsx` — client app với password gate (HR_SECRET)
+  - Pipeline view: 5-column kanban, AppCard với status transition buttons + inline notes
+  - KPI view: bảng per-referrer (total, by stage, offer rate %)
+  - Header: view toggle (Pipeline / KPI) + manual Remind button + Refresh
+- `src/app/api/hr/applications/route.ts` — GET all apps (x-hr-key auth)
+- `src/app/api/hr/applications/[id]/route.ts` — PATCH status/notes
+- `src/app/api/hr/remind/route.ts` — quét stale: new>2d, reviewing>7d, interview>14d → Discord embed @everyone
+- `.github/workflows/hr-remind.yml` — cron 9h sáng UTC+7 Mon-Fri, gọi /api/hr/remind
+- Fix TypeScript: Supabase trả `jobs` dạng array, fix formatApp type + KPI row type
+- `npm run build` pass ✅, commit `9568846`, push ✅
+
+### Result
+- `/hr` live — truy cập bằng HR_SECRET
+- Pipeline board + KPI table hoạt động
+- Auto remind Discord mỗi ngày nếu có ứng viên bị stuck
+
+### Next Step
+- Thêm `HR_SECRET` vào GitHub Secrets (Settings → Secrets → Actions → New: `HR_SECRET`)
+- Thêm `HR_SECRET` vào `.env.local` trên VPS rồi restart
+- Deploy: git pull && npm run build && pm2 restart tdgames-landingpage
+
+## 2026-06-09 (session — referral tracking)
+### Task
+Implement referral tracking via ?ref= param để tính KPI cho HR team
+
+### Work Done
+- DB migration: thêm `referred_by TEXT` vào `applications` table (Supabase)
+- `Application` type: thêm `referred_by: string | null`
+- `apply/_client.tsx`: đọc `?ref=` bằng `useSearchParams`, gửi `referred_by` trong POST body
+- `apply/page.tsx`: bọc trong `<Suspense>` (bắt buộc khi dùng `useSearchParams`)
+- `api/applications/route.ts`: Telegram + Discord notification đều hiện "Referred by"
+- `CareersTab.tsx`: hiện amber badge "via <name>" trên mỗi đơn apply trong Admin
+- `npm run build` pass ✅, commit `11fec9b`, push ✅
+
+### Result
+- HR share link: `/apply/<slug>?ref=nam` → đơn apply tự tag `referred_by = "nam"`
+- Admin thấy ngay ai refer trong danh sách Applications
+- Discord/Telegram noti cũng hiện trường Referred by
+
+### Next Step
+- Deploy VPS: `git pull && npm run build && pm2 restart tdgames-landingpage`
+- Không còn task nào
+
+## 2026-06-09 (session — fix Bulk Replace)
+### Task
+Debug và fix lỗi "replace-media-urls command failed" trong Admin Bulk Replace tab
+
+### Root Cause
+Script `replace-media-urls.mjs` được spawn như child process và cần fetch URL mapping qua HTTP (`http://localhost:{PORT}/api/admin/media/mapping`). Trên VPS, self-HTTP call này bị fail do: PATH/NVM không resolve được `node` binary, hoặc port sai.
+
+### Work Done
+- `replace-run/route.ts`:
+  - Thêm `getSupabaseAdmin` import
+  - Query Supabase trực tiếp lấy `media_assets` mapping (bỏ self-HTTP call)
+  - Inject mapping dưới dạng `MAPPING_JSON` env var vào child process
+  - Đổi `"node"` → `process.execPath` (dùng chính xác binary đang chạy server)
+- `scripts/replace-media-urls.mjs`:
+  - Đọc `MAPPING_JSON` nếu có (từ route), bỏ qua HTTP fetch
+  - Giữ HTTP fallback cho khi chạy script trực tiếp từ CLI
+- `npm run build` pass ✅
+- Commit `6f309ca`, push origin/main ✅
+
+### Result
+- Bulk Replace không còn phụ thuộc self-HTTP call
+- Node binary được resolve chính xác dù VPS dùng NVM
+
+### Next Step
+- Không còn task nào trong To do
+- Cân nhắc: noindex meta cho `/apply/[slug]` để tránh Google index URL apply form
+
+## 2026-06-09 (session — /apply/[slug] page + CV upload)
+### Task
+Hoàn thiện feature: dedicated apply page với CV upload (tiếp tục session bị ngắt)
+
+### Work Done
+- Tạo `src/app/apply/[slug]/page.tsx` — server wrapper, fetch job by slug, 404 nếu inactive
+- Tạo `src/app/apply/[slug]/_client.tsx` — full apply form: personal info, CV upload (R2), portfolio/LinkedIn, compensation fields, success screen
+- Tạo `src/app/api/applications/upload-cv/route.ts` — validate MIME (PDF/DOC/DOCX), max 10 MB, upload to R2 `applications/cv/YYYY/MM/<uuid>-<name>`
+- `careers-client.tsx`: wire up `useRouter`, "Apply Now" → `router.push('/apply/${role.slug}')`, remove dead inline `ApplyForm` component
+- `npm run build` pass ✅
+- Commit `25e0792`, push origin/main ✅
+
+### Result
+- `/apply/[slug]` live as dynamic route
+- Candidates get full-page apply experience with CV attachment
+- Careers panel stays as job detail view only — clean separation
+
+### Next Step
+- Remaining open task: debug Bulk Replace "replace-media-urls command failed"
+- Consider: `/apply/[slug]` sitemap exclusion (noindex meta tag) — don't want job apps indexed
+
+## 2026-05-28 (session — Task cleanup)
+### Task
+Cập nhật trạng thái các task đã hoàn thành
+
+### Work Done
+- Xác nhận với user: 5 task "To do" đã xong từ trước
+- Update TASKS.md: dời About hero, Team, About workspace, Footer social links, Spine premultipliedAlpha → Done
+- Update TASKS.md: Task 7 Runtime Media URL Resolution → Done
+- Update TASKS.md: Nginx + SSL + Cache → Done
+
+### Result
+- To do còn đúng 1 task: **Bulk Replace** debug
+- Tất cả task nội dung, vận hành đã xong ✅
+
+### Next Step
+- Debug Bulk Replace: chạy Dry run trên Admin → xem stderr/stdout
+
+## 2026-05-28 (session — Nginx + SSL fix)
+### Task
+Fix nginx config trên VPS: Cache-Control headers, Cloudflare real IP, 526 SSL error
+
+### Work Done
+- Phát hiện nginx config thiếu Cache-Control headers và không restore real IP từ Cloudflare
+- Session trước: thêm `set_real_ip_from` (15 Cloudflare IP ranges) + `real_ip_header CF-Connecting-IP`
+- Session trước: thêm Cache-Control headers theo location block (`/_next/static/` immutable, `/api|admin/` no-store, `/` s-maxage=60)
+- Phát hiện `https://tdgamestudio.com/` trả về HTTP 526 — Cloudflare "Full Strict" không trust self-signed cert
+- Root cause: cert cũ chỉ có `CN=www.tdgamestudio.com`, không có SAN cho apex `tdgamestudio.com`
+- Thử generate self-signed cert mới với SAN nhưng vẫn 526 (CF đang Full Strict, cần CA trust)
+- Dùng `certbot certonly --nginx -d tdgamestudio.com -d www.tdgamestudio.com` → Let's Encrypt cert thành công (expires 2026-08-26)
+- Rewrite nginx config: tách thành 3 server blocks (HTTP redirect, www redirect, main HTTPS)
+- Dùng cert mới `/etc/letsencrypt/live/tdgamestudio.com/fullchain.pem`
+- `nginx -t && systemctl reload nginx` → OK
+
+### Result
+- `https://tdgamestudio.com/` → HTTP 200 ✅ (từ 526)
+- `https://www.tdgamestudio.com/` → 301 → apex ✅
+- Cache-Control: `public, max-age=30, s-maxage=60` đang hoạt động ✅
+- Let's Encrypt cert auto-renew đã được certbot cấu hình
+
+### Next Step
+- Certbot auto-renew cần kiểm tra: `certbot renew --dry-run` để verify cron job OK
+- Xem xét thêm `billing.tdgamestudio.com` vào cert (hiện là domain riêng)
+- Tiếp tục các task còn lại: Bulk Replace debug, Team placeholder, Footer links
+
 ## 2026-05-27 (session — Page Slots plan Tasks 7–12)
 ### Task
 Hoàn thành plan Page Slots: tasks 7–12 (services pages, careers split, hero carousel, admin UI)

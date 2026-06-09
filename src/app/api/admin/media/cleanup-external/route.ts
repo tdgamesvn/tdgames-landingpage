@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-function requireAdmin(req: Request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return NextResponse.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
-  if (req.headers.get("x-admin-key") !== secret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return null;
-}
 
 const BAD_SNIPPETS = ["${", "`;"];
 const MEDIA_EXT = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4", ".webm", ".mov", ".svg"];
@@ -22,7 +17,7 @@ function looksLikeMediaUrl(url: string) {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const supabase = getSupabaseAdmin();

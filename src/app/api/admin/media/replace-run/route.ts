@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const SCRIPT_PATH = path.join(/* turbopackIgnore: true */ process.cwd(), "scripts", "replace-media-urls.mjs");
 
-function requireAdmin(req: Request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return NextResponse.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
-  if (req.headers.get("x-admin-key") !== secret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return null;
-}
 
 type Mode = "dry-run" | "apply" | "rollback";
 
@@ -24,7 +19,7 @@ function commandForMode(mode: Mode) {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const body = await request.json().catch(() => null);

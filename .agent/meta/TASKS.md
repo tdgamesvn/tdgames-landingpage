@@ -5,23 +5,7 @@ _(empty)_
 
 ## To do
 
-- [ ] **Bulk Replace** — debug lỗi "replace-media-urls command failed"
-  - UI đã fix để show stderr/stdout → thử Dry run và xem log chi tiết
-  - Nghi ngờ: script fetch `http://localhost:3000/api/admin/media/mapping` → cần check port VPS
-
-- [ ] About page hero — đang là PNG, cần update → video URL trong `site.json`
-  - Sau khi bulk replace OK sẽ tự update; hoặc edit thủ công `src/content/site.json`
-
-- [ ] Team — thay ảnh/tên placeholder bằng thật
-  - Vào `/admin` → tab "6. Team" → upload ảnh + sửa tên/chức danh
-
-- [ ] About page — ảnh studio workspace thật (section "Our Workspace")
-  - Hiện đang dùng Unsplash placeholder
-
-- [ ] Footer social links — điền URL thật (LinkedIn, Facebook, Instagram, Behance, ArtStation)
-  - Vào `/admin` → tab "9. Footer" → điền URL → Lưu
-
-- [ ] Careers section — Spine character: test premultipliedAlpha toggle trong admin nếu còn viền đen/sáng
+_(empty)_
 
 ## Done
 
@@ -44,7 +28,13 @@ _(empty)_
   - [x] Task 4: API PATCH cho phép update `label`
   - [x] Task 5: `MediaAsset.label` type + `patchMediaAsset` helper
   - [x] Task 6: Admin UI — inline label editor trên asset card (commit 893ed6f)
-  - [ ] Task 7: Gán label "about-hero" thủ công trong Admin → verify site (cần user làm)
+  - [x] Task 7: Gán label "about-hero" thủ công trong Admin → verified ✅
+- [x] About page hero — swap sang video URL ✅
+- [x] Team — ảnh/tên thật đã cập nhật qua Admin tab "6. Team" ✅
+- [x] About page workspace — ảnh studio thật thay Unsplash ✅
+- [x] Footer social links — điền URL thật (LinkedIn, Facebook, Instagram, Behance, ArtStation) ✅
+- [x] Careers Spine hero — premultipliedAlpha đã ổn ✅
+- [x] Nginx + SSL + Cache — Let's Encrypt cert, Cache-Control headers, Cloudflare real IP ✅
 - [x] Bootstrap project + agent memory
 - [x] Scaffold Next.js 16 + Tailwind v4
 - [x] Layout cơ bản (header, footer, fonts)
@@ -75,3 +65,8 @@ _(empty)_
 - [x] Spine visual controls — DB (scale/offset_x/offset_y/premultiplied_alpha), API, SpineTab sliders, home-page-lower reads from DB
 - [x] Spine Animation & Skin Picker — DB `animations JSONB`, SpineCharacter sequence loop, Admin skin dropdown + animation multi-select + reorder UI
 - [x] Spine Demo embed page — `/spine-demo/[slug]` bare iframe page, URL params (bg/color/image/scale/x/y), Admin Embed URL Builder + iframe code generator (commit 26d8eeb)
+- [x] `/apply/[slug]` dedicated apply page with CV upload (R2), `upload-cv` API route, careers panel now navigates there (commit 25e0792)
+- [x] Bulk Replace fix — eliminate self-HTTP call, inject MAPPING_JSON from Supabase, use process.execPath (commit 6f309ca)
+- [x] Discord notification khi có ứng viên mới apply (commit f1bfa36)
+- [x] Referral tracking `?ref=` param — DB col + apply page + admin badge + notifications (commit 11fec9b)
+- [x] HR Dashboard `/hr` — pipeline kanban, KPI table, Discord remind, GitHub Actions cron (commit 9568846)

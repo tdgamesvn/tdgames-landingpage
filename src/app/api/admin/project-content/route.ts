@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import fs from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
@@ -8,14 +9,6 @@ export const dynamic = "force-dynamic";
 
 const PORTFOLIO_DIR = path.join(process.cwd(), "src", "app", "portfolio");
 
-function requireAdmin(req: Request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return NextResponse.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
-  if (req.headers.get("x-admin-key") !== secret) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return null;
-}
 
 function isSafeSlug(slug: string) {
   return /^[a-z0-9][a-z0-9-]*$/.test(slug);
@@ -163,7 +156,7 @@ function extractSlots(content: string): { coverImage: string | null; modules: Sl
 }
 
 export async function GET(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const { searchParams } = new URL(request.url);

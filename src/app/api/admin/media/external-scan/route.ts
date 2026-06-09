@@ -1,15 +1,10 @@
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { readFile } from "node:fs/promises";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { globSync } from "glob";
 
-function requireAdmin(req: Request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return NextResponse.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
-  if (req.headers.get("x-admin-key") !== secret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return null;
-}
 
 const BAD_SNIPPETS = ["${", "`;", "@", "localhost", "127.0.0.1"];
 const IMAGE_EXT = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"];
@@ -52,7 +47,7 @@ function classifyExternalUrl(input: string) {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const cwd = process.cwd();

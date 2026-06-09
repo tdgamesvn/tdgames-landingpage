@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 type ProjectRow = {
@@ -28,18 +29,6 @@ function getAdminKey(req: Request) {
   return req.headers.get("x-admin-key");
 }
 
-function requireAdmin(req: Request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
-  }
-
-  if (getAdminKey(req) !== secret) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return null;
-}
 
 export async function GET(request: Request) {
   try {
@@ -85,7 +74,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -117,7 +106,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -154,7 +143,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const supabaseAdmin = getSupabaseAdmin();

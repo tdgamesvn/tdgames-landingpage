@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -8,25 +10,13 @@ function getAdminKey(req: Request) {
   return req.headers.get("x-admin-key");
 }
 
-function requireAdmin(req: Request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) {
-    return Response.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
-  }
-
-  if (getAdminKey(req) !== secret) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return null;
-}
 
 function sanitizeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, "-").toLowerCase();
 }
 
 export async function POST(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const formData = await request.formData();

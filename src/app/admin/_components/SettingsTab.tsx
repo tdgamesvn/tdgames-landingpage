@@ -23,6 +23,11 @@ function timeAgo(d: string) {
 }
 
 const KEY_META: Record<string, { label: string; description: string }> = {
+  admin_secret: {
+    label: "Admin Dashboard Password",
+    description:
+      "Mật khẩu để truy cập /admin. Để trống = dùng ADMIN_SECRET env var. Đổi ở đây có hiệu lực ngay với mọi API route.",
+  },
   hr_secret: {
     label: "HR Dashboard Password",
     description:

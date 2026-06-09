@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { uploadToR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -14,13 +15,6 @@ const ALLOWED_EXTENSIONS: Record<string, string> = {
   ".webp": "image/webp",
 };
 
-function requireAdmin(req: Request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return NextResponse.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
-  if (req.headers.get("x-admin-key") !== secret)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return null;
-}
 
 function sanitize(s: string) {
   return s.replace(/[^a-z0-9._-]/gi, "-").toLowerCase();
@@ -32,7 +26,7 @@ function getExtension(filename: string): string {
 }
 
 export async function POST(request: Request) {
-  const authError = requireAdmin(request);
+  const authError = await requireAdmin(request);
   if (authError) return authError;
 
   let formData: FormData;

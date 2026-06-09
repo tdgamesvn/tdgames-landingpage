@@ -1,16 +1,11 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { readFile } from "node:fs/promises";
 
-function requireAdmin(req: Request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return NextResponse.json({ error: "ADMIN_SECRET is required" }, { status: 500 });
-  if (req.headers.get("x-admin-key") !== secret) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return null;
-}
 
 const MEDIA_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp4", ".webm", ".mov", ".svg"]);
 
@@ -36,7 +31,7 @@ function kindFromPath(p: string) {
 }
 
 export async function POST(request: Request) {
-  const unauthorized = requireAdmin(request);
+  const unauthorized = await requireAdmin(request);
   if (unauthorized) return unauthorized;
 
   const publicDir = path.join(process.cwd(), "public");
