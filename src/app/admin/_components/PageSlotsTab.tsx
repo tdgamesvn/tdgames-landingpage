@@ -555,7 +555,7 @@ function QuickUpload({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (!file.type.startsWith("image/")) continue;
+      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) continue;
 
       try {
         // 1. Upload to R2
@@ -567,7 +567,10 @@ function QuickUpload({
           body: fd,
         });
         const uploadJson = await uploadRes.json();
-        if (!uploadRes.ok || !uploadJson.url) continue;
+        if (!uploadRes.ok || !uploadJson.url) {
+          setMsg(uploadJson.error ?? `Upload failed: ${file.name}`);
+          continue;
+        }
 
         // 2. Create page_slot entry
         const name = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
