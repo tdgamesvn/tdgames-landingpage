@@ -43,6 +43,7 @@ export default function ApplyPageClient({ job }: Props) {
     rate_per_hour: "",
   });
   const [upload, setUpload] = useState<UploadState>({ status: "idle" });
+  const [dragging, setDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -83,6 +84,12 @@ export default function ApplyPageClient({ job }: Props) {
     setError("");
 
     const cvUrl = upload.status === "done" ? upload.url : null;
+
+    if (!cvUrl) {
+      setError("Please upload your CV before submitting.");
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const payload = {
@@ -232,6 +239,25 @@ export default function ApplyPageClient({ job }: Props) {
             </p>
           )}
 
+          {job.responsibilities && job.responsibilities.length > 0 && (
+            <div className="mt-6">
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">
+                Responsibilities
+              </h2>
+              <ul className="space-y-1">
+                {job.responsibilities.map((r, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-white/70"
+                  >
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#f59e0b]" />
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {job.requirements.length > 0 && (
             <div className="mt-6">
               <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">
@@ -248,6 +274,43 @@ export default function ApplyPageClient({ job }: Props) {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {job.nice_to_have && job.nice_to_have.length > 0 && (
+            <div className="mt-6">
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">
+                Nice to Have
+              </h2>
+              <ul className="space-y-1">
+                {job.nice_to_have.map((r, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-white/70"
+                  >
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {job.skills && job.skills.length > 0 && (
+            <div className="mt-6">
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">
+                Skills
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {job.skills.map((s, i) => (
+                  <span
+                    key={i}
+                    className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/60"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </aside>
@@ -302,35 +365,124 @@ export default function ApplyPageClient({ job }: Props) {
               </Field>
             </div>
 
-            {/* CV Upload */}
-            <Field label="CV / Resume (PDF or Word, max 10 MB)">
+            {/* CV Upload — drag & drop zone */}
+            <Field label="CV / Resume * (PDF or Word, max 10 MB)">
               <div
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/5 px-4 py-3 transition-colors hover:border-white/40"
+                className={`group mt-1 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-6 text-center transition-all ${
+                  dragging
+                    ? "border-[#f59e0b] bg-[#f59e0b]/10"
+                    : upload.status === "done"
+                      ? "border-green-500/40 bg-green-500/5"
+                      : "border-white/20 bg-white/[0.03] hover:border-[#f59e0b]/50 hover:bg-white/5"
+                }`}
                 onClick={() => fileRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    if (fileRef.current) {
+                      fileRef.current.files = dt.files;
+                      fileRef.current.dispatchEvent(
+                        new Event("change", { bubbles: true }),
+                      );
+                    }
+                  }
+                }}
               >
-                <svg
-                  className="h-5 w-5 shrink-0 text-white/40"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                  />
-                </svg>
-                <span className="text-sm text-white/60">
-                  {upload.status === "idle" && "Click to attach your CV"}
-                  {upload.status === "uploading" && "Uploading…"}
-                  {upload.status === "done" && (
-                    <span className="text-green-400">✓ {upload.name}</span>
-                  )}
-                  {upload.status === "error" && (
-                    <span className="text-red-400">{upload.message}</span>
-                  )}
-                </span>
+                {upload.status === "idle" && (
+                  <>
+                    <svg
+                      className="h-8 w-8 text-white/30 transition-colors group-hover:text-[#f59e0b]/60"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                    <p className="text-sm font-medium text-white/50">
+                      Drag &amp; drop your CV here, or{" "}
+                      <span className="text-[#f59e0b] underline underline-offset-2">
+                        browse
+                      </span>
+                    </p>
+                    <p className="text-[11px] text-white/30">
+                      PDF, DOC, DOCX &middot; Max 10 MB
+                    </p>
+                  </>
+                )}
+                {upload.status === "uploading" && (
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="h-5 w-5 animate-spin text-[#f59e0b]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    <span className="text-sm text-white/60">Uploading...</span>
+                  </div>
+                )}
+                {upload.status === "done" && (
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="h-6 w-6 text-green-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-green-400">
+                      {upload.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUpload({ status: "idle" });
+                        if (fileRef.current) fileRef.current.value = "";
+                      }}
+                      className="ml-1 rounded-full p-0.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {upload.status === "error" && (
+                  <p className="text-sm text-red-400">{upload.message} — click to retry</p>
+                )}
               </div>
               <input
                 ref={fileRef}
@@ -343,8 +495,9 @@ export default function ApplyPageClient({ job }: Props) {
 
             {/* Portfolio & links */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Portfolio URL">
+              <Field label="Portfolio URL *">
                 <input
+                  required
                   type="url"
                   value={form.portfolio_url}
                   onChange={(e) => set("portfolio_url", e.target.value)}
