@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Application, ApplicationStatus, Job, JobType } from "@/app/admin/_lib/types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -441,6 +441,81 @@ function draftToPayload(d: JobDraft) {
 const labelCls = "block text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1";
 const inputCls = "w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/25 focus:border-amber-500/50 focus:outline-none";
 
+function JobImageUpload({
+  currentUrl, hrKey, onUploaded,
+}: {
+  currentUrl: string; hrKey: string; onUploaded: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(file: File) {
+    setUploading(true);
+    setError("");
+    const data = new FormData();
+    data.append("file", file);
+    try {
+      const res = await fetch("/api/hr/upload", {
+        method: "POST",
+        headers: { "x-hr-key": hrKey },
+        body: data,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Upload failed");
+      onUploaded(json.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="mt-1 space-y-2">
+      {/* Preview */}
+      {currentUrl && (
+        <div className="relative h-32 w-full overflow-hidden rounded-lg border border-white/10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={currentUrl} alt="Job" className="h-full w-full object-cover" />
+        </div>
+      )}
+      {/* Upload zone */}
+      <div
+        className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/[0.03] px-4 py-3 transition-colors hover:border-amber-500/50 hover:bg-white/5"
+        onClick={() => fileRef.current?.click()}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          const file = e.dataTransfer.files?.[0];
+          if (file) handleFile(file);
+        }}
+      >
+        {uploading ? (
+          <span className="text-xs text-white/50">Uploading...</span>
+        ) : (
+          <>
+            <svg className="h-4 w-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span className="text-xs text-white/40">
+              Drop image or <span className="text-amber-400/70 underline">browse</span>
+            </span>
+          </>
+        )}
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+      />
+      {error && <p className="text-[11px] text-red-400">{error}</p>}
+    </div>
+  );
+}
+
 function JobForm({
   initial, hrKey, onSave, onCancel,
 }: {
@@ -554,8 +629,13 @@ function JobForm({
             </div>
           </div>
           <div>
-            <label className={labelCls}>Image URL</label>
-            <input className={inputCls} value={d.image_url} onChange={(e) => set("image_url", e.target.value)} placeholder="https://cdn.tdgamestudio.com/…" />
+            <label className={labelCls}>Job Image</label>
+            <JobImageUpload
+              currentUrl={d.image_url}
+              hrKey={hrKey}
+              onUploaded={(url) => set("image_url", url)}
+            />
+            <input className={`${inputCls} mt-2`} value={d.image_url} onChange={(e) => set("image_url", e.target.value)} placeholder="https://cdn.tdgamestudio.com/… (or upload above)" />
           </div>
         </div>
       )}
