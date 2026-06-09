@@ -429,9 +429,19 @@ export function PageSlotsTab({ adminKey }: Props) {
         </div>
       )}
 
-      {/* Add new slot */}
-      <section className="space-y-3 rounded-lg border border-white/10 bg-zinc-900 p-4">
-        <h3 className="text-sm font-semibold">Add Slot</h3>
+      {/* ── Quick Upload ─────────────────────────────────────────── */}
+      <QuickUpload
+        adminKey={adminKey}
+        page={selectedPage}
+        onDone={() => void loadSlots()}
+      />
+
+      {/* Add new slot (advanced) */}
+      <details className="rounded-lg border border-white/10 bg-zinc-900">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-white/60 hover:text-white">
+          Advanced: Add Slot Manually
+        </summary>
+        <div className="space-y-3 px-4 pb-4">
         <div className="flex flex-wrap gap-2">
           <select
             value={addSlot}
@@ -502,7 +512,141 @@ export function PageSlotsTab({ adminKey }: Props) {
             {adding ? "Adding…" : "Add"}
           </button>
         </div>
-      </section>
+        </div>
+      </details>
     </div>
+  );
+}
+
+// ── Quick Upload Component ───────────────────────────────────────────────────
+
+const QUICK_SLOTS: Record<string, string[]> = {
+  home: ["service-card", "showcase-character-art", "showcase-animation", "showcase-environment", "showcase-vfx"],
+  "services-2d-art": ["workflow-step"],
+  "services-2d-animation": ["workflow-step"],
+  "services-2d-vfx": ["workflow-step"],
+};
+
+function QuickUpload({
+  adminKey, page, onDone,
+}: {
+  adminKey: string; page: string; onDone: () => void;
+}) {
+  const slotOptions = QUICK_SLOTS[page];
+  const [slot, setSlot] = useState(slotOptions?.[0] ?? "");
+  const [uploading, setUploading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // Update slot when page changes
+  useEffect(() => {
+    const opts = QUICK_SLOTS[page];
+    if (opts) setSlot(opts[0]);
+  }, [page]);
+
+  if (!slotOptions || slotOptions.length === 0) return null;
+
+  async function handleFiles(files: FileList) {
+    setUploading(true);
+    setMsg("");
+    let added = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.type.startsWith("image/")) continue;
+
+      try {
+        // 1. Upload to R2
+        const fd = new FormData();
+        fd.append("file", file);
+        const uploadRes = await fetch("/api/admin/upload", {
+          method: "POST",
+          headers: { "x-admin-key": adminKey },
+          body: fd,
+        });
+        const uploadJson = await uploadRes.json();
+        if (!uploadRes.ok || !uploadJson.url) continue;
+
+        // 2. Create page_slot entry
+        const name = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+        await fetch("/api/admin/page-slots", {
+          method: "POST",
+          headers: { "x-admin-key": adminKey, "content-type": "application/json" },
+          body: JSON.stringify({
+            page,
+            slot,
+            url: uploadJson.url,
+            display_name: name,
+            sort_order: added,
+          }),
+        });
+        added++;
+      } catch { /* skip failed */ }
+    }
+
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
+    if (added > 0) {
+      setMsg(`Added ${added} image(s)`);
+      onDone();
+    } else {
+      setMsg("No images uploaded");
+    }
+  }
+
+  return (
+    <section className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-amber-400">Quick Upload</h3>
+        <select
+          value={slot}
+          onChange={(e) => setSlot(e.target.value)}
+          className="rounded border border-amber-500/30 bg-transparent px-2 py-1 text-xs text-white"
+        >
+          {slotOptions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+
+      <div
+        className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 text-center transition-all ${
+          uploading
+            ? "border-amber-500/50 bg-amber-500/10"
+            : "border-white/20 bg-white/[0.02] hover:border-amber-500/40 hover:bg-white/5"
+        }`}
+        onClick={() => fileRef.current?.click()}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+        }}
+      >
+        {uploading ? (
+          <p className="text-sm text-amber-400">Uploading...</p>
+        ) : (
+          <>
+            <svg className="h-8 w-8 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p className="text-sm text-white/40">
+              Drop images here or <span className="text-amber-400 underline">browse</span>
+            </p>
+            <p className="text-[11px] text-white/25">Supports multiple files. Images upload to R2 and auto-create slots.</p>
+          </>
+        )}
+      </div>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => { if (e.target.files) handleFiles(e.target.files); }}
+      />
+
+      {msg && <p className="text-xs text-amber-300">{msg}</p>}
+    </section>
   );
 }
