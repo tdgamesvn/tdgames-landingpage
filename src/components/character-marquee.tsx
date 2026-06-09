@@ -7,6 +7,8 @@ import { Autoplay } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper/types";
 import "swiper/css";
 
+const isVideo = (url: string) => /\.(mp4|webm|mov)(\?|$)/i.test(url);
+
 export type CharacterMarqueeProps = {
   images: { src: string; alt: string }[];
   className?: string;
@@ -75,14 +77,26 @@ export default function CharacterMarquee({
             className="w-[220px]! md:w-[260px]!"
           >
             <div className="relative h-[260px] w-full overflow-hidden rounded-2xl border border-white/10 bg-black/20">
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 220px, 260px"
-                draggable={false}
-              />
+              {isVideo(img.src) ? (
+                <video
+                  src={img.src}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+              ) : (
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 220px, 260px"
+                  draggable={false}
+                />
+              )}
               <div className="absolute inset-0 bg-linear-to-t from-black/50 via-black/10 to-transparent opacity-90" />
             </div>
           </SwiperSlide>

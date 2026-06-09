@@ -640,7 +640,7 @@ function QuickUpload({
       <input
         ref={fileRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/mp4,video/webm"
         multiple
         className="hidden"
         onChange={(e) => { if (e.target.files) handleFiles(e.target.files); }}
