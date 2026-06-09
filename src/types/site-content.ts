@@ -39,15 +39,6 @@ export type BlogPost = {
   body: string[];
 };
 
-export type ShowcaseProject = {
-  id: string;
-  title: string;
-  subtitle: string;
-  slug: string;
-  thumbnail: string;
-  heroVideo: string;
-};
-
 export type SiteContent = {
   hero: {
     media: MediaItem[];
@@ -60,8 +51,5 @@ export type SiteContent = {
   };
   blog: {
     posts: BlogPost[];
-  };
-  portfolio: {
-    showcaseProjects: ShowcaseProject[];
   };
 };
