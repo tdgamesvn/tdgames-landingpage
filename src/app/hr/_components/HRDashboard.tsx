@@ -47,6 +47,51 @@ function timeAgo(d: string) {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+function DetailRow({ label, value, href }: { label: string; value?: string | number | null; href?: string }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-2 text-xs">
+      <span className="shrink-0 w-28 text-white/35 uppercase text-[10px] font-bold tracking-wider pt-0.5">{label}</span>
+      {href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-amber-400/80 hover:text-amber-300 break-all">
+          {String(value)} ↗
+        </a>
+      ) : (
+        <span className="text-white/70 break-all">{String(value)}</span>
+      )}
+    </div>
+  );
+}
+
+function AppDetail({ app }: { app: Application }) {
+  return (
+    <div className="space-y-2 border-t border-white/10 pt-3 mt-2">
+      <DetailRow label="Email" value={app.email} href={`mailto:${app.email}`} />
+      <DetailRow label="Phone" value={app.phone} href={app.phone ? `tel:${app.phone}` : undefined} />
+      <DetailRow label="Type" value={app.work_type} />
+      <DetailRow label="Experience" value={app.years_experience ? `${app.years_experience} year(s)` : null} />
+      <DetailRow label="Salary" value={app.expected_salary} />
+      <DetailRow label="Rate/hr" value={app.rate_per_hour} />
+      <DetailRow label="Hours/week" value={app.available_hours_per_week} />
+      <DetailRow label="Available" value={app.available_from} />
+      <DetailRow label="Portfolio" value={app.portfolio_url} href={app.portfolio_url ?? undefined} />
+      <DetailRow label="CV" value={app.cv_url ? "Download" : null} href={app.cv_url ?? undefined} />
+      <DetailRow label="LinkedIn" value={app.linkedin_url} href={app.linkedin_url ?? undefined} />
+      <DetailRow label="Source" value={app.source} />
+      <DetailRow label="Referred by" value={app.referred_by} />
+      {app.message && (
+        <div className="pt-1">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-white/35 mb-1">Message</p>
+          <p className="text-xs text-white/60 whitespace-pre-wrap bg-white/[0.03] rounded-lg p-2 border border-white/5">
+            {app.message}
+          </p>
+        </div>
+      )}
+      <DetailRow label="Applied" value={new Date(app.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} />
+    </div>
+  );
+}
+
 function AppCard({
   app,
   hrKey,
@@ -58,6 +103,7 @@ function AppCard({
 }) {
   const [saving, setSaving] = useState(false);
   const [showNote, setShowNote] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const [note, setNote] = useState(app.admin_notes ?? "");
 
   async function move(status: ApplicationStatus) {
@@ -205,7 +251,20 @@ function AppCard({
         >
           {showNote ? "✕" : "💬"}
         </button>
+        <button
+          onClick={() => setShowDetail((v) => !v)}
+          className={`rounded border px-2 py-0.5 text-[10px] transition-colors ${
+            showDetail
+              ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+              : "border-white/15 text-white/50 hover:bg-white/5"
+          }`}
+        >
+          {showDetail ? "▲ Less" : "▼ Detail"}
+        </button>
       </div>
+
+      {/* Full detail panel */}
+      {showDetail && <AppDetail app={app} />}
     </div>
   );
 }
@@ -717,9 +776,221 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
   );
 }
 
+// ── Data view (filterable table) ─────────────────────────────────────────────
+
+function DataView({
+  apps,
+  jobs,
+  hrKey,
+  onUpdate,
+}: {
+  apps: Application[];
+  jobs: Job[];
+  hrKey: string;
+  onUpdate: (id: string, patch: Partial<Application>) => void;
+}) {
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterJob, setFilterJob] = useState<string>("all");
+  const [filterSource, setFilterSource] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const sources = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of apps) if (a.source) set.add(a.source);
+    return [...set].sort();
+  }, [apps]);
+
+  const workTypes = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of apps) if (a.work_type) set.add(a.work_type);
+    return [...set].sort();
+  }, [apps]);
+
+  const filtered = useMemo(() => {
+    let list = apps;
+    if (filterStatus !== "all") list = list.filter((a) => a.status === filterStatus);
+    if (filterJob !== "all") list = list.filter((a) => a.job_id === filterJob);
+    if (filterSource !== "all") list = list.filter((a) => a.source === filterSource);
+    if (filterType !== "all") list = list.filter((a) => a.work_type === filterType);
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.full_name.toLowerCase().includes(q) ||
+          a.email.toLowerCase().includes(q) ||
+          (a.phone ?? "").toLowerCase().includes(q) ||
+          (a.referred_by ?? "").toLowerCase().includes(q),
+      );
+    }
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [apps, filterStatus, filterJob, filterSource, filterType, search]);
+
+  const selectCls = "rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white focus:border-amber-500/50 focus:outline-none";
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, email, phone..."
+          className="w-56 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-amber-500/50 focus:outline-none"
+        />
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={selectCls}>
+          <option value="all">All Status</option>
+          {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+        </select>
+        <select value={filterJob} onChange={(e) => setFilterJob(e.target.value)} className={selectCls}>
+          <option value="all">All Jobs</option>
+          {jobs.map((j) => <option key={j.id} value={j.id}>{j.title}</option>)}
+        </select>
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className={selectCls}>
+          <option value="all">All Types</option>
+          {workTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className={selectCls}>
+          <option value="all">All Sources</option>
+          {sources.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <span className="text-[10px] text-white/40 ml-auto">{filtered.length} / {apps.length} applicants</span>
+      </div>
+
+      {/* Table */}
+      {filtered.length === 0 ? (
+        <p className="py-10 text-center text-sm text-white/30">No applicants match your filters.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/10">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40">
+                <th className="px-3 py-3 text-left">Name</th>
+                <th className="px-3 py-3 text-left">Job</th>
+                <th className="px-3 py-3 text-center">Status</th>
+                <th className="px-3 py-3 text-center">Type</th>
+                <th className="px-3 py-3 text-left">Email</th>
+                <th className="px-3 py-3 text-center">Source</th>
+                <th className="px-3 py-3 text-center">Referrer</th>
+                <th className="px-3 py-3 text-center">Date</th>
+                <th className="px-3 py-3 text-center">Links</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((app, i) => (
+                <>
+                  <tr
+                    key={app.id}
+                    onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
+                    className={`border-b border-white/5 cursor-pointer transition-colors hover:bg-white/[0.04] ${
+                      i % 2 === 0 ? "" : "bg-white/[0.015]"
+                    } ${expandedId === app.id ? "bg-amber-500/5" : ""}`}
+                  >
+                    <td className="px-3 py-2.5 font-medium text-white">{app.full_name}</td>
+                    <td className="px-3 py-2.5 text-white/60 text-xs">{app.jobs?.title ?? "—"}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${STATUS_COLOR[app.status]}`}>
+                        {STATUS_LABEL[app.status]}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-center text-xs text-white/50">{app.work_type}</td>
+                    <td className="px-3 py-2.5 text-xs text-white/50">{app.email}</td>
+                    <td className="px-3 py-2.5 text-center text-xs text-white/40">{app.source ?? "—"}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      {app.referred_by ? (
+                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                          {app.referred_by}
+                        </span>
+                      ) : <span className="text-xs text-white/25">—</span>}
+                    </td>
+                    <td className="px-3 py-2.5 text-center text-xs text-white/40">
+                      {new Date(app.created_at).toLocaleDateString("vi-VN")}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        {app.cv_url && (
+                          <a href={app.cv_url} target="_blank" rel="noopener noreferrer"
+                            className="rounded border border-white/15 px-1.5 py-0.5 text-[9px] text-white/50 hover:text-white">CV</a>
+                        )}
+                        {app.portfolio_url && (
+                          <a href={app.portfolio_url} target="_blank" rel="noopener noreferrer"
+                            className="rounded border border-white/15 px-1.5 py-0.5 text-[9px] text-white/50 hover:text-white">PF</a>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedId === app.id && (
+                    <tr key={`${app.id}-detail`} className="bg-white/[0.02]">
+                      <td colSpan={9} className="px-6 py-4">
+                        <AppDetail app={app} />
+                        {/* Quick actions */}
+                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
+                          {STATUS_NEXT[app.status] && (
+                            <QuickAction app={app} hrKey={hrKey} targetStatus={STATUS_NEXT[app.status]!} onUpdate={onUpdate} />
+                          )}
+                          {app.status !== "rejected" && (
+                            <QuickAction app={app} hrKey={hrKey} targetStatus="rejected" onUpdate={onUpdate} variant="reject" />
+                          )}
+                          {app.status === "rejected" && (
+                            <QuickAction app={app} hrKey={hrKey} targetStatus="new" onUpdate={onUpdate} variant="reopen" />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuickAction({
+  app, hrKey, targetStatus, onUpdate, variant,
+}: {
+  app: Application; hrKey: string; targetStatus: ApplicationStatus;
+  onUpdate: (id: string, patch: Partial<Application>) => void;
+  variant?: "reject" | "reopen";
+}) {
+  const [saving, setSaving] = useState(false);
+
+  async function move() {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/hr/applications/${app.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        body: JSON.stringify({ status: targetStatus }),
+      });
+      if (res.ok) onUpdate(app.id, { status: targetStatus });
+    } finally { setSaving(false); }
+  }
+
+  const cls = variant === "reject"
+    ? "border-red-500/30 text-red-400 hover:bg-red-500/10"
+    : variant === "reopen"
+      ? "border-white/20 text-white/60 hover:bg-white/10"
+      : "border-white/20 text-white/80 hover:bg-white/10";
+
+  const label = variant === "reject" ? "✕ Reject"
+    : variant === "reopen" ? "↺ Reopen"
+    : `→ ${STATUS_LABEL[targetStatus]}`;
+
+  return (
+    <button onClick={move} disabled={saving}
+      className={`rounded border px-3 py-1 text-[10px] font-bold transition-colors disabled:opacity-40 ${cls}`}>
+      {saving ? "..." : label}
+    </button>
+  );
+}
+
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type View = "pipeline" | "kpi" | "jobs";
+type View = "pipeline" | "kpi" | "jobs" | "data";
 
 const HR_KEY_STORAGE = "tdg.hr.key";
 
@@ -867,7 +1138,7 @@ export default function HRDashboard() {
           <div className="flex items-center gap-2">
             {/* View tabs */}
             <div className="flex rounded-lg border border-white/10 p-0.5">
-              {(["pipeline", "kpi", "jobs"] as View[]).map((v) => (
+              {(["pipeline", "data", "kpi", "jobs"] as View[]).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
@@ -875,7 +1146,7 @@ export default function HRDashboard() {
                     view === v ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
                   }`}
                 >
-                  {v === "pipeline" ? "⬛ Pipeline" : v === "kpi" ? "📊 KPI" : "💼 Jobs"}
+                  {v === "pipeline" ? "⬛ Pipeline" : v === "data" ? "📋 Data" : v === "kpi" ? "📊 KPI" : "💼 Jobs"}
                 </button>
               ))}
             </div>
@@ -923,6 +1194,8 @@ export default function HRDashboard() {
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
         ) : view === "pipeline" ? (
           <PipelineView apps={apps} hrKey={hrKey} onUpdate={updateApp} />
+        ) : view === "data" ? (
+          <DataView apps={apps} jobs={jobs} hrKey={hrKey} onUpdate={updateApp} />
         ) : view === "kpi" ? (
           <KPIView apps={apps} />
         ) : (

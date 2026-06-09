@@ -129,6 +129,9 @@ export type Application = {
   expected_salary: string | null;
   available_from: string | null;
   rate_per_hour: string | null;
+  source: string | null;
+  message: string | null;
+  available_hours_per_week: string | null;
   status: ApplicationStatus;
   admin_notes: string | null;
   referred_by: string | null;
