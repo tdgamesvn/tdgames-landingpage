@@ -20,6 +20,7 @@ type FormState = {
   rate_per_hour: string;
   source: string;
   available_from: string;
+  available_hours_per_week: string;
   message: string;
 };
 
@@ -29,8 +30,12 @@ type UploadState =
   | { status: "done"; url: string; name: string }
   | { status: "error"; message: string };
 
+const WORK_TYPES = [
+  { value: "fulltime", label: "Full-time / Part-time / Remote" },
+  { value: "freelancer", label: "Freelancer" },
+] as const;
+
 export default function ApplyPageClient({ job }: Props) {
-  const isFreelancer = job.type === "freelancer";
   const searchParams = useSearchParams();
   const referredBy = searchParams.get("ref") ?? undefined;
 
@@ -38,7 +43,7 @@ export default function ApplyPageClient({ job }: Props) {
     full_name: "",
     email: "",
     phone: "",
-    work_type: job.type,
+    work_type: job.type === "freelancer" ? "freelancer" : "fulltime",
     years_experience: "",
     portfolio_url: "",
     linkedin_url: "",
@@ -46,6 +51,7 @@ export default function ApplyPageClient({ job }: Props) {
     rate_per_hour: "",
     source: "",
     available_from: "",
+    available_hours_per_week: "",
     message: "",
   });
   const [upload, setUpload] = useState<UploadState>({ status: "idle" });
@@ -54,6 +60,8 @@ export default function ApplyPageClient({ job }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const isFreelancer = form.work_type === "freelancer";
 
   function set(key: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -91,7 +99,8 @@ export default function ApplyPageClient({ job }: Props) {
 
     const cvUrl = upload.status === "done" ? upload.url : null;
 
-    if (!cvUrl) {
+    // CV required for non-freelancer only
+    if (!isFreelancer && !cvUrl) {
       setError("Please upload your CV before submitting.");
       setSubmitting(false);
       return;
@@ -104,16 +113,17 @@ export default function ApplyPageClient({ job }: Props) {
         email: form.email,
         phone: form.phone || null,
         work_type: form.work_type,
-        years_experience: form.years_experience
+        years_experience: !isFreelancer && form.years_experience
           ? parseInt(form.years_experience)
           : null,
         cv_url: cvUrl,
         portfolio_url: form.portfolio_url || null,
-        linkedin_url: form.linkedin_url || null,
-        expected_salary: isFreelancer ? null : form.expected_salary || null,
+        linkedin_url: !isFreelancer ? form.linkedin_url || null : null,
+        expected_salary: !isFreelancer ? form.expected_salary || null : null,
         rate_per_hour: isFreelancer ? form.rate_per_hour || null : null,
-        source: form.source || null,
-        available_from: form.available_from || null,
+        available_hours_per_week: isFreelancer ? form.available_hours_per_week || null : null,
+        source: !isFreelancer ? form.source || null : null,
+        available_from: !isFreelancer ? form.available_from || null : null,
         message: form.message || null,
         referred_by: referredBy || null,
       };
@@ -331,272 +341,433 @@ export default function ApplyPageClient({ job }: Props) {
           </h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {/* Personal info */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Full Name *">
-                <input
-                  required
-                  value={form.full_name}
-                  onChange={(e) => set("full_name", e.target.value)}
-                  placeholder="Your full name"
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Email *">
-                <input
-                  required
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  placeholder="you@example.com"
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Phone">
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => set("phone", e.target.value)}
-                  placeholder="+84 ..."
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Years of Experience">
-                <input
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={form.years_experience}
-                  onChange={(e) => set("years_experience", e.target.value)}
-                  placeholder="e.g. 3"
-                  className={inputCls}
-                />
-              </Field>
+            {/* ── Employment Type Toggle ─────────────────────────────── */}
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-white/5 p-1.5">
+              {WORK_TYPES.map((wt) => (
+                <button
+                  key={wt.value}
+                  type="button"
+                  onClick={() => set("work_type", wt.value)}
+                  className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                    form.work_type === wt.value
+                      ? "bg-[#f59e0b] text-black shadow-lg"
+                      : "text-white/50 hover:bg-white/5 hover:text-white/70"
+                  }`}
+                >
+                  {wt.value === "fulltime" ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  {wt.label}
+                </button>
+              ))}
             </div>
 
-            {/* CV Upload — drag & drop zone */}
-            <Field label="CV / Resume * (PDF or Word, max 10 MB)">
-              <div
-                className={`group mt-1 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-6 text-center transition-all ${
-                  dragging
-                    ? "border-[#f59e0b] bg-[#f59e0b]/10"
-                    : upload.status === "done"
-                      ? "border-green-500/40 bg-green-500/5"
-                      : "border-white/20 bg-white/[0.03] hover:border-[#f59e0b]/50 hover:bg-white/5"
-                }`}
-                onClick={() => fileRef.current?.click()}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragging(true);
-                }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragging(false);
-                  const file = e.dataTransfer.files?.[0];
-                  if (file) {
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    if (fileRef.current) {
-                      fileRef.current.files = dt.files;
-                      fileRef.current.dispatchEvent(
-                        new Event("change", { bubbles: true }),
-                      );
-                    }
-                  }
-                }}
-              >
-                {upload.status === "idle" && (
-                  <>
-                    <svg
-                      className="h-8 w-8 text-white/30 transition-colors group-hover:text-[#f59e0b]/60"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    <p className="text-sm font-medium text-white/50">
-                      Drag &amp; drop your CV here, or{" "}
-                      <span className="text-[#f59e0b] underline underline-offset-2">
-                        browse
-                      </span>
-                    </p>
-                    <p className="text-[11px] text-white/30">
-                      PDF, DOC, DOCX &middot; Max 10 MB
-                    </p>
-                  </>
-                )}
-                {upload.status === "uploading" && (
-                  <div className="flex items-center gap-2">
-                    <svg
-                      className="h-5 w-5 animate-spin text-[#f59e0b]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
-                    <span className="text-sm text-white/60">Uploading...</span>
-                  </div>
-                )}
-                {upload.status === "done" && (
-                  <div className="flex items-center gap-2">
-                    <svg
-                      className="h-6 w-6 text-green-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium text-green-400">
-                      {upload.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setUpload({ status: "idle" });
-                        if (fileRef.current) fileRef.current.value = "";
-                      }}
-                      className="ml-1 rounded-full p-0.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-                {upload.status === "error" && (
-                  <p className="text-sm text-red-400">{upload.message} — click to retry</p>
-                )}
-              </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </Field>
-
-            {/* Portfolio & links */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Portfolio URL *">
-                <input
-                  required
-                  type="url"
-                  value={form.portfolio_url}
-                  onChange={(e) => set("portfolio_url", e.target.value)}
-                  placeholder="https://behance.net/..."
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="LinkedIn URL">
-                <input
-                  type="url"
-                  value={form.linkedin_url}
-                  onChange={(e) => set("linkedin_url", e.target.value)}
-                  placeholder="https://linkedin.com/in/..."
-                  className={inputCls}
-                />
-              </Field>
-            </div>
-
-            {/* ── Additional Information ─────────────────────────── */}
-            <div className="mt-2 border-t border-white/10 pt-5">
+            {/* ── Personal Information ───────────────────────────────── */}
+            <div className="border-t border-white/10 pt-5">
               <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#f59e0b]">
-                Additional Information
+                Personal Information
               </h3>
 
               <div className="flex flex-col gap-4">
-                <Field label="How did you hear about us?">
-                  <select
-                    value={form.source}
-                    onChange={(e) => set("source", e.target.value)}
-                    className={`${inputCls} appearance-none`}
-                  >
-                    <option value="">Select an option</option>
-                    <option value="Facebook">Facebook</option>
-                    <option value="LinkedIn">LinkedIn</option>
-                    <option value="Behance">Behance</option>
-                    <option value="ArtStation">ArtStation</option>
-                    <option value="Friend / Referral">Friend / Referral</option>
-                    <option value="Job Board">Job Board (TopCV, VietnamWorks...)</option>
-                    <option value="Google Search">Google Search</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </Field>
-
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Field label="Available Start Date">
+                  <Field label="Full Name *">
                     <input
-                      type="date"
-                      value={form.available_from}
-                      onChange={(e) => set("available_from", e.target.value)}
+                      required
+                      value={form.full_name}
+                      onChange={(e) => set("full_name", e.target.value)}
+                      placeholder="Enter your full name"
                       className={inputCls}
                     />
                   </Field>
-
-                  {isFreelancer ? (
-                    <Field label="Rate Per Hour (USD)">
-                      <input
-                        value={form.rate_per_hour}
-                        onChange={(e) => set("rate_per_hour", e.target.value)}
-                        placeholder="e.g. $15/hr"
-                        className={inputCls}
-                      />
-                    </Field>
-                  ) : (
-                    <Field label="Expected Salary (VND/month)">
-                      <input
-                        value={form.expected_salary}
-                        onChange={(e) => set("expected_salary", e.target.value)}
-                        placeholder="Enter expected salary"
-                        className={inputCls}
-                      />
-                    </Field>
-                  )}
+                  <Field label="Email *">
+                    <input
+                      required
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => set("email", e.target.value)}
+                      placeholder="your.email@example.com"
+                      className={inputCls}
+                    />
+                  </Field>
                 </div>
 
-                <Field label="Additional Message">
-                  <textarea
-                    value={form.message}
-                    onChange={(e) => {
-                      if (e.target.value.length <= 1000) set("message", e.target.value);
-                    }}
-                    placeholder="Tell us why you'd be a great fit for TD GAMES..."
-                    rows={4}
-                    className={`${inputCls} resize-none`}
+                <Field label="Phone Number *">
+                  <input
+                    required
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => set("phone", e.target.value)}
+                    placeholder="+84 123 456 789"
+                    className={inputCls}
                   />
-                  <p className="mt-1 text-right text-[11px] text-white/30">
-                    {form.message.length}/1000
-                  </p>
+                </Field>
+
+                <Field label="Portfolio URL *">
+                  <input
+                    required
+                    type="url"
+                    value={form.portfolio_url}
+                    onChange={(e) => set("portfolio_url", e.target.value)}
+                    placeholder="https://behance.net/yourname, ArtStation, or Google Drive link"
+                    className={inputCls}
+                  />
                 </Field>
               </div>
             </div>
+
+            {/* ── Fulltime-specific fields ───────────────────────────── */}
+            {!isFreelancer && (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Years of Experience *">
+                    <input
+                      required
+                      type="number"
+                      min="0"
+                      max="50"
+                      value={form.years_experience}
+                      onChange={(e) => set("years_experience", e.target.value)}
+                      placeholder="e.g. 3"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="LinkedIn URL">
+                    <input
+                      type="url"
+                      value={form.linkedin_url}
+                      onChange={(e) => set("linkedin_url", e.target.value)}
+                      placeholder="https://linkedin.com/in/..."
+                      className={inputCls}
+                    />
+                  </Field>
+                </div>
+
+                {/* CV Upload — drag & drop zone */}
+                <Field label="Resume / CV * (PDF or Word, max 10 MB)">
+                  <div
+                    className={`group mt-1 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-6 text-center transition-all ${
+                      dragging
+                        ? "border-[#f59e0b] bg-[#f59e0b]/10"
+                        : upload.status === "done"
+                          ? "border-green-500/40 bg-green-500/5"
+                          : "border-white/20 bg-white/[0.03] hover:border-[#f59e0b]/50 hover:bg-white/5"
+                    }`}
+                    onClick={() => fileRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragging(true);
+                    }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragging(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        if (fileRef.current) {
+                          fileRef.current.files = dt.files;
+                          fileRef.current.dispatchEvent(
+                            new Event("change", { bubbles: true }),
+                          );
+                        }
+                      }
+                    }}
+                  >
+                    {upload.status === "idle" && (
+                      <>
+                        <svg
+                          className="h-8 w-8 text-white/30 transition-colors group-hover:text-[#f59e0b]/60"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                        <p className="text-sm font-medium text-white/50">
+                          Drag &amp; drop your resume here, or{" "}
+                          <span className="text-[#f59e0b] underline underline-offset-2">
+                            browse
+                          </span>
+                        </p>
+                        <p className="text-[11px] text-white/30">
+                          PDF, DOC, DOCX &middot; Max 10 MB
+                        </p>
+                      </>
+                    )}
+                    {upload.status === "uploading" && (
+                      <div className="flex items-center gap-2">
+                        <svg
+                          className="h-5 w-5 animate-spin text-[#f59e0b]"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
+                        </svg>
+                        <span className="text-sm text-white/60">Uploading...</span>
+                      </div>
+                    )}
+                    {upload.status === "done" && (
+                      <div className="flex items-center gap-2">
+                        <svg
+                          className="h-6 w-6 text-green-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <span className="text-sm font-medium text-green-400">
+                          {upload.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUpload({ status: "idle" });
+                            if (fileRef.current) fileRef.current.value = "";
+                          }}
+                          className="ml-1 rounded-full p-0.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                    {upload.status === "error" && (
+                      <p className="text-sm text-red-400">{upload.message} — click to retry</p>
+                    )}
+                  </div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </Field>
+
+                {/* ── Additional Information (fulltime) ─────────────── */}
+                <div className="border-t border-white/10 pt-5">
+                  <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#f59e0b]">
+                    Additional Information
+                  </h3>
+
+                  <div className="flex flex-col gap-4">
+                    <Field label="How did you hear about us?">
+                      <select
+                        value={form.source}
+                        onChange={(e) => set("source", e.target.value)}
+                        className={`${inputCls} appearance-none`}
+                      >
+                        <option value="">Select an option</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="LinkedIn">LinkedIn</option>
+                        <option value="Behance">Behance</option>
+                        <option value="ArtStation">ArtStation</option>
+                        <option value="Friend / Referral">Friend / Referral</option>
+                        <option value="Job Board">Job Board (TopCV, VietnamWorks...)</option>
+                        <option value="Google Search">Google Search</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </Field>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <Field label="Available Start Date">
+                        <input
+                          type="date"
+                          value={form.available_from}
+                          onChange={(e) => set("available_from", e.target.value)}
+                          className={inputCls}
+                        />
+                      </Field>
+                      <Field label="Expected Salary (VND/month)">
+                        <input
+                          value={form.expected_salary}
+                          onChange={(e) => set("expected_salary", e.target.value)}
+                          placeholder="Enter expected salary"
+                          className={inputCls}
+                        />
+                      </Field>
+                    </div>
+
+                    <Field label="Additional Message">
+                      <textarea
+                        value={form.message}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 1000) set("message", e.target.value);
+                        }}
+                        placeholder="Tell us why you'd be a great fit for TD GAMES..."
+                        rows={4}
+                        className={`${inputCls} resize-none`}
+                      />
+                      <p className="mt-1 text-right text-[11px] text-white/30">
+                        {form.message.length}/1000
+                      </p>
+                    </Field>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── Freelancer-specific fields ─────────────────────────── */}
+            {isFreelancer && (
+              <div className="border-t border-white/10 pt-5">
+                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#f59e0b]">
+                  Freelance Information
+                </h3>
+
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Field label="Hourly Rate (VND/hour) *">
+                      <input
+                        required
+                        value={form.rate_per_hour}
+                        onChange={(e) => set("rate_per_hour", e.target.value)}
+                        placeholder="Enter your hourly rate"
+                        className={inputCls}
+                      />
+                    </Field>
+                    <Field label="Available Hours per Week *">
+                      <select
+                        required
+                        value={form.available_hours_per_week}
+                        onChange={(e) => set("available_hours_per_week", e.target.value)}
+                        className={`${inputCls} appearance-none`}
+                      >
+                        <option value="">Select available hours</option>
+                        <option value="< 10 hours">{"< 10 hours"}</option>
+                        <option value="10 - 20 hours">10 - 20 hours</option>
+                        <option value="20 - 30 hours">20 - 30 hours</option>
+                        <option value="30 - 40 hours">30 - 40 hours</option>
+                        <option value="40+ hours (full-time)">40+ hours (full-time)</option>
+                      </select>
+                    </Field>
+                  </div>
+
+                  <Field label="Additional Message">
+                    <textarea
+                      value={form.message}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 1000) set("message", e.target.value);
+                      }}
+                      placeholder="Tell us about your experience, availability, and why you'd like to work with TD GAMES..."
+                      rows={4}
+                      className={`${inputCls} resize-none`}
+                    />
+                    <p className="mt-1 text-right text-[11px] text-white/30">
+                      {form.message.length}/1000
+                    </p>
+                  </Field>
+
+                  {/* Optional CV for freelancers */}
+                  <Field label="Resume / CV (optional, PDF or Word, max 10 MB)">
+                    <div
+                      className={`group mt-1 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-4 text-center transition-all ${
+                        dragging
+                          ? "border-[#f59e0b] bg-[#f59e0b]/10"
+                          : upload.status === "done"
+                            ? "border-green-500/40 bg-green-500/5"
+                            : "border-white/15 bg-white/[0.02] hover:border-white/30 hover:bg-white/5"
+                      }`}
+                      onClick={() => fileRef.current?.click()}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragging(true);
+                      }}
+                      onDragLeave={() => setDragging(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragging(false);
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) {
+                          const dt = new DataTransfer();
+                          dt.items.add(file);
+                          if (fileRef.current) {
+                            fileRef.current.files = dt.files;
+                            fileRef.current.dispatchEvent(
+                              new Event("change", { bubbles: true }),
+                            );
+                          }
+                        }
+                      }}
+                    >
+                      {upload.status === "idle" && (
+                        <p className="text-sm text-white/40">
+                          Drag &amp; drop or{" "}
+                          <span className="text-[#f59e0b]/70 underline underline-offset-2">browse</span>
+                        </p>
+                      )}
+                      {upload.status === "uploading" && (
+                        <span className="text-sm text-white/60">Uploading...</span>
+                      )}
+                      {upload.status === "done" && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-green-400">
+                            {upload.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUpload({ status: "idle" });
+                              if (fileRef.current) fileRef.current.value = "";
+                            }}
+                            className="ml-1 rounded-full p-0.5 text-white/40 hover:text-white"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                      {upload.status === "error" && (
+                        <p className="text-sm text-red-400">{upload.message}</p>
+                      )}
+                    </div>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    <p className="mt-1 text-[11px] text-white/25">
+                      You can also share a link to your CV in the Additional Message
+                    </p>
+                  </Field>
+                </div>
+              </div>
+            )}
 
             {error && (
               <p className="rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">
@@ -609,7 +780,7 @@ export default function ApplyPageClient({ job }: Props) {
               disabled={submitting || upload.status === "uploading"}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#f59e0b] px-8 py-3 text-xs font-black uppercase tracking-[0.15em] text-black transition-colors hover:bg-[#ffb366] disabled:opacity-50"
             >
-              {submitting ? "Submitting…" : "Submit Application"}
+              {submitting ? "Submitting..." : "Submit Application"}
               {!submitting && (
                 <svg
                   className="h-3 w-3"
