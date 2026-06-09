@@ -525,6 +525,9 @@ function JobForm({
   );
 }
 
+const REFCODE_KEY = "tdg.hr.refcode";
+const BASE_URL = typeof window !== "undefined" ? window.location.origin : "https://www.tdgamestudio.com";
+
 function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
   jobs: Job[]; hrKey: string;
   onUpdate: (j: Job) => void; onCreate: (j: Job) => void; onDelete: (id: string) => void;
@@ -532,6 +535,29 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [refCode, setRefCode] = useState<string>(() =>
+    typeof window !== "undefined" ? (localStorage.getItem(REFCODE_KEY) ?? "") : ""
+  );
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  function saveRefCode(val: string) {
+    setRefCode(val);
+    if (typeof window !== "undefined") {
+      if (val) localStorage.setItem(REFCODE_KEY, val);
+      else localStorage.removeItem(REFCODE_KEY);
+    }
+  }
+
+  function copyLink(job: Job) {
+    const slug = `/apply/${job.slug}`;
+    const url = refCode
+      ? `${BASE_URL}${slug}?ref=${encodeURIComponent(refCode)}`
+      : `${BASE_URL}${slug}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(job.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }
 
   async function toggleActive(job: Job) {
     setToggling(job.id);
@@ -569,6 +595,27 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
             className="rounded-lg border border-amber-500/50 px-4 py-2 text-xs font-bold text-amber-400 hover:bg-amber-500/10 transition-colors">
             + New Job
           </button>
+        )}
+      </div>
+
+      {/* Ref code banner */}
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+        <span className="text-xs font-bold text-amber-400/80">🔗 Your ref code:</span>
+        <input
+          value={refCode}
+          onChange={(e) => saveRefCode(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+          placeholder="e.g. nam, linh, hr-team…"
+          className="w-40 rounded-lg border border-amber-500/30 bg-transparent px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-amber-500/60 focus:outline-none"
+        />
+        {refCode && (
+          <span className="text-[10px] text-white/40">
+            Links will use <code className="text-amber-300/70">?ref={refCode}</code>
+          </span>
+        )}
+        {!refCode && (
+          <span className="text-[10px] text-white/30 italic">
+            Enter your name to generate trackable apply links
+          </span>
         )}
       </div>
 
@@ -616,12 +663,27 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
                   {job.is_active ? "Published" : "Draft"}
                 </button>
 
-                {/* Apply link */}
+                {/* Apply link (open) */}
                 <a href={`/apply/${job.slug}`} target="_blank" rel="noopener noreferrer"
                   className="rounded-lg border border-white/15 px-2 py-1 text-[10px] text-white/50 hover:text-white transition-colors"
                   title="Open apply page">
                   ↗
                 </a>
+
+                {/* Copy refer link */}
+                <button
+                  onClick={() => copyLink(job)}
+                  title={refCode ? `Copy link with ?ref=${refCode}` : "Copy apply link (no ref code set)"}
+                  className={`rounded-lg border px-3 py-1 text-[10px] font-bold transition-colors ${
+                    copiedId === job.id
+                      ? "border-green-500/40 bg-green-500/10 text-green-400"
+                      : refCode
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                        : "border-white/15 text-white/40 hover:bg-white/5"
+                  }`}
+                >
+                  {copiedId === job.id ? "✓ Copied!" : "📋 Copy Link"}
+                </button>
 
                 {/* Edit */}
                 <button
