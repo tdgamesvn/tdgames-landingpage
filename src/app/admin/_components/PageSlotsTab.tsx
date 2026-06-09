@@ -553,7 +553,7 @@ function QuickUpload({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (!file.type.startsWith("image/")) continue;
+      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) continue;
 
       try {
         // 1. Upload to R2
@@ -587,10 +587,10 @@ function QuickUpload({
     setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
     if (added > 0) {
-      setMsg(`Added ${added} image(s)`);
+      setMsg(`Added ${added} file(s)`);
       onDone();
     } else {
-      setMsg("No images uploaded");
+      setMsg("No files uploaded");
     }
   }
 
@@ -630,9 +630,9 @@ function QuickUpload({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
             <p className="text-sm text-white/40">
-              Drop images here or <span className="text-amber-400 underline">browse</span>
+              Drop files here or <span className="text-amber-400 underline">browse</span>
             </p>
-            <p className="text-[11px] text-white/25">Supports multiple files. Images upload to R2 and auto-create slots.</p>
+            <p className="text-[11px] text-white/25">Supports images &amp; videos (mp4, webm). Files upload to R2 and auto-create slots.</p>
           </>
         )}
       </div>
@@ -640,7 +640,7 @@ function QuickUpload({
       <input
         ref={fileRef}
         type="file"
-        accept="image/*,video/mp4,video/webm"
+        accept="image/*,video/*"
         multiple
         className="hidden"
         onChange={(e) => { if (e.target.files) handleFiles(e.target.files); }}

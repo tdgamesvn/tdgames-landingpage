@@ -321,6 +321,50 @@
       }
     ]
   },
+  "portfolio": {
+    "showcaseProjects": [
+      {
+        "id": "1",
+        "title": "Kayn Snow Moon",
+        "subtitle": "League of Legends — Login Screen Animation",
+        "slug": "kayn-snow-moon",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
+        "heroVideo": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video1.mp4"
+      },
+      {
+        "id": "2",
+        "title": "Summoner Era",
+        "subtitle": "2D Animation & VFX — Heroes Light/Dark",
+        "slug": "summoner-era",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/images/summonerDetail.png",
+        "heroVideo": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video_summoner_3_skill_1_skin_2.mp4"
+      },
+      {
+        "id": "3",
+        "title": "Axie Infinity Origins",
+        "subtitle": "Sky Mavis — Game Animation",
+        "slug": "axie-infinity-origins",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/behance/b173c85213385cf6.png",
+        "heroVideo": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video_summoner_4_skill_1_skin_2.mp4"
+      },
+      {
+        "id": "4",
+        "title": "Reaper & Lady",
+        "subtitle": "Project OverDrive — Game Animation",
+        "slug": "reaper-lady-project-overdrive",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/behance/87a63a36f47dc948.png",
+        "heroVideo": "https://cdn.tdgamestudio.com/landing/video/Super_Move/BIGBY-Long Arm of the Law_Closed.mp4"
+      },
+      {
+        "id": "5",
+        "title": "Boss Animation",
+        "subtitle": "Character Animation — The Twins",
+        "slug": "boss-animation",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/behance/379f981b88c6a84f.png",
+        "heroVideo": "https://cdn.tdgamestudio.com/landing/video/Super_Move/On_Your_Knees.mp4"
+      }
+    ]
+  },
   "about": {
     "heroImage": "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
     "workspace": [

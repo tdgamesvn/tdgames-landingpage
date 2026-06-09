@@ -1,5 +1,80 @@
 # LOG
 
+## 2026-06-09 (session — Portfolio Hero Redesign + Page Slots video upload)
+### Task
+Redesign portfolio hero section + fix Page Slots admin không cho upload video
+
+### Work Done
+- **Portfolio Hero Redesign** (spec: `docs/superpowers/specs/2026-06-09-portfolio-hero-redesign-design.md`):
+  - Thêm `ShowcaseProject` type vào `src/types/site-content.ts`
+  - Thêm `portfolio.showcaseProjects` (5 projects) vào `src/content/site.json`
+  - Tạo `src/components/portfolio/portfolio-hero.tsx` — video crossfade, vignette overlay, text content, thumbnail selector, auto-rotate 6s, pause on hover, prefers-reduced-motion
+  - Rewrite `src/app/portfolio/page.tsx`: 2184 → 111 dòng — xóa toàn bộ 3D card board hero, thay bằng `<PortfolioHero>`
+- **Page Slots video upload fix**:
+  - `PageSlotsTab.tsx`: text "images" → "files/images & videos", accept `video/*`
+  - `upload/route.ts`: max file size 20MB → 100MB cho video
+- `npm run build` pass ✅
+
+### Result
+- Portfolio hero: looping video background + 5-project selector carousel
+- Page Slots admin: hỗ trợ upload cả ảnh lẫn video (100MB max)
+
+### Next Step
+- Commit + push
+- Test video URLs thật trên portfolio hero (hiện dùng CutScene_SE videos)
+- Deploy VPS
+
+## 2026-06-09 (session — HR Jobs tab + Settings fix)
+### Task
+Thêm job management vào HR dashboard + fix Settings Unauthorized bug
+
+### Work Done
+- **Fix Settings Unauthorized** (commit `81bf7f7`):
+  - Khi save `admin_secret`, callback `onAdminKeyChange` cập nhật `adminKey` state + sessionStorage ngay
+  - Clear → `keyVerified=false`, yêu cầu re-login với env var password
+- **HR Jobs tab** (commit `9810393`):
+  - `/api/hr/jobs` GET+POST — list + tạo job mới
+  - `/api/hr/jobs/[id]` PATCH+DELETE — sửa + xóa job
+  - `HRDashboard.tsx`: tab "💼 Jobs" với:
+    - Bảng list: title, type, location, level, salary, apply link (↗)
+    - Published/Draft toggle — 1 click bật/tắt hiển thị trên /careers
+    - Inline edit form mở rộng per job
+    - Form tạo mới với basic fields + advanced (requirements, skills, image...)
+  - `signIn()` + `refresh()` load apps + jobs song song (Promise.all)
+
+### Result
+- HR có thể tự đăng job, sửa, bật/tắt hiển thị từ `/hr` → không cần vào Admin
+- Settings không còn lỗi Unauthorized sau khi đổi admin password
+
+### Next Step
+- Deploy VPS: `git pull && npm run build && pm2 restart tdgames-landingpage`
+- Backlog còn trống
+
+## 2026-06-09 (session — Settings tab + admin/HR password change)
+### Task
+Thêm chức năng đổi mật khẩu Admin và HR ngay trong Admin UI
+
+### Work Done
+- DB migration: tạo `app_settings` table (key/value) + seed `admin_secret` + `hr_secret` rows
+- `src/lib/admin-auth.ts`: `getAdminSecret()` check DB first → fallback ADMIN_SECRET env var
+- `src/lib/hr-auth.ts`: tương tự cho HR secret (đã có từ session trước, hoàn thiện)
+- `/api/admin/settings/route.ts`: GET (list all) + PATCH (upsert any key)
+- Bulk-replace 23 admin route files: xóa inline `requireAdmin`, thêm import từ `@/lib/admin-auth`, thêm `await`
+- Fix thêm 14 file dùng variable name khác (`err`, `unauthorized`) — thêm `await` bằng second pass script
+- Fix `upload/route.ts` thiếu import `NextResponse` + `requireAdmin`
+- `SettingsTab.tsx`: thêm `admin_secret` + `hr_secret` trong KEY_META, show/hide, save, clear to env var
+- Admin tab "⚙ Settings" đã được register
+- `npm run build` pass ✅, commit `8a0b124` + `7cc8987`, push ✅
+
+### Result
+- Admin vào `/admin` → tab "⚙ Settings" → đổi mật khẩu Admin hoặc HR ngay
+- Thay đổi có hiệu lực ngay, không cần restart server hay deploy lại
+- Để trống DB = dùng env var làm fallback (an toàn)
+
+### Next Step
+- Deploy VPS để các commit mới lên production
+- Không còn task nào trong backlog
+
 ## 2026-06-09 (session — HR Dashboard)
 ### Task
 Build standalone HR dashboard tại /hr — pipeline, KPI, Discord reminders

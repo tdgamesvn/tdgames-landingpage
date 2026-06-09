@@ -9,6 +9,8 @@ _(empty)_
 
 ## Done
 
+- [x] Portfolio Hero Redesign — video crossfade hero + 5-project selector (2184→111 dòng page.tsx)
+- [x] Page Slots video upload — text fix + accept video/* + max 100MB
 - [x] Page Slots feature (plan 2026-05-27-page-slots):
   - [x] Task 1–2: DB migration + seed 10 rows (home carousel + 5 single-slot pages)
   - [x] Task 3: `src/lib/page-slots.ts` — `resolveSlot` / `resolveSlots` helpers
@@ -70,3 +72,6 @@ _(empty)_
 - [x] Discord notification khi có ứng viên mới apply (commit f1bfa36)
 - [x] Referral tracking `?ref=` param — DB col + apply page + admin badge + notifications (commit 11fec9b)
 - [x] HR Dashboard `/hr` — pipeline kanban, KPI table, Discord remind, GitHub Actions cron (commit 9568846)
+- [x] Settings tab trong Admin — đổi Admin + HR password từ UI, app_settings DB table, shared auth libs (commit 7cc8987)
+- [x] Fix Settings Unauthorized sau khi đổi admin password — onAdminKeyChange callback (commit 81bf7f7)
+- [x] HR Jobs tab — CRUD jobs từ /hr: tạo/sửa/xóa/bật-tắt publish, không cần vào Admin (commit 9810393)
