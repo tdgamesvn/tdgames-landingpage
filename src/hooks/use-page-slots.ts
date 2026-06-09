@@ -8,7 +8,6 @@ type SlotItem = {
   display_name?: string | null;
   display_label?: string | null;
   sort_order: number;
-  is_active: boolean;
 };
 
 // In-memory cache: page+slot → items (shared across all hook instances)
@@ -54,7 +53,7 @@ export function slotUrl(
   label: string,
   fallback: string,
 ): string {
-  const match = items.find((it) => it.display_label === label && it.is_active);
+  const match = items.find((it) => it.display_label === label);
   return match?.url ?? fallback;
 }
 
@@ -67,5 +66,5 @@ export function slotUrlByIndex(
   fallback: string,
 ): string {
   const item = items[index];
-  return item?.is_active ? item.url : fallback;
+  return item?.url ?? fallback;
 }
