@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-
-function authCheck(req: NextRequest) {
-  return req.headers.get("x-admin-key") === process.env.ADMIN_SECRET;
-}
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!authCheck(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   const { id } = await params;
   const body = await req.json() as Partial<{
     url: string; thumb_url: string; display_name: string;
@@ -26,7 +24,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!authCheck(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   const { id } = await params;
   const supabase = getSupabaseAdmin();
   const { error } = await supabase.from("page_slots").delete().eq("id", Number(id));

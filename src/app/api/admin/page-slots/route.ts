@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-
-function authCheck(req: NextRequest) {
-  const key = req.headers.get("x-admin-key");
-  return key === process.env.ADMIN_SECRET;
-}
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  if (!authCheck(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
   const page = req.nextUrl.searchParams.get("page");
   const supabase = getSupabaseAdmin();
   let query = supabase
@@ -25,7 +22,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!authCheck(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authErr = await requireAdmin(req);
+  if (authErr) return authErr;
   const body = await req.json() as {
     page: string; slot: string; url: string;
     thumb_url?: string; display_name?: string; display_label?: string;

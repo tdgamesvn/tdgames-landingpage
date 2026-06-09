@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-
-const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
-
-function unauthorized() {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(req: Request) {
-  if (req.headers.get("x-admin-key") !== ADMIN_SECRET) return unauthorized();
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const supabase = getSupabaseAdmin();
@@ -26,7 +22,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  if (req.headers.get("x-admin-key") !== ADMIN_SECRET) return unauthorized();
+  const authError = await requireAdmin(req);
+  if (authError) return authError;
 
   try {
     const body = await req.json();
