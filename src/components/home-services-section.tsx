@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 
 import { AccentHighlight } from "./accent-highlight";
@@ -8,41 +8,10 @@ import {
   STUDIO_SERVICE_ACCENT,
   StudioServiceCardsGrid,
   studioServiceCards,
-  type StudioServiceCard,
 } from "./studio-service-cards";
+import { usePageSlots, slotUrl } from "@/hooks/use-page-slots";
 
-/** Map display_label → url from page_slots DB */
-const LABEL_TO_INDEX: Record<string, number> = {
-  "service-animation": 0,
-  "service-art": 1,
-  "service-vfx": 2,
-};
-
-function useServiceCardImages(): StudioServiceCard[] {
-  const [cards, setCards] = useState(studioServiceCards);
-
-  useEffect(() => {
-    fetch("/api/page-slots?page=home&slot=service-card")
-      .then((r) => r.json())
-      .then((data) => {
-        const items: { url: string; display_label?: string }[] = data.items ?? [];
-        if (items.length === 0) return;
-
-        setCards((prev) =>
-          prev.map((card, i) => {
-            // Match by display_label or by index
-            const match =
-              items.find((it) => LABEL_TO_INDEX[it.display_label ?? ""] === i) ??
-              items[i];
-            return match ? { ...card, image: match.url } : card;
-          }),
-        );
-      })
-      .catch(() => {/* fallback to site.json */});
-  }, []);
-
-  return cards;
-}
+const SERVICE_LABELS = ["service-animation", "service-art", "service-vfx"] as const;
 
 function ServicesStudioIntro() {
   const accentStyle = { color: STUDIO_SERVICE_ACCENT };
@@ -98,7 +67,15 @@ function ServicesStudioIntro() {
 }
 
 export default function HomeServicesSection() {
-  const cards = useServiceCardImages();
+  const slots = usePageSlots("home", "service-card");
+  const cards = useMemo(
+    () =>
+      studioServiceCards.map((card, i) => ({
+        ...card,
+        image: slotUrl(slots, SERVICE_LABELS[i], card.image),
+      })),
+    [slots],
+  );
 
   return (
     <section
