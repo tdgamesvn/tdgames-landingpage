@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { discordNotify, getDiscordUrl } from "@/lib/discord-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,9 +56,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ sent: false, reason: "No stale applications", total });
   }
 
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-  if (!webhookUrl) {
-    return NextResponse.json({ sent: false, reason: "DISCORD_WEBHOOK_URL not set", staleCount });
+  if (!getDiscordUrl("hr")) {
+    return NextResponse.json({ sent: false, reason: "No Discord webhook configured for HR channel", staleCount });
   }
 
   // Build Discord embed fields
@@ -88,21 +88,17 @@ export async function GET(request: Request) {
     inline: true,
   });
 
-  await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      content: `@everyone ⏰ **Daily HR Reminder** — ${staleCount} application${staleCount !== 1 ? "s" : ""} need attention`,
-      embeds: [
-        {
-          title: "Recruitment Pipeline — Follow-up",
-          color: 0xf59e0b,
-          fields,
-          timestamp: new Date().toISOString(),
-          footer: { text: "tdgamestudio.com/hr" },
-        },
-      ],
-    }),
+  await discordNotify("hr", {
+    content: `@everyone ⏰ **Daily HR Reminder** — ${staleCount} application${staleCount !== 1 ? "s" : ""} need attention`,
+    embeds: [
+      {
+        title: "Recruitment Pipeline — Follow-up",
+        color: 0xf59e0b,
+        fields,
+        timestamp: new Date().toISOString(),
+        footer: { text: "tdgamestudio.com/hr" },
+      },
+    ],
   });
 
   return NextResponse.json({ sent: true, staleCount, needsReview: needsReview.length, stuckReview: stuckReview.length, postInterview: postInterview.length });
