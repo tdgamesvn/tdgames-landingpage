@@ -187,32 +187,52 @@ export default function ApplyPageClient({ job }: Props) {
   // ── Page layout ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#0a0a10]">
-      {/* Top nav */}
-      <div className="border-b border-white/10 bg-[#0a0a10] px-4 py-4 sm:px-8">
-        <Link
-          href="/careers"
-          className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Back to Careers
-        </Link>
+      {/* Hero header */}
+      <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-b from-[#1a1510] to-[#0a0a10]">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f59e0b]/20 via-transparent to-transparent" />
+        </div>
+        <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-8 text-center">
+          <Image
+            src="https://cdn.tdgamestudio.com/landing/logoCompany/logo_td.png"
+            alt="TD Games"
+            width={80}
+            height={80}
+            className="mx-auto mb-4"
+          />
+          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wider text-[#f59e0b]">
+            Join Our Team
+          </h1>
+          <p className="mt-2 text-sm text-white/60">
+            We&apos;re looking for talented people
+          </p>
+          <p className="mt-1 text-xs text-white/35">
+            Fill out the form below to apply
+          </p>
+        </div>
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 lg:grid lg:grid-cols-[1fr_1.4fr] lg:gap-12">
-        {/* ── Left: Job summary ───────────────────────────────────────── */}
+        {/* ── Left: About + Job summary ─────────────────────────────── */}
         <aside className="mb-8 lg:mb-0">
+          {/* About Us */}
+          <div className="mb-8 rounded-xl border border-white/10 bg-white/[0.03] p-5">
+            <h2 className="text-lg font-black text-[#f59e0b]">TD Games Studio</h2>
+            <div className="mt-1 mb-3 h-0.5 w-10 bg-[#f59e0b]" />
+            <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-white/40">About Us</h3>
+            <p className="text-xs leading-relaxed text-white/55">
+              TD Games Studio is a professional team specializing in Art, Animation &amp; VFX services for mobile games. With experience across many game genres and an optimized production pipeline, we deliver vivid visuals, smooth animations, and impressive effects that make our partners&apos; products stand out.
+            </p>
+            <div className="mt-4 flex items-center gap-2 text-xs text-white/50">
+              <svg className="h-3.5 w-3.5 shrink-0 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+              </svg>
+              <a href="https://www.tdgamestudio.com" target="_blank" rel="noopener noreferrer" className="text-[#f59e0b]/70 hover:text-[#f59e0b] transition-colors">
+                tdgamestudio.com
+              </a>
+            </div>
+          </div>
+
           {job.image_url && (
             <div className="relative mb-6 h-48 w-full overflow-hidden rounded-xl">
               <Image
@@ -800,6 +820,42 @@ export default function ApplyPageClient({ job }: Props) {
           </form>
         </section>
       </div>
+
+      {/* Follow Us footer */}
+      <footer className="border-t border-white/10 bg-white/[0.02]">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+          <h3 className="mb-4 text-[10px] font-bold uppercase tracking-wider text-white/40">
+            Follow Us
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {[
+              { name: "Behance", href: "https://www.behance.net/tdgamesstudio", color: "bg-[#1769ff]" },
+              { name: "ArtStation", href: "https://www.artstation.com/td_games", color: "bg-[#13aff0]" },
+              { name: "Facebook", href: "https://www.facebook.com/tdgamesstudio", color: "bg-[#1877f2]" },
+              { name: "LinkedIn", href: "https://www.linkedin.com/company/td-games-company-limited", color: "bg-[#0a66c2]" },
+            ].map((s) => (
+              <a
+                key={s.name}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white/60 transition-colors hover:border-white/20 hover:text-white"
+              >
+                <span className={`h-5 w-5 rounded-md ${s.color} flex items-center justify-center text-[10px] font-bold text-white`}>
+                  {s.name[0]}
+                </span>
+                {s.name}
+              </a>
+            ))}
+          </div>
+          <p className="mt-6 text-[11px] text-white/25">
+            &copy; {new Date().getFullYear()} TD Games Company Limited &middot;{" "}
+            <a href="https://www.tdgamestudio.com" className="hover:text-white/40 transition-colors">
+              tdgamestudio.com
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
