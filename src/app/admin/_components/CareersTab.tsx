@@ -695,6 +695,11 @@ function ApplicationsSubTab({ adminKey }: Props) {
                     <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-white/50">
                       <span>{timeAgo(app.created_at)}</span>
                       <span>{app.work_type}</span>
+                      {app.referred_by && (
+                        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                          via {app.referred_by}
+                        </span>
+                      )}
                       {app.portfolio_url && (
                         <a
                           href={app.portfolio_url}

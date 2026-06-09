@@ -131,6 +131,7 @@ export type Application = {
   rate_per_hour: string | null;
   status: ApplicationStatus;
   admin_notes: string | null;
+  referred_by: string | null;
   created_at: string;
   jobs?: { title: string; slug: string };
 };

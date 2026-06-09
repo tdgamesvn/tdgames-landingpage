@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Job } from "@/app/admin/_lib/types";
@@ -27,6 +28,8 @@ type UploadState =
 
 export default function ApplyPageClient({ job }: Props) {
   const isFreelancer = job.type === "freelancer";
+  const searchParams = useSearchParams();
+  const referredBy = searchParams.get("ref") ?? undefined;
 
   const [form, setForm] = useState<FormState>({
     full_name: "",
@@ -96,6 +99,7 @@ export default function ApplyPageClient({ job }: Props) {
         linkedin_url: form.linkedin_url || null,
         expected_salary: isFreelancer ? null : form.expected_salary || null,
         rate_per_hour: isFreelancer ? form.rate_per_hour || null : null,
+        referred_by: referredBy || null,
       };
 
       const res = await fetch("/api/applications", {

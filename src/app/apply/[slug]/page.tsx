@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { Job } from "@/app/admin/_lib/types";
@@ -24,5 +25,9 @@ export default async function ApplyPage({ params }: Props) {
     notFound();
   }
 
-  return <ApplyPageClient job={data as Job} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a10]" />}>
+      <ApplyPageClient job={data as Job} />
+    </Suspense>
+  );
 }

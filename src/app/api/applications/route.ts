@@ -55,6 +55,7 @@ export async function POST(request: Request) {
         const yearsExp = body.years_experience != null ? String(body.years_experience) : null;
         const salary = body.expected_salary ? String(body.expected_salary) : null;
         const rate = body.rate_per_hour ? String(body.rate_per_hour) : null;
+        const referredBy = body.referred_by ? String(body.referred_by) : null;
 
         // ── Telegram ──────────────────────────────────────────────────
         if (telegramToken && telegramChatId) {
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
             rate ? `💰 <b>Rate/hr:</b> ${rate}` : null,
             portfolioUrl ? `🎨 <b>Portfolio:</b> ${portfolioUrl}` : null,
             cvUrl ? `📎 <b>CV:</b> ${cvUrl}` : null,
+            referredBy ? `👥 <b>Referred by:</b> ${referredBy}` : null,
           ].filter(Boolean).join("\n");
 
           await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
@@ -93,6 +95,7 @@ export async function POST(request: Request) {
           if (rate) fields.push({ name: "Rate / hr", value: rate, inline: true });
           if (portfolioUrl) fields.push({ name: "Portfolio", value: portfolioUrl, inline: false });
           if (cvUrl) fields.push({ name: "CV", value: `[Download CV](${cvUrl})`, inline: false });
+          if (referredBy) fields.push({ name: "🔗 Referred by", value: referredBy, inline: true });
 
           await fetch(discordWebhook, {
             method: "POST",
