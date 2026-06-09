@@ -13,6 +13,14 @@ import type {
   ServiceWorkflowConfig,
   ServiceWorkflowPillarKey,
 } from "@/components/service-workflow-types";
+import { usePageSlots, slotUrlByIndex } from "@/hooks/use-page-slots";
+
+/** Map config stripTitle → page_slots page name */
+const WORKFLOW_PAGE_MAP: Record<string, string> = {
+  "Our 2D game art workflow": "services-2d-art",
+  "Our 2D animation workflow": "services-2d-animation",
+  "Our 2D VFX workflow": "services-2d-vfx",
+};
 
 function PillarGlyph({ kind }: { kind: ServiceWorkflowPillarKey }) {
   if (kind === "palette") {
@@ -94,15 +102,18 @@ function ArrowBetween() {
 
 export default function ServiceWorkflowSection(config: ServiceWorkflowConfig) {
   const prefersReducedMotion = useReducedMotion();
+  const slotsPage = WORKFLOW_PAGE_MAP[config.stripTitle] ?? "";
+  const slots = usePageSlots(slotsPage, "workflow-step");
+
   const workflowSteps = useMemo(
     () =>
       config.steps.map((s, i) => ({
         n: i + 1,
         title: s.title,
         description: s.description,
-        image: s.image,
+        image: slotUrlByIndex(slots, i, s.image),
       })),
-    [config.steps],
+    [config.steps, slots],
   );
 
   const defaultStepIndex = Math.min(
