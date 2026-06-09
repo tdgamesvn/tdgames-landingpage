@@ -18,6 +18,9 @@ type FormState = {
   linkedin_url: string;
   expected_salary: string;
   rate_per_hour: string;
+  source: string;
+  available_from: string;
+  message: string;
 };
 
 type UploadState =
@@ -41,6 +44,9 @@ export default function ApplyPageClient({ job }: Props) {
     linkedin_url: "",
     expected_salary: "",
     rate_per_hour: "",
+    source: "",
+    available_from: "",
+    message: "",
   });
   const [upload, setUpload] = useState<UploadState>({ status: "idle" });
   const [dragging, setDragging] = useState(false);
@@ -106,6 +112,9 @@ export default function ApplyPageClient({ job }: Props) {
         linkedin_url: form.linkedin_url || null,
         expected_salary: isFreelancer ? null : form.expected_salary || null,
         rate_per_hour: isFreelancer ? form.rate_per_hour || null : null,
+        source: form.source || null,
+        available_from: form.available_from || null,
+        message: form.message || null,
         referred_by: referredBy || null,
       };
 
@@ -516,26 +525,78 @@ export default function ApplyPageClient({ job }: Props) {
               </Field>
             </div>
 
-            {/* Compensation */}
-            {isFreelancer ? (
-              <Field label="Rate Per Hour (USD)">
-                <input
-                  value={form.rate_per_hour}
-                  onChange={(e) => set("rate_per_hour", e.target.value)}
-                  placeholder="e.g. $15/hr"
-                  className={inputCls}
-                />
-              </Field>
-            ) : (
-              <Field label="Expected Salary">
-                <input
-                  value={form.expected_salary}
-                  onChange={(e) => set("expected_salary", e.target.value)}
-                  placeholder="e.g. $800/month"
-                  className={inputCls}
-                />
-              </Field>
-            )}
+            {/* ── Additional Information ─────────────────────────── */}
+            <div className="mt-2 border-t border-white/10 pt-5">
+              <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#f59e0b]">
+                Additional Information
+              </h3>
+
+              <div className="flex flex-col gap-4">
+                <Field label="How did you hear about us?">
+                  <select
+                    value={form.source}
+                    onChange={(e) => set("source", e.target.value)}
+                    className={`${inputCls} appearance-none`}
+                  >
+                    <option value="">Select an option</option>
+                    <option value="Facebook">Facebook</option>
+                    <option value="LinkedIn">LinkedIn</option>
+                    <option value="Behance">Behance</option>
+                    <option value="ArtStation">ArtStation</option>
+                    <option value="Friend / Referral">Friend / Referral</option>
+                    <option value="Job Board">Job Board (TopCV, VietnamWorks...)</option>
+                    <option value="Google Search">Google Search</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </Field>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Available Start Date">
+                    <input
+                      type="date"
+                      value={form.available_from}
+                      onChange={(e) => set("available_from", e.target.value)}
+                      className={inputCls}
+                    />
+                  </Field>
+
+                  {isFreelancer ? (
+                    <Field label="Rate Per Hour (USD)">
+                      <input
+                        value={form.rate_per_hour}
+                        onChange={(e) => set("rate_per_hour", e.target.value)}
+                        placeholder="e.g. $15/hr"
+                        className={inputCls}
+                      />
+                    </Field>
+                  ) : (
+                    <Field label="Expected Salary (VND/month)">
+                      <input
+                        value={form.expected_salary}
+                        onChange={(e) => set("expected_salary", e.target.value)}
+                        placeholder="Enter expected salary"
+                        className={inputCls}
+                      />
+                    </Field>
+                  )}
+                </div>
+
+                <Field label="Additional Message">
+                  <textarea
+                    value={form.message}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 1000) set("message", e.target.value);
+                    }}
+                    placeholder="Tell us why you'd be a great fit for TD GAMES..."
+                    rows={4}
+                    className={`${inputCls} resize-none`}
+                  />
+                  <p className="mt-1 text-right text-[11px] text-white/30">
+                    {form.message.length}/1000
+                  </p>
+                </Field>
+              </div>
+            </div>
 
             {error && (
               <p className="rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">
