@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-type Props = { adminKey: string };
+type Props = {
+  adminKey: string;
+  /** Called after admin_secret is saved so the parent can update its key state */
+  onAdminKeyChange?: (newKey: string) => void;
+};
 
 type Setting = { key: string; value: string; updated_at: string };
 
@@ -35,7 +39,7 @@ const KEY_META: Record<string, { label: string; description: string }> = {
   },
 };
 
-export function SettingsTab({ adminKey }: Props) {
+export function SettingsTab({ adminKey, onAdminKeyChange }: Props) {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -72,7 +76,18 @@ export function SettingsTab({ adminKey }: Props) {
         body: JSON.stringify({ key, value }),
       });
       if (!res.ok) throw new Error((await res.json()).error);
-      setMsg({ key, text: "✅ Saved. New password active immediately.", ok: true });
+
+      // If admin_secret changed, notify parent to update its key state immediately
+      if (key === "admin_secret") {
+        onAdminKeyChange?.(value);
+        const msg = value
+          ? "✅ Admin password changed — using new key now."
+          : "✅ Cleared — reverted to env var. Please re-login with your original password.";
+        setMsg({ key, text: msg, ok: true });
+      } else {
+        setMsg({ key, text: "✅ Saved. New password active immediately.", ok: true });
+      }
+
       setSettings((prev) =>
         prev.map((s) =>
           s.key === key ? { ...s, value, updated_at: new Date().toISOString() } : s

@@ -210,7 +210,20 @@ export default function AdminPage() {
         {tab === "footer" ? <FooterTab adminKey={adminKey} /> : null}
         {tab === "spine" ? <SpineTab adminKey={adminKey} /> : null}
         {tab === "page-slots" ? <PageSlotsTab adminKey={adminKey} /> : null}
-        {tab === "settings" ? <SettingsTab adminKey={adminKey} /> : null}
+        {tab === "settings" ? (
+          <SettingsTab
+            adminKey={adminKey}
+            onAdminKeyChange={(newKey) => {
+              setAdminKey(newKey);
+              if (newKey) {
+                sessionStorage.setItem(STORAGE_KEY, newKey);
+              } else {
+                sessionStorage.removeItem(STORAGE_KEY);
+                setKeyVerified(false); // sign out — user must re-login with env var
+              }
+            }}
+          />
+        ) : null}
       </main>
     </div>
   );
