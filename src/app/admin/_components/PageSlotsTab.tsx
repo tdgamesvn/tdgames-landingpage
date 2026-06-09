@@ -441,7 +441,11 @@ export function PageSlotsTab({ adminKey }: Props) {
             <option value="hero">hero</option>
             <option value="hero-carousel">hero-carousel</option>
             <option value="service-card">service-card</option>
-            <option value="showcase">showcase</option>
+            <option value="workflow-step">workflow-step</option>
+            <option value="showcase-character-art">showcase-character-art</option>
+            <option value="showcase-animation">showcase-animation</option>
+            <option value="showcase-environment">showcase-environment</option>
+            <option value="showcase-vfx">showcase-vfx</option>
             <option value="gallery">gallery</option>
           </select>
           {/* BG URL + upload */}

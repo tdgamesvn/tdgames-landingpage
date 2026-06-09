@@ -290,10 +290,11 @@ type MarqueeFilter = {
   images: CharacterMarqueeProps["images"];
 };
 
-const characterMarqueeFilters: MarqueeFilter[] = [
+/** Default showcase images — will be overridden by page_slots DB if entries exist */
+const DEFAULT_SHOWCASE: MarqueeFilter[] = [
   {
-    id: "characters",
-    label: "3D Characters",
+    id: "character-art",
+    label: "Character Art",
     images: [
       { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg", alt: "Character 1" },
       { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg", alt: "Character 2" },
@@ -303,60 +304,71 @@ const characterMarqueeFilters: MarqueeFilter[] = [
     ],
   },
   {
-    id: "props",
-    label: "3D Props",
+    id: "animation",
+    label: "Animation",
     images: [
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/lab_asset-min-1024x506.jpg", alt: "Prop 1" },
-      {
-        src: "https://cdn.tdgamestudio.com/landing/sinspired/Volcano_Arena_render-min-1024x567.jpg",
-        alt: "Prop 2",
-      },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg", alt: "Scene 1" },
-      {
-        src: "https://cdn.tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg",
-        alt: "Scene 2",
-      },
-      {
-        src: "https://cdn.tdgamestudio.com/landing/sinspired/lab_asset_dark_final-min-1024x506.jpg",
-        alt: "Scene 3",
-      },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Character-Design-min-822x1024.jpg", alt: "Animation 1" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/2D-Art-min-947x1024.jpg", alt: "Animation 2" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/promo_amanda.jpg", alt: "Animation 3" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/3a7ab9112768871.602fbfbfa228c-882x1024.jpg", alt: "Animation 4" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg", alt: "Animation 5" },
     ],
   },
   {
-    id: "backgrounds",
-    label: "Backgrounds",
+    id: "environment",
+    label: "Environment",
     images: [
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-4-1024x850.jpg", alt: "Background 1" },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-1024x850.jpg", alt: "Background 2" },
-      {
-        src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-11-min-1024x572.jpg",
-        alt: "Background 3",
-      },
-      {
-        src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg",
-        alt: "Background 4",
-      },
-      {
-        src: "https://cdn.tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg",
-        alt: "Background 5",
-      },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-4-1024x850.jpg", alt: "Environment 1" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-1024x850.jpg", alt: "Environment 2" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-11-min-1024x572.jpg", alt: "Environment 3" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg", alt: "Environment 4" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg", alt: "Environment 5" },
     ],
   },
   {
-    id: "design",
-    label: "Character design",
+    id: "vfx",
+    label: "VFX",
     images: [
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Character-Design-min-822x1024.jpg", alt: "Design 1" },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/2D-Art-min-947x1024.jpg", alt: "Design 2" },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/promo_amanda.jpg", alt: "Design 3" },
-      {
-        src: "https://cdn.tdgamestudio.com/landing/sinspired/3a7ab9112768871.602fbfbfa228c-882x1024.jpg",
-        alt: "Design 4",
-      },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg", alt: "Design 5" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/lab_asset-min-1024x506.jpg", alt: "VFX 1" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Volcano_Arena_render-min-1024x567.jpg", alt: "VFX 2" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg", alt: "VFX 3" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg", alt: "VFX 4" },
+      { src: "https://cdn.tdgamestudio.com/landing/sinspired/lab_asset_dark_final-min-1024x506.jpg", alt: "VFX 5" },
     ],
   },
 ];
+
+/** Fetch showcase images from page_slots DB, merge with defaults */
+function useShowcaseFilters(): MarqueeFilter[] {
+  const [filters, setFilters] = useState(DEFAULT_SHOWCASE);
+
+  useEffect(() => {
+    Promise.all(
+      DEFAULT_SHOWCASE.map((f) =>
+        fetch(`/api/page-slots?page=home&slot=showcase-${f.id}`)
+          .then((r) => r.json())
+          .then((data) => ({ id: f.id, items: data.items ?? [] }))
+          .catch(() => ({ id: f.id, items: [] })),
+      ),
+    ).then((results) => {
+      setFilters((prev) =>
+        prev.map((filter) => {
+          const dbItems = results.find((r) => r.id === filter.id)?.items ?? [];
+          if (dbItems.length === 0) return filter;
+          return {
+            ...filter,
+            images: dbItems.map((it: { url: string; display_name?: string }, i: number) => ({
+              src: it.url,
+              alt: it.display_name ?? `${filter.label} ${i + 1}`,
+            })),
+          };
+        }),
+      );
+    });
+  }, []);
+
+  return filters;
+}
 
 type SpineCharacterData = {
   id: string;
@@ -406,7 +418,8 @@ function findCharacter(list: SpineCharacterData[], slug: string) {
 }
 
 export default function HomePageLower() {
-  const [activeMarqueeFilter, setActiveMarqueeFilter] = useState(characterMarqueeFilters[0]);
+  const showcaseFilters = useShowcaseFilters();
+  const [activeMarqueeFilter, setActiveMarqueeFilter] = useState(showcaseFilters[0]);
   const spineCharacters = useSpineCharacters();
   const careersCharacter = findCharacter(spineCharacters, "careers-hero");
   const contactCharacter = findCharacter(spineCharacters, "contact-mascot");
@@ -430,10 +443,10 @@ export default function HomePageLower() {
                 className="text-3xl font-black uppercase tracking-tight text-white md:text-4xl"
                 style={{ fontFamily: "var(--font-rajdhani)" }}
               >
-                CHARACTER <AccentHighlight>SHOWCASE</AccentHighlight>
+                ART <AccentHighlight>SHOWCASE</AccentHighlight>
               </h3>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
-                Bringing game characters to life through expressive animation, dynamic poses, and polished visual effects.
+                Bringing game worlds to life through stunning 2D art, expressive animation, and polished visual effects.
               </p>
             </div>
             <div className="hidden items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35 md:flex">
@@ -447,7 +460,7 @@ export default function HomePageLower() {
           </div>
 
           <div className="mb-5 flex flex-wrap items-center gap-2">
-            {characterMarqueeFilters.map((f) => {
+            {showcaseFilters.map((f) => {
               const isActive = f.id === activeMarqueeFilter.id;
               return (
                 <button
