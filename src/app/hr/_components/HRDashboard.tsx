@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Application, ApplicationStatus } from "@/app/admin/_lib/types";
+import type { Application, ApplicationStatus, Job, JobType } from "@/app/admin/_lib/types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -336,9 +336,328 @@ function KPIView({ apps }: { apps: Application[] }) {
   );
 }
 
+// ── JobsView ──────────────────────────────────────────────────────────────────
+
+const JOB_TYPES: JobType[] = ["fulltime", "parttime", "remote", "freelancer"];
+
+type JobDraft = {
+  title: string; type: JobType; location: string; level: string;
+  salary: string; summary: string; description: string;
+  categories: string; requirements: string; responsibilities: string;
+  nice_to_have: string; skills: string; image_url: string; is_active: boolean;
+};
+
+const EMPTY_DRAFT: JobDraft = {
+  title: "", type: "fulltime", location: "", level: "", salary: "",
+  summary: "", description: "", categories: "", requirements: "",
+  responsibilities: "", nice_to_have: "", skills: "", image_url: "", is_active: true,
+};
+
+function jobToDraft(j: Job): JobDraft {
+  return {
+    title: j.title, type: j.type, location: j.location, level: j.level,
+    salary: j.salary, summary: j.summary, description: j.description,
+    categories: j.categories.join(", "),
+    requirements: j.requirements.join("\n"),
+    responsibilities: j.responsibilities.join("\n"),
+    nice_to_have: j.nice_to_have.join("\n"),
+    skills: j.skills.join(", "),
+    image_url: j.image_url, is_active: j.is_active,
+  };
+}
+
+function draftToPayload(d: JobDraft) {
+  return {
+    title: d.title, type: d.type, location: d.location, level: d.level,
+    salary: d.salary, summary: d.summary, description: d.description,
+    categories: d.categories.split(",").map((s) => s.trim()).filter(Boolean),
+    requirements: d.requirements.split("\n").map((s) => s.trim()).filter(Boolean),
+    responsibilities: d.responsibilities.split("\n").map((s) => s.trim()).filter(Boolean),
+    nice_to_have: d.nice_to_have.split("\n").map((s) => s.trim()).filter(Boolean),
+    skills: d.skills.split(",").map((s) => s.trim()).filter(Boolean),
+    image_url: d.image_url, is_active: d.is_active,
+  };
+}
+
+const labelCls = "block text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1";
+const inputCls = "w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/25 focus:border-amber-500/50 focus:outline-none";
+
+function JobForm({
+  initial, hrKey, onSave, onCancel,
+}: {
+  initial: JobDraft; hrKey: string;
+  onSave: (job: Job) => void; onCancel: () => void;
+}) {
+  const [d, setD] = useState<JobDraft>(initial);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const isNew = !("id" in initial);
+
+  function set(k: keyof JobDraft, v: string | boolean) {
+    setD((prev) => ({ ...prev, [k]: v }));
+  }
+
+  async function save() {
+    if (!d.title) { setErr("Title is required"); return; }
+    setSaving(true); setErr("");
+    try {
+      const payload = draftToPayload(d);
+      const id: string | undefined = (initial as JobDraft & { id?: string }).id;
+      const url = id ? `/api/hr/jobs/${id}` : "/api/hr/jobs";
+      const method = id ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method, headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      onSave(json.job as Job);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Save failed");
+    } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="space-y-4 rounded-xl border border-amber-500/20 bg-white/[0.02] p-5">
+      <h3 className="text-sm font-bold text-white">{isNew ? "New Job" : "Edit Job"}</h3>
+
+      {/* Row 1: title + type */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label className={labelCls}>Title *</label>
+          <input className={inputCls} value={d.title} onChange={(e) => set("title", e.target.value)} placeholder="2D Character Artist" />
+        </div>
+        <div>
+          <label className={labelCls}>Type</label>
+          <select className={inputCls} value={d.type} onChange={(e) => set("type", e.target.value as JobType)}>
+            {JOB_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Row 2: location + level + salary */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div>
+          <label className={labelCls}>Location</label>
+          <input className={inputCls} value={d.location} onChange={(e) => set("location", e.target.value)} placeholder="Remote / Hanoi" />
+        </div>
+        <div>
+          <label className={labelCls}>Level</label>
+          <input className={inputCls} value={d.level} onChange={(e) => set("level", e.target.value)} placeholder="Junior / Senior" />
+        </div>
+        <div>
+          <label className={labelCls}>Salary</label>
+          <input className={inputCls} value={d.salary} onChange={(e) => set("salary", e.target.value)} placeholder="$500–$800/month" />
+        </div>
+      </div>
+
+      {/* Categories + Summary */}
+      <div>
+        <label className={labelCls}>Categories (comma-separated)</label>
+        <input className={inputCls} value={d.categories} onChange={(e) => set("categories", e.target.value)} placeholder="Art, Animation" />
+      </div>
+      <div>
+        <label className={labelCls}>Summary (shown in detail panel)</label>
+        <textarea rows={2} className={inputCls} value={d.summary} onChange={(e) => set("summary", e.target.value)} placeholder="Short overview…" />
+      </div>
+
+      {/* Advanced toggle */}
+      <button type="button" onClick={() => setShowAdvanced((v) => !v)}
+        className="text-[11px] text-white/40 hover:text-white/70 transition-colors">
+        {showAdvanced ? "▲ Hide advanced fields" : "▼ Show advanced fields (requirements, skills, image…)"}
+      </button>
+
+      {showAdvanced && (
+        <div className="space-y-4 border-t border-white/10 pt-4">
+          <div>
+            <label className={labelCls}>Description (card preview)</label>
+            <textarea rows={2} className={inputCls} value={d.description} onChange={(e) => set("description", e.target.value)} />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelCls}>Requirements (one per line)</label>
+              <textarea rows={4} className={inputCls} value={d.requirements} onChange={(e) => set("requirements", e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Responsibilities (one per line)</label>
+              <textarea rows={4} className={inputCls} value={d.responsibilities} onChange={(e) => set("responsibilities", e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelCls}>Nice to have (one per line)</label>
+              <textarea rows={3} className={inputCls} value={d.nice_to_have} onChange={(e) => set("nice_to_have", e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Skills (comma-separated)</label>
+              <textarea rows={3} className={inputCls} value={d.skills} onChange={(e) => set("skills", e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Image URL</label>
+            <input className={inputCls} value={d.image_url} onChange={(e) => set("image_url", e.target.value)} placeholder="https://cdn.tdgamestudio.com/…" />
+          </div>
+        </div>
+      )}
+
+      {/* Active + Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-white/70">
+          <input type="checkbox" checked={d.is_active}
+            onChange={(e) => set("is_active", e.target.checked)}
+            className="h-4 w-4 accent-amber-500" />
+          Publish (visible on /careers)
+        </label>
+        <div className="flex gap-2">
+          <button onClick={onCancel}
+            className="rounded-lg border border-white/15 px-4 py-2 text-xs text-white/60 hover:bg-white/5">
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving}
+            className="rounded-lg bg-amber-600 px-5 py-2 text-xs font-bold hover:bg-amber-500 disabled:opacity-40">
+            {saving ? "Saving…" : isNew ? "Create Job" : "Save Changes"}
+          </button>
+        </div>
+      </div>
+      {err && <p className="text-xs text-red-400">{err}</p>}
+    </div>
+  );
+}
+
+function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
+  jobs: Job[]; hrKey: string;
+  onUpdate: (j: Job) => void; onCreate: (j: Job) => void; onDelete: (id: string) => void;
+}) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [toggling, setToggling] = useState<string | null>(null);
+
+  async function toggleActive(job: Job) {
+    setToggling(job.id);
+    try {
+      const res = await fetch(`/api/hr/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        body: JSON.stringify({ is_active: !job.is_active }),
+      });
+      const json = await res.json();
+      if (res.ok) onUpdate(json.job as Job);
+    } finally { setToggling(null); }
+  }
+
+  async function deleteJob(id: string) {
+    if (!confirm("Delete this job? This cannot be undone.")) return;
+    const res = await fetch(`/api/hr/jobs/${id}`, {
+      method: "DELETE", headers: { "x-hr-key": hrKey },
+    });
+    if (res.ok) onDelete(id);
+  }
+
+  const activeCount = jobs.filter((j) => j.is_active).length;
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-bold text-white">Jobs</h2>
+          <span className="text-xs text-white/50">{jobs.length} total · {activeCount} active</span>
+        </div>
+        {!showCreate && (
+          <button onClick={() => { setShowCreate(true); setEditingId(null); }}
+            className="rounded-lg border border-amber-500/50 px-4 py-2 text-xs font-bold text-amber-400 hover:bg-amber-500/10 transition-colors">
+            + New Job
+          </button>
+        )}
+      </div>
+
+      {/* Create form */}
+      {showCreate && (
+        <JobForm initial={EMPTY_DRAFT} hrKey={hrKey}
+          onSave={(j) => { onCreate(j); setShowCreate(false); }}
+          onCancel={() => setShowCreate(false)} />
+      )}
+
+      {/* Job list */}
+      {jobs.length === 0 && !showCreate && (
+        <p className="py-10 text-center text-sm text-white/30">No jobs yet — create one above.</p>
+      )}
+
+      <div className="space-y-2">
+        {jobs.map((job) => (
+          <div key={job.id} className="rounded-xl border border-white/10 bg-white/[0.03]">
+            {/* Row */}
+            <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+              {/* Status dot */}
+              <span className={`h-2 w-2 shrink-0 rounded-full ${job.is_active ? "bg-green-400" : "bg-white/20"}`} />
+
+              {/* Title + meta */}
+              <div className="min-w-0 flex-1">
+                <span className="font-semibold text-white">{job.title}</span>
+                <span className="ml-2 text-xs text-white/40">
+                  {job.type} · {job.location || "—"} · {job.level || "—"}
+                </span>
+                {job.salary && <span className="ml-2 text-xs text-amber-400/70">{job.salary}</span>}
+              </div>
+
+              {/* Actions */}
+              <div className="flex shrink-0 items-center gap-2">
+                {/* Toggle active */}
+                <button
+                  onClick={() => void toggleActive(job)}
+                  disabled={toggling === job.id}
+                  className={`rounded-full border px-3 py-1 text-[10px] font-bold transition-colors disabled:opacity-40 ${
+                    job.is_active
+                      ? "border-green-500/40 bg-green-500/10 text-green-400 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/40"
+                      : "border-white/15 text-white/40 hover:border-green-500/40 hover:text-green-400"
+                  }`}
+                >
+                  {job.is_active ? "Published" : "Draft"}
+                </button>
+
+                {/* Apply link */}
+                <a href={`/apply/${job.slug}`} target="_blank" rel="noopener noreferrer"
+                  className="rounded-lg border border-white/15 px-2 py-1 text-[10px] text-white/50 hover:text-white transition-colors"
+                  title="Open apply page">
+                  ↗
+                </a>
+
+                {/* Edit */}
+                <button
+                  onClick={() => setEditingId(editingId === job.id ? null : job.id)}
+                  className="rounded-lg border border-white/15 px-3 py-1 text-[10px] text-white/60 hover:bg-white/5 transition-colors">
+                  {editingId === job.id ? "Close" : "Edit"}
+                </button>
+
+                {/* Delete */}
+                <button onClick={() => void deleteJob(job.id)}
+                  className="rounded-lg border border-white/10 px-2 py-1 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Inline edit form */}
+            {editingId === job.id && (
+              <div className="border-t border-white/10 px-4 py-4">
+                <JobForm
+                  initial={{ ...jobToDraft(job), ...{ id: job.id } } as JobDraft & { id: string }}
+                  hrKey={hrKey}
+                  onSave={(j) => { onUpdate(j); setEditingId(null); }}
+                  onCancel={() => setEditingId(null)} />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type View = "pipeline" | "kpi";
+type View = "pipeline" | "kpi" | "jobs";
 
 export default function HRDashboard() {
   const [hrKey, setHrKey] = useState("");
@@ -346,24 +665,30 @@ export default function HRDashboard() {
   const [authError, setAuthError] = useState("");
   const [view, setView] = useState<View>("pipeline");
   const [apps, setApps] = useState<Application[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [reminding, setReminding] = useState(false);
   const [remindMsg, setRemindMsg] = useState("");
+
+  async function loadData(key: string) {
+    const [appsRes, jobsRes] = await Promise.all([
+      fetch("/api/hr/applications", { headers: { "x-hr-key": key } }),
+      fetch("/api/hr/jobs",         { headers: { "x-hr-key": key } }),
+    ]);
+    if (!appsRes.ok) throw new Error("Invalid key");
+    const [appsData, jobsData] = await Promise.all([appsRes.json(), jobsRes.json()]);
+    setApps(appsData.applications ?? []);
+    setJobs(jobsData.jobs ?? []);
+  }
 
   async function signIn() {
     setAuthError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/hr/applications", {
-        headers: { "x-hr-key": inputKey },
-      });
-      if (!res.ok) {
-        setAuthError("Invalid key. Try again.");
-        return;
-      }
-      const data = await res.json();
-      setApps(data.applications ?? []);
+      await loadData(inputKey);
       setHrKey(inputKey);
+    } catch {
+      setAuthError("Invalid key. Try again.");
     } finally {
       setLoading(false);
     }
@@ -372,15 +697,8 @@ export default function HRDashboard() {
   async function refresh() {
     if (!hrKey) return;
     setLoading(true);
-    try {
-      const res = await fetch("/api/hr/applications", {
-        headers: { "x-hr-key": hrKey },
-      });
-      const data = await res.json();
-      setApps(data.applications ?? []);
-    } finally {
-      setLoading(false);
-    }
+    try { await loadData(hrKey); }
+    finally { setLoading(false); }
   }
 
   async function sendReminder() {
@@ -464,17 +782,15 @@ export default function HRDashboard() {
           <div className="flex items-center gap-2">
             {/* View tabs */}
             <div className="flex rounded-lg border border-white/10 p-0.5">
-              {(["pipeline", "kpi"] as View[]).map((v) => (
+              {(["pipeline", "kpi", "jobs"] as View[]).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-bold capitalize transition-colors ${
-                    view === v
-                      ? "bg-white/10 text-white"
-                      : "text-white/40 hover:text-white/70"
+                  className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${
+                    view === v ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
                   }`}
                 >
-                  {v === "pipeline" ? "⬛ Pipeline" : "📊 KPI"}
+                  {v === "pipeline" ? "⬛ Pipeline" : v === "kpi" ? "📊 KPI" : "💼 Jobs"}
                 </button>
               ))}
             </div>
@@ -513,8 +829,16 @@ export default function HRDashboard() {
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
         ) : view === "pipeline" ? (
           <PipelineView apps={apps} hrKey={hrKey} onUpdate={updateApp} />
-        ) : (
+        ) : view === "kpi" ? (
           <KPIView apps={apps} />
+        ) : (
+          <JobsView
+            jobs={jobs}
+            hrKey={hrKey}
+            onUpdate={(j) => setJobs((prev) => prev.map((x) => x.id === j.id ? j : x))}
+            onCreate={(j) => setJobs((prev) => [j, ...prev])}
+            onDelete={(id) => setJobs((prev) => prev.filter((x) => x.id !== id))}
+          />
         )}
       </main>
     </div>
