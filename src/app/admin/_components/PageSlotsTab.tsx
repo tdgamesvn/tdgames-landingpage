@@ -433,12 +433,17 @@ export function PageSlotsTab({ adminKey }: Props) {
       <section className="space-y-3 rounded-lg border border-white/10 bg-zinc-900 p-4">
         <h3 className="text-sm font-semibold">Add Slot</h3>
         <div className="flex flex-wrap gap-2">
-          <input
+          <select
             value={addSlot}
             onChange={(e) => setAddSlot(e.target.value)}
-            placeholder="slot name (e.g. hero)"
-            className="w-36 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
-          />
+            className="w-40 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
+          >
+            <option value="hero">hero</option>
+            <option value="hero-carousel">hero-carousel</option>
+            <option value="service-card">service-card</option>
+            <option value="showcase">showcase</option>
+            <option value="gallery">gallery</option>
+          </select>
           {/* BG URL + upload */}
           <div className="flex min-w-48 flex-1 gap-1.5">
             <input
