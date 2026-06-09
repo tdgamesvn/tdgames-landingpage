@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { requireHR } from "@/lib/hr-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,14 +10,6 @@ const THRESHOLDS = {
   reviewing: 7,  // days before nudging to schedule interview
   interview: 14, // days before nudging to make offer/close
 };
-
-function requireHR(req: Request) {
-  const secret = process.env.HR_SECRET ?? process.env.ADMIN_SECRET;
-  if (!secret) return NextResponse.json({ error: "HR_SECRET is required" }, { status: 500 });
-  if (req.headers.get("x-hr-key") !== secret)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return null;
-}
 
 function daysAgo(dateStr: string) {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
@@ -30,7 +23,7 @@ function formatApp(app: { full_name: string; jobs: { title: string }[] | null; r
 }
 
 export async function GET(request: Request) {
-  const authError = requireHR(request);
+  const authError = await requireHR(request);
   if (authError) return authError;
 
   const supabase = getSupabaseAdmin();

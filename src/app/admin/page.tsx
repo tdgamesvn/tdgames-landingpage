@@ -12,6 +12,7 @@ import { BlogTab } from "./_components/BlogTab";
 import { FooterTab } from "./_components/FooterTab";
 import { SpineTab } from "./_components/SpineTab";
 import { PageSlotsTab } from "./_components/PageSlotsTab";
+import { SettingsTab } from "./_components/SettingsTab";
 import type { AdminTab } from "./_lib/types";
 
 const TABS: { id: AdminTab; label: string; description: string }[] = [
@@ -69,6 +70,11 @@ const TABS: { id: AdminTab; label: string; description: string }[] = [
     id: "page-slots",
     label: "11. Page Slots",
     description: "Quản lý media slots cho từng trang — swap URL ngay, không rebuild",
+  },
+  {
+    id: "settings",
+    label: "⚙ Settings",
+    description: "Cấu hình ứng dụng: HR password, v.v. Thay đổi có hiệu lực ngay",
   },
 ];
 
@@ -204,6 +210,7 @@ export default function AdminPage() {
         {tab === "footer" ? <FooterTab adminKey={adminKey} /> : null}
         {tab === "spine" ? <SpineTab adminKey={adminKey} /> : null}
         {tab === "page-slots" ? <PageSlotsTab adminKey={adminKey} /> : null}
+        {tab === "settings" ? <SettingsTab adminKey={adminKey} /> : null}
       </main>
     </div>
   );
