@@ -419,7 +419,8 @@ function findCharacter(list: SpineCharacterData[], slug: string) {
 
 export default function HomePageLower() {
   const showcaseFilters = useShowcaseFilters();
-  const [activeMarqueeFilter, setActiveMarqueeFilter] = useState(showcaseFilters[0]);
+  const [activeId, setActiveId] = useState(showcaseFilters[0]?.id);
+  const activeMarqueeFilter = showcaseFilters.find((f) => f.id === activeId) ?? showcaseFilters[0];
   const spineCharacters = useSpineCharacters();
   const careersCharacter = findCharacter(spineCharacters, "careers-hero");
   const contactCharacter = findCharacter(spineCharacters, "contact-mascot");
@@ -465,7 +466,7 @@ export default function HomePageLower() {
               return (
                 <button
                   key={f.id}
-                  onClick={() => setActiveMarqueeFilter(f)}
+                  onClick={() => setActiveId(f.id)}
                   className={`rounded-full px-4 py-2 text-[11px] font-bold tracking-[0.14em] transition-all ${
                     isActive
                       ? "bg-white text-black"
