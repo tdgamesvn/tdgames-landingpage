@@ -16,6 +16,7 @@ type PageSlot = {
 
 const PAGES = [
   { value: "home", label: "Home" },
+  { value: "portfolio", label: "Portfolio" },
   { value: "about", label: "About" },
   { value: "careers", label: "Careers" },
   { value: "services-2d-art", label: "Services — 2D Art" },
@@ -522,6 +523,7 @@ export function PageSlotsTab({ adminKey }: Props) {
 
 const QUICK_SLOTS: Record<string, string[]> = {
   home: ["service-card", "showcase-character-art", "showcase-animation", "showcase-environment", "showcase-vfx"],
+  portfolio: ["hero-carousel"],
   "services-2d-art": ["workflow-step"],
   "services-2d-animation": ["workflow-step"],
   "services-2d-vfx": ["workflow-step"],
