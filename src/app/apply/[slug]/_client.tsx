@@ -196,9 +196,9 @@ export default function ApplyPageClient({ job }: Props) {
           <Image
             src="https://cdn.tdgamestudio.com/landing/logoCompany/logo_td.png"
             alt="TD Games"
-            width={80}
-            height={80}
-            className="mx-auto mb-4"
+            width={120}
+            height={120}
+            className="mx-auto mb-4 drop-shadow-[0_0_25px_rgba(245,158,11,0.35)]"
           />
           <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-wider text-[#f59e0b]">
             Join Our Team
