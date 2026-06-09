@@ -512,6 +512,9 @@ function JobImageUpload({
         onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
       />
       {error && <p className="text-[11px] text-red-400">{error}</p>}
+      <p className="text-[10px] text-white/25 mt-1">
+        Recommended: 480 x 320 px (3:2 landscape). Image will be cropped to fit card on /careers.
+      </p>
     </div>
   );
 }

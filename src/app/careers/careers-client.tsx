@@ -465,15 +465,15 @@ export default function CareersClient({ heroUrl }: { heroUrl: string }) {
                         key={job.id}
                         className="group overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] transition-all hover:border-[#f59e0b]/40 hover:bg-white/[0.05]"
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center">
-                          {/* Image */}
-                          <div className="relative h-40 w-full shrink-0 overflow-hidden sm:h-28 sm:w-48">
+                        <div className="flex flex-col sm:flex-row sm:items-stretch">
+                          {/* Image — stretches full card height on desktop */}
+                          <div className="relative h-40 w-full shrink-0 overflow-hidden sm:h-auto sm:w-44">
                             <Image
                               src={job.image_url ?? ""}
                               alt={job.title}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
-                              sizes="(max-width: 640px) 100vw, 192px"
+                              sizes="(max-width: 640px) 100vw, 176px"
                             />
                           </div>
 
