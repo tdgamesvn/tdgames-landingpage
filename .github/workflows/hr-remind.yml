@@ -1,0 +1,26 @@
+name: ⏰ Daily HR Reminder
+
+on:
+  schedule:
+    # 9:00 AM UTC+7 = 02:00 UTC, Monday–Friday
+    - cron: "0 2 * * 1-5"
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+jobs:
+  remind:
+    name: Send stale-application reminder to Discord
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⏰ Trigger HR remind endpoint
+        run: |
+          STATUS=$(curl -s -o /tmp/remind_body.txt -w "%{http_code}" \
+            -X GET \
+            -H "x-hr-key: ${{ secrets.HR_SECRET }}" \
+            "https://www.tdgamestudio.com/api/hr/remind")
+          echo "HTTP $STATUS"
+          cat /tmp/remind_body.txt
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Reminder endpoint returned $STATUS"
+            exit 1
+          fi
+          echo "✅ Done"
