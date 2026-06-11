@@ -314,6 +314,18 @@ export default function SiteFooter() {
                 >
                   Game UI
                 </Link>
+                <Link
+                  href="/contact"
+                  className="block transition-colors hover:text-white"
+                >
+                  Developer
+                </Link>
+                <Link
+                  href="/contact"
+                  className="block transition-colors hover:text-white"
+                >
+                  Game Design
+                </Link>
               </div>
             </div>
 
