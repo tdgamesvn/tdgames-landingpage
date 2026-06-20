@@ -604,6 +604,26 @@ function ApplicationsSubTab({ adminKey }: Props) {
     }
   }
 
+  async function deleteApp(app: Application) {
+    if (
+      !confirm(
+        `Delete application from "${app.full_name}"? This cannot be undone.`
+      )
+    )
+      return;
+    try {
+      const res = await fetch(`/api/admin/applications/${app.id}`, {
+        method: "DELETE",
+        headers: { "x-admin-key": adminKey },
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      setApps((prev) => prev.filter((a) => a.id !== app.id));
+      setMsg("✅ Application deleted");
+    } catch (e) {
+      setMsg(`❌ ${e instanceof Error ? e.message : "Delete failed"}`);
+    }
+  }
+
   function timeAgo(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const days = Math.floor(diff / 86400000);
@@ -814,6 +834,16 @@ function ApplicationsSubTab({ adminKey }: Props) {
                         className="mt-1.5 rounded-md border border-white/15 px-3 py-1 text-xs hover:bg-white/5 disabled:opacity-40"
                       >
                         {savingId === app.id ? "Saving…" : "Save Notes"}
+                      </button>
+                    </div>
+
+                    {/* Delete */}
+                    <div className="border-t border-white/10 pt-3">
+                      <button
+                        onClick={() => void deleteApp(app)}
+                        className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/20 transition-colors"
+                      >
+                        🗑 Delete Application
                       </button>
                     </div>
                   </div>

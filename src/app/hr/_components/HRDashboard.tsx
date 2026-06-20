@@ -96,10 +96,12 @@ function AppCard({
   app,
   hrKey,
   onUpdate,
+  onDelete,
 }: {
   app: Application;
   hrKey: string;
   onUpdate: (id: string, patch: Partial<Application>) => void;
+  onDelete: (id: string) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [showNote, setShowNote] = useState(false);
@@ -115,6 +117,20 @@ function AppCard({
         body: JSON.stringify({ status }),
       });
       if (res.ok) onUpdate(app.id, { status });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteApp() {
+    if (!confirm(`Delete application from "${app.full_name}"? This cannot be undone.`)) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/hr/applications/${app.id}`, {
+        method: "DELETE",
+        headers: { "x-hr-key": hrKey },
+      });
+      if (res.ok) onDelete(app.id);
     } finally {
       setSaving(false);
     }
@@ -261,6 +277,14 @@ function AppCard({
         >
           {showDetail ? "▲ Less" : "▼ Detail"}
         </button>
+        <button
+          onClick={deleteApp}
+          disabled={saving}
+          className="rounded border border-white/10 px-2 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors disabled:opacity-40"
+          title="Delete application"
+        >
+          🗑
+        </button>
       </div>
 
       {/* Full detail panel */}
@@ -275,10 +299,12 @@ function PipelineView({
   apps,
   hrKey,
   onUpdate,
+  onDelete,
 }: {
   apps: Application[];
   hrKey: string;
   onUpdate: (id: string, patch: Partial<Application>) => void;
+  onDelete: (id: string) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -303,7 +329,7 @@ function PipelineView({
                 </div>
               )}
               {col.map((app) => (
-                <AppCard key={app.id} app={app} hrKey={hrKey} onUpdate={onUpdate} />
+                <AppCard key={app.id} app={app} hrKey={hrKey} onUpdate={onUpdate} onDelete={onDelete} />
               ))}
             </div>
           </div>
@@ -866,11 +892,13 @@ function DataView({
   jobs,
   hrKey,
   onUpdate,
+  onDelete,
 }: {
   apps: Application[];
   jobs: Job[];
   hrKey: string;
   onUpdate: (id: string, patch: Partial<Application>) => void;
+  onDelete: (id: string) => void;
 }) {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterJob, setFilterJob] = useState<string>("all");
@@ -1018,6 +1046,19 @@ function DataView({
                           {app.status === "rejected" && (
                             <QuickAction app={app} hrKey={hrKey} targetStatus="new" onUpdate={onUpdate} variant="reopen" />
                           )}
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Delete application from "${app.full_name}"? This cannot be undone.`)) return;
+                              const res = await fetch(`/api/hr/applications/${app.id}`, {
+                                method: "DELETE",
+                                headers: { "x-hr-key": hrKey },
+                              });
+                              if (res.ok) onDelete(app.id);
+                            }}
+                            className="rounded border border-white/10 px-3 py-1 text-[10px] font-bold text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors ml-auto"
+                          >
+                            🗑 Delete
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1164,6 +1205,10 @@ export default function HRDashboard() {
     setApps((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
   }
 
+  function deleteApp(id: string) {
+    setApps((prev) => prev.filter((a) => a.id !== id));
+  }
+
   // ── Auth gate ──────────────────────────────────────────────────────────────
   if (!hrKey) {
     return (
@@ -1276,9 +1321,9 @@ export default function HRDashboard() {
         {loading && apps.length === 0 ? (
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
         ) : view === "pipeline" ? (
-          <PipelineView apps={apps} hrKey={hrKey} onUpdate={updateApp} />
+          <PipelineView apps={apps} hrKey={hrKey} onUpdate={updateApp} onDelete={deleteApp} />
         ) : view === "data" ? (
-          <DataView apps={apps} jobs={jobs} hrKey={hrKey} onUpdate={updateApp} />
+          <DataView apps={apps} jobs={jobs} hrKey={hrKey} onUpdate={updateApp} onDelete={deleteApp} />
         ) : view === "kpi" ? (
           <KPIView apps={apps} />
         ) : (
