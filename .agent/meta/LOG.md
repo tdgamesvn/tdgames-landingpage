@@ -1,5 +1,27 @@
 # LOG
 
+## 2026-06-25 (session 2 — Discord HR notifications)
+### Task
+Add Discord webhook notifications when application status changes or admin notes updated
+
+### Work Done
+- Created `src/lib/hr-notify.ts` — shared helper `notifyApplicationUpdate()` for Discord embeds
+- Updated `src/app/api/hr/applications/[id]/route.ts` — snapshots old app, fire-and-forget notification
+- Updated `src/app/api/admin/applications/[id]/route.ts` — same pattern, uses shared helper
+- Notification types:
+  - 📋 Status change (blue embed) with old → new status
+  - 🎉 Offer (green embed)
+  - ❌ Rejection (red embed) with reason
+  - 💬 Note updated (amber embed) with note content (truncated 500 chars)
+- `npm run build` pass ✅
+
+### Result
+- Both HR and Admin PATCH routes now send Discord notifications on status/note changes
+- Fire-and-forget pattern — no impact on API response time
+
+### Next Step
+- Commit & push, deploy VPS
+
 ## 2026-06-25 (session — Rejection Reason feature)
 ### Task
 Complete Rejection Reason feature — DB migration, KPI stats UI

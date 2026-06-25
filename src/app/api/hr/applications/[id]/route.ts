@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { notifyApplicationUpdate } from "@/lib/hr-notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  // Snapshot old values before update (for diff in notification)
+  const { data: oldApp } = await supabase
+    .from("applications")
+    .select("full_name, status, admin_notes, rejection_reason, job_id")
+    .eq("id", id)
+    .single();
+
   const allowed: Record<string, unknown> = {};
   if ("status" in body) allowed.status = body.status;
   if ("admin_notes" in body) allowed.admin_notes = body.admin_notes;
@@ -40,6 +48,17 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Fire-and-forget Discord notification
+  if (oldApp) {
+    (async () => {
+      try {
+        await notifyApplicationUpdate(oldApp, allowed, body);
+      } catch {
+        // Silently ignore — DB update already succeeded
+      }
+    })();
+  }
 
   return NextResponse.json({ application: data });
 }
