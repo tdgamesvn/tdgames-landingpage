@@ -45,6 +45,85 @@ function timeAgo(d: string) {
   return `${Math.floor(days / 7)}w ago`;
 }
 
+// ── Reject Modal ─────────────────────────────────────────────────────────────
+
+function RejectModal({
+  appName,
+  onConfirm,
+  onCancel,
+}: {
+  appName: string;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const presets = [
+    "Portfolio quality does not meet requirements",
+    "Insufficient experience for this role",
+    "Skills mismatch",
+    "Position already filled",
+    "Salary expectations too high",
+    "No response after follow-up",
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={onCancel}>
+      <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[#141418] p-6 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div>
+          <h3 className="text-base font-bold text-white">Reject Application</h3>
+          <p className="mt-1 text-xs text-white/50">Rejecting <span className="font-semibold text-white/70">{appName}</span></p>
+        </div>
+
+        {/* Preset reasons */}
+        <div className="flex flex-wrap gap-1.5">
+          {presets.map((p) => (
+            <button
+              key={p}
+              onClick={() => setReason(p)}
+              className={`rounded-full border px-2.5 py-1 text-[10px] transition-colors ${
+                reason === p
+                  ? "border-red-500/50 bg-red-500/15 text-red-300"
+                  : "border-white/10 text-white/50 hover:border-white/25 hover:text-white/70"
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+
+        {/* Custom reason */}
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Reason</label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            autoFocus
+            className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-red-500/50 focus:outline-none"
+            placeholder="Enter rejection reason…"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button
+            onClick={onCancel}
+            className="rounded-lg border border-white/15 px-4 py-2 text-xs text-white/60 hover:bg-white/5 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(reason)}
+            className="rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-500 transition-colors"
+          >
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function DetailRow({ label, value, href }: { label: string; value?: string | number | null; href?: string }) {
@@ -87,6 +166,14 @@ function AppDetail({ app }: { app: Application }) {
           </p>
         </div>
       )}
+      {app.rejection_reason && (
+        <div className="pt-1">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-red-400/60 mb-1">Rejection Reason</p>
+          <p className="text-xs text-red-300/80 whitespace-pre-wrap bg-red-500/[0.06] rounded-lg p-2 border border-red-500/15">
+            {app.rejection_reason}
+          </p>
+        </div>
+      )}
       <DetailRow label="Applied" value={new Date(app.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} />
     </div>
   );
@@ -106,17 +193,22 @@ function AppCard({
   const [saving, setSaving] = useState(false);
   const [showNote, setShowNote] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [note, setNote] = useState(app.admin_notes ?? "");
 
-  async function move(status: ApplicationStatus) {
+  async function move(status: ApplicationStatus, rejection_reason?: string) {
     setSaving(true);
     try {
+      const body: Record<string, unknown> = { status };
+      if (rejection_reason !== undefined) body.rejection_reason = rejection_reason;
+      // Clear rejection_reason when reopening
+      if (status !== "rejected") body.rejection_reason = null;
       const res = await fetch(`/api/hr/applications/${app.id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json", "x-hr-key": hrKey },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(body),
       });
-      if (res.ok) onUpdate(app.id, { status });
+      if (res.ok) onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
     } finally {
       setSaving(false);
     }
@@ -197,6 +289,13 @@ function AppCard({
         )}
       </div>
 
+      {/* Rejection reason preview */}
+      {app.status === "rejected" && app.rejection_reason && (
+        <p className="text-[11px] text-red-400/70 italic truncate">
+          ✕ {app.rejection_reason}
+        </p>
+      )}
+
       {/* Note preview */}
       {app.admin_notes && !showNote && (
         <p className="text-[11px] text-white/40 italic truncate">
@@ -245,7 +344,7 @@ function AppCard({
         )}
         {app.status !== "rejected" && (
           <button
-            onClick={() => move("rejected")}
+            onClick={() => setShowRejectModal(true)}
             disabled={saving}
             className="rounded border border-red-500/30 px-2 py-0.5 text-[10px] font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
           >
@@ -289,6 +388,18 @@ function AppCard({
 
       {/* Full detail panel */}
       {showDetail && <AppDetail app={app} />}
+
+      {/* Reject modal */}
+      {showRejectModal && (
+        <RejectModal
+          appName={app.full_name}
+          onConfirm={(reason) => {
+            setShowRejectModal(false);
+            void move("rejected", reason);
+          }}
+          onCancel={() => setShowRejectModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -342,6 +453,23 @@ function PipelineView({
 // ── KPI view ──────────────────────────────────────────────────────────────────
 
 function KPIView({ apps }: { apps: Application[] }) {
+  // Rejection reason stats
+  const rejectionStats = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const app of apps) {
+      if (app.status === "rejected" && app.rejection_reason) {
+        const key = app.rejection_reason;
+        map.set(key, (map.get(key) ?? 0) + 1);
+      }
+    }
+    return [...map.entries()]
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [apps]);
+
+  const totalRejected = apps.filter((a) => a.status === "rejected").length;
+  const withReason = apps.filter((a) => a.status === "rejected" && a.rejection_reason).length;
+
   const rows = useMemo(() => {
     const map = new Map<string, Record<string, number>>();
 
@@ -365,6 +493,7 @@ function KPIView({ apps }: { apps: Application[] }) {
   }
 
   return (
+    <div className="space-y-6">
     <div className="overflow-x-auto rounded-xl border border-white/10">
       <table className="w-full text-sm">
         <thead>
@@ -417,6 +546,45 @@ function KPIView({ apps }: { apps: Application[] }) {
           })}
         </tbody>
       </table>
+    </div>
+
+    {/* Rejection Reasons Breakdown */}
+    {totalRejected > 0 && (
+      <div className="rounded-xl border border-white/10 p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white">Rejection Reasons</h3>
+          <span className="text-[10px] text-white/40">
+            {withReason}/{totalRejected} rejected with reason ({totalRejected > 0 ? Math.round((withReason / totalRejected) * 100) : 0}%)
+          </span>
+        </div>
+
+        {rejectionStats.length === 0 ? (
+          <p className="text-xs text-white/30 italic">No rejection reasons recorded yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {rejectionStats.map(({ reason, count }) => {
+              const pct = totalRejected > 0 ? Math.round((count / totalRejected) * 100) : 0;
+              return (
+                <div key={reason} className="space-y-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-white/70 truncate flex-1">{reason}</span>
+                    <span className="shrink-0 text-xs font-bold text-red-300">
+                      {count} <span className="text-white/30 font-normal">({pct}%)</span>
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-white/5">
+                    <div
+                      className="h-full rounded-full bg-red-500/50 transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    )}
     </div>
   );
 }
@@ -1081,16 +1249,20 @@ function QuickAction({
   variant?: "reject" | "reopen";
 }) {
   const [saving, setSaving] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
-  async function move() {
+  async function move(rejection_reason?: string) {
     setSaving(true);
     try {
+      const body: Record<string, unknown> = { status: targetStatus };
+      if (rejection_reason !== undefined) body.rejection_reason = rejection_reason;
+      if (targetStatus !== "rejected") body.rejection_reason = null;
       const res = await fetch(`/api/hr/applications/${app.id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json", "x-hr-key": hrKey },
-        body: JSON.stringify({ status: targetStatus }),
+        body: JSON.stringify(body),
       });
-      if (res.ok) onUpdate(app.id, { status: targetStatus });
+      if (res.ok) onUpdate(app.id, { status: targetStatus, rejection_reason: targetStatus === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
     } finally { setSaving(false); }
   }
 
@@ -1105,10 +1277,25 @@ function QuickAction({
     : `→ ${STATUS_LABEL[targetStatus]}`;
 
   return (
-    <button onClick={move} disabled={saving}
-      className={`rounded border px-3 py-1 text-[10px] font-bold transition-colors disabled:opacity-40 ${cls}`}>
-      {saving ? "..." : label}
-    </button>
+    <>
+      <button
+        onClick={() => variant === "reject" ? setShowRejectModal(true) : void move()}
+        disabled={saving}
+        className={`rounded border px-3 py-1 text-[10px] font-bold transition-colors disabled:opacity-40 ${cls}`}
+      >
+        {saving ? "..." : label}
+      </button>
+      {showRejectModal && (
+        <RejectModal
+          appName={app.full_name}
+          onConfirm={(reason) => {
+            setShowRejectModal(false);
+            void move(reason);
+          }}
+          onCancel={() => setShowRejectModal(false)}
+        />
+      )}
+    </>
   );
 }
 

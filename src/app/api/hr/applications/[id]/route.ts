@@ -25,6 +25,7 @@ export async function PATCH(
   const allowed: Record<string, unknown> = {};
   if ("status" in body) allowed.status = body.status;
   if ("admin_notes" in body) allowed.admin_notes = body.admin_notes;
+  if ("rejection_reason" in body) allowed.rejection_reason = body.rejection_reason;
 
   if (Object.keys(allowed).length === 0) {
     return NextResponse.json({ error: "No updatable fields" }, { status: 400 });

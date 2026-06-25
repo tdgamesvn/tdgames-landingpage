@@ -23,14 +23,15 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  // Only allow updating status and admin_notes
+  // Only allow updating status, admin_notes, rejection_reason
   const allowedFields: Record<string, unknown> = {};
   if ("status" in body) allowedFields.status = body.status;
   if ("admin_notes" in body) allowedFields.admin_notes = body.admin_notes;
+  if ("rejection_reason" in body) allowedFields.rejection_reason = body.rejection_reason;
 
   if (Object.keys(allowedFields).length === 0) {
     return NextResponse.json(
-      { error: "No updatable fields provided. Allowed: status, admin_notes" },
+      { error: "No updatable fields provided. Allowed: status, admin_notes, rejection_reason" },
       { status: 400 }
     );
   }

@@ -1,6 +1,7 @@
 # TASKS
 
 ## Doing
+
 _(empty)_
 
 ## To do
@@ -70,3 +71,4 @@ _(empty)_
 - [x] Discord notification khi có ứng viên mới apply (commit f1bfa36)
 - [x] Referral tracking `?ref=` param — DB col + apply page + admin badge + notifications (commit 11fec9b)
 - [x] HR Dashboard `/hr` — pipeline kanban, KPI table, Discord remind, GitHub Actions cron (commit 9568846)
+- [x] Rejection Reason feature — DB col `rejection_reason`, RejectModal with presets, AppCard/QuickAction reject flow, AppDetail display, KPI rejection stats breakdown

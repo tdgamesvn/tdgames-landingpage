@@ -134,6 +134,7 @@ export type Application = {
   available_hours_per_week: string | null;
   status: ApplicationStatus;
   admin_notes: string | null;
+  rejection_reason: string | null;
   referred_by: string | null;
   created_at: string;
   jobs?: { title: string; slug: string };

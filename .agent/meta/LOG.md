@@ -1,5 +1,23 @@
 # LOG
 
+## 2026-06-25 (session — Rejection Reason feature)
+### Task
+Complete Rejection Reason feature — DB migration, KPI stats UI
+
+### Work Done
+- DB migration: `ALTER TABLE applications ADD COLUMN IF NOT EXISTS rejection_reason TEXT` (Supabase MCP)
+- KPIView: added Rejection Reasons Breakdown section — bar chart with % per reason, coverage stat (X/Y rejected with reason)
+- Verified: RejectModal, AppCard reject flow, QuickAction reject modal, AppDetail display, API PATCH — all already implemented from prior session
+- `npm run build` pass ✅
+
+### Result
+- Full Rejection Reason feature complete: DB → Type → API → Modal UI → KPI stats
+- HR Dashboard `/hr` KPI tab now shows rejection reason breakdown with visual bars
+
+### Next Step
+- Commit & push
+- Deploy VPS: `git pull && npm run build && pm2 restart tdgames-landingpage`
+
 ## 2026-06-09 (session — HR Dashboard)
 ### Task
 Build standalone HR dashboard tại /hr — pipeline, KPI, Discord reminders
