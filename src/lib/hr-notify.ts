@@ -73,7 +73,7 @@ export async function notifyApplicationUpdate(
       fields.push({ name: "Reason", value: reason, inline: false });
 
     await discordNotify("hr", {
-      content: `${emoji} **${name}** — status updated`,
+      content: `@everyone ${emoji} **${name}** — status updated`,
       embeds: [
         {
           title: `${emoji} ${isRejected ? "Rejected" : newStatus === "offer" ? "Offer!" : "Status Update"} — ${name}`,
@@ -104,7 +104,7 @@ export async function notifyApplicationUpdate(
         fields.push({ name: "Position", value: jobTitle, inline: true });
 
       await discordNotify("hr", {
-        content: `💬 **${name}** — note updated`,
+        content: `@everyone 💬 **${name}** — note updated`,
         embeds: [
           {
             title: `💬 Note — ${name}`,
