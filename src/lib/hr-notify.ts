@@ -17,6 +17,39 @@ interface OldApp {
 }
 
 /**
+ * Send Discord notification when a new comment is posted on an application.
+ * Call fire-and-forget — caller should not await.
+ */
+export async function notifyNewComment(
+  applicantName: string,
+  authorName: string,
+  content: string,
+  jobTitle?: string,
+): Promise<void> {
+  const truncated =
+    content.length > 500 ? content.slice(0, 497) + "..." : content;
+
+  const fields: { name: string; value: string; inline?: boolean }[] = [
+    { name: "Author", value: authorName, inline: true },
+  ];
+  if (jobTitle) fields.push({ name: "Position", value: jobTitle, inline: true });
+  fields.push({ name: "Comment", value: truncated, inline: false });
+
+  await discordNotify("hr", {
+    content: `💬 **${applicantName}** — new comment by ${authorName}`,
+    embeds: [
+      {
+        title: `💬 Comment — ${applicantName}`,
+        color: 0x8b5cf6, // purple to distinguish from note (amber)
+        fields,
+        timestamp: new Date().toISOString(),
+        footer: { text: "HR Dashboard" },
+      },
+    ],
+  });
+}
+
+/**
  * Send Discord notification when an application is updated.
  * Call this AFTER the DB update succeeds, in a fire-and-forget block.
  */

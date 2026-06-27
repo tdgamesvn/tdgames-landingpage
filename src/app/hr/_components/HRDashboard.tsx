@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { Application, ApplicationStatus, Job, JobType } from "@/app/admin/_lib/types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Application, ApplicationComment, ApplicationStatus, Job, JobType } from "@/app/admin/_lib/types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -142,7 +142,172 @@ function DetailRow({ label, value, href }: { label: string; value?: string | num
   );
 }
 
-function AppDetail({ app }: { app: Application }) {
+const COMMENT_AUTHOR_KEY = "tdg.hr.comment.author";
+
+function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
+  const [comments, setComments] = useState<ApplicationComment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [content, setContent] = useState("");
+  const [author, setAuthor] = useState(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem(COMMENT_AUTHOR_KEY) ?? ""
+      : "",
+  );
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/hr/applications/${appId}/comments`, {
+        headers: { "x-hr-key": hrKey },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data.comments ?? []);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [appId, hrKey]);
+
+  useEffect(() => {
+    void fetchComments();
+  }, [fetchComments]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [comments.length]);
+
+  async function submit() {
+    const trimAuthor = author.trim();
+    const trimContent = content.trim();
+    if (!trimAuthor || !trimContent) return;
+
+    // Persist author name
+    localStorage.setItem(COMMENT_AUTHOR_KEY, trimAuthor);
+
+    setSending(true);
+    try {
+      const res = await fetch(`/api/hr/applications/${appId}/comments`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-hr-key": hrKey,
+        },
+        body: JSON.stringify({
+          author_name: trimAuthor,
+          content: trimContent,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComments((prev) => [...prev, data.comment]);
+        setContent("");
+      }
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-purple-400/70">
+        Comments ({comments.length})
+      </p>
+
+      {/* Comment list */}
+      <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
+        {loading && (
+          <p className="text-xs text-white/30 italic">Loading...</p>
+        )}
+        {!loading && comments.length === 0 && (
+          <p className="text-xs text-white/25 italic">
+            No comments yet. Start the conversation.
+          </p>
+        )}
+        {comments.map((c) => (
+          <div
+            key={c.id}
+            className="rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 space-y-1"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-purple-300/90">
+                {c.author_name}
+              </span>
+              <span className="text-[9px] text-white/30">
+                {new Date(c.created_at).toLocaleString("vi-VN", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <p className="text-xs text-white/65 whitespace-pre-wrap leading-relaxed">
+              {c.content}
+            </p>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* New comment form */}
+      <div className="space-y-2 border-t border-white/8 pt-3">
+        {/* Author input (only if not set) */}
+        {!author && (
+          <input
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            placeholder="Your name..."
+            className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none"
+          />
+        )}
+        {author && (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-white/40">
+              Commenting as{" "}
+              <span className="font-bold text-purple-300/70">{author}</span>
+            </span>
+            <button
+              onClick={() => {
+                setAuthor("");
+                localStorage.removeItem(COMMENT_AUTHOR_KEY);
+              }}
+              className="text-[9px] text-white/25 hover:text-white/50"
+            >
+              (change)
+            </button>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <input
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && content.trim() && author.trim()) {
+                e.preventDefault();
+                void submit();
+              }
+            }}
+            placeholder="Write a comment..."
+            className="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none"
+          />
+          <button
+            onClick={submit}
+            disabled={sending || !content.trim() || !author.trim()}
+            className="shrink-0 rounded-lg bg-purple-600 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-purple-500 disabled:opacity-40 transition-colors"
+          >
+            {sending ? "..." : "Send"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AppDetail({ app, hrKey }: { app: Application; hrKey: string }) {
   return (
     <div className="space-y-2 border-t border-white/10 pt-3 mt-2">
       <DetailRow label="Email" value={app.email} href={`mailto:${app.email}`} />
@@ -175,6 +340,11 @@ function AppDetail({ app }: { app: Application }) {
         </div>
       )}
       <DetailRow label="Applied" value={new Date(app.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} />
+
+      {/* Comment thread */}
+      <div className="pt-3 mt-2 border-t border-white/8">
+        <CommentThread appId={app.id} hrKey={hrKey} />
+      </div>
     </div>
   );
 }
@@ -387,7 +557,7 @@ function AppCard({
       </div>
 
       {/* Full detail panel */}
-      {showDetail && <AppDetail app={app} />}
+      {showDetail && <AppDetail app={app} hrKey={hrKey} />}
 
       {/* Reject modal */}
       {showRejectModal && (
@@ -1202,7 +1372,7 @@ function DataView({
                   {expandedId === app.id && (
                     <tr key={`${app.id}-detail`} className="bg-white/[0.02]">
                       <td colSpan={9} className="px-6 py-4">
-                        <AppDetail app={app} />
+                        <AppDetail app={app} hrKey={hrKey} />
                         {/* Quick actions */}
                         <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
                           {STATUS_NEXT[app.status] && (
