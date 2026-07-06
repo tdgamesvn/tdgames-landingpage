@@ -17,6 +17,16 @@ Impact:
   lại `git config core.hooksPath .githooks` một lần (không có gì tự động enforce).
 - Bypass: `git push --no-verify`.
 
+Follow-up phát hiện thêm (cùng ngày):
+- `.github/workflows/deploy.yml` đã tự deploy khi push lên `main` (SSH → `npm run build` →
+  `pm2 restart`), KHÔNG cần build tay trên VPS.
+- 2 lần auto-deploy sau đó fail với lỗi `⨯ Another next build process is already running` —
+  do tôi (agent) đã SSH build tay trên VPS trong lúc debug, để lại lock file build dở dang,
+  làm nghẽn lần build kế tiếp của workflow.
+- **Quy tắc rút ra: KHÔNG SSH build tay trên VPS nữa.** Chỉ `git push` và để
+  `.github/workflows/deploy.yml` tự chạy; dùng `gh run list/watch --workflow=deploy.yml` để
+  theo dõi thay vì SSH vào build thủ công.
+
 ---
 
 ## 2026-05-22 — Next.js thay vì Astro

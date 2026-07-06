@@ -13,9 +13,15 @@ Triển khai gợi ý từ session hotfix trước: thêm gate chặn commit l�
 
 ### Result
 - Từ giờ `git push` sẽ tự chặn nếu có lỗi TypeScript, tránh lặp lại lỗi 500 ngày 2026-07-06
+- Phát hiện thêm khi verify deploy: `.github/workflows/deploy.yml` đã auto-deploy on push, nhưng
+  2 lần chạy gần nhất (`0a6cb1c`, `d23ecd3`) đều FAIL với lỗi
+  `⨯ Another next build process is already running` — do build tay qua SSH (session hotfix
+  trước) để lại lock file dở dang, nghẽn build tiếp theo của workflow
+- Đã push lại (`72a93a6`) không SSH build tay lần này → `gh run watch` xác nhận deploy
+  **success**, VPS git HEAD = `72a93a6`, pm2 restart 53, uptime fresh, site 200 OK
 
 ### Next Step
-- Không có, task đóng
+- Không SSH build tay trên VPS nữa — xem DECISIONS.md, chỉ push và để workflow tự deploy
 
 ## 2026-07-06 (session — production 500 hotfix)
 ### Task
