@@ -1,0 +1,10 @@
+#!/bin/sh
+# ponytail: blocks push when TS types are broken, so main never carries a
+# commit that fails `next build`'s type-check step (root cause of the
+# 2026-07-06 prod 500 — see .agent/meta/LOG.md).
+echo "🔎 tsc --noEmit before push..."
+npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "❌ Type errors found — push blocked. Fix them or 'git push --no-verify' to bypass."
+  exit 1
+fi

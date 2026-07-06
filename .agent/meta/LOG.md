@@ -1,5 +1,45 @@
 # LOG
 
+## 2026-07-06 (session — pre-push type-check gate)
+### Task
+Triển khai gợi ý từ session hotfix trước: thêm gate chặn commit lỗi type lên main
+
+### Work Done
+- `package.json`: thêm script `typecheck` = `tsc --noEmit`
+- `.githooks/pre-push`: chạy `npm run typecheck`, block push nếu fail (bypass: `--no-verify`)
+- Bật bằng `git config core.hooksPath .githooks` (local, xem DECISIONS.md để biết cách bật lại
+  nếu clone máy mới)
+- Verify: `npm run typecheck` chạy sạch trên code hiện tại
+
+### Result
+- Từ giờ `git push` sẽ tự chặn nếu có lỗi TypeScript, tránh lặp lại lỗi 500 ngày 2026-07-06
+
+### Next Step
+- Không có, task đóng
+
+## 2026-07-06 (session — production 500 hotfix)
+### Task
+Landing page báo lỗi 500 khi load CSS/JS chunks (screenshot Console DevTools từ sếp)
+
+### Work Done
+- Root cause: commit `d23ecd3` (add "test" stage) thêm `"test"` vào type `ApplicationStatus` nhưng
+  không update `STATUS_COLORS`/`APPLICATION_STATUSES` trong `src/app/admin/_components/CareersTab.tsx`
+  → `npm run build` fail ở bước type-check
+- Turbopack ghi đè `.next/static` (chunks mới) TRƯỚC khi type-check chạy, nên build fail giữa chừng
+  để lại `.next` ở trạng thái nửa vời: HTML/manifest cũ trỏ tới chunk đã bị xoá/ghi đè → 500 ngẫu nhiên
+  trên các file `_next/static/chunks/*.css`/`.js` (pm2 restart count 51 trong 6h là dấu hiệu)
+- Fix: thêm key `test` vào `STATUS_COLORS` và `APPLICATION_STATUSES` trong `CareersTab.tsx`
+  (HRDashboard.tsx đã có sẵn, chỉ thiếu ở admin CareersTab)
+- Commit `0a6cb1c`, push, `git pull && npm run build` (pass) → `pm2 restart` trên VPS
+- Verify: tất cả CSS chunk trên homepage trả 200
+
+### Result
+- Production https://www.tdgamestudio.com hết lỗi 500
+
+### Next Step
+- Cân nhắc thêm CI type-check (`npm run build` hoặc `tsc --noEmit`) chạy trước khi cho phép merge/deploy,
+  để tránh lặp lại kiểu lỗi "build fail giữa chừng làm hỏng .next đang chạy"
+
 ## 2026-06-27 (session — HR Comments feature)
 ### Task
 Add comment thread on applications in HR Dashboard with Discord notifications

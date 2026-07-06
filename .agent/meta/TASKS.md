@@ -10,6 +10,10 @@ _(empty)_
 
 ## Done
 
+- [x] Pre-push type-check gate (2026-07-06): `npm run typecheck` + `.githooks/pre-push`,
+  chặn push nếu lỗi TypeScript, tránh lặp lại hotfix 500 ✅
+- [x] Hotfix production 500 (2026-07-06): CareersTab.tsx thiếu status "test" gây build fail
+  giữa chừng, làm hỏng `.next` đang chạy → fix + rebuild + pm2 restart, verified ✅
 - [x] Page Slots feature (plan 2026-05-27-page-slots):
   - [x] Task 1–2: DB migration + seed 10 rows (home carousel + 5 single-slot pages)
   - [x] Task 3: `src/lib/page-slots.ts` — `resolveSlot` / `resolveSlots` helpers

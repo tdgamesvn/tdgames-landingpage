@@ -1,5 +1,24 @@
 # DECISIONS
 
+## 2026-07-06 — Pre-push type-check hook (chặn build fail lên prod)
+Decision:
+- Thêm `npm run typecheck` (`tsc --noEmit`) + git hook `.githooks/pre-push`, bật qua
+  `git config core.hooksPath .githooks`.
+
+Reason:
+- Prod 500 ngày 2026-07-06: commit thiếu 1 field trong `STATUS_COLORS` khiến `npm run build`
+  fail type-check giữa chừng → deploy trên VPS build lỗi, `.next/static` bị ghi đè dở dang.
+- `.github/workflows/deploy.yml` đã có `npm run build` + `set -e` (chặn deploy nếu build lỗi),
+  nhưng không chặn được nếu ai đó SSH build tay trên VPS (đúng thứ đã gây ra bug này).
+- Chặn sớm nhất có thể (trước khi push) rẻ hơn debug prod.
+
+Impact:
+- `core.hooksPath` là git config **local** (không nằm trong repo) → máy mới clone phải tự chạy
+  lại `git config core.hooksPath .githooks` một lần (không có gì tự động enforce).
+- Bypass: `git push --no-verify`.
+
+---
+
 ## 2026-05-22 — Next.js thay vì Astro
 Decision:
 - Dùng Next.js 16 (App Router) thay vì Astro như kế hoạch ban đầu.
