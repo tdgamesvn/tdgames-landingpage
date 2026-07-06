@@ -91,7 +91,7 @@ export type ProjectContent = {
 };
 
 export type JobType = "fulltime" | "parttime" | "remote" | "freelancer";
-export type ApplicationStatus = "new" | "reviewing" | "interview" | "offer" | "rejected";
+export type ApplicationStatus = "new" | "reviewing" | "test" | "interview" | "offer" | "rejected";
 
 export type Job = {
   id: string;
