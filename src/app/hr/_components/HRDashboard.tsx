@@ -154,7 +154,22 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
       ? localStorage.getItem(COMMENT_AUTHOR_KEY) ?? ""
       : "",
   );
+  // Whether the author name is confirmed (persisted) vs. still being typed.
+  // Gating the "name input" vs. "Commenting as" display on `author` truthiness
+  // (instead of this separate flag) unmounted the input after the first
+  // keystroke, since `author` became truthy immediately on every change.
+  const [authorLocked, setAuthorLocked] = useState(
+    () => typeof window !== "undefined" && !!localStorage.getItem(COMMENT_AUTHOR_KEY),
+  );
   const bottomRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [content]);
 
   const fetchComments = useCallback(async () => {
     try {
@@ -187,6 +202,8 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
 
     // Persist author name
     localStorage.setItem(COMMENT_AUTHOR_KEY, trimAuthor);
+    setAuthor(trimAuthor);
+    setAuthorLocked(true);
 
     setSending(true);
     try {
@@ -255,8 +272,8 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
 
       {/* New comment form */}
       <div className="space-y-2 border-t border-white/8 pt-3">
-        {/* Author input (only if not set) */}
-        {!author && (
+        {/* Author input (only until name is confirmed) */}
+        {!authorLocked && (
           <input
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
@@ -264,7 +281,7 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
             className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none"
           />
         )}
-        {author && (
+        {authorLocked && (
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-white/40">
               Commenting as{" "}
@@ -273,6 +290,7 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
             <button
               onClick={() => {
                 setAuthor("");
+                setAuthorLocked(false);
                 localStorage.removeItem(COMMENT_AUTHOR_KEY);
               }}
               className="text-[9px] text-white/25 hover:text-white/50"
@@ -281,8 +299,9 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
             </button>
           </div>
         )}
-        <div className="flex gap-2">
-          <input
+        <div className="flex gap-2 items-end">
+          <textarea
+            ref={contentRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={(e) => {
@@ -291,8 +310,9 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
                 void submit();
               }
             }}
-            placeholder="Write a comment..."
-            className="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none"
+            placeholder="Write a comment... (Shift+Enter xuống dòng)"
+            rows={1}
+            className="flex-1 resize-none rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none overflow-y-auto"
           />
           <button
             onClick={submit}

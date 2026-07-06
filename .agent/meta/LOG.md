@@ -1,5 +1,27 @@
 # LOG
 
+## 2026-06-27 (session — HR Comments feature)
+### Task
+Add comment thread on applications in HR Dashboard with Discord notifications
+
+### Work Done
+- DB: `application_comments` table already created (uuid PK, application_id FK, author_name, content, created_at)
+- Type: `ApplicationComment` added to `src/app/admin/_lib/types.ts`
+- API: `GET/POST /api/hr/applications/[id]/comments/route.ts` — list & create, `x-hr-key` auth
+- Discord: `notifyNewComment()` in `hr-notify.ts` — purple embed, fire-and-forget
+- UI: `CommentThread` component in `HRDashboard.tsx` — inline chat, author name persisted via localStorage
+- Integration: `AppDetail` renders `<CommentThread>` in both Pipeline view and Data view
+- `npm run build` pass ✅
+- Commit `27e8ea7`, pushed & deployed to VPS ✅
+
+### Result
+- HR team can leave comments on any application, visible to all HR users
+- Each comment triggers a purple Discord notification with applicant name, author, position, content
+- Production live at https://www.tdgamestudio.com/hr
+
+### Next Step
+- Update memory files (SCHEMA.md, API.md) with new table/endpoint
+
 ## 2026-06-25 (session 2 — Discord HR notifications)
 ### Task
 Add Discord webhook notifications when application status changes or admin notes updated
