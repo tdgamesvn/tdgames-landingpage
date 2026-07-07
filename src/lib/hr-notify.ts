@@ -36,7 +36,7 @@ export async function notifyNewComment(
   fields.push({ name: "Comment", value: truncated, inline: false });
 
   await discordNotify("hr", {
-    content: `💬 **${applicantName}** — new comment by ${authorName}`,
+    content: `@everyone 💬 **${applicantName}** — new comment by ${authorName}`,
     embeds: [
       {
         title: `💬 Comment — ${applicantName}`,

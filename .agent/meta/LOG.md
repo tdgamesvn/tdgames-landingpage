@@ -1,5 +1,23 @@
 # LOG
 
+## 2026-07-07 (session — HR dashboard fixes)
+### Task
+2 fix nhỏ trên `/hr`: (1) cột Rejected bị rớt xuống hàng dưới trong Pipeline view,
+(2) Discord notify khi comment ứng viên thiếu tag `@everyone`
+
+### Work Done
+- `HRDashboard.tsx` (`PipelineView`): grid `xl:grid-cols-5` → `xl:grid-cols-6`
+  (6 status: new/reviewing/test/interview/offer/rejected, 5 cột làm cột thứ 6 rớt hàng)
+- `hr-notify.ts` (`notifyNewComment`): thêm `@everyone` vào content, đồng nhất với
+  `notifyApplicationUpdate` (status change / note đã có sẵn tag này)
+
+### Result
+- Pipeline hiển thị đủ 6 cột trên 1 hàng ở màn hình ≥1280px
+- Comment mới trên ứng viên giờ tag @everyone trên Discord giống status/note update
+
+### Next Step
+- Không có, 2 fix độc lập, không tồn đọng
+
 ## 2026-07-06 (session — pre-push type-check gate)
 ### Task
 Triển khai gợi ý từ session hotfix trước: thêm gate chặn commit lỗi type lên main

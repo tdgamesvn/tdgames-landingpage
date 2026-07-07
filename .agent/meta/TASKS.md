@@ -10,6 +10,8 @@ _(empty)_
 
 ## Done
 
+- [x] HR Dashboard fixes (2026-07-07): Pipeline grid `xl:grid-cols-6` (cột Rejected không rớt
+  hàng nữa) + Discord notify comment ứng viên thêm tag `@everyone`
 - [x] Pre-push type-check gate (2026-07-06): `npm run typecheck` + `.githooks/pre-push`,
   chặn push nếu lỗi TypeScript, tránh lặp lại hotfix 500 ✅
 - [x] Hotfix production 500 (2026-07-06): CareersTab.tsx thiếu status "test" gây build fail

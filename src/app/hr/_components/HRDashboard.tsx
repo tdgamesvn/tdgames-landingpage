@@ -612,7 +612,7 @@ function PipelineView({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {STATUSES.map((status) => {
         const col = apps.filter((a) => a.status === status);
         return (
