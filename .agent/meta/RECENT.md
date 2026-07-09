@@ -24,6 +24,12 @@ Feature 2: AI evaluation ứng viên qua cliproxyapi (OpenAI-compatible, port 83
 - Test end-to-end pass ✅: POST evaluate trên ứng viên thật → score 78, verdict "yes",
   strengths/concerns tiếng Việt hợp lý, lưu DB đúng (~vài giây với gpt-5.4-mini)
 
+### Bugfix kèm theo
+- Không chuyển được status "test": enum `application_status` trong DB thiếu giá trị
+  (UI/types có từ session trước nhưng chưa migrate). Migration
+  `add_test_to_application_status`: `alter type ... add value 'test' before 'interview'`.
+  Verified: PATCH status=test → 200 ✅
+
 ### Next Step
 - Commit + deploy: VPS cần env `AI_BASE_URL=http://100.126.162.96:8317/v1`
   (Mac qua Tailscale, Mac phải bật) + AI_API_KEY + AI_MODEL

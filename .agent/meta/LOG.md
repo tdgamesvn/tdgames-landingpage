@@ -20,6 +20,12 @@ Feature 2: AI evaluation ứng viên qua cliproxyapi (OpenAI-compatible, port 83
 - Test end-to-end pass ✅: POST evaluate trên ứng viên thật → score 78, verdict "yes",
   strengths/concerns tiếng Việt hợp lý, lưu DB đúng (~vài giây với gpt-5.4-mini)
 
+### Nâng cấp: đọc CV PDF
+- `extractCvText()` trong evaluate route: fetch CV từ CDN → extract text bằng `unpdf`
+  (dep mới, serverless-friendly) → nhét `cv_text` (cap 12k chars) vào prompt.
+  PDF only; fail thì fallback chấm theo form data. Thêm `today` vào prompt
+  (trước đó AI phán sai "ngày available khá xa"). Verified: score 72→82 sau khi đọc CV thật.
+
 ### Bugfix kèm theo
 - Không chuyển được status "test": enum `application_status` trong DB thiếu giá trị
   (UI/types có từ session trước nhưng chưa migrate). Migration
