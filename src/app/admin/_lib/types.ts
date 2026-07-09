@@ -114,6 +114,13 @@ export type Job = {
   created_at: string;
 };
 
+export type AiEvaluation = {
+  score: number;
+  verdict: "strong_yes" | "yes" | "maybe" | "no";
+  strengths: string[];
+  concerns: string[];
+};
+
 export type Application = {
   id: string;
   job_id: string;
@@ -133,6 +140,8 @@ export type Application = {
   message: string | null;
   available_hours_per_week: string | null;
   status: ApplicationStatus;
+  ai_score: number | null;
+  ai_evaluation: AiEvaluation | null;
   admin_notes: string | null;
   rejection_reason: string | null;
   referred_by: string | null;

@@ -49,6 +49,19 @@ function timeAgo(d: string) {
   return `${Math.floor(days / 7)}w ago`;
 }
 
+function scoreColor(s: number) {
+  if (s >= 75) return "border-green-500/40 bg-green-500/10 text-green-300";
+  if (s >= 50) return "border-yellow-500/40 bg-yellow-500/10 text-yellow-300";
+  return "border-red-500/40 bg-red-500/10 text-red-300";
+}
+
+const VERDICT_LABEL: Record<string, string> = {
+  strong_yes: "Strong Yes",
+  yes: "Yes",
+  maybe: "Maybe",
+  no: "No",
+};
+
 // ── Reject Modal ─────────────────────────────────────────────────────────────
 
 function RejectModal({
@@ -148,7 +161,7 @@ function DetailRow({ label, value, href }: { label: string; value?: string | num
 
 const COMMENT_AUTHOR_KEY = "tdg.hr.comment.author";
 
-function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
+function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string; hrKey: string; listMaxH?: string }) {
   const [comments, setComments] = useState<ApplicationComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -239,7 +252,7 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
       </p>
 
       {/* Comment list */}
-      <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
+      <div className={`${listMaxH} space-y-2 overflow-y-auto pr-1`}>
         {loading && (
           <p className="text-xs text-white/30 italic">Loading...</p>
         )}
@@ -331,7 +344,7 @@ function CommentThread({ appId, hrKey }: { appId: string; hrKey: string }) {
   );
 }
 
-function AppDetail({ app, hrKey }: { app: Application; hrKey: string }) {
+function AppDetail({ app, hrKey, comments = true }: { app: Application; hrKey: string; comments?: boolean }) {
   return (
     <div className="space-y-2 border-t border-white/10 pt-3 mt-2">
       <DetailRow label="Email" value={app.email} href={`mailto:${app.email}`} />
@@ -366,8 +379,227 @@ function AppDetail({ app, hrKey }: { app: Application; hrKey: string }) {
       <DetailRow label="Applied" value={new Date(app.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} />
 
       {/* Comment thread */}
-      <div className="pt-3 mt-2 border-t border-white/8">
-        <CommentThread appId={app.id} hrKey={hrKey} />
+      {comments && (
+        <div className="pt-3 mt-2 border-t border-white/8">
+          <CommentThread appId={app.id} hrKey={hrKey} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Candidate Modal (ClickUp-style: info left, comments right) ───────────────
+
+function CandidateModal({
+  app,
+  hrKey,
+  saving,
+  onMove,
+  onDeleteApp,
+  onSaveNote,
+  onPatch,
+  onClose,
+}: {
+  app: Application;
+  hrKey: string;
+  saving: boolean;
+  onMove: (status: ApplicationStatus, reason?: string) => void;
+  onDeleteApp: () => void;
+  onSaveNote: (note: string) => void;
+  onPatch: (patch: Partial<Application>) => void;
+  onClose: () => void;
+}) {
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [note, setNote] = useState(app.admin_notes ?? "");
+  const [evaluating, setEvaluating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  async function evaluate() {
+    setEvaluating(true);
+    setAiError(null);
+    try {
+      const res = await fetch(`/api/hr/applications/${app.id}/evaluate`, {
+        method: "POST",
+        headers: { "x-hr-key": hrKey },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      onPatch({
+        ai_score: data.application.ai_score,
+        ai_evaluation: data.application.ai_evaluation,
+      });
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Evaluation failed");
+    } finally {
+      setEvaluating(false);
+    }
+  }
+  const nextStatus = STATUS_NEXT[app.status];
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 py-6"
+      onClick={onClose}
+    >
+      <div
+        className="flex h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#141418] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
+          <div className="min-w-0">
+            <h3 className="text-lg font-bold leading-tight text-white">{app.full_name}</h3>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {app.jobs && <span className="text-xs text-white/55">{app.jobs.title}</span>}
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_COLOR[app.status]}`}
+              >
+                {STATUS_LABEL[app.status]}
+              </span>
+              <span className="text-[10px] text-white/40">{timeAgo(app.created_at)}</span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="shrink-0 rounded-lg border border-white/15 px-2.5 py-1 text-xs text-white/50 hover:bg-white/5 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[1fr_340px]">
+          {/* Left: actions + info + note */}
+          <div className="space-y-3 overflow-y-auto px-5 py-4">
+            {/* Actions */}
+            <div className="flex flex-wrap gap-1.5">
+              {nextStatus && (
+                <button
+                  onClick={() => onMove(nextStatus)}
+                  disabled={saving}
+                  className="rounded border border-white/20 px-2.5 py-1 text-[11px] font-bold text-white/80 hover:bg-white/10 disabled:opacity-40 transition-colors"
+                >
+                  → {STATUS_LABEL[nextStatus]}
+                </button>
+              )}
+              {app.status !== "rejected" && (
+                <button
+                  onClick={() => setShowRejectModal(true)}
+                  disabled={saving}
+                  className="rounded border border-red-500/30 px-2.5 py-1 text-[11px] font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+                >
+                  ✕ Reject
+                </button>
+              )}
+              {app.status === "rejected" && (
+                <button
+                  onClick={() => onMove("new")}
+                  disabled={saving}
+                  className="rounded border border-white/20 px-2.5 py-1 text-[11px] font-bold text-white/60 hover:bg-white/10 disabled:opacity-40"
+                >
+                  ↺ Reopen
+                </button>
+              )}
+              <button
+                onClick={onDeleteApp}
+                disabled={saving}
+                className="ml-auto rounded border border-white/10 px-2.5 py-1 text-[11px] text-white/30 hover:border-red-500/40 hover:text-red-400 disabled:opacity-40 transition-colors"
+                title="Delete application"
+              >
+                🗑 Delete
+              </button>
+            </div>
+
+            {/* AI Evaluation */}
+            <div className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">
+                  AI Evaluation
+                </p>
+                <button
+                  onClick={() => void evaluate()}
+                  disabled={evaluating}
+                  className="rounded border border-amber-500/30 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/10 disabled:opacity-40 transition-colors"
+                >
+                  {evaluating ? "Evaluating…" : app.ai_evaluation ? "↻ Re-evaluate" : "🤖 Evaluate"}
+                </button>
+              </div>
+              {aiError && <p className="text-[11px] text-red-400">{aiError}</p>}
+              {app.ai_evaluation && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full border px-2.5 py-0.5 text-sm font-bold ${scoreColor(app.ai_evaluation.score)}`}
+                    >
+                      {app.ai_evaluation.score}
+                    </span>
+                    <span className="text-xs font-bold text-white/70">
+                      {VERDICT_LABEL[app.ai_evaluation.verdict] ?? app.ai_evaluation.verdict}
+                    </span>
+                  </div>
+                  <ul className="space-y-0.5 text-[11px] text-green-300/80">
+                    {app.ai_evaluation.strengths.map((s, i) => (
+                      <li key={i}>+ {s}</li>
+                    ))}
+                  </ul>
+                  <ul className="space-y-0.5 text-[11px] text-red-300/80">
+                    {app.ai_evaluation.concerns.map((c, i) => (
+                      <li key={i}>− {c}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+
+            <AppDetail app={app} hrKey={hrKey} comments={false} />
+
+            {/* Note */}
+            <div className="space-y-1 border-t border-white/8 pt-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Note</p>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+                className="w-full rounded border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
+                placeholder="Add a note…"
+              />
+              {note !== (app.admin_notes ?? "") && (
+                <button
+                  onClick={() => onSaveNote(note)}
+                  disabled={saving}
+                  className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold hover:bg-amber-500 disabled:opacity-40"
+                >
+                  Save note
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Right: comments */}
+          <div className="overflow-y-auto border-t border-white/10 bg-white/[0.02] px-4 py-4 md:border-l md:border-t-0">
+            <CommentThread appId={app.id} hrKey={hrKey} listMaxH="max-h-[52vh]" />
+          </div>
+        </div>
+
+        {/* Reject modal (inside stopPropagation container) */}
+        {showRejectModal && (
+          <RejectModal
+            appName={app.full_name}
+            onConfirm={(reason) => {
+              setShowRejectModal(false);
+              onMove("rejected", reason);
+            }}
+            onCancel={() => setShowRejectModal(false)}
+          />
+        )}
       </div>
     </div>
   );
@@ -386,7 +618,7 @@ function AppCard({
 }) {
   const [saving, setSaving] = useState(false);
   const [showNote, setShowNote] = useState(false);
-  const [showDetail, setShowDetail] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [note, setNote] = useState(app.admin_notes ?? "");
 
@@ -422,15 +654,15 @@ function AppCard({
     }
   }
 
-  async function saveNote() {
+  async function saveNote(newNote: string) {
     setSaving(true);
     try {
       await fetch(`/api/hr/applications/${app.id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json", "x-hr-key": hrKey },
-        body: JSON.stringify({ admin_notes: note }),
+        body: JSON.stringify({ admin_notes: newNote }),
       });
-      onUpdate(app.id, { admin_notes: note });
+      onUpdate(app.id, { admin_notes: newNote });
       setShowNote(false);
     } finally {
       setSaving(false);
@@ -443,9 +675,12 @@ function AppCard({
     <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 space-y-2 hover:border-white/20 transition-colors">
       {/* Name + date */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-semibold text-white leading-tight">
+        <button
+          onClick={() => setShowModal(true)}
+          className="text-left text-sm font-semibold text-white leading-tight hover:text-amber-300 transition-colors"
+        >
           {app.full_name}
-        </span>
+        </button>
         <span className="text-[10px] text-white/40 shrink-0">{timeAgo(app.created_at)}</span>
       </div>
 
@@ -456,6 +691,14 @@ function AppCard({
 
       {/* Tags row */}
       <div className="flex flex-wrap gap-1.5">
+        {app.ai_score != null && (
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${scoreColor(app.ai_score)}`}
+            title={app.ai_evaluation ? VERDICT_LABEL[app.ai_evaluation.verdict] : undefined}
+          >
+            🤖 {app.ai_score}
+          </span>
+        )}
         {app.referred_by && (
           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
             via {app.referred_by}
@@ -509,7 +752,7 @@ function AppCard({
           />
           <div className="flex gap-1">
             <button
-              onClick={saveNote}
+              onClick={() => void saveNote(note)}
               disabled={saving}
               className="rounded bg-amber-600 px-2 py-0.5 text-[10px] font-bold hover:bg-amber-500 disabled:opacity-40"
             >
@@ -561,16 +804,6 @@ function AppCard({
           {showNote ? "✕" : "💬"}
         </button>
         <button
-          onClick={() => setShowDetail((v) => !v)}
-          className={`rounded border px-2 py-0.5 text-[10px] transition-colors ${
-            showDetail
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
-              : "border-white/15 text-white/50 hover:bg-white/5"
-          }`}
-        >
-          {showDetail ? "▲ Less" : "▼ Detail"}
-        </button>
-        <button
           onClick={deleteApp}
           disabled={saving}
           className="rounded border border-white/10 px-2 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors disabled:opacity-40"
@@ -580,8 +813,19 @@ function AppCard({
         </button>
       </div>
 
-      {/* Full detail panel */}
-      {showDetail && <AppDetail app={app} hrKey={hrKey} />}
+      {/* Candidate modal */}
+      {showModal && (
+        <CandidateModal
+          app={app}
+          hrKey={hrKey}
+          saving={saving}
+          onMove={(status, reason) => void move(status, reason)}
+          onDeleteApp={() => void deleteApp()}
+          onSaveNote={(n) => { setNote(n); void saveNote(n); }}
+          onPatch={(patch) => onUpdate(app.id, patch)}
+          onClose={() => setShowModal(false)}
+        />
+      )}
 
       {/* Reject modal */}
       {showRejectModal && (

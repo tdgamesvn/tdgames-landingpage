@@ -6,10 +6,16 @@ _(empty)_
 
 ## To do
 
-_(empty)_
+- [ ] Test end-to-end AI Evaluation trên /hr + set env AI_* trên VPS khi deploy
 
 ## Done
 
+- [x] HR Feature 2 — AI Evaluation (2026-07-09): migration ai_score/ai_evaluation,
+  `POST /api/hr/applications/[id]/evaluate` qua cliproxyapi (gpt-5.4-mini),
+  badge trên AppCard + panel trong CandidateModal
+
+- [x] HR Candidate Modal kiểu ClickUp (2026-07-09): click tên ứng viên → modal lớn,
+  info + actions trái / comments phải; bỏ nút ▼ Detail inline (`HRDashboard.tsx`)
 - [x] HR Dashboard fixes (2026-07-07): Pipeline grid `xl:grid-cols-6` (cột Rejected không rớt
   hàng nữa) + Discord notify comment ứng viên thêm tag `@everyone`
 - [x] Pre-push type-check gate (2026-07-06): `npm run typecheck` + `.githooks/pre-push`,
