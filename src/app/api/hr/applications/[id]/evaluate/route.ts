@@ -19,6 +19,7 @@ async function extractCvText(cvUrl: string | null): Promise<string | null> {
   try {
     const res = await fetch(cvUrl, { signal: AbortSignal.timeout(20_000) });
     if (!res.ok) return null;
+    if (Number(res.headers.get("content-length") ?? 0) > 20 * 1024 * 1024) return null; // skip >20MB
     const isPdf =
       cvUrl.toLowerCase().includes(".pdf") ||
       (res.headers.get("content-type") ?? "").includes("pdf");
@@ -142,6 +143,13 @@ export async function POST(
     return NextResponse.json(
       { error: "AI returned unparseable output", raw: text.slice(0, 500) },
       { status: 502 }
+    );
+  }
+
+  // CV unreadable (image-only PDF, too heavy, or non-PDF) — flag it so HR knows the score is form-data-only
+  if (a.cv_url && !cvText) {
+    evaluation.concerns.unshift(
+      "⚠️ Không đọc được nội dung CV (file thuần ảnh / quá nặng / không phải PDF) — điểm chỉ dựa trên form data"
     );
   }
 
