@@ -150,10 +150,9 @@ Server-side Supabase client: `src/lib/supabase-admin.ts` (dùng `SUPABASE_SERVIC
 Đã xong và đang chạy production: Careers (`/careers` + `/api/jobs` + `/api/applications`),
 HR dashboard (`/hr` + AI evaluation), Blog (Supabase, 8 bài), Page Slots, Admin 13 tabs.
 
-**Còn lại (nhỏ):**
-- Test end-to-end AI Evaluation trên `/hr` (env trên VPS đã set đủ)
-- Team: thay ảnh/tên placeholder → qua `/admin` tab Team
-- About: ảnh workspace thật (section "Our Workspace", hiện Unsplash)
+**Không còn task tồn đọng.** Mọi mục từng liệt kê ở đây (Careers, Blog, HR + AI eval,
+Team, About workspace) đều đã xong và verified trên production. Nếu cần việc mới,
+hỏi sếp — đừng bới doc cũ ra làm.
 
 ## Memory Files
 

@@ -6,8 +6,7 @@ _(empty)_
 
 ## To do
 
-- [ ] Team: thay ảnh/tên placeholder (qua /admin tab Team)
-- [ ] About: ảnh workspace thật (hiện dùng Unsplash)
+_(trống — không còn task nào tồn đọng)_
 
 ## Done
 
