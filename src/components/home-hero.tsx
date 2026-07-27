@@ -568,7 +568,7 @@ export default function HomeHero() {
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
-                2D & 3D GAME
+                2D & 3D GAME ART
               </motion.div>
             </div>
             <div className="overflow-hidden">
@@ -582,7 +582,7 @@ export default function HomeHero() {
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
-                ART <span style={{ color: "var(--hero-highlight-color, #f59e0b)" }}>STUDIO</span>
+                OUTSOURCING <span style={{ color: "var(--hero-highlight-color, #f59e0b)" }}>STUDIO</span>
               </motion.div>
             </div>
 
@@ -594,13 +594,13 @@ export default function HomeHero() {
             >
               <div className="w-12 h-[2px]" style={{ backgroundColor: "var(--hero-subtitle-color, #f59e0b)" }} />
               <h3
-                className="font-bold tracking-[0.3em] uppercase"
+                className="font-bold tracking-[0.16em] uppercase"
                 style={{
                   fontSize: "var(--hero-subtitle-size, 16px)",
                   color: "var(--hero-subtitle-color, #f59e0b)"
                 }}
               >
-                Game art outsource
+                Bring Your Game to Life with High-Quality Art, Animation & VFX
               </h3>
             </motion.div>
             <p
@@ -610,7 +610,7 @@ export default function HomeHero() {
                 color: "var(--hero-desc-color, #e5e7eb)"
               }}
             >
-              TD Games specializes in transforming creative ideas into vibrant art. We offer a range of services including professional game visuals, 2D stylized art, concept designs, environment art, illustrations, and 2D spine animation. Our skilled team uses advanced techniques to produce both 2D and 3D art, ensuring dynamic and interactive results.
+              Scale your game production with high-quality concept art, stylized characters, Spine animation, frame-by-frame animation, and Unity VFX—crafted specifically for mobile games. Every asset is production-ready and optimized for seamless integration into modern game pipelines.
             </p>
             <div className="mb-[15px] mt-[32px]">
               <Link
