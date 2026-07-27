@@ -559,15 +559,15 @@ export default function HomePageLower() {
                 ),
               },
               {
-                title: "REASONABLE PRICES",
-                body: "Clear scopes and predictable delivery so teams can plan budgets without surprises.",
+                title: "PAID TRIAL BATCH",
+                body: "Start with a small paid batch to calibrate style and pipeline before you commit to full production.",
                 icon: (
                   <path d="M4 10h16v2H4v-2zm0-4h10v2H4V6zm0 8h16v2H4v-2z" />
                 ),
               },
               {
-                title: "STREAMLINED WORKFLOW",
-                body: "Fast feedback loops, organized handoffs, and milestones that keep production moving.",
+                title: "ENGINE-READY DELIVERY",
+                body: "Spine rigs, sprite sheets and atlases handed off ready for Unity — no re-export loop on your side.",
                 icon: <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />,
               },
               {
@@ -634,21 +634,21 @@ export default function HomePageLower() {
             <div className="grid gap-8 md:grid-cols-3 md:divide-x md:divide-white/10">
               {[
                 {
-                  value: "150+",
+                  value: "70+",
                   label: "PROJECTS COMPLETED",
                   icon: (
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7v-7zm4-3h2v10h-2V7zm4 3h2v7h-2v-7z" />
                   ),
                 },
                 {
-                  value: "50+",
+                  value: "12+",
                   label: "HAPPY CLIENTS",
                   icon: (
                     <path d="M16 11c1.7 0 3-1.3 3-3s-1.3-3-3-3c-.2 0-.4 0-.6.1C15.2 4.2 13.4 3 11.5 3 9 3 7 5 7 7.5c0 2.3 1.8 4.3 4.1 4.5-.3.5-.6 1-1 1.5H7v2h3.5c-.4.6-.7 1.3-.9 2H7v2h2.1c.4 1.7 1.9 3 3.9 3h6v-2h-6c-.8 0-1.5-.5-1.8-1.2L16 11zm-4.5-6C12.9 5 14 6.1 14 7.5S12.9 10 11.5 10 9 8.9 9 7.5 10.1 5 11.5 5z" />
                   ),
                 },
                 {
-                  value: "3700+",
+                  value: "1200+",
                   label: "ASSETS DELIVERED",
                   icon: (
                     <path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44-.16.09-.16-.09-7.9-4.44A.99.99 0 013 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44.16-.09.16.09 7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L5.04 8 12 11.85 18.96 8 12 4.15zM5 14.5l6 3.35v-6.7L5 9.15v5.35zm14 0v-5.35l-6 3.35v6.7l6-3.35z" />
@@ -673,13 +673,8 @@ export default function HomePageLower() {
                     className="text-4xl font-black tracking-tight text-[#ff8c3a] md:text-5xl"
                     style={{ fontFamily: "var(--font-rajdhani)" }}
                   >
-                    {stat.value === "150+" ? (
-                      <CountUp end={150} suffix="+" />
-                    ) : stat.value === "50+" ? (
-                      <CountUp end={50} suffix="+" />
-                    ) : (
-                      <CountUp end={3700} suffix="+" />
-                    )}
+                    {/* ponytail: parse từ value, khỏi phải sửa 2 chỗ khi đổi số */}
+                    <CountUp end={parseInt(stat.value, 10)} suffix="+" />
                   </div>
                   <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
                     {stat.label}
@@ -983,12 +978,6 @@ export default function HomePageLower() {
                       />
                     </svg>
                   </a>
-                  <a
-                    href="/contact"
-                    className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-[11px] font-black uppercase tracking-[0.18em] text-white/90 transition-colors hover:bg-white/10"
-                  >
-                    Contact us
-                  </a>
                 </div>
               </div>
             </div>
@@ -1121,13 +1110,7 @@ export default function HomePageLower() {
                   className="inline-flex items-center justify-center rounded-full px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black transition-transform hover:scale-[1.02]"
                   style={{ backgroundColor: ACCENT }}
                 >
-                  Get a quote
-                </a>
-                <a
-                  href="/contact"
-                  className="inline-flex items-center justify-center rounded-full border border-white/18 bg-transparent px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                >
-                  Contact
+                  Get a Free Quote
                 </a>
               </div>
             </div>

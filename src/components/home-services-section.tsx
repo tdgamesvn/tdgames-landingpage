@@ -58,8 +58,8 @@ function ServicesStudioIntro() {
           className="mx-auto mt-5 max-w-2xl text-base leading-7 text-white/70 opacity-70"
           style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
         >
-          This version keeps the brand energy but removes the hard AAA pressure.
-          The layout follows a studio portfolio rhythm aligned with TD Games.
+          Stylized 2D art, animation and VFX built to drop straight into your
+          engine — Spine, frame-by-frame, and Unity-ready effects.
         </p>
       </div>
     </motion.div>

@@ -7,8 +7,17 @@ _(empty)_
 ## To do
 
 - [ ] Test end-to-end AI Evaluation trên /hr + set env AI_* trên VPS khi deploy
+- [ ] USP/CTA P4: viết lại blog theo 2D (6/12 bài đang về 3D)
+- [ ] Commit + deploy đợt USP/CTA (P1–P3)
 
 ## Done
+
+- [x] USP & CTA audit + fix P1-P3 (2026-07-27): gỡ text nội bộ ở services section,
+  bỏ định vị "3D" khỏi hero, gộp CTA hero ("Get a Free Quote" + "View Our Work"
+  + micro-copy), đồng bộ 5 nhãn CTA header; WHY CHOOSE → PAID TRIAL BATCH +
+  ENGINE-READY DELIVERY, bỏ 2 CTA trùng (careers band + LET'S TALK),
+  footer bỏ "Developer"/"Game Design"; hạ số liệu về đúng tầm studio mới
+  (cards 30+/25+/15+, band 70+ projects · 12+ clients · 1200+ assets)
 
 - [x] HR Feature 2 — AI Evaluation (2026-07-09): migration ai_score/ai_evaluation,
   `POST /api/hr/applications/[id]/evaluate` qua cliproxyapi (gpt-5.4-mini),

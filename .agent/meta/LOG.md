@@ -1,5 +1,55 @@
 # LOG
 
+## 2026-07-27 (session — USP & CTA audit)
+### Task
+Rà soát USP + CTA toàn site, đề xuất và áp dụng nhóm ưu tiên 1–2.
+
+### Work Done
+- Audit: hero → services → why-us → careers → contact → header/footer
+- **P1** `home-services-section.tsx`: paragraph dưới "OUR SERVICES" là ghi chú
+  thiết kế nội bộ đang chạy production → thay bằng copy thật (Spine / frame-by-frame /
+  Unity-ready)
+- **P2** `home-hero.tsx`: bỏ định vị "3D" (studio là 2D-only, không có trang 3D nào)
+  → title "2D ART & ANIMATION / OUTSOURCING STUDIO"; desc bỏ "specifically for mobile
+  games" → "mobile, PC and web titles"
+- **P2** Hero CTA: "Get in touch" → "Get a Free Quote" + thêm secondary "View Our Work"
+  → /portfolio + micro-copy "Reply within 24h · NDA on request"
+- `site-header.tsx`: đồng bộ 5 nhãn "Get a Quote" → "Get a Free Quote"
+- `npx tsc --noEmit` clean
+
+### Result
+Định vị nhất quán 2D, hết text nội bộ lộ ra ngoài, CTA có 1 nhãn primary chuẩn +
+đường thoát low-commitment cho lead chưa sẵn sàng.
+
+### P3 (làm tiếp cùng session)
+- `home-page-lower.tsx` WHY CHOOSE: 2 item generic → differentiator thật
+  - "REASONABLE PRICES" → **PAID TRIAL BATCH** (căn cứ: blog site.json:184,197)
+  - "STREAMLINED WORKFLOW" → **ENGINE-READY DELIVERY** (căn cứ: services/2d-vfx
+    "Unity & Spine Integration", services/2d-animation "Spine Animation")
+- Careers band: bỏ nút "Contact us" cạnh "View vacancies" (lẫn audience)
+- LET'S TALK: bỏ nút "Contact" trùng (2 nút cùng trỏ /contact) + "Get a quote"
+  → "Get a Free Quote"
+- `site-footer.tsx`: bỏ "Developer" / "Game Design" (lệch định vị 2D art),
+  giữ "Game UI" → /contact (có comment `ponytail:` giải thích)
+- `npx tsc --noEmit` clean
+
+### Số liệu — sếp chốt "ít thôi, đúng tầm công ty mới"
+- `site.json` service cards: 50+/50+/50+ → **Animation 30+ · Art 25+ · VFX 15+** (tổng 70)
+- Stats band `home-page-lower.tsx`: 150+ → **70+** PROJECTS · 50+ → **12+** CLIENTS ·
+  3700+ → **1200+** ASSETS (khớp tổng service cards; 16 case study trên portfolio
+  = phần hiển thị của 70)
+- Bonus: `CountUp` đang là if-chain hardcode `=== "150+"` → `parseInt(stat.value, 10)`,
+  đổi số không còn phải sửa 2 chỗ
+- Giữ nguyên `service-2d-art-featured-showcase.tsx` (45+ environments, 200+ assets —
+  nằm gọn trong 1200+)
+- `npx tsc --noEmit` clean
+
+### Còn treo
+- P4: blog 6/12 bài về 3D, loãng SEO "2D game art outsourcing"
+- Chưa commit / chưa deploy
+
+---
+
 ## 2026-07-09 (session — HR AI Evaluation)
 ### Task
 Feature 2: AI evaluation ứng viên qua cliproxyapi (OpenAI-compatible, port 8317 trên Mac).

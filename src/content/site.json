@@ -112,7 +112,7 @@
         "title": "2D Animation",
         "icon": "animation",
         "href": "/services/2d-animation",
-        "statValue": "50+",
+        "statValue": "30+",
         "statLabel": "Completed projects",
         "description": "Stylized attack loops, promo motion, idle cycles, and lightweight animated sequences built for game readability.",
         "image": "https://cdn.tdgamestudio.com/landing/images/service-animation.jpg"
@@ -121,7 +121,7 @@
         "title": "2D Art",
         "icon": "art",
         "href": "/services/2d-art",
-        "statValue": "50+",
+        "statValue": "25+",
         "statLabel": "Completed projects",
         "description": "Character sheets, splash illustrations, UI-support art, and painted assets tuned for a cleaner, friendlier game look.",
         "image": "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg"
@@ -130,7 +130,7 @@
         "title": "2D VFX",
         "icon": "vfx",
         "href": "/services/2d-vfx",
-        "statValue": "50+",
+        "statValue": "15+",
         "statLabel": "Completed projects",
         "description": "Skill bursts, hit flashes, elemental trails, and screen-space accents that add energy without pushing the style too hard.",
         "image": "https://cdn.tdgamestudio.com/landing/sinspired/Game_Animation-min-1024x612.jpg"

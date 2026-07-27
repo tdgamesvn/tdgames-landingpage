@@ -146,7 +146,7 @@ function QuoteButton({
             "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))",
         }}
       >
-        Get a Quote
+        Get a Free Quote
         <svg
           className="w-3.5 h-3.5"
           fill="none"
@@ -170,7 +170,7 @@ function QuoteButton({
         className={`${base} rounded-full bg-white hover:bg-amber-300 text-black px-7 py-2.5`}
         style={font}
       >
-        Get a Quote
+        Get a Free Quote
         <svg
           className="w-3.5 h-3.5"
           fill="none"
@@ -198,7 +198,7 @@ function QuoteButton({
         }`}
         style={font}
       >
-        Get a Quote
+        Get a Free Quote
         <svg
           className="w-3.5 h-3.5"
           fill="none"
@@ -226,7 +226,7 @@ function QuoteButton({
         animation: "glow-ping 2s ease-in-out infinite",
       }}
     >
-      Get a Quote →
+      Get a Free Quote →
     </Link>
   );
 }
@@ -524,7 +524,7 @@ export default function SiteHeader() {
             className="mt-3 inline-flex items-center justify-center rounded-full bg-white text-black hover:bg-amber-300 px-6 py-3 text-sm font-black uppercase tracking-[0.15em]"
             style={{ fontFamily: "var(--font-nav-display)" }}
           >
-            Get a Quote
+            Get a Free Quote
           </Link>
         </div>
       )}

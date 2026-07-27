@@ -568,7 +568,7 @@ export default function HomeHero() {
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
-                2D & 3D GAME ART
+                2D ART & ANIMATION
               </motion.div>
             </div>
             <div className="overflow-hidden">
@@ -610,19 +610,30 @@ export default function HomeHero() {
                 color: "var(--hero-desc-color, #e5e7eb)"
               }}
             >
-              Scale your game production with high-quality concept art, stylized characters, Spine animation, frame-by-frame animation, and Unity VFX—crafted specifically for mobile games. Every asset is production-ready and optimized for seamless integration into modern game pipelines.
+              Scale your game production with high-quality concept art, stylized characters, Spine animation, frame-by-frame animation, and Unity VFX—crafted for mobile, PC and web titles. Every asset is production-ready and optimized for seamless integration into modern game pipelines.
             </p>
             <div className="mb-[15px] mt-[32px]">
-              <Link
-                href="/contact"
-                className="inline-block rounded-xl border-2 px-[32px] py-[16px] text-[18px] font-bold uppercase tracking-wider text-black transition-colors duration-300 hover:bg-transparent hover:text-white"
-                style={{
-                  backgroundColor: "var(--hero-btn-bg, #f59e0b)",
-                  borderColor: "var(--hero-btn-bg, #f59e0b)",
-                }}
-              >
-                Get in touch
-              </Link>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/contact"
+                  className="inline-block rounded-xl border-2 px-[32px] py-[16px] text-[18px] font-bold uppercase tracking-wider text-black transition-colors duration-300 hover:bg-transparent hover:text-white"
+                  style={{
+                    backgroundColor: "var(--hero-btn-bg, #f59e0b)",
+                    borderColor: "var(--hero-btn-bg, #f59e0b)",
+                  }}
+                >
+                  Get a Free Quote
+                </Link>
+                <Link
+                  href="/portfolio"
+                  className="inline-block rounded-xl border-2 border-white/25 px-[32px] py-[16px] text-[18px] font-bold uppercase tracking-wider text-white/90 transition-colors duration-300 hover:border-white/50 hover:bg-white/10"
+                >
+                  View Our Work
+                </Link>
+              </div>
+              <p className="mt-4 text-[13px] tracking-wide text-white/50">
+                Reply within 24h · NDA on request
+              </p>
             </div>
           </div>
         </motion.div>

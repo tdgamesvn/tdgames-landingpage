@@ -308,23 +308,13 @@ export default function SiteFooter() {
                 >
                   2D VFX
                 </Link>
+                {/* ponytail: Game UI chưa có trang riêng → tạm trỏ /contact.
+                    Bỏ "Developer" / "Game Design" vì lệch định vị 2D art. */}
                 <Link
                   href="/contact"
                   className="block transition-colors hover:text-white"
                 >
                   Game UI
-                </Link>
-                <Link
-                  href="/contact"
-                  className="block transition-colors hover:text-white"
-                >
-                  Developer
-                </Link>
-                <Link
-                  href="/contact"
-                  className="block transition-colors hover:text-white"
-                >
-                  Game Design
                 </Link>
               </div>
             </div>
