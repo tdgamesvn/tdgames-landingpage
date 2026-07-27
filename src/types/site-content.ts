@@ -28,17 +28,6 @@ export type ServiceCard = {
   image: string;
 };
 
-export type BlogPost = {
-  slug: string;
-  date: string;
-  title: string;
-  excerpt: string;
-  tag: string;
-  image: string;
-  views: number;
-  body: string[];
-};
-
 export type SiteContent = {
   hero: {
     media: MediaItem[];
@@ -48,8 +37,5 @@ export type SiteContent = {
   };
   services: {
     cards: ServiceCard[];
-  };
-  blog: {
-    posts: BlogPost[];
   };
 };

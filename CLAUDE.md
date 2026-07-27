@@ -83,7 +83,8 @@ node --env-file=.env.local scripts/replace-media-urls.mjs --apply  # apply
 
 ### Content & Data Flow
 
-- **`src/content/site.json`** — nguồn dữ liệu chính: `hero.media[]`, `home.featuredProjects[]`, `services.cards[]`, `blog.posts[]`, `team[]`. Types ở `src/types/site-content.ts`. Đây là single source of truth cho phần lớn UI động.
+- **`src/content/site.json`** — nguồn dữ liệu chính: `hero.media[]`, `home.featuredProjects[]`, `services.cards[]`, `about`. Types ở `src/types/site-content.ts`.
+- **Blog KHÔNG nằm ở site.json** — đã migrate sang Supabase table `blog_posts`, đọc qua `GET /api/blog` + `GET /api/blog/[slug]`, sửa qua `/api/admin/blog`. (Key `blog` cũ trong site.json là dead data, đã xoá 2026-07-27.)
 - **Portfolio case studies** — mỗi project có thư mục riêng `src/app/portfolio/<slug>/`, bên trong có `project-data.ts` (export `CaseStudyProps`) và `page.tsx` (gọi `<CaseStudyLayout>`). Types ở `src/components/portfolio/case-study-types.ts`.
 - **Services pages** — dùng `<ServicePageTemplate>` tại `src/components/service-page-template.tsx`, nhận props cấu hình (FAQ, workflow, showcase). Các presets: `service-faq-presets.ts`, `service-workflow-presets.ts`.
 
@@ -140,7 +141,7 @@ Server-side Supabase client: `src/lib/supabase-admin.ts` (dùng `SUPABASE_SERVIC
 6. Telegram notification khi có ứng viên mới
 
 **Các task nhỏ còn lại:**
-- Blog: thay placeholder bằng nội dung thật (`src/content/site.json` → `blog.posts`)
+- ~~Blog placeholder~~ — đã xong từ trước, 8 bài thật trong Supabase `blog_posts`, đúng định vị 2D
 - Team: thay ảnh/tên placeholder → qua `/admin` tab "6. Team"
 - About: ảnh workspace thật (section "Our Workspace", hiện Unsplash)
 

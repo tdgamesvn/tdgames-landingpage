@@ -7,11 +7,12 @@ _(empty)_
 ## To do
 
 - [ ] Test end-to-end AI Evaluation trên /hr + set env AI_* trên VPS khi deploy
-- [ ] USP/CTA P4: viết lại blog theo 2D (6/12 bài đang về 3D)
-- [ ] Commit + deploy đợt USP/CTA (P1–P3)
 
 ## Done
 
+- [x] Dọn dead data blog (2026-07-27): `blog` trong site.json không render ở đâu
+  (blog thật ở Supabase `blog_posts`) → xoá 184 dòng + type `BlogPost`;
+  sitemap thêm blog routes đọc từ DB (34 URL); sửa CLAUDE.md đang chỉ sai nguồn
 - [x] USP & CTA audit + fix P1-P3 (2026-07-27): gỡ text nội bộ ở services section,
   bỏ định vị "3D" khỏi hero, gộp CTA hero ("Get a Free Quote" + "View Our Work"
   + micro-copy), đồng bộ 5 nhãn CTA header; WHY CHOOSE → PAID TRIAL BATCH +

@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
+
 const BASE_URL = "https://tdgamestudio.com";
 
 const portfolioSlugs = [
@@ -21,7 +23,7 @@ const portfolioSlugs = [
   "summoner-era-arena-of-heroes",
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -44,5 +46,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...portfolioRoutes];
+  // ponytail: blog nằm ở Supabase, không phải site.json. DB lỗi → bỏ qua blog
+  // routes chứ không để cả sitemap fail.
+  let blogRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const { data } = await getSupabaseAdmin()
+      .from("blog_posts")
+      .select("slug, created_at")
+      .eq("published", true);
+    blogRoutes = (data ?? []).map((post) => ({
+      url: `${BASE_URL}/blog/${post.slug}`,
+      lastModified: post.created_at ? new Date(post.created_at) : now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    }));
+  } catch (err) {
+    console.error("[sitemap] blog_posts", err);
+  }
+
+  return [...staticRoutes, ...portfolioRoutes, ...blogRoutes];
 }
