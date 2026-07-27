@@ -1,33 +1,34 @@
 import ServiceFeaturedShowcaseSection from "@/components/service-featured-showcase-section";
 import type { StudioServiceCard } from "@/components/studio-service-cards";
 
+// ponytail: statValue/statLabel are placeholder numbers, sếp sẽ thay bằng số liệu thật sau.
 const cards: StudioServiceCard[] = [
   {
-    title: "Combat & ability sets",
+    title: "Combat Animation",
     icon: "animation",
     href: "/portfolio",
-    statValue: "50+",
-    statLabel: "Completed projects",
+    statValue: "60+",
+    statLabel: "Combat animations",
     description:
       "Attack chains, cancels, and hit reactions timed for gameplay feedback and marketing trailers.",
     image: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg",
   },
   {
-    title: "Locomotion & idles",
+    title: "Character Animation",
     icon: "animation",
     href: "/portfolio",
-    statValue: "50+",
-    statLabel: "Completed projects",
+    statValue: "90+",
+    statLabel: "Animation sets",
     description:
       "Walk, run, and idle loops tuned for Spine rigs and consistent silhouette at target zoom.",
     image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
   },
   {
-    title: "UI & presentation motion",
+    title: "UI & Motion Graphics",
     icon: "animation",
     href: "/portfolio",
-    statValue: "50+",
-    statLabel: "Completed projects",
+    statValue: "35+",
+    statLabel: "Motion graphics delivered",
     description:
       "Menu flourishes, reward reveals, and lightweight motion that supports UX without noise.",
     image: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-07 233917.png",
@@ -41,7 +42,7 @@ export default function Service2DAnimationFeaturedShowcase() {
       sectionStep="// 03"
       railLabel="Showcase"
       titleAccent="2D ANIMATION"
-      description="Highlights from recent animation deliveries—loops, combat, and UI-adjacent motion—using on-repo imagery as stand-ins while your production art is in flight."
+      description="Browse recent animation work featuring gameplay motion, character actions, combat sequences and polished UI animation."
       cards={cards}
     />
   );

@@ -31,11 +31,11 @@ export default async function Service2DArtPage() {
       }
       hero={{
         image: heroImage,
-        titleTop: "2D GAME ART",
-        titleMain: "PRODUCTION",
-        subheading: "2D Art outsource",
+        titleTop: "2D GAME ART OUTSOURCING",
+        titleMain: "SERVICES",
+        subheading: "High-Quality 2D Visuals for Mobile Games",
         description:
-          "TD Games specializes in professional 2D game art, turning ideas into visually striking creations. Our expertise spans stylized characters, environments, UI-support pieces, and illustration pipelines tuned for production schedules.",
+          "TD Games is a 2D art studio with an exceptional reputation for talented 2D game artists and deep industry experience. We offer comprehensive 2D game art outsourcing services tailored for mobile projects of any scale from indie titles to mid-core games. From initial character concepts and immersive environments to high-impact splash illustrations and UI assets, our team delivers high-quality, production-ready artworks that satisfy game developers and studios around the world while fitting seamlessly into your pipeline.",
         ctaLabel: "Consult with our experts",
       }}
       capabilities={{
@@ -45,17 +45,6 @@ export default async function Service2DArtPage() {
         titleHighlight: "2D ART",
         titleSuffix: " SERVICES",
         items: [
-          {
-            title: "Slot Art",
-            description:
-              "Slot-ready visual sets with readable symbols and style consistency.",
-            image: "https://cdn.tdgamestudio.com/landing/images/Slot_Art-1024x683.jpg",
-          },
-          {
-            title: "Casual Characters",
-            description: "Stylized character sets for casual and social game worlds.",
-            image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
-          },
           {
             title: "Character Concept",
             description:
@@ -68,14 +57,24 @@ export default async function Service2DArtPage() {
             image: "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
           },
           {
-            title: "Isometry Art",
-            description: "Isometric assets and building sets for gameplay readability.",
+            title: "UI/UX Design",
+            description: "Game-ready HUD, menu, and interface art built for clarity and flow.",
+            image: "https://cdn.tdgamestudio.com/landing/images/Slot_Art-1024x683.jpg",
+          },
+          {
+            title: "Illustration",
+            description: "High-impact splash art and key visuals for marketing and story beats.",
+            image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
+          },
+          {
+            title: "Casual Game Art",
+            description: "Stylized visual sets tuned for casual and social game worlds.",
             image: "https://cdn.tdgamestudio.com/landing/images/Isometry_art-1024x683.jpg",
           },
           {
-            title: "Casual Art Props",
+            title: "Props & Items",
             description:
-              "Prop packs and icon-ready objects tailored for casual game style.",
+              "Prop packs and icon-ready objects tailored for any game style.",
             image: "https://cdn.tdgamestudio.com/landing/images/Casual_Art_Props-1024x683.jpg",
           },
         ],

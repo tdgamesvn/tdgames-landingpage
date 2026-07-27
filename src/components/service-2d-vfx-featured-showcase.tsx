@@ -1,33 +1,34 @@
 import ServiceFeaturedShowcaseSection from "@/components/service-featured-showcase-section";
 import type { StudioServiceCard } from "@/components/studio-service-cards";
 
+// ponytail: statValue/statLabel are placeholder numbers, sếp sẽ thay bằng số liệu thật sau.
 const cards: StudioServiceCard[] = [
   {
-    title: "Skill bursts & impacts",
+    title: "Combat VFX",
     icon: "vfx",
     href: "/portfolio",
-    statValue: "50+",
-    statLabel: "Completed projects",
+    statValue: "70+",
+    statLabel: "VFX effects created",
     description:
       "Punchy hit frames, elemental pops, and combo accents authored for atlas efficiency.",
     image: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
   },
   {
-    title: "Buffs & ambient layers",
+    title: "Environment VFX",
     icon: "vfx",
     href: "/portfolio",
-    statValue: "50+",
-    statLabel: "Completed projects",
+    statValue: "40+",
+    statLabel: "Ambient VFX sets",
     description:
       "Auras, trails, and environmental shimmer that reinforce mood without stealing focus.",
     image: "https://cdn.tdgamestudio.com/landing/images/Isometry_art-1024x683.jpg",
   },
   {
-    title: "UI & feedback flashes",
+    title: "UI & Feedback VFX",
     icon: "vfx",
     href: "/portfolio",
     statValue: "50+",
-    statLabel: "Completed projects",
+    statLabel: "UI VFX delivered",
     description:
       "Screen-safe glows, level-up sparks, and reward VFX aligned to your HUD contrast rules.",
     image: "https://cdn.tdgamestudio.com/landing/images/trieuvan.png",
@@ -41,7 +42,7 @@ export default function Service2DVfxFeaturedShowcase() {
       sectionStep="// 03"
       railLabel="Showcase"
       titleAccent="2D VFX"
-      description="Sample frames and library-style cards for VFX work—using placeholder art from the repo to mirror the 2D Art page layout."
+      description="Discover production-ready visual effects built for mobile games, including combat skills, environmental effects and polished UI feedback."
       cards={cards}
     />
   );

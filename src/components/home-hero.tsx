@@ -614,7 +614,7 @@ export default function HomeHero() {
             </p>
             <div className="mb-[15px] mt-[32px]">
               <Link
-                href="#open-form"
+                href="/contact"
                 className="inline-block rounded-xl border-2 px-[32px] py-[16px] text-[18px] font-bold uppercase tracking-wider text-black transition-colors duration-300 hover:bg-transparent hover:text-white"
                 style={{
                   backgroundColor: "var(--hero-btn-bg, #f59e0b)",

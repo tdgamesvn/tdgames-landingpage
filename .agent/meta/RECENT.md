@@ -30,15 +30,22 @@ Feature 2: AI evaluation ứng viên qua cliproxyapi (OpenAI-compatible, port 83
   PDF only; fail thì fallback chấm theo form data. Thêm `today` vào prompt
   (trước đó AI phán sai "ngày available khá xa"). Verified: score 72→82 sau khi đọc CV thật.
 
+### Hardening CV pipeline
+- Guard content-length > 20MB → skip tải CV
+- CV không đọc được (thuần ảnh / quá nặng / không phải PDF) → tự động chèn concern
+  "⚠️ Không đọc được nội dung CV..." vào đầu list để HR biết điểm chỉ dựa trên form data
+
 ### Bugfix kèm theo
 - Không chuyển được status "test": enum `application_status` trong DB thiếu giá trị
   (UI/types có từ session trước nhưng chưa migrate). Migration
   `add_test_to_application_status`: `alter type ... add value 'test' before 'interview'`.
   Verified: PATCH status=test → 200 ✅
 
-### Next Step
-- Commit + deploy: VPS cần env `AI_BASE_URL=http://100.126.162.96:8317/v1`
-  (Mac qua Tailscale, Mac phải bật) + AI_API_KEY + AI_MODEL
+### Deploy production
+- Đã thêm AI_BASE_URL/AI_API_KEY/AI_MODEL vào `/opt/tdgames-landingpage/.env.local`
+  trên VPS + pm2 restart. VPS reach cliproxyapi trên Mac qua Tailscale OK (200).
+  Verified evaluate trên https://www.tdgamestudio.com → 200 ✅
+- Lưu ý vận hành: Mac tắt/ngủ → nút Evaluate trên prod báo lỗi 502, HR bấm lại sau
 
 ---
 

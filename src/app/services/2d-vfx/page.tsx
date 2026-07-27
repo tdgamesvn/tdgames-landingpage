@@ -31,11 +31,11 @@ export default async function Service2DVfxPage() {
       }
       hero={{
         image: heroImage,
-        titleTop: "2D GAME",
-        titleMain: "VFX",
-        subheading: "2D VFX outsource",
+        titleTop: "2D GAME VFX OUTSOURCING",
+        titleMain: "SERVICES",
+        subheading: "Impactful 2D Visual Effects to Elevate Your Game Feel",
         description:
-          "TD Games authors sprite and flipbook VFX with gameplay readability first—hits, skills, auras, and UI-safe flashes—packed and timed for production builds.",
+          "TD Games offers top-tier 2D VFX outsourcing services that add instant punch, polish, and excitement to your game's combat and interface. Our artists create dynamic skill effects, explosive particles, and ambient visual flourishes tailored specifically for mobile and mid-core games. Whether integrated directly into Spine character animations or delivered as standalone sprite sheets, our 2D VFX are fully optimized for smooth performance without compromising frame rates.",
         ctaLabel: "Consult with our experts",
       }}
       capabilities={{
@@ -46,37 +46,37 @@ export default async function Service2DVfxPage() {
         titleSuffix: " SERVICES",
         items: [
           {
-            title: "Combat impacts",
+            title: "Combat VFX",
             description:
               "Hit flashes, slams, and combo punctuation with clear telegraphing.",
             image: "https://cdn.tdgamestudio.com/landing/images/bcc4707e-cae2-46a2-9c96-c254c28ba763.png",
           },
           {
-            title: "Skill libraries",
+            title: "Character VFX",
             description:
-              "Elemental variants and tiered intensity so designers can reuse content.",
+              "Skill and elemental effects built around each character's kit and silhouette.",
             image: "https://cdn.tdgamestudio.com/landing/images/3067c837-e030-403f-b7c5-0c7246bfe15f.png",
           },
           {
-            title: "Buffs & auras",
-            description:
-              "Looping overlays and support effects that stay readable at mobile scale.",
-            image: "https://cdn.tdgamestudio.com/landing/images/95bff405-e638-4cec-9260-e5c9af46f49b.png",
-          },
-          {
-            title: "Ambient world VFX",
+            title: "Environment VFX",
             description:
               "Weather hints, glows, and environmental motion that sell mood.",
             image: "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
           },
           {
-            title: "UI feedback",
+            title: "UI & Feedback VFX",
             description:
               "Reward bursts, level-up sparks, and HUD-safe treatments.",
             image: "https://cdn.tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
           },
           {
-            title: "Atlas delivery",
+            title: "Cinematic VFX",
+            description:
+              "Atmospheric overlays and mood-driven effects for cutscenes and key moments.",
+            image: "https://cdn.tdgamestudio.com/landing/images/95bff405-e638-4cec-9260-e5c9af46f49b.png",
+          },
+          {
+            title: "Unity & Spine Integration",
             description:
               "Packed sheets, pivots, and integration notes for your shaders and tools.",
             image: "https://cdn.tdgamestudio.com/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",

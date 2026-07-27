@@ -964,7 +964,7 @@ export default function HomePageLower() {
                 />
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <a
-                    href="#"
+                    href="/careers"
                     className="inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-[11px] font-black uppercase tracking-[0.18em] text-black transition-transform hover:scale-[1.02]"
                     style={{ backgroundColor: ACCENT }}
                   >
@@ -984,7 +984,7 @@ export default function HomePageLower() {
                     </svg>
                   </a>
                   <a
-                    href="#"
+                    href="/contact"
                     className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-[11px] font-black uppercase tracking-[0.18em] text-white/90 transition-colors hover:bg-white/10"
                   >
                     Contact us
@@ -1117,14 +1117,14 @@ export default function HomePageLower() {
               />
               <div className="mt-6 flex flex-wrap gap-3">
                 <a
-                  href="#"
+                  href="/contact"
                   className="inline-flex items-center justify-center rounded-full px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black transition-transform hover:scale-[1.02]"
                   style={{ backgroundColor: ACCENT }}
                 >
                   Get a quote
                 </a>
                 <a
-                  href="#"
+                  href="/contact"
                   className="inline-flex items-center justify-center rounded-full border border-white/18 bg-transparent px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   Contact
