@@ -45,6 +45,10 @@ next-env.d.ts
 # supabase temp
 supabase/.temp/
 
+# playwright-mcp artifacts (console logs, page snapshots, test screenshots)
+.playwright-mcp/
+*-test.png
+
 # script backups
 .media-replace-backup.json
 scripts/.gif-to-mp4-map.json

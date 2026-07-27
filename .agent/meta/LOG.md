@@ -1,5 +1,22 @@
 # LOG
 
+## 2026-07-27 (session — dọn repo)
+### Task
+Dọn artifact rác của playwright-mcp khỏi repo.
+
+### Work Done
+- Xoá `.playwright-mcp/` (10 file đã bị commit từ 2026-05 + 14 file untracked mới)
+  và `portfolio-hero-test.png`
+- `.gitignore`: thêm `.playwright-mcp/` và `*-test.png`
+
+### Result
+`git status` sạch, không còn artifact lảng vảng mỗi lần chạy playwright.
+
+### Next Step
+Không có task tồn đọng.
+
+---
+
 ## 2026-07-27 (session — USP & CTA audit)
 ### Task
 Rà soát USP + CTA toàn site, đề xuất và áp dụng nhóm ưu tiên 1–2.

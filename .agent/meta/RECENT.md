@@ -80,7 +80,24 @@ Rà soát USP + CTA toàn site, đề xuất và áp dụng nhóm ưu tiên 1–
   `https://www.tdgamestudio.com` → sửa lại non-www ở CLAUDE.md ×2 + PROJECT.md
   (curl vào www trả 301 làm verify hụt 2 lần trong session này)
 
-### Bài học
+### Task ma thứ 2 — CLAUDE.md "Current Task Priority" stale nặng
+Sếp hỏi "tưởng xong hết rồi mà" → verify bằng curl/ls thay vì đọc doc:
+- `/api/jobs` trả job thật, `/careers` 200, `/hr` 200 → **Careers xong lâu rồi**
+  (migration `20260524120000_careers_schema.sql`), doc vẫn ghi `jobs`/`applications`
+  "(sắp tạo)"
+- Admin thực tế **13 tab** (Blog, Careers, Footer, PageSlots, Settings, Spine, Team…),
+  doc ghi 6
+- `/api/hr/*` (applications, jobs, remind, upload) + HR dashboard — doc không nhắc
+- Env `AI_BASE_URL/AI_API_KEY/AI_MODEL` đã có trên VPS → task "set env AI_*" cũng xong
+→ Viết lại CLAUDE.md: admin tabs, bảng DB (thêm blog_posts/jobs/applications/page_slots),
+  mục HR Dashboard, và thay "Current Task Priority" bằng cảnh báo verify-trước-khi-tin.
+
+### Bài học (cập nhật)
+- **Hai task ma trong một session** đều do doc stale. Quy tắc mới: trước khi bắt tay
+  vào "task còn lại" trong CLAUDE.md/TASKS.md, verify bằng `curl` production hoặc
+  `ls` source. Doc là gợi ý, không phải sự thật.
+
+### Bài học (cũ)
 - CLAUDE.md stale dẫn tới cả một task ma. Trước khi "sửa nội dung", verify xem
   file đó có thực sự được render không (`grep` chỗ dùng, hoặc curl API production).
 
