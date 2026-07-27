@@ -130,7 +130,7 @@ URL: `/admin` — key: `x-admin-key: <ADMIN_SECRET>`
 | Hạng mục | Trạng thái |
 |----------|-----------|
 | Build | ✅ Pass |
-| Production deploy | ✅ Live: https://www.tdgamestudio.com |
+| Production deploy | ✅ Live: https://tdgamestudio.com |
 | PM2 + Nginx + SSL | ✅ Online, auto-restart |
 | Supabase migrations | ✅ Applied |
 | Media pipeline R2 | ✅ 100% Behance migrated → cdn.tdgamestudio.com |

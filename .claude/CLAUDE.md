@@ -1,6 +1,6 @@
 # Agent Rules — tdgames-landingpage
 
-Next.js 16 App Router landing page cho TD Games Studio. Production: https://www.tdgamestudio.com
+Next.js 16 App Router landing page cho TD Games Studio. Production: https://tdgamestudio.com
 
 **Stack:** Next.js 16, Tailwind v4 (CSS variables, không có tailwind.config.js), TypeScript, Supabase (PostgreSQL), Cloudflare R2 CDN (`cdn.tdgamestudio.com`), Framer Motion, PM2 trên VPS.
 
@@ -94,7 +94,7 @@ Sau đó cập nhật ngay:
 | Item | Giá trị |
 |------|---------|
 | Dev URL | http://localhost:3000 |
-| Production | https://www.tdgamestudio.com |
+| Production | https://tdgamestudio.com |
 | Admin | /admin (key: ADMIN_SECRET trong .env.local) |
 | VPS | `ssh root@vps6core` → `/opt/tdgames-landingpage` |
 | PM2 | `pm2 restart tdgames-landingpage` |

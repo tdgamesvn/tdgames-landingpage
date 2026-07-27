@@ -52,7 +52,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **TD Games Studio** landing page — Next.js 16 (App Router), Tailwind CSS v4, TypeScript, Supabase (PostgreSQL), Cloudflare R2 CDN.
 
-- **Production:** https://www.tdgamestudio.com
+- **Production:** https://tdgamestudio.com
 - **Dev server:** `npm run dev` → http://localhost:3000
 - **Admin UI:** `/admin` (requires `ADMIN_SECRET` from `.env.local` as `x-admin-key` header)
 - **GitHub:** https://github.com/tdgamesvn/tdgames-landingpage

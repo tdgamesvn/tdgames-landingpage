@@ -56,8 +56,26 @@ Rà soát USP + CTA toàn site, đề xuất và áp dụng nhóm ưu tiên 1–
   (WHY CHOOSE / stats không có trong HTML đầu — section dưới không SSR, verify bằng mắt)
 - Lưu ý: build local phải `dangerouslyDisableSandbox` vì next/font fetch Google Fonts
 
-### Còn treo
-- P4: blog 6/12 bài về 3D, loãng SEO "2D game art outsourcing"
+### P4 hoá ra là TASK MA — `site.json → blog.posts` là dead data
+- Định làm "viết lại 6/12 bài blog về 3D", đã viết xong 5 bài mới vào `site.json`…
+  rồi mới phát hiện `blog.posts` **không được render ở đâu cả**.
+- Blog thật đọc từ Supabase `blog_posts` qua `GET /api/blog` (`src/app/blog/page.tsx`
+  fetch client-side). Production đang có **8 bài, tất cả đúng định vị 2D**
+  (`why-2d-animation-still-rules-game-art`, `from-sketch-to-sprite-our-2d-art-pipeline`,
+  `frame-by-frame-principles-of-game-animation`, `vfx-on-a-budget…`, …) — không bài 3D nào.
+- → Revert 5 bài vừa viết, **xoá hẳn key `blog` khỏi `site.json`** (184 dòng dead data)
+  + xoá `BlogPost` khỏi `src/types/site-content.ts`. Chính nó là thứ khiến audit tin
+  nhầm là blog còn placeholder/3D.
+- **Sitemap**: phát hiện blog detail pages chưa từng có trong sitemap → thêm, đọc
+  `blog_posts` từ Supabase (try/catch, DB lỗi thì bỏ blog routes chứ không fail cả
+  sitemap). `sitemap()` chuyển thành async. Build ra 34 URL (10 static + 16 portfolio
+  + 8 blog).
+- Sửa `CLAUDE.md`: dòng "site.json là nguồn `blog.posts[]`" đã sai từ lâu → ghi rõ
+  blog nằm ở Supabase.
+
+### Bài học
+- CLAUDE.md stale dẫn tới cả một task ma. Trước khi "sửa nội dung", verify xem
+  file đó có thực sự được render không (`grep` chỗ dùng, hoặc curl API production).
 
 ---
 
