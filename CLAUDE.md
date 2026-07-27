@@ -90,15 +90,21 @@ node --env-file=.env.local scripts/replace-media-urls.mjs --apply  # apply
 
 ### Admin System (`/admin`)
 
-Hiện có **6 tabs** (`src/app/admin/_components/`):
-1. **Projects** — CRUD projects (Supabase `projects` table)
-2. **Project Content** — upload/replace ảnh trong case study files
-3. **Media Library** — quản lý `media_assets` table
-4. **Create** — tạo media entry mới
-5. **Bulk Replace** — chạy `replace-media-urls.mjs` qua API
-6. **Team** — quản lý `team[]` trong `site.json`
+**13 tabs** trong `src/app/admin/_components/`: Projects, ProjectContent, Media, Create,
+Bulk, Team, Blog, Careers, Footer, PageSlots, Settings, Spine (+ UploadZone/MediaPreview/
+SlotHint là component dùng chung). Đọc thư mục để biết danh sách hiện tại — đừng tin con
+số trong doc này.
 
-Admin API routes: `src/app/api/admin/*`, tất cả yêu cầu header `x-admin-key: <ADMIN_SECRET>`.
+Admin API routes: `src/app/api/admin/*` (applications, blog, footer, jobs, media,
+page-slots, project-content, settings, spine, spine-json, team, upload) — tất cả yêu cầu
+header `x-admin-key: <ADMIN_SECRET>`.
+
+### HR Dashboard (`/hr`)
+
+Trang tuyển dụng nội bộ, tách khỏi `/admin`: pipeline ứng viên kiểu ClickUp, candidate
+modal, comment, Discord notify, AI evaluation (`POST /api/hr/applications/[id]/evaluate`
+qua cliproxyapi — env `AI_BASE_URL` / `AI_API_KEY` / `AI_MODEL`, đã set trên VPS).
+API: `src/app/api/hr/*` (applications, jobs, remind, upload).
 
 ### Media Pipeline
 
@@ -125,24 +131,28 @@ Project ref: `zjunfcyymesfpeikspzf`
 |-------|---------|
 | `media_assets` | Track tất cả media (ảnh/video), trạng thái R2 migration |
 | `projects` | Portfolio projects hiển thị qua API |
-| `jobs` *(sắp tạo)* | Danh sách việc làm cho Careers page |
-| `applications` *(sắp tạo)* | Đơn ứng tuyển từ Careers form |
+| `blog_posts` | Bài blog (nguồn duy nhất — KHÔNG phải site.json) |
+| `jobs` | Việc làm cho Careers page |
+| `applications` | Đơn ứng tuyển (+ `ai_score`, `ai_evaluation` cho AI eval) |
+| `page_slots` | Ảnh/media theo slot từng trang (`src/lib/page-slots.ts`) |
+
+Migrations trong `supabase/migrations/`. Chạy `npx supabase migration list` để xem
+trạng thái thật thay vì tin bảng này.
 
 Server-side Supabase client: `src/lib/supabase-admin.ts` (dùng `SUPABASE_SERVICE_ROLE_KEY`).
 
 ## Current Task Priority
 
-**Next big feature: Careers** (spec đã thiết kế đầy đủ, session 10):
-1. DB: tạo `jobs` + `applications` tables (Supabase migration)
-2. API public: `GET /api/jobs`, `POST /api/applications`
-3. API admin: `CRUD /api/admin/jobs`, `GET+PATCH /api/admin/applications`
-4. Careers page: đọc từ DB, job detail panel + apply form inline
-5. Admin tab "7. Careers": sub-tab Jobs + Applications
-6. Telegram notification khi có ứng viên mới
+> ⚠️ Mục này từng stale rất nặng (2026-07-27: liệt kê Careers/Blog là "sắp làm"
+> trong khi cả hai đã chạy production nhiều tháng, gây ra 2 task ma). **Verify trước
+> khi tin**: `curl https://tdgamestudio.com/api/<route>`, `ls src/app/<route>`.
 
-**Các task nhỏ còn lại:**
-- ~~Blog placeholder~~ — đã xong từ trước, 8 bài thật trong Supabase `blog_posts`, đúng định vị 2D
-- Team: thay ảnh/tên placeholder → qua `/admin` tab "6. Team"
+Đã xong và đang chạy production: Careers (`/careers` + `/api/jobs` + `/api/applications`),
+HR dashboard (`/hr` + AI evaluation), Blog (Supabase, 8 bài), Page Slots, Admin 13 tabs.
+
+**Còn lại (nhỏ):**
+- Test end-to-end AI Evaluation trên `/hr` (env trên VPS đã set đủ)
+- Team: thay ảnh/tên placeholder → qua `/admin` tab Team
 - About: ảnh workspace thật (section "Our Workspace", hiện Unsplash)
 
 ## Memory Files

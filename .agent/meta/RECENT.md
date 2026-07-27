@@ -73,6 +73,13 @@ Rà soát USP + CTA toàn site, đề xuất và áp dụng nhóm ưu tiên 1–
 - Sửa `CLAUDE.md`: dòng "site.json là nguồn `blog.posts[]`" đã sai từ lâu → ghi rõ
   blog nằm ở Supabase.
 
+### Deploy đợt 2
+- Commit `0a8bf76` → push → VPS pull + build + `pm2 restart` (restart #89)
+- Verify: `curl https://tdgamestudio.com/sitemap.xml` → 34 `<url>`, có đủ 8 blog route ✅
+- Canonical domain là **non-www** (`www.` 301 → `tdgamestudio.com`). Docs đang ghi
+  `https://www.tdgamestudio.com` → sửa lại non-www ở CLAUDE.md ×2 + PROJECT.md
+  (curl vào www trả 301 làm verify hụt 2 lần trong session này)
+
 ### Bài học
 - CLAUDE.md stale dẫn tới cả một task ma. Trước khi "sửa nội dung", verify xem
   file đó có thực sự được render không (`grep` chỗ dùng, hoặc curl API production).

@@ -6,9 +6,14 @@ _(empty)_
 
 ## To do
 
-- [ ] Test end-to-end AI Evaluation trên /hr + set env AI_* trên VPS khi deploy
+- [ ] Team: thay ảnh/tên placeholder (qua /admin tab Team)
+- [ ] About: ảnh workspace thật (hiện dùng Unsplash)
 
 ## Done
+
+- [x] Dọn doc stale (2026-07-27): CLAUDE.md ghi Careers/jobs/applications "sắp tạo"
+  trong khi đã production từ 2026-05-24; admin 6 tab → thực tế 13; thiếu mục /hr.
+  Task "test AI Eval + set env VPS" cũng đã xong từ LOG 2026-07-09 (verified 200).
 
 - [x] Dọn dead data blog (2026-07-27): `blog` trong site.json không render ở đâu
   (blog thật ở Supabase `blog_posts`) → xoá 184 dòng + type `BlogPost`;
