@@ -4,6 +4,23 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-07-27 (session — dọn repo)
+### Task
+Dọn artifact rác của playwright-mcp khỏi repo.
+
+### Work Done
+- Xoá `.playwright-mcp/` (10 file đã bị commit từ 2026-05 + 14 file untracked mới)
+  và `portfolio-hero-test.png`
+- `.gitignore`: thêm `.playwright-mcp/` và `*-test.png`
+
+### Result
+`git status` sạch, không còn artifact lảng vảng mỗi lần chạy playwright.
+
+### Next Step
+Không có task tồn đọng.
+
+---
+
 ## 2026-07-27 (session — USP & CTA audit)
 ### Task
 Rà soát USP + CTA toàn site, đề xuất và áp dụng nhóm ưu tiên 1–2.
@@ -693,29 +710,6 @@ Footer editable qua Admin + Social links + Blog section homepage
 ### Result
 - Homepage blog section hiển thị bài thật từ DB
 - Footer: địa chỉ, email, Discord, LinkedIn/Facebook/Instagram/Behance/ArtStation đều edit được qua `/admin` → "9. Footer"
-
----
-
-## 2026-05-24 (session 11)
-### Task
-Blog feature — deploy và fix build error
-
-### Work Done
-- Phát hiện: Blog API routes (`/api/blog`, `/api/admin/blog`) chưa được commit từ session trước → production không có blog
-- Committed toàn bộ blog feature: API routes, BlogTab admin, updated blog pages, migration file (commit 1fed8d5)
-- Build fail do 4 files dùng `createSupabaseAdmin` (không tồn tại) thay vì `getSupabaseAdmin`
-- Fix import trong 4 files, commit + push (commit 8ba7635)
-- Deploy VPS: build 43 pages ✅, PM2 online ✅
-- Seeded 8 bài blog thật vào Supabase `blog_posts` (published=true)
-
-### Result
-- `GET /api/blog` trả về 8 posts ✅ (verified production)
-- `/blog` page hiển thị 8 bài với filter tags: Animation, Art Pipeline, VFX, Case Study, Studio Life, Art Direction, Guide
-- Admin tab "8. Blog" live tại /admin
-
-### Next Step
-- Team: thay ảnh/tên placeholder qua `/admin` tab "6. Team"
-- About: ảnh studio workspace thật
 
 ---
 
