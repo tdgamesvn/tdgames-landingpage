@@ -44,9 +44,16 @@ Rà soát USP + CTA toàn site, đề xuất và áp dụng nhóm ưu tiên 1–
   nằm gọn trong 1200+)
 - `npx tsc --noEmit` clean
 
+### Deploy
+- Commit `67dc61f` → push main (pre-push typecheck pass)
+- VPS: `git pull` → `npm run build` → `pm2 restart tdgames-landingpage` (restart #87, online)
+- Verify prod: `curl -sL https://www.tdgamestudio.com` → "Get a Free Quote" ×2,
+  "View Our Work" ×1, "2D ART &amp; ANIMATION" ✅
+  (WHY CHOOSE / stats không có trong HTML đầu — section dưới không SSR, verify bằng mắt)
+- Lưu ý: build local phải `dangerouslyDisableSandbox` vì next/font fetch Google Fonts
+
 ### Còn treo
 - P4: blog 6/12 bài về 3D, loãng SEO "2D game art outsourcing"
-- Chưa commit / chưa deploy
 
 ---
 
