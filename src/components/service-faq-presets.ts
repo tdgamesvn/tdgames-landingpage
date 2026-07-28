@@ -1,100 +1,165 @@
 import type { ServiceFaqItem } from "@/components/service-faq-section";
 
+// ponytail: chỉ 2 câu cuối dùng chung cho cả 3 service (NDA + get started).
+// "What files" và "How much" KHÔNG shared — file bàn giao và cấu trúc giá khác nhau thật.
+const sharedClosingFaqItems: ServiceFaqItem[] = [
+  {
+    question: "Do you sign an NDA?",
+    answer:
+      "Yes—ask and we will have one signed the same day, working from your template or ours. Either way, briefs, references, and unreleased assets stay inside the assigned team, and nothing appears in our portfolio or marketing without your written approval.",
+  },
+  {
+    question: "How do we get started?",
+    answer:
+      "Send your brief, target style references, and technical constraints, and we reply within 24 hours. Most clients begin with a paid trial batch—a small paid deliverable that calibrates style and pipeline before you commit to full production.",
+  },
+];
+
+// ponytail: cùng một đoạn "why TD Games" cho cả 3, chỉ khác vế track record.
+// Số liệu lấy từ home-page-lower.tsx (70+ projects / 12+ clients / 1200+ assets).
+const timezoneAdvantage =
+  "Our team works GMT+7: same-day turnaround with studios across Asia and Australia, an afternoon overlap with Europe, and overnight turnaround for North America—feedback you send at the end of your day is actioned before your next morning.";
+
 export const service2DArtFaqItems: ServiceFaqItem[] = [
   {
-    question: "What Is 2D Art?",
+    question: "What is 2D art in game production?",
     answer:
-      "2D art involves creating visual content in two dimensions, such as illustrations, characters, and backgrounds. It’s a fundamental aspect of storytelling in gaming, animation, and various creative projects.",
+      "Illustration, character and prop design, environments, and UI art—the visual layer players read before they read anything else. In games it also carries a production job: every asset has to survive export, resolution targets, and a style guide it did not author.",
   },
   {
-    question: "What Is a 2D Art Style?",
+    question: "What is a 2D art style?",
     answer:
-      "A 2D art style is the shared visual language for your product: color palette, line weight, shading approach, proportions, and how detail is simplified. A strong style keeps every asset—heroes, UI, props, and environments—reading as one coherent world and speeds up approvals and production.",
+      "The shared visual language for your product: palette, line weight, shading approach, proportions, and how detail simplifies at small sizes. A locked style keeps heroes, UI, props, and environments reading as one world—and it is what makes approvals fast instead of subjective.",
   },
   {
-    question: "What Are the Stages of 2D Art?",
+    question: "What are the stages of a 2D art pipeline?",
     answer:
-      "A common pipeline runs from direction and references, through mood boards and rough concepts, then optional line work, color and lighting passes, polish, and finally export-ready delivery (layers, specs, and formats your team needs). The exact steps flex with your milestone plan and art direction.",
+      "Direction and references, mood boards, rough concepts, line work where the style calls for it, colour and lighting passes, polish, then export-ready delivery. The steps flex with your milestone plan; the review gates do not.",
   },
   {
-    question: "How Much Time Does the First 2D Sketch Take?",
+    question: "Can you match our existing art style?",
     answer:
-      "It depends on how tight the brief is, the complexity of the subject, and the level of finish you need. A fast exploration can be a short cycle; a hero-quality first read or marketing-ready frame takes longer. We scope time per milestone after we align on references, resolution, and deliverables.",
+      "Yes—that is most of our work. We start from your style guide and shipped in-game assets, then lock shape language and palette rules on a small batch before scaling. New assets should be indistinguishable from what your team already made.",
   },
   {
-    question: "How to Hire 2D Game Artists?",
+    question: "How do you keep quality consistent across a large batch?",
     answer:
-      "Start with a clear style brief and list of deliverables (formats, resolutions, naming). Review portfolios for work that matches your target look and production quality. When possible, run a small paid trial on a representative task. Agree up front on milestones, revision rounds, communication cadence, and handoff rules before scaling volume.",
+      "An art lead owns the style bible and reviews every asset against it before delivery. Batches ship against a fixed naming convention and export spec, so consistency is enforced by process rather than by hoping each artist remembers.",
   },
   {
-    question: "Why Outsource 2D Art Services to TD Games?",
-    answer:
-      "Outsourcing gives you flexible capacity, access to experienced illustrators and art leads, and predictable costs tied to milestones instead of long hiring cycles. With TD Games you get clear art direction, disciplined export standards, and a team that can scale with your roadmap—so your in-house crew stays focused on creative direction, integration, and shipping.",
+    question: "Why outsource 2D art to TD Games?",
+    answer: `Two concrete reasons. Track record: 70+ projects completed, 1200+ assets delivered, and 12+ studios who came back for the next one. Time zone: ${timezoneAdvantage}`,
   },
+  {
+    question: "How much does 2D art cost?",
+    answer:
+      "Cost tracks complexity and volume, not a flat per-asset rate—a background prop and a hero splash illustration are different jobs. Send us the brief and target style and you get a scoped quote within 24 hours.",
+  },
+  {
+    question: "How long does a 2D art batch take?",
+    answer:
+      "A small batch of props or icons is a much shorter cycle than a hero-quality character sheet with variants. We commit to a delivery date with the quote, once references, resolution, and deliverables are locked—so you get a date before you sign, not after.",
+  },
+  {
+    question: "What files do you deliver?",
+    answer:
+      "Layered sources where agreed, flattened exports at your target resolutions, and usage notes covering any variant or recolour rules. Naming follows the convention agreed at the brief stage, so new assets slot into your existing library.",
+  },
+  ...sharedClosingFaqItems,
 ];
 
 export const service2DAnimationFaqItems: ServiceFaqItem[] = [
   {
     question: "What does 2D animation cover for games?",
     answer:
-      "Gameplay loops (idle, walk, attack), UI motion, promo cuts, and Spine or frame-based deliveries—scoped to your engine, resolution, and performance targets.",
+      "Gameplay loops (idle, walk, attack, hit reactions), UI motion, promo cuts, and Spine or frame-based delivery—scoped to your engine, resolution, and performance targets from the first conversation.",
   },
   {
-    question: "Spine vs frame-by-frame—which do you use?",
+    question: "Spine or frame-by-frame—which do you use?",
     answer:
       "We match the pipeline to the product: Spine for scalable gameplay sets, frame-by-frame when the brief needs drawn smear frames or a specific illustrated look. Many projects mix both.",
   },
   {
     question: "How do you keep motion readable on small screens?",
     answer:
-      "We bias silhouette, contrast, and hold frames; test timing against UI scale; and avoid micro-details that disappear at target resolution.",
+      "We bias silhouette, contrast, and hold frames, test timing against actual UI scale, and drop micro-detail that disappears at target resolution.",
   },
   {
-    question: "What files do you deliver?",
+    question: "Can you animate to our existing rigs and style?",
     answer:
-      "Typical handoffs include project sources where agreed, exported atlases or sequences, naming conventions, pivot notes, and a short integration checklist for your engineers.",
+      "Yes. We work to your rig structure, bone naming, and style guide rather than importing ours. If a rig needs changes to support a move, we flag it before animating, not after.",
   },
   {
     question: "How many revision rounds are typical?",
     answer:
-      "We structure reviews around blocking, timing, and polish gates so feedback stays efficient. Exact rounds are agreed per milestone in the statement of work.",
+      "Reviews are structured around blocking, timing, and polish gates so feedback lands while it can still be acted on cheaply. Exact rounds are agreed per milestone in the statement of work.",
   },
   {
     question: "Why work with TD Games on animation?",
-    answer:
-      "You get directors who understand game constraints, consistent quality across sets, and schedules tied to production reality—so animation ships without thrash.",
+    answer: `Two concrete reasons. Track record: 70+ projects completed, 1200+ assets delivered, and 12+ studios who came back for the next one. Time zone: ${timezoneAdvantage}`,
   },
+  {
+    question: "How much does 2D animation cost?",
+    answer:
+      "Cost depends on the number of animations, their complexity, and the rig they run on—an idle-and-attack pair is a different scope than a full combat chain with transitions and hit reactions. We quote per set after a scoping call, and you get a number within 24 hours.",
+  },
+  {
+    question: "How long does an animation set take?",
+    answer:
+      "A single gameplay loop is a much shorter cycle than a full combat chain across multiple characters. We commit to a delivery date with the quote, once the rig and brief are locked—so you get a date before you sign, not after.",
+  },
+  {
+    question: "What files do you deliver?",
+    answer:
+      "Spine project sources where agreed, exported atlases or frame sequences, pivot notes, and a short integration checklist for your engineers. Naming follows the convention agreed at the brief stage.",
+  },
+  ...sharedClosingFaqItems,
 ];
 
 export const service2DVfxFaqItems: ServiceFaqItem[] = [
   {
     question: "What counts as 2D VFX in games?",
     answer:
-      "Sprite or flipbook bursts, trails, impacts, buffs, screen accents, and UI-adjacent flashes—authored to read in motion and stay within atlas budgets.",
+      "Sprite and flipbook bursts, trails, impacts, buffs, screen accents, and UI-adjacent flashes—authored to read in motion and stay inside atlas budgets.",
   },
   {
-    question: "How do you balance flash vs clarity?",
+    question: "How do you balance flash against clarity?",
     answer:
-      "We tier intensity (normal vs elite vs ultimate), cap simultaneous overlays, and tune color contrast so characters and telegraphs stay legible.",
+      "We tier intensity (normal, elite, ultimate), cap simultaneous overlays, and tune colour contrast so characters and telegraphs stay legible. An effect that hides the gameplay it is celebrating has failed.",
   },
   {
     question: "Can VFX match our existing art style?",
     answer:
-      "Yes. We start from your style guide and in-game references, then lock shape language and palette rules before building libraries.",
+      "Yes. We start from your style guide and in-game references, then lock shape language and palette rules before building any library.",
   },
   {
-    question: "How are effects optimized?",
+    question: "How are effects optimised?",
     answer:
-      "Through atlas packing, frame culling, particle budget targets, and early tests on representative devices or profiles you provide.",
+      "Atlas packing, frame culling, particle budget targets, and early tests on representative devices or device profiles. We agree the budget before authoring, so optimisation is a constraint we design against rather than a rescue pass at the end.",
   },
   {
     question: "Do you provide variants and reuse?",
     answer:
-      "Libraries are built with recolor tiers, scale variants, and modular layers where possible so teams can stretch content across characters and skills.",
+      "Libraries are built with recolour tiers, scale variants, and modular layers wherever the art allows, so your team can stretch one authored effect across multiple characters and skills.",
   },
   {
     question: "Why outsource VFX to TD Games?",
-    answer:
-      "You ship faster with a team used to game-ready delivery: strong timing, disciplined exports, and effects tuned for real devices—not just concept frames.",
+    answer: `Two concrete reasons. Track record: 70+ combat effects, 40+ ambient VFX sets, and 50+ UI VFX delivered across 70+ shipped projects. Time zone: ${timezoneAdvantage}`,
   },
+  {
+    question: "How much does 2D VFX cost?",
+    answer:
+      "Cost tracks effect complexity and set size—a single hit-spark is a smaller scope than a layered elemental skill effect with multiple frames and colour variants. We quote per effect or per set after a scoping call, and you get a number within 24 hours.",
+  },
+  {
+    question: "How long does a VFX set take?",
+    answer:
+      "A small set of hits and impacts is a much shorter cycle than a skill-effect package with multiple elements and variants. We commit to a delivery date with the quote, once creative direction and the technical budget are locked—so you get a date before you sign, not after.",
+  },
+  {
+    question: "What files do you deliver?",
+    answer:
+      "Packed atlas sheets, pivot data, and engine-ready hooks for your target, plus usage notes covering how variants and recolours are meant to be applied. Naming follows the convention agreed at the brief stage, so new effects drop into your existing library.",
+  },
+  ...sharedClosingFaqItems,
 ];
