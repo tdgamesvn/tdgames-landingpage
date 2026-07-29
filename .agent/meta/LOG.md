@@ -1495,3 +1495,26 @@ lớn trùng bộ VFX), đổi label `Character Art` → `Art`. **Giữ nguyên 
 không có row nào cho slot này nên không cần dọn dữ liệu).
 Verified prod: HTML không còn "Character Art"/tab Environment; chuỗi
 "Environments" còn lại là mô tả service card, không liên quan.
+
+### Bổ sung — card "What we do" 3 trang service vào Page Slots
+Sếp hỏi chỉnh 6 ảnh section "OUR 2D ART SERVICES" ở đâu trong admin → **chưa có
+đường nào**, hardcode trong `src/app/services/<slug>/page.tsx`. Trang chủ đã đọc
+`service-card` từ Page Slots từ lâu (`home-services-section.tsx:70`) nhưng 3
+trang service bị bỏ sót. Sếp chọn phương án B (đưa vào admin).
+
+**Work Done**
+- `page-slots.ts`: thêm `resolveServiceCards(page, defaults)` — đọc slot
+  `service-card`, map `url→image`, `display_name→title`, `display_label→description`.
+  Slot rỗng / DB lỗi → trả nguyên defaults.
+- 3 trang service: mảng `items` inline → const `DEFAULT_CARDS` top-level,
+  `items: cards` với `cards = await resolveServiceCards(slug, DEFAULT_CARDS)`.
+  Trang vốn đã là async server component (đang `await resolveSlot` cho hero) nên
+  không đổi kiến trúc.
+- `PageSlotsTab.tsx`: `service-card` vào QUICK_SLOTS của cả 3 trang service.
+- Seed 18 row (id 65-82) lấy từ chính data hardcode → admin hiện sẵn 6 card/trang.
+
+**Result** CI xanh, prod render đủ 6 card cả 3 trang (verified qua curl HTML).
+
+**Lưu ý cho lần sau:** `display_label` đang dùng làm *description* của card ở
+slot `service-card` — khác ngữ nghĩa "label" ở slot khác. Đổi tên cột là đụng
+mọi slot nên để nguyên, đọc comment trong `resolveServiceCards` trước khi sửa.

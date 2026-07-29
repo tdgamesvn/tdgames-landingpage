@@ -13,6 +13,12 @@ _(empty)_
 
 ## Done
 
+- [x] Card "What we do" 3 trang service vào Page Slots (2026-07-29):
+  `resolveServiceCards()`, seed 18 row id 65-82, admin quick slot `service-card`.
+
+- [x] ART SHOWCASE trang chủ còn 3 tag Art/Animation/VFX (2026-07-29): bỏ nhóm
+  Environment, đổi nhãn Character Art → Art (giữ id `character-art`).
+
 - [x] Logo header/footer vào Page Slots (2026-07-29): hook `useSlotUrl()` dùng chung,
   header + footer đọc slot `global/brand-logo`, fallback `BRAND_LOGO_FALLBACK`.
   Admin thêm page "Global (header + footer)". Seed row id 49.
