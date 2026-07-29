@@ -1592,3 +1592,15 @@ mượn ảnh cũ** — sếp thay được từ admin, không cần deploy.
 - `Cinematic` = **trailer / motion graphics** marketing là chính.
 - `3D Animation` = bonus, "có làm nhưng không mạnh, vẫn nhận nếu có cơ hội" →
   mô tả viết "on request", không quảng cáo là thế mạnh.
+
+### Bổ sung — hiện mô tả card khi hover (3 trang service)
+Phát hiện khi verify: `ServiceCapabilitiesGrid` **chỉ render tiêu đề**, trường
+`description` có trong data (site + DB) nhưng không hiển thị ở đâu cả — nên loạt
+mô tả sửa trước đó không ai đọc được. Bài học: kiểm component render gì TRƯỚC khi
+ngồi viết nội dung cho một field.
+
+Fix 1 file dùng chung → cả Art / Animation / VFX cùng có:
+`<p>` ẩn mặc định (`max-h-0` + `text-white/0`), `group-hover` mở ra
+(`max-h-24`, `text-white/75`), transition 300ms. Khung nhãn thêm `right-4` +
+`max-w-full` để mô tả dài không tràn mép ảnh trên mobile.
+Verified prod: cả 3 trang có markup hover + text mô tả trong HTML.
