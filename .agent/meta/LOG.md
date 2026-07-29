@@ -22,6 +22,22 @@ row). Thêm nữa, cả 2 dropdown slot trong `PageSlotsTab.tsx` đều thiếu 
 Trang chủ giờ đọc logo từ DB; `FALLBACK_CLIENT_LOGOS` giữ lại làm lưới an toàn
 khi API lỗi. Chưa commit/deploy — chờ sếp review dev.
 
+### Bổ sung — deploy: hoá ra đã tự động từ lâu
+Sếp hỏi có cách deploy nhanh hơn không. Kiểm tra: `.github/workflows/deploy.yml`
+**đã có auto-deploy on push từ 2026-05-23** (ssh-action → pull → npm i → build →
+pm2 restart, ~1m30s). Doc `CLAUDE.md` ghi "Deploy (manual, trên VPS)" → agent
+các session trước cứ ssh build tay sau khi push.
+
+Đó cũng chính là nguyên nhân 4/5 run gần nhất fail sau ~26s: build tay chạy
+song song với CI → `⨯ Another next build process is already running`. Prod vẫn
+đúng vì build tay hoàn tất, nhưng CI đỏ.
+
+Fix: `deploy.yml` thêm `concurrency: {group: deploy-vps, cancel-in-progress: false}`
+(không cancel — kill giữa chừng để lại lock) + `workflow_dispatch` để chạy lại
+tay. `CLAUDE.md` viết lại mục Deploy: push xong là xong, KHÔNG ssh build tay.
+
+Commit `445b88c` → CI xanh, deploy 1m30s không cần thao tác gì.
+
 ### Next Step
 Sếp thay 5 logo tạm bằng logo khách thật ngay trong tab Page Slots.
 
