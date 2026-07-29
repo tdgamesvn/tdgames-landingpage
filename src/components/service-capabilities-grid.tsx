@@ -76,16 +76,26 @@ export default function ServiceCapabilitiesGrid({
                 {/* Gradient & overlay content */}
                 <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14141a]/90 via-transparent to-transparent opacity-90" />
 
-                <div className="pointer-events-none absolute bottom-4 left-4">
+                {/* right-4: chặn khung tràn mép ảnh khi mô tả dài trên mobile. */}
+                <div className="pointer-events-none absolute bottom-4 left-4 right-4">
                   <div
-                    className="inline-flex items-center rounded-xl border border-[#ff8c3a]/35 bg-black/45 px-4 py-2 shadow-[0_18px_50px_rgba(0,0,0,0.35)] backdrop-blur"
+                    className="inline-flex max-w-full items-center rounded-xl border border-[#ff8c3a]/35 bg-black/45 px-4 py-2 shadow-[0_18px_50px_rgba(0,0,0,0.35)] backdrop-blur"
                   >
-                    <h3
-                      className="text-sm font-black uppercase tracking-[0.08em] text-[#ffcc8e] md:text-base"
-                      style={{ fontFamily: "var(--font-rajdhani)" }}
-                    >
-                      {item.title}
-                    </h3>
+                    <div>
+                      <h3
+                        className="text-sm font-black uppercase tracking-[0.08em] text-[#ffcc8e] md:text-base"
+                        style={{ fontFamily: "var(--font-rajdhani)" }}
+                      >
+                        {item.title}
+                      </h3>
+                      {/* Mô tả chỉ hiện khi hover — max-h + opacity để có
+                          transition mượt (max-h không animate được từ 'auto'). */}
+                      {item.description ? (
+                        <p className="max-h-0 max-w-[42ch] overflow-hidden text-xs leading-relaxed text-white/0 transition-all duration-300 group-hover:mt-1.5 group-hover:max-h-24 group-hover:text-white/75">
+                          {item.description}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>
