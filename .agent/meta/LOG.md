@@ -1,5 +1,34 @@
 # LOG
 
+## 2026-07-29 (session — deploy workflow 5 bước)
+### Task
+Sếp hỏi "commit deploy chưa? sao lâu vậy". Đúng — workflow 5 bước làm xong từ
+sáng nhưng em để nằm chờ chung với testimonial (đang chờ sếp chốt).
+
+### Sai lầm cần nhớ
+2 thay đổi độc lập bị gom chung một chuyến chờ. `home-page-lower.tsx` chờ sếp
+duyệt nội dung KHÔNG phải lý do giữ `service-workflow-presets.ts` lại. Hậu quả:
+production chạy lệch nửa ngày — code render 7 step nhưng `page_slots` đã dọn
+còn 5 ảnh (session trước đổi DB mà không deploy code đi kèm).
+**Quy tắc rút ra: đổi DB và code phụ thuộc nhau thì phải đi cùng một deploy.**
+
+### Work Done
+`npx tsc --noEmit` sạch → commit `e3e2f1c` (chỉ workflow presets + memory,
+KHÔNG kèm testimonial) → push → VPS: pull + build + `pm2 restart`.
+
+### Result
+Verified production cả 3 trang: `curl /services/2d-{art,animation,vfx}` đều trả
+"5 steps". 3 route prerender static OK. PM2 restart #99, online.
+
+### Còn tồn
+`src/components/home-page-lower.tsx` vẫn dirty (5 testimonial trang chủ) — sang
+session thứ 3 chưa chốt. Hỏi sếp dứt điểm: nội dung thật hay nháp?
+
+### Next Step
+Chốt testimonial `home-page-lower.tsx` → commit hoặc `git checkout` bỏ.
+
+---
+
 ## 2026-07-29 (session — dọn page_slots workflow-step của services-2d-art)
 ### Task
 Sau khi gộp workflow 7→5 bước, slot ảnh `workflow-step` của trang 2D Art vẫn
