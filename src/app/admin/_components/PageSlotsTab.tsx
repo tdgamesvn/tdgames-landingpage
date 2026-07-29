@@ -461,6 +461,7 @@ export function PageSlotsTab({ adminKey }: Props) {
             <option value="gallery">gallery</option>
             <option value="client-logos">client-logos</option>
             <option value="brand-logo">brand-logo</option>
+            <option value="featured-card">featured-card</option>
           </select>
           {/* BG URL + upload */}
           <div className="flex min-w-48 flex-1 gap-1.5">
@@ -532,9 +533,9 @@ const QUICK_SLOTS: Record<string, string[]> = {
   portfolio: ["hero-carousel"],
   about: ["hero"],
   careers: ["hero"],
-  "services-2d-art": ["hero", "service-card", "workflow-step"],
-  "services-2d-animation": ["hero", "service-card", "workflow-step"],
-  "services-2d-vfx": ["hero", "service-card", "workflow-step"],
+  "services-2d-art": ["hero", "service-card", "featured-card", "workflow-step"],
+  "services-2d-animation": ["hero", "service-card", "featured-card", "workflow-step"],
+  "services-2d-vfx": ["hero", "service-card", "featured-card", "workflow-step"],
 };
 
 function QuickUpload({

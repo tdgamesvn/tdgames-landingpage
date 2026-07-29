@@ -57,6 +57,26 @@ export async function resolveServiceCards(
 }
 
 /**
+ * Card "Featured showcase" của 3 trang service — slot `featured-card`.
+ * Map: url → image, display_name → title, display_label → description.
+ * `statValue`/`statLabel`/`icon`/`href` không có cột tương ứng trong page_slots
+ * nên lấy theo index từ defaults — sếp cần sửa số liệu thì phải sửa code.
+ */
+export async function resolveFeaturedCards<T extends { title: string; description: string; image: string }>(
+  page: string,
+  defaults: T[],
+): Promise<T[]> {
+  const items = await resolveSlots(page, "featured-card");
+  if (!items.length) return defaults;
+  return items.map((it, i) => ({
+    ...(defaults[i] ?? defaults[0]),
+    image: it.url,
+    title: it.display_name || defaults[i]?.title || "",
+    description: it.display_label || defaults[i]?.description || "",
+  }));
+}
+
+/**
  * Resolve all items for a carousel slot (for Server Components).
  * Returns empty array if not found.
  */

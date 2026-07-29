@@ -1,5 +1,6 @@
 import ServiceFeaturedShowcaseSection from "@/components/service-featured-showcase-section";
 import type { StudioServiceCard } from "@/components/studio-service-cards";
+import { resolveFeaturedCards } from "@/lib/page-slots";
 
 // ponytail: statValue/statLabel are placeholder numbers, sếp sẽ thay bằng số liệu thật sau.
 const featured2DArtShowcaseCards: StudioServiceCard[] = [
@@ -35,7 +36,8 @@ const featured2DArtShowcaseCards: StudioServiceCard[] = [
   },
 ];
 
-export default function Service2DArtFeaturedShowcase() {
+export default async function Service2DArtFeaturedShowcase() {
+  const cards = await resolveFeaturedCards("services-2d-art", featured2DArtShowcaseCards);
   return (
     <ServiceFeaturedShowcaseSection
       id="featured-2d-art"
@@ -43,7 +45,7 @@ export default function Service2DArtFeaturedShowcase() {
       railLabel="Showcase"
       titleAccent="2D ART"
       description="Explore a selection of production-ready 2D artwork created for mobile games, including characters, environments, UI assets and props."
-      cards={featured2DArtShowcaseCards}
+      cards={cards}
     />
   );
 }

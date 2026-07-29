@@ -1,5 +1,6 @@
 import ServiceFeaturedShowcaseSection from "@/components/service-featured-showcase-section";
 import type { StudioServiceCard } from "@/components/studio-service-cards";
+import { resolveFeaturedCards } from "@/lib/page-slots";
 
 // ponytail: statValue/statLabel are placeholder numbers, sếp sẽ thay bằng số liệu thật sau.
 const cards: StudioServiceCard[] = [
@@ -35,7 +36,8 @@ const cards: StudioServiceCard[] = [
   },
 ];
 
-export default function Service2DAnimationFeaturedShowcase() {
+export default async function Service2DAnimationFeaturedShowcase() {
+  const resolved = await resolveFeaturedCards("services-2d-animation", cards);
   return (
     <ServiceFeaturedShowcaseSection
       id="featured-2d-animation"
@@ -43,7 +45,7 @@ export default function Service2DAnimationFeaturedShowcase() {
       railLabel="Showcase"
       titleAccent="2D ANIMATION"
       description="Browse recent animation work featuring gameplay motion, character actions, combat sequences and polished UI animation."
-      cards={cards}
+      cards={resolved}
     />
   );
 }

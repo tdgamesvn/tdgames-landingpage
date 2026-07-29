@@ -1,5 +1,6 @@
 import ServiceFeaturedShowcaseSection from "@/components/service-featured-showcase-section";
 import type { StudioServiceCard } from "@/components/studio-service-cards";
+import { resolveFeaturedCards } from "@/lib/page-slots";
 
 // ponytail: statValue/statLabel are placeholder numbers, sếp sẽ thay bằng số liệu thật sau.
 const cards: StudioServiceCard[] = [
@@ -35,7 +36,8 @@ const cards: StudioServiceCard[] = [
   },
 ];
 
-export default function Service2DVfxFeaturedShowcase() {
+export default async function Service2DVfxFeaturedShowcase() {
+  const resolved = await resolveFeaturedCards("services-2d-vfx", cards);
   return (
     <ServiceFeaturedShowcaseSection
       id="featured-2d-vfx"
@@ -43,7 +45,7 @@ export default function Service2DVfxFeaturedShowcase() {
       railLabel="Showcase"
       titleAccent="2D VFX"
       description="Discover production-ready visual effects built for mobile games, including combat skills, environmental effects and polished UI feedback."
-      cards={cards}
+      cards={resolved}
     />
   );
 }
