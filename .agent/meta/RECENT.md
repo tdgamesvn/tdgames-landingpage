@@ -4,6 +4,86 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-07-29 (session — viết lại Our Values `/careers`)
+### Task
+Sếp gửi screenshot section "Our Values" trang `/careers`, hỏi sửa sao cho ứng
+viên đọc thấy hấp dẫn để apply. Sếp bảo làm theo đề xuất của agent.
+
+### Vấn đề của bản cũ
+5 value toàn nói về *không khí* (trung thực, ấm áp, "big family", quan tâm) —
+paste sang studio nào cũng đúng, không trả lời câu ứng viên artist thực sự
+scan tìm: dự án gì, học được gì, có crunch không. "Big family" trong ngành
+outsource còn bị đọc thành "OT không tính lương" → phản tác dụng.
+
+### Work Done
+`src/app/careers/careers-client.tsx`:
+- Viết lại toàn bộ `BENEFITS` (5 item, dòng 92-124): Work that ships /
+  Feedback, not silence / Level up on the clock / Planned, not panicked /
+  Say it straight. Mỗi desc ép về ~22-26 từ để 5 card cao bằng nhau; mỗi
+  value kèm 1 chi tiết kiểm chứng được thay vì tính từ.
+- Gán lại field `icon` cho khớp nghĩa mới — KHÔNG viết SVG mới, tái dùng 5
+  icon sẵn có trong `BenefitIcon`.
+- Grid: bỏ `xl:grid-cols-5` → dừng ở `lg:grid-cols-3` (5 cột làm mỗi card
+  chỉ ~150px, title card 1 xuống 2 dòng gây lệch chiều cao).
+- Subtitle section đổi sang "Not slogans — what you can actually expect from
+  your first week here."
+
+### Result
+`npx tsc --noEmit` sạch. Chưa commit/deploy — chờ sếp review dev.
+
+### Bổ sung trong cùng session — dải hard benefits
+Sếp cấp policy thật → thêm mảng `PERKS` (9 chip) + render dải chip bo tròn
+dưới 5 card. Fact sếp xác nhận: remote 1 ngày/tuần, T2-T6 8h nghỉ T7-CN,
+không OT (có OT thì trả lương), thử việc 100% lương; lương 13 / bảo hiểm /
+thiết bị / phép / review lương "đều có" (không có con số cụ thể → viết
+không kèm số: "Full social insurance", "Paid annual leave", "Regular salary
+reviews").
+
+Kèm 2 claim treo đã xử:
+- Bỏ "artists who have shipped 50+ projects" → "senior artists across 2D art,
+  animation and VFX" (sếp không xác nhận con số gán cho người).
+- Card "Planned, not panicked" giờ viết được "when overtime happens, it is
+  paid" vì sếp đã confirm.
+
+### Next Step
+Sếp review dev → commit + deploy. Vẫn treo: testimonial thật cho
+home-page-lower, có làm trang Game Development riêng không.
+
+---
+
+## 2026-07-29 (session — chốt số liệu 50+ & testimonial, deploy)
+### Task
+Sếp chốt: số liệu đúng, testimonial để sếp sửa nội dung sau → commit + deploy
+toàn bộ phần đang dirty.
+
+### Work Done
+Đồng bộ con số "projects" về **50+** ở cả 4 nơi (trước đó 3 nơi nói 3 số khác nhau:
+home 70+, about 30+, FAQ 70+):
+- `src/app/about/page.tsx` — stat PROJECTS DELIVERED 30+ → 50+
+- `src/components/home-page-lower.tsx` — stat 70+ PROJECTS COMPLETED → 50+
+  PROJECTS DELIVERED; viết lại description "Why choose TD Games" + 4 card
+  (SHIP-READY QUALITY / LOW-RISK START / ENGINE-READY DELIVERY / NDA & IP
+  PROTECTION); thay 5 testimonial (1 typing + 4 card) sang bản nội dung mới
+- `src/components/service-faq-presets.ts` — 70+ → 50+ ở FAQ 2D Art, 2D Animation
+  và VFX ("50+ shipped projects"). Thêm comment: đổi số ở đây phải đổi kèm
+  home-page-lower + about.
+
+Giữ nguyên `service-2d-vfx-featured-showcase.tsx` statValue "70+" — đó là **VFX
+effects created**, không phải projects.
+
+### Result
+`npx tsc --noEmit` sạch, `npm run build` pass. Commit + push + deploy VPS.
+
+### Ghi chú
+- `npm run build` fail trong sandbox (không fetch được Google Fonts) → phải chạy
+  với `dangerouslyDisableSandbox: true`.
+- Testimonial hiện tại là bản tạm, sếp sẽ thay nội dung thật sau.
+
+### Next Step
+Sếp gửi testimonial thật. Vẫn treo: có làm trang Game Development riêng không.
+
+---
+
 ## 2026-07-29 (session — copy hero /about + deploy)
 ### Task
 Sếp gửi screenshot hero `/about` kèm copy mới, bảo thay 2 đoạn body.
@@ -95,71 +175,6 @@ session thứ 5 chưa chốt.
 
 ### Next Step
 Sếp review dev rồi commit + deploy. Vẫn nợ: chốt testimonial home-page-lower.
-
----
-
-## 2026-07-29 (session — sửa fact About: năm thành lập 2023)
-### Task
-Sếp gửi screenshot hero `/about`, chốt: studio hoạt động từ **2023**, và rà
-lại các thông tin khác + CTA.
-
-### Phát hiện: 3 nguồn nói 3 năm khác nhau
-- `src/app/about/page.tsx` — "Founded in 2019"
-- Footer (Supabase `site_config.footer.description1`) — "Founded in 2022"
-- Sếp — 2023
-
-### Work Done
-`src/app/about/page.tsx`:
-- 2019 → 2023, viết lại 2 đoạn hero (bỏ giọng "kể lể lâu năm", studio 3 năm
-  nên bán tốc độ + chất lượng)
-- Stats: `5+` → `3+` YEARS OF EXPERIENCE, `50+` → `30+` PROJECTS DELIVERED
-  (7 CREATIVE TEAM giữ nguyên — sếp xác nhận)
-- CTA "Get in touch" giữ nguyên (đề xuất "Get a quote" cho đồng bộ 3 trang
-  service, sếp chọn giữ)
-
-DB: `UPDATE site_config` key `footer` → description1 2022 → 2023.
-Code default `site-footer.tsx` + placeholder `FooterTab.tsx` cũng sửa 2019 →
-2023 (chỉ là fallback/UI hint, không phải nguồn thật).
-
-### Result
-`npx tsc --noEmit` sạch, `npm run build` pass. DB + code đi cùng một deploy
-(theo đúng bài học session trước).
-
-### Ghi chú
-`src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ) —
-session thứ 4 chưa chốt. Không commit lần này.
-
-### Next Step
-Chốt số phận testimonial `home-page-lower.tsx` → commit hoặc `git checkout`.
-
----
-
-## 2026-07-29 (session — deploy workflow 5 bước)
-### Task
-Sếp hỏi "commit deploy chưa? sao lâu vậy". Đúng — workflow 5 bước làm xong từ
-sáng nhưng em để nằm chờ chung với testimonial (đang chờ sếp chốt).
-
-### Sai lầm cần nhớ
-2 thay đổi độc lập bị gom chung một chuyến chờ. `home-page-lower.tsx` chờ sếp
-duyệt nội dung KHÔNG phải lý do giữ `service-workflow-presets.ts` lại. Hậu quả:
-production chạy lệch nửa ngày — code render 7 step nhưng `page_slots` đã dọn
-còn 5 ảnh (session trước đổi DB mà không deploy code đi kèm).
-**Quy tắc rút ra: đổi DB và code phụ thuộc nhau thì phải đi cùng một deploy.**
-
-### Work Done
-`npx tsc --noEmit` sạch → commit `e3e2f1c` (chỉ workflow presets + memory,
-KHÔNG kèm testimonial) → push → VPS: pull + build + `pm2 restart`.
-
-### Result
-Verified production cả 3 trang: `curl /services/2d-{art,animation,vfx}` đều trả
-"5 steps". 3 route prerender static OK. PM2 restart #99, online.
-
-### Còn tồn
-`src/components/home-page-lower.tsx` vẫn dirty (5 testimonial trang chủ) — sang
-session thứ 3 chưa chốt. Hỏi sếp dứt điểm: nội dung thật hay nháp?
-
-### Next Step
-Chốt testimonial `home-page-lower.tsx` → commit hoặc `git checkout` bỏ.
 
 ---
 

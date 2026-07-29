@@ -89,37 +89,61 @@ const LIFE_PHOTOS = [
   "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
 ];
 
+// ponytail: mỗi desc ~22-26 từ để 5 card cao bằng nhau ở grid 3 cột.
+// Mỗi value phải kèm một chi tiết kiểm chứng được — bỏ tính từ chung chung.
 const BENEFITS = [
   {
-    title: "Transparency and openness",
-    desc: "We build trusting relationships through honest and open communication. Everyone in our team is free to express their thoughts and ideas, knowing that they will be heard and supported.",
-    icon: "transparency",
-    color: "#f59e0b",
-  },
-  {
-    title: "Friendliness and support",
-    desc: "We create an atmosphere where everyone feels comfortable and can be themselves. There is no place for formalities in our team — only mutual assistance, warmth and team spirit.",
-    icon: "friendliness",
-    color: "#f59e0b",
-  },
-  {
-    title: "Comfort and care",
-    desc: "We care about the well-being of each team member, providing comfortable working conditions and support in any situation. Together we create an environment where everyone feels like part of a big family.",
+    title: "Work that ships",
+    desc: "Real titles for global studios, real production pipelines — not mock tasks. What you build goes live and goes in your portfolio.",
     icon: "comfort",
     color: "#f59e0b",
   },
   {
-    title: "Shared growth",
-    desc: "Passionate about mentoring, we support ongoing learning, internal R&D, and community engagement to grow skills, confidence, and studio expertise in every team member.",
+    title: "Feedback, not silence",
+    desc: "Art direction reviews every milestone. You always know why a note was given — and you leave each project better than you started it.",
+    icon: "friendliness",
+    color: "#f59e0b",
+  },
+  {
+    title: "Level up on the clock",
+    desc: "Mentoring from senior artists across 2D art, animation and VFX, plus internal R&D time to learn new tools and styles during work hours.",
     icon: "growth",
     color: "#f59e0b",
   },
   {
-    title: "Work-life balance",
-    desc: "We respect your time outside work. Flexible hours, clear boundaries, and a culture that values rest help our team stay creative and motivated for the long run.",
+    title: "Planned, not panicked",
+    desc: "We scope schedules with buffer instead of burning weekends. Crunch is not the plan here — and when overtime happens, it is paid.",
     icon: "balance",
     color: "#f59e0b",
   },
+  {
+    title: "Say it straight",
+    desc: "Flat team, direct access to leads. Disagree with a decision? Say so — pushing back on the work is part of the job here.",
+    icon: "transparency",
+    color: "#f59e0b",
+  },
+  {
+    title: "Paid on the books",
+    desc: "Full statutory insurance, 13th-month salary and a formal review twice a year. Your income is on paper, not a handshake — no surprises at payday.",
+    icon: "pay",
+    color: "#f59e0b",
+  },
+];
+
+// ponytail: chip text thuần, không icon riêng — chỉ thêm khi có fact thật.
+// Đổi ở đây phải khớp policy thật; đừng thêm chip không verify được.
+const PERKS = [
+  "1 remote day every week",
+  "Mon–Fri, 8-hour days — weekends off",
+  "Overtime is paid, always",
+  "100% salary during probation",
+  "13th-month salary",
+  "Full statutory insurance (social, health, unemployment)",
+  "Workstation & tablet provided",
+  "12 days paid annual leave",
+  "Salary reviews twice a year",
+  "Paid public holidays & Tet break",
+  "Team trip every year",
 ];
 
 function BenefitIcon({ name, color }: { name: string; color: string }) {
@@ -240,6 +264,25 @@ function BenefitIcon({ name, color }: { name: string; color: string }) {
           strokeLinejoin="round"
         />
         <circle cx="16" cy="6" r="2" fill={fill} stroke={stroke} strokeWidth="2" />
+      </svg>
+    );
+  }
+
+  if (name === "pay") {
+    return (
+      <svg viewBox="0 0 32 32" fill="none" className="h-7 w-7">
+        <rect
+          x="4"
+          y="8"
+          width="24"
+          height="17"
+          rx="3"
+          fill={fill}
+          stroke={stroke}
+          strokeWidth="2"
+        />
+        <path d="M4 14H28" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+        <path d="M9 20H14" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
       </svg>
     );
   }
@@ -563,11 +606,12 @@ export default function CareersClient({ heroUrl }: { heroUrl: string }) {
                 Our <AccentHighlight>Values</AccentHighlight>
               </h2>
               <p className="mt-4 max-w-xl text-left text-sm leading-relaxed text-white/65 md:text-base">
-                The principles that shape our team — how we work, how we treat each other, and how we grow together.
+                Not slogans — what you can actually expect from your first week here.
               </p>
             </header>
 
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:mt-12">
+            {/* ponytail: dừng ở 3 cột — 5 cột làm mỗi card chỉ ~150px, chữ dày đặc */}
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 md:mt-12">
               {BENEFITS.map((benefit) => (
                 <div
                   key={benefit.title}
@@ -588,6 +632,20 @@ export default function CareersClient({ heroUrl }: { heroUrl: string }) {
                     <p className="mt-3 text-sm leading-relaxed text-white/65">{benefit.desc}</p>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-2.5 md:mt-10">
+              {PERKS.map((perk) => (
+                <span
+                  key={perk}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#ff8c3a]/25 bg-[#ff8c3a]/[0.07] px-4 py-2 text-xs font-medium text-white/80 md:text-sm"
+                >
+                  <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0" fill="none" aria-hidden>
+                    <path d="M3.5 8.5L6.5 11.5L12.5 5" stroke="#ffb04a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {perk}
+                </span>
               ))}
             </div>
           </div>

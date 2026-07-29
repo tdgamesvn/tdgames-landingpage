@@ -1,5 +1,52 @@
 # LOG
 
+## 2026-07-29 (session — viết lại Our Values `/careers`)
+### Task
+Sếp gửi screenshot section "Our Values" trang `/careers`, hỏi sửa sao cho ứng
+viên đọc thấy hấp dẫn để apply. Sếp bảo làm theo đề xuất của agent.
+
+### Vấn đề của bản cũ
+5 value toàn nói về *không khí* (trung thực, ấm áp, "big family", quan tâm) —
+paste sang studio nào cũng đúng, không trả lời câu ứng viên artist thực sự
+scan tìm: dự án gì, học được gì, có crunch không. "Big family" trong ngành
+outsource còn bị đọc thành "OT không tính lương" → phản tác dụng.
+
+### Work Done
+`src/app/careers/careers-client.tsx`:
+- Viết lại toàn bộ `BENEFITS` (5 item, dòng 92-124): Work that ships /
+  Feedback, not silence / Level up on the clock / Planned, not panicked /
+  Say it straight. Mỗi desc ép về ~22-26 từ để 5 card cao bằng nhau; mỗi
+  value kèm 1 chi tiết kiểm chứng được thay vì tính từ.
+- Gán lại field `icon` cho khớp nghĩa mới — KHÔNG viết SVG mới, tái dùng 5
+  icon sẵn có trong `BenefitIcon`.
+- Grid: bỏ `xl:grid-cols-5` → dừng ở `lg:grid-cols-3` (5 cột làm mỗi card
+  chỉ ~150px, title card 1 xuống 2 dòng gây lệch chiều cao).
+- Subtitle section đổi sang "Not slogans — what you can actually expect from
+  your first week here."
+
+### Result
+`npx tsc --noEmit` sạch. Chưa commit/deploy — chờ sếp review dev.
+
+### Bổ sung trong cùng session — dải hard benefits
+Sếp cấp policy thật → thêm mảng `PERKS` (9 chip) + render dải chip bo tròn
+dưới 5 card. Fact sếp xác nhận: remote 1 ngày/tuần, T2-T6 8h nghỉ T7-CN,
+không OT (có OT thì trả lương), thử việc 100% lương; lương 13 / bảo hiểm /
+thiết bị / phép / review lương "đều có" (không có con số cụ thể → viết
+không kèm số: "Full social insurance", "Paid annual leave", "Regular salary
+reviews").
+
+Kèm 2 claim treo đã xử:
+- Bỏ "artists who have shipped 50+ projects" → "senior artists across 2D art,
+  animation and VFX" (sếp không xác nhận con số gán cho người).
+- Card "Planned, not panicked" giờ viết được "when overtime happens, it is
+  paid" vì sếp đã confirm.
+
+### Next Step
+Sếp review dev → commit + deploy. Vẫn treo: testimonial thật cho
+home-page-lower, có làm trang Game Development riêng không.
+
+---
+
 ## 2026-07-29 (session — chốt số liệu 50+ & testimonial, deploy)
 ### Task
 Sếp chốt: số liệu đúng, testimonial để sếp sửa nội dung sau → commit + deploy
@@ -1290,3 +1337,38 @@ Deploy tdgames-landingpage lên VPS vps6core
 ### Result
 - PROJECT.md, TASKS.md, DECISIONS.md, LOG.md đã tạo đúng với thực tế
 - Xác nhận: dự án dùng Next.js 16, không phải Astro
+
+---
+
+## 2026-07-29 (session — logo client đọc từ Page Slots)
+### Task
+Sếp xem tab `11. Page Slots` của `/admin`, hỏi phần thay logo client ở đâu.
+
+### Nguyên nhân
+Không có — dải logo khách hàng ở section CLIENTS trang chủ hardcode thẳng
+trong `src/components/home-page-lower.tsx` (mảng 10 URL `Frame-26..30` lặp 2
+lần), không nằm trong bảng `page_slots` nên tab Page Slots không thấy.
+
+### Work Done
+`src/components/home-page-lower.tsx`:
+- Thêm `FALLBACK_CLIENT_LOGOS` (5 URL cũ) + hook `useClientLogos()` fetch
+  `GET /api/page-slots?page=home&slot=client-logos`; slot rỗng / fetch lỗi →
+  giữ fallback (cùng pattern `useSpineCharacters`).
+- Marquee render `[...clientLogos, ...clientLogos]` thay vì mảng cứng nhân đôi
+  bằng tay.
+
+Không cần migration: ô "slot" trong form Add của `PageSlotsTab` là text tự do,
+sếp gõ `client-logos` là dùng được ngay.
+
+### Result
+`npx tsc --noEmit` sạch. gitnexus impact `HomePageLower` = LOW (0 caller trực
+tiếp). Chưa commit/deploy — chờ sếp thêm logo trong admin rồi review dev.
+
+### Ghi chú
+Logo TDG ở header/footer (`site-header.tsx:266`, `site-footer.tsx:81`) vẫn
+hardcode — sếp chưa chốt có đưa vào Page Slots không.
+`careers-client.tsx` vẫn dirty từ session trước.
+
+### Next Step
+Sếp vào /admin → Page Slots → page `home`, slot `client-logos`, upload logo →
+kiểm tra trang chủ.

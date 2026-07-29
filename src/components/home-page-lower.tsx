@@ -412,6 +412,35 @@ function useSpineCharacters() {
   return characters;
 }
 
+/** Logo client mặc định — dùng khi slot `client-logos` chưa có item nào trong DB */
+const FALLBACK_CLIENT_LOGOS = [
+  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-26-min-300x141.png",
+  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-27-min-300x141.png",
+  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-28-min-300x141.png",
+  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-29-min-300x141.png",
+  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-30-min-300x141.png",
+];
+
+/**
+ * Logo khách hàng — quản lý ở /admin → tab Page Slots, page `home`, slot `client-logos`.
+ * Slot rỗng hoặc fetch lỗi → giữ FALLBACK_CLIENT_LOGOS.
+ */
+function useClientLogos() {
+  const [logos, setLogos] = useState<string[]>(FALLBACK_CLIENT_LOGOS);
+
+  useEffect(() => {
+    fetch("/api/page-slots?page=home&slot=client-logos")
+      .then((r) => r.json())
+      .then((data: { items?: { url?: string }[] }) => {
+        const urls = (data.items ?? []).map((i) => i.url).filter((u): u is string => !!u);
+        if (urls.length) setLogos(urls);
+      })
+      .catch(() => { /* giữ fallback */ });
+  }, []);
+
+  return logos;
+}
+
 /** Helper tìm character theo slug */
 function findCharacter(list: SpineCharacterData[], slug: string) {
   return list.find((c) => c.slug === slug) ?? null;
@@ -422,6 +451,7 @@ export default function HomePageLower() {
   const [activeId, setActiveId] = useState(showcaseFilters[0]?.id);
   const activeMarqueeFilter = showcaseFilters.find((f) => f.id === activeId) ?? showcaseFilters[0];
   const spineCharacters = useSpineCharacters();
+  const clientLogos = useClientLogos();
   const careersCharacter = findCharacter(spineCharacters, "careers-hero");
   const contactCharacter = findCharacter(spineCharacters, "contact-mascot");
 
@@ -1052,18 +1082,8 @@ export default function HomePageLower() {
                 animate={{ x: ["0%", "-50%"] }}
                 transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
               >
-                {[
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-26-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-27-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-28-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-29-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-30-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-26-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-27-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-28-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-29-min-300x141.png",
-                  "https://cdn.tdgamestudio.com/landing/logoCompany/Frame-30-min-300x141.png",
-                ].map((src, idx) => (
+                {/* nhân đôi danh sách để marquee -50% nối liền mạch */}
+                {[...clientLogos, ...clientLogos].map((src, idx) => (
                   <div
                     key={`${src}-${idx}`}
                     className="relative h-14 w-[220px] shrink-0 md:h-16 md:w-[260px]"
