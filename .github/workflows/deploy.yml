@@ -62,7 +62,7 @@ jobs:
             # .next hỏng, chỉ trang HTML mới lộ (sự cố 2026-07-29).
             echo "🩺 Healthcheck..."
             for i in 1 2 3 4 5 6 7 8 9 10; do
-              code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/ || true)
+              code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ || true)
               [ "$code" = "200" ] && break
               echo "   thử $i: HTTP $code, đợi 3s..."
               sleep 3

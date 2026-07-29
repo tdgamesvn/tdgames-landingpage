@@ -11,7 +11,10 @@ module.exports = {
       max_memory_restart: "512M",
       env: {
         NODE_ENV: "production",
-        PORT: 3001,
+        // Process đang chạy trên VPS dùng 3000 và nginx proxy về 3000.
+        // 3001 là app khác (platforms) — để 3001 ở đây là bẫy: fallback
+        // `pm2 start ecosystem.config.js` sẽ bind nhầm port.
+        PORT: 3000,
       },
     },
   ],
