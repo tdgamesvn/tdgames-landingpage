@@ -5,11 +5,11 @@ export const service2DArtWorkflowConfig: ServiceWorkflowConfig = {
   processLabel: "Our process",
   titleWhite: "2D",
   titleAccent: "workflow",
-  stepsSubtitle: "7 steps to exceptional game art",
+  stepsSubtitle: "5 steps to exceptional game art",
   description:
-    "A streamlined 7-step process to transform your ideas into stunning 2D game art with precision, creativity, and consistent quality.",
+    "A streamlined 5-step process to transform your ideas into stunning 2D game art with precision, creativity, and consistent quality.",
   stripTitle: "Our 2D game art workflow",
-  defaultStepIndex: 3,
+  defaultStepIndex: 2,
   steps: [
     {
       title: "Discovery & art brief",
@@ -17,14 +17,9 @@ export const service2DArtWorkflowConfig: ServiceWorkflowConfig = {
       image: "https://cdn.tdgamestudio.com/landing/images/Character_Concept-1024x683.jpg",
     },
     {
-      title: "Concept exploration",
-      description: "Explore ideas with quick sketches and compositions.",
+      title: "Concept & design approval",
+      description: "Explore directions, then lock the chosen design in clean lines.",
       image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
-    },
-    {
-      title: "Design approval",
-      description: "Refine the chosen direction with clean lines and details.",
-      image: "https://cdn.tdgamestudio.com/landing/images/Isometry_art-1024x683.jpg",
     },
     {
       title: "Final rendering",
@@ -37,13 +32,8 @@ export const service2DArtWorkflowConfig: ServiceWorkflowConfig = {
       image: "https://cdn.tdgamestudio.com/landing/images/Slot_Art-1024x683.jpg",
     },
     {
-      title: "Production export",
-      description: "Prepare assets for implementation and export.",
-      image: "https://cdn.tdgamestudio.com/landing/images/Casual_Art_Props-1024x683.jpg",
-    },
-    {
       title: "Delivery & integration",
-      description: "Deliver final assets ready for production.",
+      description: "Export production-ready assets and hand off for integration.",
       image: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
     },
   ],
@@ -71,7 +61,7 @@ export const service2DAnimationWorkflowConfig: ServiceWorkflowConfig = {
   processLabel: "Our process",
   titleWhite: "2D",
   titleAccent: "animation",
-  stepsSubtitle: "7 steps from brief to shipped motion",
+  stepsSubtitle: "5 steps from brief to shipped motion",
   description:
     "A production-minded pipeline for rigs, timing, and export—so gameplay motion stays readable and your team can integrate fast.",
   stripTitle: "Our 2D animation workflow",
@@ -93,24 +83,14 @@ export const service2DAnimationWorkflowConfig: ServiceWorkflowConfig = {
       image: "https://cdn.tdgamestudio.com/landing/images/origins-thumbnail.png",
     },
     {
-      title: "Polish & secondary motion",
-      description: "Hair, cloth, and accents that sell weight and energy.",
+      title: "Polish & review",
+      description: "Secondary motion refined, then walked through together.",
       image: "https://cdn.tdgamestudio.com/landing/images/9985f5f1-9ed5-4f08-9143-7d86a9765272.png",
     },
     {
-      title: "Client review",
-      description: "Walk through the animation set together before final export.",
-      image: "https://cdn.tdgamestudio.com/landing/images/2f308aec-bd0c-42b9-9220-ca123338d9b9.png",
-    },
-    {
-      title: "Export & integration",
-      description: "Spine/atlas checks, naming, and integration notes.",
+      title: "Export & delivery",
+      description: "Spine/atlas checks, naming, and packages ready for build.",
       image: "https://cdn.tdgamestudio.com/landing/images/a0a5dab6-1e06-4a1b-af95-af0b51fc27e6.png",
-    },
-    {
-      title: "Final delivery",
-      description: "Final packages ready for build and marketing cuts.",
-      image: "https://cdn.tdgamestudio.com/landing/images/f0d05f71-5089-4b3f-b453-7a8d19afc013.png",
     },
   ],
   pillars: [
@@ -137,21 +117,16 @@ export const service2DVfxWorkflowConfig: ServiceWorkflowConfig = {
   processLabel: "Our process",
   titleWhite: "2D",
   titleAccent: "VFX",
-  stepsSubtitle: "7 steps for readable, punchy effects",
+  stepsSubtitle: "5 steps for readable, punchy effects",
   description:
     "From concept frames to optimized atlases—effects that pop on screen without stealing clarity from characters and UI.",
   stripTitle: "Our 2D VFX workflow",
-  defaultStepIndex: 3,
+  defaultStepIndex: 2,
   steps: [
     {
-      title: "VFX brief & references",
-      description: "Define palette, shape language, and intensity tiers.",
+      title: "VFX brief & style",
+      description: "Lock palette, shape language, and hero frames before build.",
       image: "https://cdn.tdgamestudio.com/landing/images/9ab9a213-58d4-40c7-aacc-c6ad9f826d0f.png",
-    },
-    {
-      title: "Style exploration",
-      description: "Hero frames for silhouette and color before full build.",
-      image: "https://cdn.tdgamestudio.com/landing/images/bcc4707e-cae2-46a2-9c96-c254c28ba763.png",
     },
     {
       title: "Effect production",
@@ -169,14 +144,9 @@ export const service2DVfxWorkflowConfig: ServiceWorkflowConfig = {
       image: "https://cdn.tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
     },
     {
-      title: "Unity / Spine integration",
-      description: "Packed sheets, pivot data, and engine-ready hooks.",
+      title: "Integration & delivery",
+      description: "Packed sheets, engine-ready hooks, and clear usage notes.",
       image: "https://cdn.tdgamestudio.com/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",
-    },
-    {
-      title: "Final delivery",
-      description: "Libraries and variants shipped with clear usage notes.",
-      image: "https://cdn.tdgamestudio.com/landing/images/IMG_4352.png",
     },
   ],
   pillars: [

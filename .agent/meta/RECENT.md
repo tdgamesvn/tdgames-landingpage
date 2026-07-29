@@ -4,6 +4,109 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-07-29 (session — dọn page_slots workflow-step của services-2d-art)
+### Task
+Sau khi gộp workflow 7→5 bước, slot ảnh `workflow-step` của trang 2D Art vẫn
+còn 7 row → ảnh lệch bậc từ step 3 và 2 row mồ côi. Sếp bảo "dọn luôn".
+
+### Work Done
+`slotUrlByIndex(slots, i, fallback)` map thuần theo vị trí (`items[index]`),
+nên chỉ cần xoá 2 row và đánh lại `sort_order` — không đụng code.
+
+SQL trên Supabase: xoá id 34 (ảnh "3") + id 37 (ảnh "6"), renumber
+`sort_order` 32→0, 33→1, 35→2, 36→3, 38→4.
+
+Chọn ảnh nào để giữ theo đúng fallback trong preset: step gộp
+"Concept & design approval" giữ ảnh 2 (preset dùng `Casual_character`),
+step gộp "Delivery & integration" giữ ảnh 7 (preset dùng `summoners.png`).
+
+### Result
+5 row còn lại: ảnh 1, 2, 4, 5, 7 → sort_order 0–4, khớp 5 step mới.
+Chỉ đổi DB, không có code change → không cần build/deploy.
+
+### Ghi chú
+`src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ đổi
+từ session trước). Chưa commit — vẫn chờ sếp chốt đây là nội dung thật hay nháp.
+
+### Next Step
+Chốt số phận testimonial trong `home-page-lower.tsx`.
+
+---
+
+## 2026-07-29 (session — workflow 3 trang service: 7 bước → 5 bước)
+### Task
+Sếp yêu cầu rút workflow của cả 3 trang service từ 7 bước xuống 5 bước.
+Đề xuất bảng gộp trước, sếp duyệt rồi mới sửa.
+
+### Work Done
+Chỉ sửa data trong `src/components/service-workflow-presets.ts` — KHÔNG đụng
+layout, vì `service-workflow-section.tsx` render động theo `steps.length`
+(arrow giữa card, "Step X of N", strip flex-1 đều tự co).
+
+Gộp bước:
+- 2D Art: (2 Concept + 3 Design approval) → "Concept & design approval";
+  (6 Production export + 7 Delivery) → "Delivery & integration"
+- 2D Animation: (4 Polish + 5 Client review) → "Polish & review";
+  (6 Export & integration + 7 Final delivery) → "Export & delivery"
+- 2D VFX: (1 Brief + 2 Style exploration) → "VFX brief & style";
+  (6 Unity/Spine integration + 7 Final delivery) → "Integration & delivery"
+
+Kèm theo: `stepsSubtitle` "7 steps" → "5 steps" (cả 3), description Art
+"7-step" → "5-step", `defaultStepIndex` 3→2 (Art, VFX) để trỏ bước giữa.
+
+### Result
+- `npx tsc --noEmit` sạch, mỗi config đúng 5 steps
+- Không có chỗ nào khác trong repo hardcode số 7 (đã grep `7[- ]step`)
+
+### Lưu ý còn tồn
+Trang **2D Art** lấy ảnh step từ Supabase `page_slots` (slot `workflow-step`,
+7 rows, map theo `sort_order` = index). Sau khi gộp: ảnh 1–2 vẫn đúng, ảnh
+3–5 lệch một bậc (ảnh cũ của "Design approval" giờ nằm ở "Final rendering"),
+ảnh 6–7 thành mồ côi. Cần sếp chỉnh lại trong `/admin` → PageSlots.
+Animation + VFX dùng ảnh trong preset → không ảnh hưởng.
+
+### Next Step
+- Sếp review UI dev rồi deploy (git push + build trên VPS)
+- Dọn 2 slot thừa của services-2d-art nếu sếp xác nhận
+
+---
+
+## 2026-07-29 (session — rút gọn hero copy 3 trang service)
+### Task
+Sếp gửi screenshot `/services/2d-vfx`: title + description + button đều quá dài
+trên cả 3 trang service. Yêu cầu đề xuất phương án trước, rồi mới sửa.
+
+### Đo được (lý do sửa)
+Hero title box `max-w-[606px]` @ Changa One 92px → ~8 ký tự/dòng.
+Description box `max-w-[547px]` @18px → ~60 ký tự/dòng.
+- 2D Art: titleTop 23 ký tự = 3 dòng + "SERVICES"; description 85 từ ≈ 10 dòng
+- 2D VFX: titleTop 23 ký tự = 3 dòng; description 72 từ ≈ 9 dòng
+- 2D Animation: titleTop 17 ký tự = 2 dòng; description 72 từ ≈ 8 dòng
+Chuẩn hero landing: title ≤ 2 dòng, description 35–45 từ.
+
+### Work Done (chỉ đổi chuỗi copy, KHÔNG đụng layout)
+`src/app/services/{2d-art,2d-animation,2d-vfx}/page.tsx`:
+- titleTop bỏ "OUTSOURCING" → "2D GAME ART/VFX" (2D ANIMATION giữ nguyên)
+- subheading gánh lại keyword "outsourcing" đã bỏ khỏi H1
+- description: 85/72/72 từ → 29/31/25 từ
+- ctaLabel: "Consult with our experts" → "Get a quote" (đồng bộ cả 3)
+Keyword SEO vẫn giữ nguyên trong `layout.tsx` metadata của từng trang.
+
+### Result
+`npm run build` pass, 3 route service prerender static OK.
+
+### Ghi chú
+- `src/components/home-page-lower.tsx` đang dirty từ session trước (thay 5
+  testimonial trang chủ: Jens Weinberg → Sophia Martinez...). KHÔNG commit lần
+  này — chưa rõ đây là nội dung chốt hay bản nháp. Hỏi sếp trước khi đẩy.
+- Build cần network (Google Fonts) → phải `dangerouslyDisableSandbox: true`.
+
+### Next Step
+- Chốt số phận testimonial trong `home-page-lower.tsx`
+- Phần copy dài bị cắt khỏi hero (uy tín studio) có thể đưa xuống section dưới nếu cần
+
+---
+
 ## 2026-07-28 (session — email signature generator: HUỶ)
 ### Task
 Sếp hỏi có làm được app tạo chữ ký email cho nhân viên không (tham chiếu HubSpot).
@@ -64,167 +167,6 @@ BD gửi bộ FAQ mới cho 2D Art / 2D Animation / 2D VFX. Review và áp vào 
 
 ### Next Step
 - Chờ sếp chốt: có làm FAQ editable qua admin không (cần table + tab + API)
-
----
-
-## 2026-07-27 (session — dọn repo)
-### Task
-Dọn artifact rác của playwright-mcp khỏi repo.
-
-### Work Done
-- Xoá `.playwright-mcp/` (10 file đã bị commit từ 2026-05 + 14 file untracked mới)
-  và `portfolio-hero-test.png`
-- `.gitignore`: thêm `.playwright-mcp/` và `*-test.png`
-
-### Result
-`git status` sạch, không còn artifact lảng vảng mỗi lần chạy playwright.
-
-### Next Step
-Không có task tồn đọng.
-
----
-
-## 2026-07-27 (session — USP & CTA audit)
-### Task
-Rà soát USP + CTA toàn site, đề xuất và áp dụng nhóm ưu tiên 1–2.
-
-### Work Done
-- Audit: hero → services → why-us → careers → contact → header/footer
-- **P1** `home-services-section.tsx`: paragraph dưới "OUR SERVICES" là ghi chú
-  thiết kế nội bộ đang chạy production → thay bằng copy thật (Spine / frame-by-frame /
-  Unity-ready)
-- **P2** `home-hero.tsx`: bỏ định vị "3D" (studio là 2D-only, không có trang 3D nào)
-  → title "2D ART & ANIMATION / OUTSOURCING STUDIO"; desc bỏ "specifically for mobile
-  games" → "mobile, PC and web titles"
-- **P2** Hero CTA: "Get in touch" → "Get a Free Quote" + thêm secondary "View Our Work"
-  → /portfolio + micro-copy "Reply within 24h · NDA on request"
-- `site-header.tsx`: đồng bộ 5 nhãn "Get a Quote" → "Get a Free Quote"
-- `npx tsc --noEmit` clean
-
-### Result
-Định vị nhất quán 2D, hết text nội bộ lộ ra ngoài, CTA có 1 nhãn primary chuẩn +
-đường thoát low-commitment cho lead chưa sẵn sàng.
-
-### P3 (làm tiếp cùng session)
-- `home-page-lower.tsx` WHY CHOOSE: 2 item generic → differentiator thật
-  - "REASONABLE PRICES" → **PAID TRIAL BATCH** (căn cứ: blog site.json:184,197)
-  - "STREAMLINED WORKFLOW" → **ENGINE-READY DELIVERY** (căn cứ: services/2d-vfx
-    "Unity & Spine Integration", services/2d-animation "Spine Animation")
-- Careers band: bỏ nút "Contact us" cạnh "View vacancies" (lẫn audience)
-- LET'S TALK: bỏ nút "Contact" trùng (2 nút cùng trỏ /contact) + "Get a quote"
-  → "Get a Free Quote"
-- `site-footer.tsx`: bỏ "Developer" / "Game Design" (lệch định vị 2D art),
-  giữ "Game UI" → /contact (có comment `ponytail:` giải thích)
-- `npx tsc --noEmit` clean
-
-### Số liệu — sếp chốt "ít thôi, đúng tầm công ty mới"
-- `site.json` service cards: 50+/50+/50+ → **Animation 30+ · Art 25+ · VFX 15+** (tổng 70)
-- Stats band `home-page-lower.tsx`: 150+ → **70+** PROJECTS · 50+ → **12+** CLIENTS ·
-  3700+ → **1200+** ASSETS (khớp tổng service cards; 16 case study trên portfolio
-  = phần hiển thị của 70)
-- Bonus: `CountUp` đang là if-chain hardcode `=== "150+"` → `parseInt(stat.value, 10)`,
-  đổi số không còn phải sửa 2 chỗ
-- Giữ nguyên `service-2d-art-featured-showcase.tsx` (45+ environments, 200+ assets —
-  nằm gọn trong 1200+)
-- `npx tsc --noEmit` clean
-
-### Deploy
-- Commit `67dc61f` → push main (pre-push typecheck pass)
-- VPS: `git pull` → `npm run build` → `pm2 restart tdgames-landingpage` (restart #87, online)
-- Verify prod: `curl -sL https://www.tdgamestudio.com` → "Get a Free Quote" ×2,
-  "View Our Work" ×1, "2D ART &amp; ANIMATION" ✅
-  (WHY CHOOSE / stats không có trong HTML đầu — section dưới không SSR, verify bằng mắt)
-- Lưu ý: build local phải `dangerouslyDisableSandbox` vì next/font fetch Google Fonts
-
-### P4 hoá ra là TASK MA — `site.json → blog.posts` là dead data
-- Định làm "viết lại 6/12 bài blog về 3D", đã viết xong 5 bài mới vào `site.json`…
-  rồi mới phát hiện `blog.posts` **không được render ở đâu cả**.
-- Blog thật đọc từ Supabase `blog_posts` qua `GET /api/blog` (`src/app/blog/page.tsx`
-  fetch client-side). Production đang có **8 bài, tất cả đúng định vị 2D**
-  (`why-2d-animation-still-rules-game-art`, `from-sketch-to-sprite-our-2d-art-pipeline`,
-  `frame-by-frame-principles-of-game-animation`, `vfx-on-a-budget…`, …) — không bài 3D nào.
-- → Revert 5 bài vừa viết, **xoá hẳn key `blog` khỏi `site.json`** (184 dòng dead data)
-  + xoá `BlogPost` khỏi `src/types/site-content.ts`. Chính nó là thứ khiến audit tin
-  nhầm là blog còn placeholder/3D.
-- **Sitemap**: phát hiện blog detail pages chưa từng có trong sitemap → thêm, đọc
-  `blog_posts` từ Supabase (try/catch, DB lỗi thì bỏ blog routes chứ không fail cả
-  sitemap). `sitemap()` chuyển thành async. Build ra 34 URL (10 static + 16 portfolio
-  + 8 blog).
-- Sửa `CLAUDE.md`: dòng "site.json là nguồn `blog.posts[]`" đã sai từ lâu → ghi rõ
-  blog nằm ở Supabase.
-
-### Deploy đợt 2
-- Commit `0a8bf76` → push → VPS pull + build + `pm2 restart` (restart #89)
-- Verify: `curl https://tdgamestudio.com/sitemap.xml` → 34 `<url>`, có đủ 8 blog route ✅
-- Canonical domain là **non-www** (`www.` 301 → `tdgamestudio.com`). Docs đang ghi
-  `https://www.tdgamestudio.com` → sửa lại non-www ở CLAUDE.md ×2 + PROJECT.md
-  (curl vào www trả 301 làm verify hụt 2 lần trong session này)
-
-### Task ma thứ 2 — CLAUDE.md "Current Task Priority" stale nặng
-Sếp hỏi "tưởng xong hết rồi mà" → verify bằng curl/ls thay vì đọc doc:
-- `/api/jobs` trả job thật, `/careers` 200, `/hr` 200 → **Careers xong lâu rồi**
-  (migration `20260524120000_careers_schema.sql`), doc vẫn ghi `jobs`/`applications`
-  "(sắp tạo)"
-- Admin thực tế **13 tab** (Blog, Careers, Footer, PageSlots, Settings, Spine, Team…),
-  doc ghi 6
-- `/api/hr/*` (applications, jobs, remind, upload) + HR dashboard — doc không nhắc
-- Env `AI_BASE_URL/AI_API_KEY/AI_MODEL` đã có trên VPS → task "set env AI_*" cũng xong
-→ Viết lại CLAUDE.md: admin tabs, bảng DB (thêm blog_posts/jobs/applications/page_slots),
-  mục HR Dashboard, và thay "Current Task Priority" bằng cảnh báo verify-trước-khi-tin.
-
-### Bài học (cập nhật)
-- **Hai task ma trong một session** đều do doc stale. Quy tắc mới: trước khi bắt tay
-  vào "task còn lại" trong CLAUDE.md/TASKS.md, verify bằng `curl` production hoặc
-  `ls` source. Doc là gợi ý, không phải sự thật.
-
-### Bài học (cũ)
-- CLAUDE.md stale dẫn tới cả một task ma. Trước khi "sửa nội dung", verify xem
-  file đó có thực sự được render không (`grep` chỗ dùng, hoặc curl API production).
-
----
-
-## 2026-07-09 (session — HR AI Evaluation)
-### Task
-Feature 2: AI evaluation ứng viên qua cliproxyapi (OpenAI-compatible, port 8317 trên Mac).
-
-### Work Done
-- Migration `add_ai_evaluation_to_applications`: `ai_score` int + `ai_evaluation` jsonb
-- Route mới `POST /api/hr/applications/[id]/evaluate`: requireHR → fetch app + JD →
-  gọi `${AI_BASE_URL}/chat/completions` (env: AI_BASE_URL/AI_API_KEY/AI_MODEL,
-  default gpt-5.4-mini) → parse JSON `{score, verdict, strengths, concerns}` → lưu DB
-- `types.ts`: type `AiEvaluation` + 2 field trên `Application`
-- `HRDashboard.tsx`: badge `🤖 {score}` trên AppCard (xanh ≥75 / vàng ≥50 / đỏ);
-  panel AI Evaluation trong CandidateModal (nút Evaluate/Re-evaluate, verdict,
-  strengths/concerns); prop `onPatch` để sync state
-- `.env.local`: thêm AI_BASE_URL=http://localhost:8317/v1, AI_API_KEY, AI_MODEL
-
-### Result
-- `tsc --noEmit` pass ✅
-- Test end-to-end pass ✅: POST evaluate trên ứng viên thật → score 78, verdict "yes",
-  strengths/concerns tiếng Việt hợp lý, lưu DB đúng (~vài giây với gpt-5.4-mini)
-
-### Nâng cấp: đọc CV PDF
-- `extractCvText()` trong evaluate route: fetch CV từ CDN → extract text bằng `unpdf`
-  (dep mới, serverless-friendly) → nhét `cv_text` (cap 12k chars) vào prompt.
-  PDF only; fail thì fallback chấm theo form data. Thêm `today` vào prompt
-  (trước đó AI phán sai "ngày available khá xa"). Verified: score 72→82 sau khi đọc CV thật.
-
-### Hardening CV pipeline
-- Guard content-length > 20MB → skip tải CV
-- CV không đọc được (thuần ảnh / quá nặng / không phải PDF) → tự động chèn concern
-  "⚠️ Không đọc được nội dung CV..." vào đầu list để HR biết điểm chỉ dựa trên form data
-
-### Bugfix kèm theo
-- Không chuyển được status "test": enum `application_status` trong DB thiếu giá trị
-  (UI/types có từ session trước nhưng chưa migrate). Migration
-  `add_test_to_application_status`: `alter type ... add value 'test' before 'interview'`.
-  Verified: PATCH status=test → 200 ✅
-
-### Deploy production
-- Đã thêm AI_BASE_URL/AI_API_KEY/AI_MODEL vào `/opt/tdgames-landingpage/.env.local`
-  trên VPS + pm2 restart. VPS reach cliproxyapi trên Mac qua Tailscale OK (200).
-  Verified evaluate trên https://www.tdgamestudio.com → 200 ✅
-- Lưu ý vận hành: Mac tắt/ngủ → nút Evaluate trên prod báo lỗi 502, HR bấm lại sau
 
 ---
 
