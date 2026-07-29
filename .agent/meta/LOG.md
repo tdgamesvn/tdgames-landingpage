@@ -1541,3 +1541,16 @@ Càng push liên tiếp (feature rồi docs) thì cửa sổ chết càng lặp.
 `route`. (Deploy thực ra đã thành công, chỉ healthcheck chết.)
 
 **Result:** CI xanh, log in đủ 9 route -> 200; verify lại qua domain cũng 200 cả 9.
+
+### Bổ sung — rollback tự động khi healthcheck đỏ
+Sếp hỏi "còn lặp lại không". Lỗ hổng còn lại: healthcheck đỏ thì prod **kẹt ở
+build hỏng** chờ người ssh sửa tay. Thêm vào `deploy.yml`: healthcheck fail →
+`mv .next .next-bad && mv .next-old .next` + `pm2 restart`, in status sau
+rollback; CI vẫn `exit 1`. Build hỏng giữ ở `.next-bad` để soi.
+CI xanh, 9/9 route 200.
+
+**Trạng thái 3 lỗi hôm nay:** (1) artifact lai — hết, `.next-new` luôn tạo mới;
+(2) cửa sổ 70s mất file — hết, `.next` không bị đụng cho tới lúc `mv`;
+(3) bẫy `$path` zsh — hết, đã đổi `$route`.
+**Chưa che:** route động (`/blog/[slug]`, `/portfolio/[slug]`) không nằm trong
+healthcheck; ai ssh build tay song song CI vẫn tự bắn vào chân mình.
