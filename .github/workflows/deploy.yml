@@ -45,6 +45,12 @@ jobs:
             echo "📦 Installing dependencies..."
             npm install --production=false
 
+            # Build đè lên .next cũ có thể để lại artifact lai (thiếu client
+            # reference manifest → toàn site 500). Xoá sạch, giữ lại .next/cache
+            # để build vẫn nhanh.
+            echo "🧹 Xoá build cũ (giữ cache)..."
+            find .next -mindepth 1 -maxdepth 1 ! -name cache -exec rm -rf {} + 2>/dev/null || true
+
             echo "🔨 Building..."
             npm run build
 
