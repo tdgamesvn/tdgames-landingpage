@@ -239,7 +239,7 @@ export default async function AboutPage() {
                   className="mt-4 text-3xl font-black text-white"
                   style={{ fontFamily: "var(--font-rajdhani)" }}
                 >
-                  30+
+                  50+
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wider text-white/50">
                   PROJECTS DELIVERED

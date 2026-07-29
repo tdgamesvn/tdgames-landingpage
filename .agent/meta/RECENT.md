@@ -4,6 +4,35 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-07-29 (session — copy hero /about + deploy)
+### Task
+Sếp gửi screenshot hero `/about` kèm copy mới, bảo thay 2 đoạn body.
+
+### Work Done
+`src/app/about/page.tsx:107-113` — thay nội dung 2 `<p>`, giữ nguyên markup
+(vẫn 2 đoạn để giữ nhịp layout):
+- đoạn 1: "Founded in 2023, TD Games is a Vietnam based game outsourcing
+  studio dedicated to delivering high quality Game Art, Animation, VFX, and
+  Game Development services."
+- đoạn 2: creativity/professionalism + long-term partnerships.
+
+Deploy kèm luôn 2 thay đổi hero tồn từ 2 session trước (layout-width + Changa
+One cho `/about`, eyebrow HIRING `/careers`).
+
+### Result
+`npx tsc --noEmit` sạch, `npm run build` pass.
+
+### Ghi chú
+- Copy mới nhắc "Game Development services" nhưng site chỉ có 3 trang service
+  (2D Art / Animation / VFX) — đã hỏi sếp, chưa chốt.
+- `src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ) —
+  session thứ 7 chưa chốt, KHÔNG commit lần này.
+
+### Next Step
+Chốt testimonial `home-page-lower.tsx` + có thêm trang Game Development không.
+
+---
+
 ## 2026-07-29 (session — eyebrow HIRING hero /careers)
 ### Task
 Sếp gửi screenshot hero `/careers`: "HIRING" to lên 1 chút + mép trái khớp
@@ -131,35 +160,6 @@ session thứ 3 chưa chốt. Hỏi sếp dứt điểm: nội dung thật hay n
 
 ### Next Step
 Chốt testimonial `home-page-lower.tsx` → commit hoặc `git checkout` bỏ.
-
----
-
-## 2026-07-29 (session — dọn page_slots workflow-step của services-2d-art)
-### Task
-Sau khi gộp workflow 7→5 bước, slot ảnh `workflow-step` của trang 2D Art vẫn
-còn 7 row → ảnh lệch bậc từ step 3 và 2 row mồ côi. Sếp bảo "dọn luôn".
-
-### Work Done
-`slotUrlByIndex(slots, i, fallback)` map thuần theo vị trí (`items[index]`),
-nên chỉ cần xoá 2 row và đánh lại `sort_order` — không đụng code.
-
-SQL trên Supabase: xoá id 34 (ảnh "3") + id 37 (ảnh "6"), renumber
-`sort_order` 32→0, 33→1, 35→2, 36→3, 38→4.
-
-Chọn ảnh nào để giữ theo đúng fallback trong preset: step gộp
-"Concept & design approval" giữ ảnh 2 (preset dùng `Casual_character`),
-step gộp "Delivery & integration" giữ ảnh 7 (preset dùng `summoners.png`).
-
-### Result
-5 row còn lại: ảnh 1, 2, 4, 5, 7 → sort_order 0–4, khớp 5 step mới.
-Chỉ đổi DB, không có code change → không cần build/deploy.
-
-### Ghi chú
-`src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ đổi
-từ session trước). Chưa commit — vẫn chờ sếp chốt đây là nội dung thật hay nháp.
-
-### Next Step
-Chốt số phận testimonial trong `home-page-lower.tsx`.
 
 ---
 

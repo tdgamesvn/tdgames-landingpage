@@ -16,7 +16,8 @@ const sharedClosingFaqItems: ServiceFaqItem[] = [
 ];
 
 // ponytail: cùng một đoạn "why TD Games" cho cả 3, chỉ khác vế track record.
-// Số liệu lấy từ home-page-lower.tsx (70+ projects / 12+ clients / 1200+ assets).
+// Số liệu lấy từ home-page-lower.tsx (50+ projects / 12+ clients / 1200+ assets).
+// Đổi số ở đây thì đổi cả home-page-lower.tsx + about/page.tsx.
 const timezoneAdvantage =
   "Our team works GMT+7: same-day turnaround with studios across Asia and Australia, an afternoon overlap with Europe, and overnight turnaround for North America—feedback you send at the end of your day is actioned before your next morning.";
 
@@ -48,7 +49,7 @@ export const service2DArtFaqItems: ServiceFaqItem[] = [
   },
   {
     question: "Why outsource 2D art to TD Games?",
-    answer: `Two concrete reasons. Track record: 70+ projects completed, 1200+ assets delivered, and 12+ studios who came back for the next one. Time zone: ${timezoneAdvantage}`,
+    answer: `Two concrete reasons. Track record: 50+ projects delivered, 1200+ assets shipped, and 12+ studios who came back for the next one. Time zone: ${timezoneAdvantage}`,
   },
   {
     question: "How much does 2D art cost?",
@@ -96,7 +97,7 @@ export const service2DAnimationFaqItems: ServiceFaqItem[] = [
   },
   {
     question: "Why work with TD Games on animation?",
-    answer: `Two concrete reasons. Track record: 70+ projects completed, 1200+ assets delivered, and 12+ studios who came back for the next one. Time zone: ${timezoneAdvantage}`,
+    answer: `Two concrete reasons. Track record: 50+ projects delivered, 1200+ assets shipped, and 12+ studios who came back for the next one. Time zone: ${timezoneAdvantage}`,
   },
   {
     question: "How much does 2D animation cost?",
@@ -144,7 +145,7 @@ export const service2DVfxFaqItems: ServiceFaqItem[] = [
   },
   {
     question: "Why outsource VFX to TD Games?",
-    answer: `Two concrete reasons. Track record: 70+ combat effects, 40+ ambient VFX sets, and 50+ UI VFX delivered across 70+ shipped projects. Time zone: ${timezoneAdvantage}`,
+    answer: `Two concrete reasons. Track record: 70+ combat effects, 40+ ambient VFX sets, and 50+ UI VFX delivered across 50+ shipped projects. Time zone: ${timezoneAdvantage}`,
   },
   {
     question: "How much does 2D VFX cost?",

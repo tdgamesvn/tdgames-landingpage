@@ -545,34 +545,34 @@ export default function HomePageLower() {
             label="Why us"
             title="WHY CHOOSE TD GAMES"
             highlight="TD GAMES"
-            description="We create immersive 2D animation, stunning game art, and eye-catching VFX that bring ideas to life and captivate players."
+            description="Game art, animation, VFX and game development from one Vietnam-based team — 50+ projects delivered engine-ready and on schedule."
             className="mb-10 md:mb-12"
           />
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
-                title: "HIGH QUALITY ART",
-                body: "Every asset is crafted with attention to detail, style consistency, and production-ready polish.",
+                title: "SHIP-READY QUALITY",
+                body: "Every asset matches your style guide and passes an in-house art review before hand-off — you get work that ships, not work you have to fix.",
                 icon: (
                   <path d="M12 3l2.4 5.5L20 9.3l-4.2 3.6 1.3 5.6L12 15.9 6.9 18.5l1.3-5.6L4 9.3l5.6-.8L12 3z" />
                 ),
               },
               {
-                title: "PAID TRIAL BATCH",
-                body: "Start with a small paid batch to calibrate style and pipeline before you commit to full production.",
+                title: "LOW-RISK START",
+                body: "Begin with a small paid trial batch. See our real output and pipeline fit before you commit budget to full production.",
                 icon: (
-                  <path d="M4 10h16v2H4v-2zm0-4h10v2H4V6zm0 8h16v2H4v-2z" />
+                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 14.5l-4-4L8.4 11 11 13.6l5.6-5.6L18 9.4l-7 7z" />
                 ),
               },
               {
                 title: "ENGINE-READY DELIVERY",
-                body: "Spine rigs, sprite sheets and atlases handed off ready for Unity — no re-export loop on your side.",
+                body: "Spine rigs, sprite sheets and atlases exported for Unity, Cocos or your engine — drop them into the build, no re-export loop on your side.",
                 icon: <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />,
               },
               {
-                title: "PROTECTING YOUR IDEA",
-                body: "NDA-friendly process and careful handling of concepts, references, and unreleased work.",
+                title: "NDA & IP PROTECTION",
+                body: "Your concepts, references and unreleased work stay yours — NDA-friendly process and controlled access from the first file we touch.",
                 icon: (
                   <path d="M12 2L4 6v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V6l-8-4zm0 2.2l6 3v4.8c0 4-2.5 7.8-6 9-3.5-1.2-6-5-6-9V7.2l6-3zM10 10h4v6h-2v-4h-2v-2z" />
                 ),
@@ -634,8 +634,8 @@ export default function HomePageLower() {
             <div className="grid gap-8 md:grid-cols-3 md:divide-x md:divide-white/10">
               {[
                 {
-                  value: "70+",
-                  label: "PROJECTS COMPLETED",
+                  value: "50+",
+                  label: "PROJECTS DELIVERED",
                   icon: (
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7v-7zm4-3h2v10h-2V7zm4 3h2v7h-2v-7z" />
                   ),
@@ -768,7 +768,7 @@ export default function HomePageLower() {
                 &ldquo;
               </span>
               <TypingText
-                text="Overall we are EXTREMELY happy! This is one thing we'll love to improve upon in more frequent communication. Twice a day can be doable in order to keep things moving."
+                text="Working with the team was a smooth experience from start to finish. Their animations felt responsive, polished, and perfectly matched our game's visual style. Communication was clear, revisions were handled quickly, and every milestone was delivered on schedule. We'd be happy to collaborate again."
                 cps={46}
                 className="mt-2 flex-1 text-[14px] leading-7 text-white/80"
               />
@@ -784,9 +784,9 @@ export default function HomePageLower() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold text-white">
-                    Jens Weinberg
+                    Sophia Martinez
                   </div>
-                  <div className="text-xs text-white/55">Animation lead</div>
+                  <div className="text-xs text-white/55">Art Director</div>
                 </div>
                 <div className="flex shrink-0 gap-0.5 text-[#ff8c3a]">
                   {[1, 2, 3, 4, 5].map((s) => (
@@ -802,33 +802,33 @@ export default function HomePageLower() {
               {[
                 {
                   quote:
-                    "I recently had a 3D character created, and the experience was fantastic. The team nailed my vision and delivered on time.",
-                  name: "Tom Brunner",
-                  role: "Indie dev",
+                    "Every idle, attack, and skill animation added personality while maintaining excellent gameplay readability. Their attention to detail exceeded our expectations.",
+                  name: "Daniel Brooks",
+                  role: "Game Producer",
                   avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg",
                   stars: 5,
                 },
                 {
                   quote:
-                    "Awesome job, guys! Thanks for cooperation, delivery in time, and of course quality of the animation.",
-                  name: "Adel Wazir",
-                  role: "Producer",
+                    "Their expertise in Spine animation significantly improved our production pipeline. The rigs were clean, animations were optimized, and implementation into the engine was straightforward. It saved our team a considerable amount of time.",
+                  name: "Ryan Mitchell",
+                  role: "Lead Game Designer",
                   avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg",
                   stars: 5,
                 },
                 {
                   quote:
-                    "Worked with this team on a couple of titles — quality is smooth and consistent. Would recommend.",
-                  name: "Tom Johnson",
-                  role: "Art director",
+                    "The VFX work added a whole new level of impact to our combat system. Effects were visually striking without overwhelming the gameplay, and every iteration reflected our feedback accurately. Excellent quality throughout the project.",
+                  name: "Emily Foster",
+                  role: "Creative Director",
                   avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg",
                   stars: 4,
                 },
                 {
                   quote:
-                    "Very short deadline for characters after our previous vendor slipped — you helped us ship on time.",
-                  name: "Peter Wilson",
-                  role: "Studio lead",
+                    "We've worked with several outsourcing teams before, and this was one of the most reliable collaborations we've had. They understood our production process, adapted quickly, and consistently delivered assets that required minimal revisions.",
+                  name: "Nathan Collins",
+                  role: "Project Manager",
                   avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg",
                   stars: 5,
                 },

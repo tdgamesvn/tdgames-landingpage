@@ -1,5 +1,38 @@
 # LOG
 
+## 2026-07-29 (session — chốt số liệu 50+ & testimonial, deploy)
+### Task
+Sếp chốt: số liệu đúng, testimonial để sếp sửa nội dung sau → commit + deploy
+toàn bộ phần đang dirty.
+
+### Work Done
+Đồng bộ con số "projects" về **50+** ở cả 4 nơi (trước đó 3 nơi nói 3 số khác nhau:
+home 70+, about 30+, FAQ 70+):
+- `src/app/about/page.tsx` — stat PROJECTS DELIVERED 30+ → 50+
+- `src/components/home-page-lower.tsx` — stat 70+ PROJECTS COMPLETED → 50+
+  PROJECTS DELIVERED; viết lại description "Why choose TD Games" + 4 card
+  (SHIP-READY QUALITY / LOW-RISK START / ENGINE-READY DELIVERY / NDA & IP
+  PROTECTION); thay 5 testimonial (1 typing + 4 card) sang bản nội dung mới
+- `src/components/service-faq-presets.ts` — 70+ → 50+ ở FAQ 2D Art, 2D Animation
+  và VFX ("50+ shipped projects"). Thêm comment: đổi số ở đây phải đổi kèm
+  home-page-lower + about.
+
+Giữ nguyên `service-2d-vfx-featured-showcase.tsx` statValue "70+" — đó là **VFX
+effects created**, không phải projects.
+
+### Result
+`npx tsc --noEmit` sạch, `npm run build` pass. Commit + push + deploy VPS.
+
+### Ghi chú
+- `npm run build` fail trong sandbox (không fetch được Google Fonts) → phải chạy
+  với `dangerouslyDisableSandbox: true`.
+- Testimonial hiện tại là bản tạm, sếp sẽ thay nội dung thật sau.
+
+### Next Step
+Sếp gửi testimonial thật. Vẫn treo: có làm trang Game Development riêng không.
+
+---
+
 ## 2026-07-29 (session — copy hero /about + deploy)
 ### Task
 Sếp gửi screenshot hero `/about` kèm copy mới, bảo thay 2 đoạn body.
