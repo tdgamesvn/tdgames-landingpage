@@ -1453,3 +1453,34 @@ hardcode — sếp chưa chốt có đưa vào Page Slots không.
 ### Next Step
 Sếp vào /admin → Page Slots → page `home`, slot `client-logos`, upload logo →
 kiểm tra trang chủ.
+
+---
+
+## 2026-07-29 (session — logo header/footer vào Page Slots)
+### Task
+Sếp tưởng việc này đã xong. Kiểm tra: **chưa**. Cái xong trước đó là logo
+**client** ở trang chủ (`home/client-logos`) — dễ nhầm tên. Logo brand TD Games
+ở header (`site-header.tsx:266`) và footer (`site-footer.tsx:81`) vẫn hardcode
+cùng 1 URL CDN.
+
+### Work Done
+- Mới `src/lib/use-slot-url.ts`: hook `useSlotUrl(page, slot, fallback)` cho
+  client component (gọi `/api/page-slots?...&single=1`), + hằng
+  `BRAND_LOGO_FALLBACK`. Server component vẫn dùng `resolveSlot()`.
+- `site-header.tsx` + `site-footer.tsx`: `src={logoUrl}` đọc slot
+  `global/brand-logo`. API lỗi / slot rỗng → giữ URL CDN cũ, không bao giờ
+  render ảnh trống.
+- `PageSlotsTab.tsx`: thêm page `global` ("Global (header + footer)") vào
+  `PAGES`, `QUICK_SLOTS.global = ["brand-logo"]`, option `brand-logo` ở form
+  add thủ công.
+- Seed row `page_slots` id 49 (page `global`, slot `brand-logo`, URL hiện tại)
+  để tab render sẵn nhóm.
+
+### Result
+`tsc --noEmit` sạch, CI xanh, prod 200, HTML vẫn ra `logo_td2.png` (2 chỗ).
+Một slot dùng chung header + footer — sếp đổi 1 lần là cả 2 đổi, đúng như
+hành vi hardcode cũ.
+
+### Next Step
+Còn treo: testimonial trang chủ (`home-page-lower.tsx`) là bản tạm em viết,
+chờ sếp gửi nội dung thật hoặc chốt giữ.

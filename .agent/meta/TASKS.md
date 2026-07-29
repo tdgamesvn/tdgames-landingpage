@@ -10,10 +10,12 @@ _(empty)_
   (5 quote + tên đổi mới, chưa commit). Nội dung chốt hay nháp? Sếp xác nhận rồi
   commit hoặc revert.
 
-- [ ] Logo header/footer (`site-header.tsx:266`, `site-footer.tsx:81`) vẫn hardcode —
-  có đưa vào Page Slots như logo client không? Sếp chốt.
 
 ## Done
+
+- [x] Logo header/footer vào Page Slots (2026-07-29): hook `useSlotUrl()` dùng chung,
+  header + footer đọc slot `global/brand-logo`, fallback `BRAND_LOGO_FALLBACK`.
+  Admin thêm page "Global (header + footer)". Seed row id 49.
 
 - [x] Logo client trang chủ đọc từ Page Slots (2026-07-29): hook `useClientLogos()`
   fetch slot `home/client-logos`, fallback về 5 URL cũ. Không cần migration.
