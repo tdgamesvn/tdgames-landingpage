@@ -1,5 +1,41 @@
 # LOG
 
+## 2026-07-29 (session — sửa fact About: năm thành lập 2023)
+### Task
+Sếp gửi screenshot hero `/about`, chốt: studio hoạt động từ **2023**, và rà
+lại các thông tin khác + CTA.
+
+### Phát hiện: 3 nguồn nói 3 năm khác nhau
+- `src/app/about/page.tsx` — "Founded in 2019"
+- Footer (Supabase `site_config.footer.description1`) — "Founded in 2022"
+- Sếp — 2023
+
+### Work Done
+`src/app/about/page.tsx`:
+- 2019 → 2023, viết lại 2 đoạn hero (bỏ giọng "kể lể lâu năm", studio 3 năm
+  nên bán tốc độ + chất lượng)
+- Stats: `5+` → `3+` YEARS OF EXPERIENCE, `50+` → `30+` PROJECTS DELIVERED
+  (7 CREATIVE TEAM giữ nguyên — sếp xác nhận)
+- CTA "Get in touch" giữ nguyên (đề xuất "Get a quote" cho đồng bộ 3 trang
+  service, sếp chọn giữ)
+
+DB: `UPDATE site_config` key `footer` → description1 2022 → 2023.
+Code default `site-footer.tsx` + placeholder `FooterTab.tsx` cũng sửa 2019 →
+2023 (chỉ là fallback/UI hint, không phải nguồn thật).
+
+### Result
+`npx tsc --noEmit` sạch, `npm run build` pass. DB + code đi cùng một deploy
+(theo đúng bài học session trước).
+
+### Ghi chú
+`src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ) —
+session thứ 4 chưa chốt. Không commit lần này.
+
+### Next Step
+Chốt số phận testimonial `home-page-lower.tsx` → commit hoặc `git checkout`.
+
+---
+
 ## 2026-07-29 (session — deploy workflow 5 bước)
 ### Task
 Sếp hỏi "commit deploy chưa? sao lâu vậy". Đúng — workflow 5 bước làm xong từ

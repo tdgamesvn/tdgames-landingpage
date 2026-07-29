@@ -4,6 +4,35 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-07-29 (session — deploy workflow 5 bước)
+### Task
+Sếp hỏi "commit deploy chưa? sao lâu vậy". Đúng — workflow 5 bước làm xong từ
+sáng nhưng em để nằm chờ chung với testimonial (đang chờ sếp chốt).
+
+### Sai lầm cần nhớ
+2 thay đổi độc lập bị gom chung một chuyến chờ. `home-page-lower.tsx` chờ sếp
+duyệt nội dung KHÔNG phải lý do giữ `service-workflow-presets.ts` lại. Hậu quả:
+production chạy lệch nửa ngày — code render 7 step nhưng `page_slots` đã dọn
+còn 5 ảnh (session trước đổi DB mà không deploy code đi kèm).
+**Quy tắc rút ra: đổi DB và code phụ thuộc nhau thì phải đi cùng một deploy.**
+
+### Work Done
+`npx tsc --noEmit` sạch → commit `e3e2f1c` (chỉ workflow presets + memory,
+KHÔNG kèm testimonial) → push → VPS: pull + build + `pm2 restart`.
+
+### Result
+Verified production cả 3 trang: `curl /services/2d-{art,animation,vfx}` đều trả
+"5 steps". 3 route prerender static OK. PM2 restart #99, online.
+
+### Còn tồn
+`src/components/home-page-lower.tsx` vẫn dirty (5 testimonial trang chủ) — sang
+session thứ 3 chưa chốt. Hỏi sếp dứt điểm: nội dung thật hay nháp?
+
+### Next Step
+Chốt testimonial `home-page-lower.tsx` → commit hoặc `git checkout` bỏ.
+
+---
+
 ## 2026-07-29 (session — dọn page_slots workflow-step của services-2d-art)
 ### Task
 Sau khi gộp workflow 7→5 bước, slot ảnh `workflow-step` của trang 2D Art vẫn
@@ -129,44 +158,6 @@ production chưa bao giờ có route này.
 - Bảng `team_members` đã có sẵn `name` / `title` / `photo` — đúng 3 field cần dùng
 - Copy phải ghi clipboard dạng rich text (`ClipboardItem` với `text/html`),
   không phải chép chuỗi HTML thô
-
----
-
-## 2026-07-28 (session — viết lại FAQ 3 service page)
-### Task
-BD gửi bộ FAQ mới cho 2D Art / 2D Animation / 2D VFX. Review và áp vào code.
-
-### Work Done
-- `service-faq-presets.ts`: 6 câu/service → 11 câu/service, viết lại toàn bộ
-- Tách `sharedClosingFaqItems` (NDA + get started) dùng chung cả 3 — bản BD viết
-  3 kiểu khác nhau cho cùng một ý. "What files" / "How much" giữ riêng (khác thật)
-- Sửa claim SAI của BD: "GMT+7 overlap with US Pacific" — lệch 15h, gần như không
-  overlap. Đổi thành "overnight turnaround for North America" (lợi thế thật)
-- Thêm số thật vào câu "why TD Games" (70+/12+/1200+ lấy từ `home-page-lower.tsx`,
-  VFX dùng 70+/40+/50+ từ `service-2d-vfx-featured-showcase.tsx`) — bản BD toàn tính từ
-- Dùng đúng chữ "paid trial batch" khớp `home-page-lower.tsx:562`; BD viết lệch 3 kiểu
-- VFX thiếu hẳn câu NDA → thêm
-- Cắt mệnh đề tự tham chiếu thừa ("following the same review gates used for the rest
-  of the pipeline") — tic lặp ở cả 3 bản BD
-
-### Result
-`npx tsc --noEmit` pass. Blast radius nhỏ: mỗi const 1 consumer (`service-2d-*-faq.tsx`).
-
-### Blockers
-- Sếp không cho số ngày cụ thể cho câu timeline → viết "delivery date committed with
-  the quote" thay vì bịa số. Có số thật thì siết lại được.
-- Sếp tưởng FAQ sửa được trong `/admin` — KHÔNG. Đang hardcode trong
-  `service-faq-presets.ts`, không có tab/API nào đọc.
-
-### Quyết định
-- NDA wording: **giữ hero "on request", sửa FAQ**. Cam kết tuyệt đối kiểu "We sign an
-  NDA before any brief changes hands" là sai thực tế (khách hỏi giá không ký giấy) và
-  tạo ma sát đầu phễu. FAQ đổi sang "ask and we will have one signed the same day,
-  from your template or ours" — giữ sức nặng, bỏ tính tuyệt đối, thêm 2 cam kết
-  cụ thể (same-day, ký theo template khách).
-
-### Next Step
-- Chờ sếp chốt: có làm FAQ editable qua admin không (cần table + tab + API)
 
 ---
 

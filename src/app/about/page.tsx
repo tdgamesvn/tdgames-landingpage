@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import { resolveSlot } from "@/lib/page-slots";
+import siteContent from "@/content/site.json";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -102,11 +103,11 @@ export default async function AboutPage() {
               </h1>
 
               <p className="mt-8 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
-                Founded in 2019, TD Games emerged from a shared passion for creating visually stunning game experiences. What started as a small team of artists has grown into a trusted game art studio working with developers worldwide.
+                Founded in 2023, TD Games started as a small crew of artists obsessed with game visuals — and grew fast into a Hanoi-based studio trusted by developers worldwide.
               </p>
               
               <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
-                We specialize in 2D animation, VFX, and splash art for games — bringing characters and worlds to life with professional-grade assets that enhance gameplay and captivate players.
+                We specialize in 2D animation, VFX, and splash art for games — bringing characters and worlds to life with production-ready assets that ship on schedule.
               </p>
 
               <Link
@@ -163,7 +164,7 @@ export default async function AboutPage() {
                   className="mt-4 text-3xl font-black text-white"
                   style={{ fontFamily: "var(--font-rajdhani)" }}
                 >
-                  5+
+                  3+
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wider text-white/50">
                   YEARS OF EXPERIENCE
@@ -236,7 +237,7 @@ export default async function AboutPage() {
                   className="mt-4 text-3xl font-black text-white"
                   style={{ fontFamily: "var(--font-rajdhani)" }}
                 >
-                  50+
+                  30+
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wider text-white/50">
                   PROJECTS DELIVERED
@@ -304,23 +305,46 @@ export default async function AboutPage() {
             >
               Our <span className="text-[#f59e0b]">Expertise</span>
             </h2>
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-white/70 md:text-base">
+              Two ways to work with us: outsource your{" "}
+              <span className="text-white">art, animation and VFX</span> to our team, or hand us
+              the whole game and we build it{" "}
+              <span className="text-white">end to end</span>. Either way,{" "}
+              <span className="text-[#f59e0b]">2D is where we are strongest</span> — with 3D
+              support when a project needs it.
+            </p>
 
             <div className="mt-12 grid gap-8 md:grid-cols-3">
               {[
                 {
-                  title: "2D ANIMATION & VFX",
-                  desc: "Character animations, skill effects, and cinematic sequences that bring your game to life.",
+                  title: "2D GAME ART & ILLUSTRATION",
+                  desc: "Character design, splash art, concept art, environments, UI and icons — production-ready in your game's style.",
+                  icon: "M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01",
+                },
+                {
+                  title: "2D ANIMATION",
+                  desc: "Spine and frame-by-frame character animation, skill motions, login screens and cinematic sequences.",
                   icon: "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
                 },
                 {
-                  title: "LOGIN SCREEN ANIMATIONS",
-                  desc: "Eye-catching animated login screens that create memorable first impressions for players.",
-                  icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
+                  title: "GAME VFX",
+                  desc: "Skill effects, impacts, buffs and environment FX — hand-crafted 2D VFX tuned for readability in combat.",
+                  icon: "M13 10V3L4 14h7v7l9-11h-7z",
                 },
                 {
-                  title: "SPLASH ART & ILLUSTRATION",
-                  desc: "High-quality character art and promotional illustrations that showcase your game's unique style.",
-                  icon: "M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01",
+                  title: "FULL GAME DEVELOPMENT",
+                  desc: "The complete game, not just assets: design, art, programming, build and release — one team, one timeline.",
+                  icon: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
+                },
+                {
+                  title: "DEDICATED ART TEAM",
+                  desc: "A long-term squad of artists and animators working inside your pipeline, scaling up or down as your roadmap moves.",
+                  icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
+                },
+                {
+                  title: "ENGINE INTEGRATION",
+                  desc: "Assets delivered ready to ship — Spine, Unity and Cocos setups, atlases and export specs that drop straight into your build.",
+                  icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
                 },
               ].map((item) => (
                 <div
@@ -378,27 +402,31 @@ export default async function AboutPage() {
             </h2>
 
             <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[
-                { img: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png", label: "KAYN SNOW MOON" },
-                { img: "https://cdn.tdgamestudio.com/landing/images/summonerDetail.png", label: "SUMMONER ERA" },
-                { img: "https://cdn.tdgamestudio.com/landing/images/service-animation.jpg", label: "ANIMATION" },
-                { img: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg", label: "BATTLE OF GODS" },
-              ].map((item, i) => (
-                <div key={i} className="group relative aspect-[3/4] overflow-hidden rounded-lg">
+              {siteContent.home.featuredProjects.slice(0, 4).map((item) => (
+                <Link
+                  key={item.slug}
+                  href={`/portfolio/${item.slug}`}
+                  className="group relative aspect-[3/4] overflow-hidden rounded-lg"
+                >
                   <Image
-                    src={item.img}
-                    alt={item.label}
+                    src={item.image}
+                    alt={item.title}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <p
-                    className="absolute bottom-4 left-4 text-xs font-black uppercase tracking-wider text-[#f59e0b]"
-                    style={{ fontFamily: "var(--font-rajdhani)" }}
-                  >
-                    {item.label}
-                  </p>
-                </div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60">
+                      {item.category}
+                    </p>
+                    <p
+                      className="mt-1 text-xs font-black uppercase tracking-wider text-[#f59e0b]"
+                      style={{ fontFamily: "var(--font-rajdhani)" }}
+                    >
+                      {item.title}
+                    </p>
+                  </div>
+                </Link>
               ))}
             </div>
 
