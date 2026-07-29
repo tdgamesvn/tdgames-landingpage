@@ -4,6 +4,33 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-07-29 (session — logo client vào Page Slots)
+### Task
+Sếp gửi screenshot tab Page Slots (`/admin`, page `home`), hỏi tại sao không
+thấy phần logo client. Sếp muốn quản lý logo client từ admin.
+
+### Nguyên nhân
+`home-page-lower.tsx:415` đọc slot `home/client-logos`, rỗng → rơi về mảng
+hardcode `FALLBACK_CLIENT_LOGOS` (5 logo CDN). Trong DB `page_slots` không có
+row `client-logos` nào → tab admin không render nhóm nào (chỉ render nhóm có
+row). Thêm nữa, cả 2 dropdown slot trong `PageSlotsTab.tsx` đều thiếu option
+`client-logos` → không có đường thêm từ UI.
+
+### Work Done
+- `PageSlotsTab.tsx`: thêm `<option value="client-logos">` vào form "Add Slot
+  Manually" (dòng ~461) + thêm `"client-logos"` vào `QUICK_SLOTS.home`.
+- Seed 5 logo fallback vào `page_slots` (id 44-48, page `home`, slot
+  `client-logos`, sort_order 0-4, display_name Client 1-5) qua Supabase MCP.
+
+### Result
+Trang chủ giờ đọc logo từ DB; `FALLBACK_CLIENT_LOGOS` giữ lại làm lưới an toàn
+khi API lỗi. Chưa commit/deploy — chờ sếp review dev.
+
+### Next Step
+Sếp thay 5 logo tạm bằng logo khách thật ngay trong tab Page Slots.
+
+---
+
 ## 2026-07-29 (session — viết lại Our Values `/careers`)
 ### Task
 Sếp gửi screenshot section "Our Values" trang `/careers`, hỏi sửa sao cho ứng
@@ -137,44 +164,6 @@ session thứ 6 chưa chốt.
 
 ### Next Step
 Sếp review dev → commit chung với thay đổi hero `/about` chưa deploy.
-
----
-
-## 2026-07-29 (session — đồng bộ hero /about với Portfolio + Careers)
-### Task
-Sếp gửi screenshot `/about`, hỏi bố cục lệch so với tab Portfolio/Careers là
-lỗi hay chủ đích. → Lỗi. Sếp chọn phương án C (lề + font + eyebrow).
-
-### Nguyên nhân
-Hero `/about` là hero DUY NHẤT không dùng biến layout chung:
-`width: min(90%, 1280px); margin: 0 auto` thay vì `var(--layout-width, 75%)`
-(`--layout-width: 76%` khai báo global ở `globals.css`). Màn >1422px bị chốt
-1280px rồi auto-center → khối chữ đẩy vào giữa, lệch phải so với logo/nav.
-Màn hẹp trùng khớp ngẫu nhiên nên trước giờ không lộ.
-Font H1 cũng lệch: Rajdhani vs Changa One dùng ở mọi hero khác.
-
-### Work Done
-`src/app/about/page.tsx` (chỉ hero, không đụng section dưới):
-- container `min(90%,1280px)` → `mx-auto` + `var(--layout-width, 75%)`
-- H1 `var(--font-rajdhani)` → `changaOne.className` (import `Changa_One`)
-- ~~thêm eyebrow gạch amber + "2D game art studio · Hanoi"~~ → sếp bảo bỏ,
-  đã gỡ lại. Hero chỉ còn H1 + 2 đoạn + CTA (mt-8 như cũ).
-
-Kèm theo (sếp phát hiện qua screenshot `/careers`): eyebrow "HIRING" chỉ
-`text-xs` (12px) trong khi H1 72px → tỉ lệ 1:6, nhìn hụt. Sửa
-`careers-client.tsx:340` → `text-sm md:text-base` + `tracking-[0.3em]`
-cho khớp subtitle hero Portfolio (16px).
-
-### Result
-`npx tsc --noEmit` sạch, `npm run build` pass. Chưa commit/deploy.
-
-### Ghi chú
-Các section dưới của `/about` vẫn dùng container riêng — chưa rà, sếp bảo mới làm.
-`src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ) —
-session thứ 5 chưa chốt.
-
-### Next Step
-Sếp review dev rồi commit + deploy. Vẫn nợ: chốt testimonial home-page-lower.
 
 ---
 

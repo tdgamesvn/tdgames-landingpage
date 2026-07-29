@@ -458,6 +458,7 @@ export function PageSlotsTab({ adminKey }: Props) {
             <option value="showcase-environment">showcase-environment</option>
             <option value="showcase-vfx">showcase-vfx</option>
             <option value="gallery">gallery</option>
+            <option value="client-logos">client-logos</option>
           </select>
           {/* BG URL + upload */}
           <div className="flex min-w-48 flex-1 gap-1.5">
@@ -522,7 +523,7 @@ export function PageSlotsTab({ adminKey }: Props) {
 // ── Quick Upload Component ───────────────────────────────────────────────────
 
 const QUICK_SLOTS: Record<string, string[]> = {
-  home: ["service-card", "showcase-character-art", "showcase-animation", "showcase-environment", "showcase-vfx"],
+  home: ["service-card", "showcase-character-art", "showcase-animation", "showcase-environment", "showcase-vfx", "client-logos"],
   portfolio: ["hero-carousel"],
   "services-2d-art": ["workflow-step"],
   "services-2d-animation": ["workflow-step"],

@@ -3,6 +3,13 @@ name: 🚀 Deploy to VPS
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+# Một build tại một thời điểm. Không cancel-in-progress: kill giữa chừng
+# để lại lock trong .next → run sau fail "Another next build process is already running".
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
 
 jobs:
   deploy:

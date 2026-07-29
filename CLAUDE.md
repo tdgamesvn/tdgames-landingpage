@@ -65,8 +65,13 @@ npm run dev          # Dev server → http://localhost:3000
 npm run build        # Production build
 npm run lint         # ESLint
 
-# Deploy (manual, trên VPS)
-git push origin main
+# Deploy — TỰ ĐỘNG qua GitHub Actions (.github/workflows/deploy.yml)
+git push origin main        # xong. CI ssh vào VPS: pull → npm i → build → pm2 restart (~1m30s)
+gh run watch                # xem tiến độ nếu cần
+
+# KHÔNG ssh build tay khi vừa push — build tay chạy song song với CI sẽ đụng
+# lock của Next ("Another next build process is already running") → CI fail.
+# Chỉ deploy tay khi CI hỏng: gh workflow run deploy.yml (chạy lại), hoặc
 # ssh vps6core → cd /opt/tdgames-landingpage → git pull && npm run build && pm2 restart tdgames-landingpage
 
 # Supabase migrations

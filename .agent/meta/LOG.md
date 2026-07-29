@@ -1,5 +1,32 @@
 # LOG
 
+## 2026-07-29 (session — logo client vào Page Slots)
+### Task
+Sếp gửi screenshot tab Page Slots (`/admin`, page `home`), hỏi tại sao không
+thấy phần logo client. Sếp muốn quản lý logo client từ admin.
+
+### Nguyên nhân
+`home-page-lower.tsx:415` đọc slot `home/client-logos`, rỗng → rơi về mảng
+hardcode `FALLBACK_CLIENT_LOGOS` (5 logo CDN). Trong DB `page_slots` không có
+row `client-logos` nào → tab admin không render nhóm nào (chỉ render nhóm có
+row). Thêm nữa, cả 2 dropdown slot trong `PageSlotsTab.tsx` đều thiếu option
+`client-logos` → không có đường thêm từ UI.
+
+### Work Done
+- `PageSlotsTab.tsx`: thêm `<option value="client-logos">` vào form "Add Slot
+  Manually" (dòng ~461) + thêm `"client-logos"` vào `QUICK_SLOTS.home`.
+- Seed 5 logo fallback vào `page_slots` (id 44-48, page `home`, slot
+  `client-logos`, sort_order 0-4, display_name Client 1-5) qua Supabase MCP.
+
+### Result
+Trang chủ giờ đọc logo từ DB; `FALLBACK_CLIENT_LOGOS` giữ lại làm lưới an toàn
+khi API lỗi. Chưa commit/deploy — chờ sếp review dev.
+
+### Next Step
+Sếp thay 5 logo tạm bằng logo khách thật ngay trong tab Page Slots.
+
+---
+
 ## 2026-07-29 (session — viết lại Our Values `/careers`)
 ### Task
 Sếp gửi screenshot section "Our Values" trang `/careers`, hỏi sửa sao cho ứng
