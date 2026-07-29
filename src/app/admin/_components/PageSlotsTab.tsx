@@ -523,11 +523,15 @@ export function PageSlotsTab({ adminKey }: Props) {
 // ── Quick Upload Component ───────────────────────────────────────────────────
 
 const QUICK_SLOTS: Record<string, string[]> = {
-  home: ["service-card", "showcase-character-art", "showcase-animation", "showcase-environment", "showcase-vfx", "client-logos"],
+  // Phải khớp slot mà code thật sự đọc (grep resolveSlot/usePageSlots).
+  // Thiếu ở đây = không có đường upload từ UI, dù trang vẫn đọc slot đó.
+  home: ["hero-carousel", "service-card", "showcase-character-art", "showcase-animation", "showcase-environment", "showcase-vfx", "client-logos"],
   portfolio: ["hero-carousel"],
-  "services-2d-art": ["workflow-step"],
-  "services-2d-animation": ["workflow-step"],
-  "services-2d-vfx": ["workflow-step"],
+  about: ["hero"],
+  careers: ["hero"],
+  "services-2d-art": ["hero", "workflow-step"],
+  "services-2d-animation": ["hero", "workflow-step"],
+  "services-2d-vfx": ["hero", "workflow-step"],
 };
 
 function QuickUpload({
