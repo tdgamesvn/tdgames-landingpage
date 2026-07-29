@@ -71,14 +71,16 @@ jobs:
             # Request đầu cũng warm luôn từng route để user không ăn cold-start.
             echo "🩺 Healthcheck..."
             failed=""
-            for path in / /services/2d-art /services/2d-animation /services/2d-vfx /about /careers /blog /portfolio /admin; do
+            # KHÔNG đặt tên biến là `path`: trong zsh $path gắn với $PATH,
+            # gán vào là xoá sạch PATH -> "command not found: curl".
+            for route in / /services/2d-art /services/2d-animation /services/2d-vfx /about /careers /blog /portfolio /admin; do
               for i in 1 2 3 4 5 6 7 8 9 10; do
-                code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$path" || true)
+                code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$route" || true)
                 [ "$code" = "200" ] && break
                 sleep 3
               done
-              echo "   $path -> $code"
-              [ "$code" = "200" ] || failed="$failed $path($code)"
+              echo "   $route -> $code"
+              [ "$code" = "200" ] || failed="$failed $route($code)"
             done
             if [ -n "$failed" ]; then
               echo "❌ Route lỗi sau restart:$failed"
