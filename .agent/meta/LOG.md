@@ -38,6 +38,30 @@ tay. `CLAUDE.md` viết lại mục Deploy: push xong là xong, KHÔNG ssh build
 
 Commit `445b88c` → CI xanh, deploy 1m30s không cần thao tác gì.
 
+### Bổ sung 2 — prod 500 toàn site (đã fix)
+Sau deploy `445b88c`, `https://tdgamestudio.com/` trả **500** (API `/api/*` vẫn
+200 nên dễ tưởng lành). PM2 err log:
+`InvariantError: The client reference manifest for route "/" does not exist`.
+
+Nguyên nhân: `.next` trên VPS là artifact **lai giữa 2 lần build đè lên nhau**
+(build tay + build CI cùng ngày). Next build không xoá `.next` cũ → manifest cũ
+sót lại, không khớp chunk mới.
+
+Fix ngay: ssh VPS → `rm -rf .next && npm run build && pm2 restart`. Prod 200 lại
+(home / admin / careers).
+
+Chặn tái diễn — `deploy.yml` trước bước build:
+`find .next -mindepth 1 -maxdepth 1 ! -name cache -exec rm -rf {} +`
+(xoá sạch build cũ, giữ `.next/cache` để build vẫn nhanh). Commit `4f...` CI xanh.
+
+**Bài học:** sau deploy phải curl trang HTML, không chỉ curl API.
+
+### Bổ sung 3 — rà QUICK_SLOTS thiếu slot
+Grep toàn bộ `resolveSlot` / `usePageSlots` để đối chiếu với `QUICK_SLOTS` trong
+`PageSlotsTab.tsx` → thiếu: `home/hero-carousel`, `about/hero`, `careers/hero`,
+`services-2d-*/hero`. Đã bổ sung (commit `58839d1`) kèm comment: slot nào code
+đọc thì phải có ở đây, không thì không có đường upload từ UI.
+
 ### Next Step
 Sếp thay 5 logo tạm bằng logo khách thật ngay trong tab Page Slots.
 
