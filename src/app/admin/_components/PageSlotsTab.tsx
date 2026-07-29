@@ -15,6 +15,8 @@ type PageSlot = {
 };
 
 const PAGES = [
+  // `global` không phải 1 trang — là slot dùng chung mọi trang (logo header/footer).
+  { value: "global", label: "Global (header + footer)" },
   { value: "home", label: "Home" },
   { value: "portfolio", label: "Portfolio" },
   { value: "about", label: "About" },
@@ -459,6 +461,7 @@ export function PageSlotsTab({ adminKey }: Props) {
             <option value="showcase-vfx">showcase-vfx</option>
             <option value="gallery">gallery</option>
             <option value="client-logos">client-logos</option>
+            <option value="brand-logo">brand-logo</option>
           </select>
           {/* BG URL + upload */}
           <div className="flex min-w-48 flex-1 gap-1.5">
@@ -525,6 +528,7 @@ export function PageSlotsTab({ adminKey }: Props) {
 const QUICK_SLOTS: Record<string, string[]> = {
   // Phải khớp slot mà code thật sự đọc (grep resolveSlot/usePageSlots).
   // Thiếu ở đây = không có đường upload từ UI, dù trang vẫn đọc slot đó.
+  global: ["brand-logo"],
   home: ["hero-carousel", "service-card", "showcase-character-art", "showcase-animation", "showcase-environment", "showcase-vfx", "client-logos"],
   portfolio: ["hero-carousel"],
   about: ["hero"],

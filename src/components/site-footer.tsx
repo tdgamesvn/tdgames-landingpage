@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useSlotUrl, BRAND_LOGO_FALLBACK } from "@/lib/use-slot-url";
 
 type FooterConfig = {
   description1: string;
@@ -45,6 +46,7 @@ function ContactIconBox({
 
 export default function SiteFooter() {
   const [cfg, setCfg] = useState<FooterConfig>(FOOTER_DEFAULT);
+  const logoUrl = useSlotUrl("global", "brand-logo", BRAND_LOGO_FALLBACK);
 
   useEffect(() => {
     fetch("/api/footer")
@@ -78,7 +80,7 @@ export default function SiteFooter() {
           <div>
             <div className="relative h-10 w-[170px]">
               <Image
-                src="https://cdn.tdgamestudio.com/landing/logoCompany/logo_td2.png"
+                src={logoUrl}
                 alt="TD Games"
                 fill
                 className="object-contain"

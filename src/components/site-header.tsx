@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuoteStyleListener } from "./hero-layout-state";
+import { useSlotUrl, BRAND_LOGO_FALLBACK } from "@/lib/use-slot-url";
 
 function navHrefPath(href: string) {
   const i = href.indexOf("#");
@@ -237,6 +238,7 @@ export default function SiteHeader() {
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const pathname = usePathname();
   const quoteStyle = useQuoteStyleListener();
+  const logoUrl = useSlotUrl("global", "brand-logo", BRAND_LOGO_FALLBACK);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -263,7 +265,7 @@ export default function SiteHeader() {
             aria-label="TD Games home"
           >
             <Image
-              src="https://cdn.tdgamestudio.com/landing/logoCompany/logo_td2.png"
+              src={logoUrl}
               alt=""
               width={260}
               height={76}
