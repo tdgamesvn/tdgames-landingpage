@@ -12,40 +12,40 @@ export const revalidate = 60;
 /** Card mặc định — dùng khi slot `service-card` của trang này chưa có row nào trong DB. */
 const DEFAULT_CARDS: ServiceCapabilityItem[] = [
   {
-    title: "Spine Animation",
-    description:
-      "Rig-driven loops and attacks tuned for engine constraints and revision speed.",
-    image: "https://cdn.tdgamestudio.com/landing/images/7be77dae-b42e-44c0-b1be-397150c7ff3d.jpg",
-  },
-  {
-    title: "Frame-by-Frame Animation",
-    description:
-      "Hand-drawn accents for promo beats and hero moments when the brief demands it.",
-    image: "https://cdn.tdgamestudio.com/landing/images/minh-hong-minh-hong-thumbnail-2.jpg",
-  },
-  {
-    title: "UI Animation",
-    description:
-      "Lightweight motion for menus, rewards, and tutorial flourishes.",
-    image: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-07 233917.png",
-  },
-  {
-    title: "Cutscenes",
-    description:
-      "Cinematic sequences and story beats timed for maximum impact.",
-    image: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg",
-  },
-  {
-    title: "Creature Animation",
-    description:
-      "Non-humanoid rigs and locomotion that stay on-model across variants.",
-    image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
-  },
-  {
     title: "Character Animation",
     description:
       "Combat, idle, and expression sets authored for readable silhouettes.",
     image: "https://cdn.tdgamestudio.com/landing/images/2f308aec-bd0c-42b9-9220-ca123338d9b9.png",
+  },
+  {
+    title: "UI Animation",
+    description:
+      "Menu, reward, and tutorial motion that guides the eye without noise.",
+    image: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-07 233917.png",
+  },
+  {
+    title: "Login Animation",
+    description:
+      "Animated login and splash screens that set the tone from the first second.",
+    image: "https://cdn.tdgamestudio.com/landing/images/7be77dae-b42e-44c0-b1be-397150c7ff3d.jpg",
+  },
+  {
+    title: "Cutscene",
+    description:
+      "Story beats and scripted sequences timed to land the narrative moment.",
+    image: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg",
+  },
+  {
+    title: "Cinematic",
+    description:
+      "Trailer-grade sequences and key moments built for marketing impact.",
+    image: "https://cdn.tdgamestudio.com/landing/images/minh-hong-minh-hong-thumbnail-2.jpg",
+  },
+  {
+    title: "3D Animation",
+    description:
+      "3D character and prop animation delivered game-ready for your engine.",
+    image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
   },
 ];
 
