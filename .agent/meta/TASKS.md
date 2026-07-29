@@ -6,9 +6,15 @@ _(empty)_
 
 ## To do
 
-_(trống — không còn task nào tồn đọng)_
+- [ ] Chốt testimonial trang chủ: `src/components/home-page-lower.tsx` đang dirty
+  (5 quote + tên đổi mới, chưa commit). Nội dung chốt hay nháp? Sếp xác nhận rồi
+  commit hoặc revert.
 
 ## Done
+
+- [x] Rút gọn hero copy 3 trang service (2026-07-29): title bỏ "OUTSOURCING"
+  (3 dòng → 2), description 85/72/72 từ → 29/31/25, CTA "Consult with our experts"
+  → "Get a quote". Chỉ đổi chuỗi, không đụng layout; keyword SEO giữ ở metadata.
 
 - [x] Dọn doc stale (2026-07-27): CLAUDE.md ghi Careers/jobs/applications "sắp tạo"
   trong khi đã production từ 2026-05-24; admin 6 tab → thực tế 13; thiếu mục /hr.

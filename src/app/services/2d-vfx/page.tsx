@@ -31,12 +31,12 @@ export default async function Service2DVfxPage() {
       }
       hero={{
         image: heroImage,
-        titleTop: "2D GAME VFX OUTSOURCING",
+        titleTop: "2D GAME VFX",
         titleMain: "SERVICES",
-        subheading: "Impactful 2D Visual Effects to Elevate Your Game Feel",
+        subheading: "2D VFX outsourcing that elevates your game feel",
         description:
-          "TD Games offers top-tier 2D VFX outsourcing services that add instant punch, polish, and excitement to your game's combat and interface. Our artists create dynamic skill effects, explosive particles, and ambient visual flourishes tailored specifically for mobile and mid-core games. Whether integrated directly into Spine character animations or delivered as standalone sprite sheets, our 2D VFX are fully optimized for smooth performance without compromising frame rates.",
-        ctaLabel: "Consult with our experts",
+          "Dynamic skill effects, explosive particles, and UI flourishes built for mobile and mid-core games. Delivered as Spine-integrated or standalone sprite sheets — optimized for smooth frame rates.",
+        ctaLabel: "Get a quote",
       }}
       capabilities={{
         eyebrow: "What we do",

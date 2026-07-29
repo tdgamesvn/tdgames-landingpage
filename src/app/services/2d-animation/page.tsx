@@ -33,10 +33,10 @@ export default async function Service2DAnimationPage() {
         image: heroImage,
         titleTop: "2D GAME ANIMATION",
         titleMain: "SERVICES",
-        subheading: "Fluid, Engine-Ready 2D Motion for Characters & Cutscenes",
+        subheading: "Engine-ready motion for characters & cutscenes",
         description:
-          "TD Games is a specialized 2D animation studio recognized for delivering fluid, game-ready motion that brings characters and worlds to life. We specialize in both Spine 2D skeletal animation and traditional Frame-by-Frame techniques. From character combat sets to cinematic login screens, we provide end-to-end 2D animation outsourcing services with complete technical handoffs, including exported atlases, pivot notes, and developer integration checklists, ensuring your assets plug seamlessly into any game engine.",
-        ctaLabel: "Consult with our experts",
+          "Spine 2D skeletal and frame-by-frame animation, from combat sets to cinematic login screens. Full technical handoff: atlases, pivot notes, integration checklist.",
+        ctaLabel: "Get a quote",
       }}
       capabilities={{
         eyebrow: "What we do",

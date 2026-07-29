@@ -1,5 +1,41 @@
 # LOG
 
+## 2026-07-29 (session — rút gọn hero copy 3 trang service)
+### Task
+Sếp gửi screenshot `/services/2d-vfx`: title + description + button đều quá dài
+trên cả 3 trang service. Yêu cầu đề xuất phương án trước, rồi mới sửa.
+
+### Đo được (lý do sửa)
+Hero title box `max-w-[606px]` @ Changa One 92px → ~8 ký tự/dòng.
+Description box `max-w-[547px]` @18px → ~60 ký tự/dòng.
+- 2D Art: titleTop 23 ký tự = 3 dòng + "SERVICES"; description 85 từ ≈ 10 dòng
+- 2D VFX: titleTop 23 ký tự = 3 dòng; description 72 từ ≈ 9 dòng
+- 2D Animation: titleTop 17 ký tự = 2 dòng; description 72 từ ≈ 8 dòng
+Chuẩn hero landing: title ≤ 2 dòng, description 35–45 từ.
+
+### Work Done (chỉ đổi chuỗi copy, KHÔNG đụng layout)
+`src/app/services/{2d-art,2d-animation,2d-vfx}/page.tsx`:
+- titleTop bỏ "OUTSOURCING" → "2D GAME ART/VFX" (2D ANIMATION giữ nguyên)
+- subheading gánh lại keyword "outsourcing" đã bỏ khỏi H1
+- description: 85/72/72 từ → 29/31/25 từ
+- ctaLabel: "Consult with our experts" → "Get a quote" (đồng bộ cả 3)
+Keyword SEO vẫn giữ nguyên trong `layout.tsx` metadata của từng trang.
+
+### Result
+`npm run build` pass, 3 route service prerender static OK.
+
+### Ghi chú
+- `src/components/home-page-lower.tsx` đang dirty từ session trước (thay 5
+  testimonial trang chủ: Jens Weinberg → Sophia Martinez...). KHÔNG commit lần
+  này — chưa rõ đây là nội dung chốt hay bản nháp. Hỏi sếp trước khi đẩy.
+- Build cần network (Google Fonts) → phải `dangerouslyDisableSandbox: true`.
+
+### Next Step
+- Chốt số phận testimonial trong `home-page-lower.tsx`
+- Phần copy dài bị cắt khỏi hero (uy tín studio) có thể đưa xuống section dưới nếu cần
+
+---
+
 ## 2026-07-28 (session — email signature generator: HUỶ)
 ### Task
 Sếp hỏi có làm được app tạo chữ ký email cho nhân viên không (tham chiếu HubSpot).

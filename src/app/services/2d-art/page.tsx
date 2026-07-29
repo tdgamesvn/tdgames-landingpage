@@ -31,12 +31,12 @@ export default async function Service2DArtPage() {
       }
       hero={{
         image: heroImage,
-        titleTop: "2D GAME ART OUTSOURCING",
+        titleTop: "2D GAME ART",
         titleMain: "SERVICES",
-        subheading: "High-Quality 2D Visuals for Mobile Games",
+        subheading: "2D art outsourcing for mobile games",
         description:
-          "TD Games is a 2D art studio with an exceptional reputation for talented 2D game artists and deep industry experience. We offer comprehensive 2D game art outsourcing services tailored for mobile projects of any scale from indie titles to mid-core games. From initial character concepts and immersive environments to high-impact splash illustrations and UI assets, our team delivers high-quality, production-ready artworks that satisfy game developers and studios around the world while fitting seamlessly into your pipeline.",
-        ctaLabel: "Consult with our experts",
+          "From character concepts and environments to splash illustrations and UI assets — production-ready artwork that fits straight into your pipeline. Indie to mid-core, any scale.",
+        ctaLabel: "Get a quote",
       }}
       capabilities={{
         eyebrow: "What we do",
