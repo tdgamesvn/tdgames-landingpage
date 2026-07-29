@@ -1,5 +1,6 @@
 // src/lib/page-slots.ts
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import type { ServiceCapabilityItem } from "@/components/service-capabilities-grid";
 
 export type SlotItem = {
   id: number;
@@ -35,6 +36,24 @@ export async function resolveSlot(
   } catch {
     return fallback;
   }
+}
+
+/**
+ * Card "What we do" của 3 trang service — slot `service-card`.
+ * Map: url → image, display_name → title, display_label → description.
+ * Slot rỗng (hoặc DB lỗi) → trả nguyên defaults, trang không bao giờ trống.
+ */
+export async function resolveServiceCards(
+  page: string,
+  defaults: ServiceCapabilityItem[],
+): Promise<ServiceCapabilityItem[]> {
+  const items = await resolveSlots(page, "service-card");
+  if (!items.length) return defaults;
+  return items.map((it, i) => ({
+    image: it.url,
+    title: it.display_name || defaults[i]?.title || "",
+    description: it.display_label || defaults[i]?.description || "",
+  }));
 }
 
 /**

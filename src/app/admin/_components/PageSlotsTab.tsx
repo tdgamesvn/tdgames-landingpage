@@ -532,9 +532,9 @@ const QUICK_SLOTS: Record<string, string[]> = {
   portfolio: ["hero-carousel"],
   about: ["hero"],
   careers: ["hero"],
-  "services-2d-art": ["hero", "workflow-step"],
-  "services-2d-animation": ["hero", "workflow-step"],
-  "services-2d-vfx": ["hero", "workflow-step"],
+  "services-2d-art": ["hero", "service-card", "workflow-step"],
+  "services-2d-animation": ["hero", "service-card", "workflow-step"],
+  "services-2d-vfx": ["hero", "service-card", "workflow-step"],
 };
 
 function QuickUpload({
