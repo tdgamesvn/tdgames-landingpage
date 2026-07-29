@@ -109,7 +109,13 @@ export default function AdminPage() {
         if (typeof window !== "undefined") sessionStorage.setItem(STORAGE_KEY, value);
       } else {
         setKeyVerified(false);
-        setVerifyMsg("Sai admin key hoặc API lỗi");
+        // Tách 401 (sai key) khỏi lỗi hệ thống — gộp chung làm mất cả buổi
+        // truy lỗi khi thật ra key trong DB đã bị đổi.
+        setVerifyMsg(
+          res.status === 401
+            ? "Sai admin key"
+            : `Lỗi hệ thống (HTTP ${res.status}) — key có thể vẫn đúng`,
+        );
       }
     } catch {
       setKeyVerified(false);
@@ -134,24 +140,34 @@ export default function AdminPage() {
           <p className="text-sm text-white/60">
             Nhập admin key (giá trị của <code className="font-mono text-xs">ADMIN_SECRET</code>) để tiếp tục.
           </p>
-          <input
-            type="password"
-            value={adminKey}
-            onChange={(e) => setAdminKey(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && adminKey) void verifyKey(adminKey);
+          {/* <form> + FormData: lấy key từ DOM chứ không từ React state.
+              Password manager autofill không kích onChange -> state rỗng ->
+              nút Sign in disable dù ô đã có chữ (sếp báo 2026-07-30). */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const value = String(new FormData(e.currentTarget).get("adminKey") ?? "").trim();
+              if (value) void verifyKey(value);
             }}
-            placeholder="Admin key"
-            className="w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:border-indigo-400"
-            autoFocus
-          />
-          <button
-            onClick={() => void verifyKey(adminKey)}
-            disabled={!adminKey || verifying}
-            className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium hover:bg-indigo-500 disabled:opacity-40"
+            className="space-y-4"
           >
-            {verifying ? "Verifying…" : "Sign in"}
-          </button>
+            <input
+              type="password"
+              name="adminKey"
+              defaultValue={adminKey}
+              onChange={(e) => setAdminKey(e.target.value)}
+              placeholder="Admin key"
+              className="w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:border-indigo-400"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={verifying}
+              className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium hover:bg-indigo-500 disabled:opacity-40"
+            >
+              {verifying ? "Verifying…" : "Sign in"}
+            </button>
+          </form>
           {verifyMsg ? <p className="text-xs text-white/60">{verifyMsg}</p> : null}
           <p className="text-[10px] text-white/40">
             Key được lưu trong <code className="font-mono">sessionStorage</code> (chỉ phiên này).
