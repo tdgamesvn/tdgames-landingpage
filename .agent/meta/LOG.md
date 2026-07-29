@@ -1484,3 +1484,14 @@ hành vi hardcode cũ.
 ### Next Step
 Còn treo: testimonial trang chủ (`home-page-lower.tsx`) là bản tạm em viết,
 chờ sếp gửi nội dung thật hoặc chốt giữ.
+
+### Bổ sung — ART SHOWCASE còn 3 tag
+Sếp gửi screenshot section ART SHOWCASE trang chủ: rút còn Art / Animation / VFX.
+`home-page-lower.tsx` `DEFAULT_SHOWCASE`: xoá block `environment` (5 ảnh, phần
+lớn trùng bộ VFX), đổi label `Character Art` → `Art`. **Giữ nguyên id
+`character-art`** để không đứt slot DB `showcase-character-art` — đổi id là mất
+đường đọc ảnh từ Page Slots.
+`PageSlotsTab.tsx` gỡ `showcase-environment` khỏi dropdown + QUICK_SLOTS (DB
+không có row nào cho slot này nên không cần dọn dữ liệu).
+Verified prod: HTML không còn "Character Art"/tab Environment; chuỗi
+"Environments" còn lại là mô tả service card, không liên quan.
