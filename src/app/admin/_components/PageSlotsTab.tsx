@@ -457,7 +457,6 @@ export function PageSlotsTab({ adminKey }: Props) {
             <option value="workflow-step">workflow-step</option>
             <option value="showcase-character-art">showcase-character-art</option>
             <option value="showcase-animation">showcase-animation</option>
-            <option value="showcase-environment">showcase-environment</option>
             <option value="showcase-vfx">showcase-vfx</option>
             <option value="gallery">gallery</option>
             <option value="client-logos">client-logos</option>
@@ -529,7 +528,7 @@ const QUICK_SLOTS: Record<string, string[]> = {
   // Phải khớp slot mà code thật sự đọc (grep resolveSlot/usePageSlots).
   // Thiếu ở đây = không có đường upload từ UI, dù trang vẫn đọc slot đó.
   global: ["brand-logo"],
-  home: ["hero-carousel", "service-card", "showcase-character-art", "showcase-animation", "showcase-environment", "showcase-vfx", "client-logos"],
+  home: ["hero-carousel", "service-card", "showcase-character-art", "showcase-animation", "showcase-vfx", "client-logos"],
   portfolio: ["hero-carousel"],
   about: ["hero"],
   careers: ["hero"],

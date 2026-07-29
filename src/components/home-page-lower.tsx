@@ -293,8 +293,10 @@ type MarqueeFilter = {
 /** Default showcase images — will be overridden by page_slots DB if entries exist */
 const DEFAULT_SHOWCASE: MarqueeFilter[] = [
   {
+    // id giữ nguyên `character-art` để không đứt slot DB `showcase-character-art`;
+    // chỉ nhãn hiển thị đổi thành "Art".
     id: "character-art",
-    label: "Character Art",
+    label: "Art",
     images: [
       { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg", alt: "Character 1" },
       { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg", alt: "Character 2" },
@@ -312,17 +314,6 @@ const DEFAULT_SHOWCASE: MarqueeFilter[] = [
       { src: "https://cdn.tdgamestudio.com/landing/sinspired/promo_amanda.jpg", alt: "Animation 3" },
       { src: "https://cdn.tdgamestudio.com/landing/sinspired/3a7ab9112768871.602fbfbfa228c-882x1024.jpg", alt: "Animation 4" },
       { src: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg", alt: "Animation 5" },
-    ],
-  },
-  {
-    id: "environment",
-    label: "Environment",
-    images: [
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-4-1024x850.jpg", alt: "Environment 1" },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-2-copy-1024x850.jpg", alt: "Environment 2" },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-11-min-1024x572.jpg", alt: "Environment 3" },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/Artboard-1-copy-13-min-1024x572.jpg", alt: "Environment 4" },
-      { src: "https://cdn.tdgamestudio.com/landing/sinspired/space_arena_source_nature_render_final-min-1024x599.jpg", alt: "Environment 5" },
     ],
   },
   {
