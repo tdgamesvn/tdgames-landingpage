@@ -1554,3 +1554,25 @@ CI xanh, 9/9 route 200.
 (3) bẫy `$path` zsh — hết, đã đổi `$route`.
 **Chưa che:** route động (`/blog/[slug]`, `/portfolio/[slug]`) không nằm trong
 healthcheck; ai ssh build tay song song CI vẫn tự bắn vào chân mình.
+
+### Bổ sung — card "Featured showcase" 3 trang service vào Page Slots
+Sếp gửi screenshot section "FEATURED 2D ART" (3 card lớn có số liệu). Cùng kiểu
+với `service-card` nhưng component khác: `service-2d-{art,animation,vfx}-featured-showcase.tsx`.
+
+- `page-slots.ts`: thêm `resolveFeaturedCards(page, defaults)` — slot `featured-card`.
+- 3 component đổi sang `async`, `await resolveFeaturedCards(...)`. Chúng vốn là
+  server component (chỉ `service-featured-showcase-section.tsx` mới `"use client"`)
+  nên không phải đổi kiến trúc.
+- Admin: `featured-card` vào dropdown + QUICK_SLOTS 3 trang service.
+- Seed 9 row id 83-91.
+
+**Giới hạn đã biết:** `statValue`/`statLabel` (80+ / "Characters delivered"),
+`icon`, `href` KHÔNG sửa được từ admin — `page_slots` không có cột tương ứng nên
+lấy theo index từ defaults trong code. Sếp cần đổi số thì sửa code, hoặc thêm
+cột `meta jsonb` sau.
+
+Bẫy dính giữa đường: 2/3 file đặt tên mảng const là `cards`, script đổi tên biến
+tạo ra `const cards = await ...(..., cards)` → TS7022 tự tham chiếu. Đổi thành
+`resolved`.
+
+**Result:** tsc sạch, CI xanh, cả 3 trang render card từ DB (verified curl).
