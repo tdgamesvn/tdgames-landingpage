@@ -1518,3 +1518,26 @@ trang service bị bỏ sót. Sếp chọn phương án B (đưa vào admin).
 **Lưu ý cho lần sau:** `display_label` đang dùng làm *description* của card ở
 slot `service-card` — khác ngữ nghĩa "label" ở slot khác. Đổi tên cột là đụng
 mọi slot nên để nguyên, đọc comment trong `resolveServiceCards` trước khi sửa.
+
+### Bổ sung — 500 ở /services/2d-art: chính cái "fix" sáng nay gây ra
+Sếp báo Internal Server Error. Chỉ **1 route** chết (`/services/2d-art`), 8 route
+còn lại 200 → healthcheck curl mỗi `/` không thấy gì.
+
+**Root cause:** bước `find .next ... -exec rm -rf` (thêm sáng nay để tránh
+artifact lai) xoá sạch `.next` **trước** khi build. App PM2 vẫn đang chạy suốt
+~70s build đó, route nào chưa nạp vào RAM thì không còn file để đọc → 500.
+Càng push liên tiếp (feature rồi docs) thì cửa sổ chết càng lặp.
+
+**Fix root-cause — build rồi swap:**
+- `next.config.ts`: `distDir: process.env.NEXT_DIST_DIR || ".next"`.
+- `deploy.yml`: chép `.next/cache` → `.next-new/cache`, build với
+  `NEXT_DIST_DIR=.next-new`, xong mới `mv .next .next-old && mv .next-new .next`,
+  restart, rồi `rm -rf .next-old`. `.next` luôn nhất quán; downtime còn ~1s lúc
+  restart thay vì ~70s.
+- Healthcheck quét **9 route** thay vì 1, request đầu warm luôn cache từng route.
+
+**Bẫy zsh dính giữa đường:** vòng lặp đặt tên biến `path` → zsh gắn `$path` với
+`$PATH`, gán vào là xoá sạch PATH → `command not found: curl`. Đổi thành
+`route`. (Deploy thực ra đã thành công, chỉ healthcheck chết.)
+
+**Result:** CI xanh, log in đủ 9 route -> 200; verify lại qua domain cũng 200 cả 9.
