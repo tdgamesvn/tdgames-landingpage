@@ -62,6 +62,20 @@ Grep toàn bộ `resolveSlot` / `usePageSlots` để đối chiếu với `QUICK
 `services-2d-*/hero`. Đã bổ sung (commit `58839d1`) kèm comment: slot nào code
 đọc thì phải có ở đây, không thì không có đường upload từ UI.
 
+### Bổ sung 4 — healthcheck sau deploy (+ phát hiện port sai)
+`deploy.yml` sau `pm2 restart`: curl `http://127.0.0.1:3000/` tối đa 10 lần
+(3s/lần), không 200 → in `pm2 logs --err` rồi `exit 1`. Curl trang **HTML**,
+không phải `/api` — `/api` vẫn 200 khi `.next` hỏng.
+
+Lần chạy đầu fail: healthcheck curl port **3001** (lấy từ `ecosystem.config.js`)
+→ HTTP 307 về `/login`. Hoá ra **3001 là app khác** (platforms); landing page
+chạy trên **3000** và nginx cũng proxy về 3000. `ecosystem.config.js` ghi 3001
+là bẫy: nếu PM2 rơi vào nhánh fallback `pm2 start ecosystem.config.js` thì app
+bind nhầm port → site chết. Đã sửa cả hai về 3000 (commit `1ae...`).
+
+Run sau xanh, log: `thử 1: HTTP 000` → `✅ trang chủ HTTP 200` (retry loop đúng
+là cần, app mất ~3s boot).
+
 ### Next Step
 Sếp thay 5 logo tạm bằng logo khách thật ngay trong tab Page Slots.
 
