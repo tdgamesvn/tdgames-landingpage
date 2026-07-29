@@ -337,7 +337,8 @@ export default function CareersClient({ heroUrl }: { heroUrl: string }) {
             style={{ width: "var(--layout-width, 75%)" }}
           >
             <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#ff9f1a]">
+              {/* ml-[2px]: bù side-bearing của Changa One để mép chữ khớp H1 bên dưới */}
+              <p className="ml-[2px] text-base font-bold uppercase tracking-[0.3em] text-[#ff9f1a] md:text-lg">
                 Hiring
               </p>
               <h1

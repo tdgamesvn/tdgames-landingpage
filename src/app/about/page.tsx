@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Changa_One } from "next/font/google";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import { resolveSlot } from "@/lib/page-slots";
@@ -8,6 +9,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 export const revalidate = 60;
+
+const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
 
 type TeamMember = { id: string; name: string; title: string; photo: string };
 type WorkspaceImage = { src: string; alt: string };
@@ -91,23 +94,22 @@ export default async function AboutPage() {
           />
 
           <div
-            className="relative z-[2] px-4"
-            style={{ width: "min(90%, 1280px)", margin: "0 auto" }}
+            className="relative z-[2] mx-auto px-4"
+            style={{ width: "var(--layout-width, 75%)" }}
           >
             <div className="max-w-2xl">
               <h1
-                className="text-6xl font-black uppercase leading-[1] tracking-tight md:text-8xl"
-                style={{ fontFamily: "var(--font-rajdhani)" }}
+                className={`text-6xl font-black uppercase leading-[1] tracking-tight md:text-8xl ${changaOne.className}`}
               >
                 ABOUT <span className="text-[#f59e0b]">US</span>
               </h1>
 
               <p className="mt-8 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
-                Founded in 2023, TD Games started as a small crew of artists obsessed with game visuals — and grew fast into a Hanoi-based studio trusted by developers worldwide.
+                Founded in 2023, TD Games is a Vietnam based game outsourcing studio dedicated to delivering high quality Game Art, Animation, VFX, and Game Development services.
               </p>
-              
+
               <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
-                We specialize in 2D animation, VFX, and splash art for games — bringing characters and worlds to life with production-ready assets that ship on schedule.
+                We combine creativity, professionalism, and technical expertise to help our global partners bring outstanding gaming experiences to life. Every project is approached with passion, precision, and a commitment to building long-term partnerships.
               </p>
 
               <Link

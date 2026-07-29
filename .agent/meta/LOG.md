@@ -1,5 +1,99 @@
 # LOG
 
+## 2026-07-29 (session — copy hero /about + deploy)
+### Task
+Sếp gửi screenshot hero `/about` kèm copy mới, bảo thay 2 đoạn body.
+
+### Work Done
+`src/app/about/page.tsx:107-113` — thay nội dung 2 `<p>`, giữ nguyên markup
+(vẫn 2 đoạn để giữ nhịp layout):
+- đoạn 1: "Founded in 2023, TD Games is a Vietnam based game outsourcing
+  studio dedicated to delivering high quality Game Art, Animation, VFX, and
+  Game Development services."
+- đoạn 2: creativity/professionalism + long-term partnerships.
+
+Deploy kèm luôn 2 thay đổi hero tồn từ 2 session trước (layout-width + Changa
+One cho `/about`, eyebrow HIRING `/careers`).
+
+### Result
+`npx tsc --noEmit` sạch, `npm run build` pass.
+
+### Ghi chú
+- Copy mới nhắc "Game Development services" nhưng site chỉ có 3 trang service
+  (2D Art / Animation / VFX) — đã hỏi sếp, chưa chốt.
+- `src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ) —
+  session thứ 7 chưa chốt, KHÔNG commit lần này.
+
+### Next Step
+Chốt testimonial `home-page-lower.tsx` + có thêm trang Game Development không.
+
+---
+
+## 2026-07-29 (session — eyebrow HIRING hero /careers)
+### Task
+Sếp gửi screenshot hero `/careers`: "HIRING" to lên 1 chút + mép trái khớp
+text bên dưới.
+
+### Nguyên nhân lệch
+Box của cả 4 phần tử trong hero đều bắt đầu ở x=159.52 (đo bằng Playwright).
+Lệch là do **side-bearing của font**: Changa One ở 72px đẩy nét chữ "B" vào
+trong 3.6px, còn Nunito Sans 16px chỉ 1.2px → mắt thấy HIRING thò ra trái ~2.4px.
+
+### Work Done
+`careers-client.tsx:340` — `text-sm md:text-base` → `text-base md:text-lg`
+(16→18px) + `ml-[2px]` bù bearing. Kèm comment giải thích con số 2px.
+
+### Result
+Đo lại trên dev: ink-left HIRING 162.91 vs BUILD 163.12 (lệch 0.2px). Chỉ đổi
+className, không đụng logic.
+
+### Ghi chú
+`src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ) —
+session thứ 6 chưa chốt.
+
+### Next Step
+Sếp review dev → commit chung với thay đổi hero `/about` chưa deploy.
+
+---
+
+## 2026-07-29 (session — đồng bộ hero /about với Portfolio + Careers)
+### Task
+Sếp gửi screenshot `/about`, hỏi bố cục lệch so với tab Portfolio/Careers là
+lỗi hay chủ đích. → Lỗi. Sếp chọn phương án C (lề + font + eyebrow).
+
+### Nguyên nhân
+Hero `/about` là hero DUY NHẤT không dùng biến layout chung:
+`width: min(90%, 1280px); margin: 0 auto` thay vì `var(--layout-width, 75%)`
+(`--layout-width: 76%` khai báo global ở `globals.css`). Màn >1422px bị chốt
+1280px rồi auto-center → khối chữ đẩy vào giữa, lệch phải so với logo/nav.
+Màn hẹp trùng khớp ngẫu nhiên nên trước giờ không lộ.
+Font H1 cũng lệch: Rajdhani vs Changa One dùng ở mọi hero khác.
+
+### Work Done
+`src/app/about/page.tsx` (chỉ hero, không đụng section dưới):
+- container `min(90%,1280px)` → `mx-auto` + `var(--layout-width, 75%)`
+- H1 `var(--font-rajdhani)` → `changaOne.className` (import `Changa_One`)
+- ~~thêm eyebrow gạch amber + "2D game art studio · Hanoi"~~ → sếp bảo bỏ,
+  đã gỡ lại. Hero chỉ còn H1 + 2 đoạn + CTA (mt-8 như cũ).
+
+Kèm theo (sếp phát hiện qua screenshot `/careers`): eyebrow "HIRING" chỉ
+`text-xs` (12px) trong khi H1 72px → tỉ lệ 1:6, nhìn hụt. Sửa
+`careers-client.tsx:340` → `text-sm md:text-base` + `tracking-[0.3em]`
+cho khớp subtitle hero Portfolio (16px).
+
+### Result
+`npx tsc --noEmit` sạch, `npm run build` pass. Chưa commit/deploy.
+
+### Ghi chú
+Các section dưới của `/about` vẫn dùng container riêng — chưa rà, sếp bảo mới làm.
+`src/components/home-page-lower.tsx` VẪN dirty (5 testimonial trang chủ) —
+session thứ 5 chưa chốt.
+
+### Next Step
+Sếp review dev rồi commit + deploy. Vẫn nợ: chốt testimonial home-page-lower.
+
+---
+
 ## 2026-07-29 (session — sửa fact About: năm thành lập 2023)
 ### Task
 Sếp gửi screenshot hero `/about`, chốt: studio hoạt động từ **2023**, và rà
