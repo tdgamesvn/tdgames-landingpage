@@ -32,19 +32,19 @@ const DEFAULT_CARDS: ServiceCapabilityItem[] = [
   {
     title: "Cutscene",
     description:
-      "Story beats and scripted sequences timed to land the narrative moment.",
+      "Skill and ultimate cutscenes timed to the ability itself, so every cast reads as a payoff.",
     image: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg",
   },
   {
     title: "Cinematic",
     description:
-      "Trailer-grade sequences and key moments built for marketing impact.",
+      "Trailer and promo motion graphics — key art cut to music for store pages, ads, and launch beats.",
     image: "https://cdn.tdgamestudio.com/landing/images/minh-hong-minh-hong-thumbnail-2.jpg",
   },
   {
     title: "3D Animation",
     description:
-      "3D character and prop animation delivered game-ready for your engine.",
+      "3D character and prop animation on request, delivered game-ready alongside our 2D pipeline.",
     image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
   },
 ];
