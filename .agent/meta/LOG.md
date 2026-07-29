@@ -1576,3 +1576,19 @@ tạo ra `const cards = await ...(..., cards)` → TS7022 tự tham chiếu. Đ�
 `resolved`.
 
 **Result:** tsc sạch, CI xanh, cả 3 trang render card từ DB (verified curl).
+
+### Bổ sung — 6 card 2D Animation theo sếp chốt
+Sếp đổi danh sách: Character / UI / Login / Cutscene / Cinematic / 3D Animation
+(bỏ Spine Animation, Frame-by-Frame, Creature Animation). Sửa **trong DB** (id
+65-70, `service-card` của `services-2d-animation`) + đồng bộ `DEFAULT_CARDS`
+trong `src/app/services/2d-animation/page.tsx` làm fallback.
+
+Ảnh giữ nguyên, gán lại cho card khớp nghĩa nhất. **Login / Cinematic / 3D đang
+mượn ảnh cũ** — sếp thay được từ admin, không cần deploy.
+
+**Nghĩa từng card (sếp làm rõ, đừng đoán lại):**
+- `Cutscene` = cutscene **skill trong game** (ultimate, cast animation), KHÔNG
+  phải story beat.
+- `Cinematic` = **trailer / motion graphics** marketing là chính.
+- `3D Animation` = bonus, "có làm nhưng không mạnh, vẫn nhận nếu có cơ hội" →
+  mô tả viết "on request", không quảng cáo là thế mạnh.
