@@ -85,6 +85,19 @@ jobs:
             if [ -n "$failed" ]; then
               echo "❌ Route lỗi sau restart:$failed"
               pm2 logs tdgames-landingpage --err --lines 30 --nostream
+              # Build mới hỏng → trả .next cũ về, prod tự sống lại thay vì kẹt
+              # ở bản hỏng chờ người sửa tay. CI vẫn đỏ để biết mà xử.
+              if [ -d .next-old ]; then
+                echo "⏪ Rollback về build trước..."
+                rm -rf .next-bad
+                mv .next .next-bad
+                mv .next-old .next
+                pm2 restart tdgames-landingpage
+                sleep 5
+                echo "   sau rollback: / -> $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ || true)"
+              else
+                echo "⚠️  Không có .next-old để rollback."
+              fi
               exit 1
             fi
 
