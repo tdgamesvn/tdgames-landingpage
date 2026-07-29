@@ -45,33 +45,49 @@ jobs:
             echo "📦 Installing dependencies..."
             npm install --production=false
 
-            # Build đè lên .next cũ có thể để lại artifact lai (thiếu client
-            # reference manifest → toàn site 500). Xoá sạch, giữ lại .next/cache
-            # để build vẫn nhanh.
-            echo "🧹 Xoá build cũ (giữ cache)..."
-            find .next -mindepth 1 -maxdepth 1 ! -name cache -exec rm -rf {} + 2>/dev/null || true
+            # Build vào .next-new rồi swap. Lý do:
+            #  - build đè lên .next cũ để lại artifact lai (manifest cũ + chunk mới → 500)
+            #  - nhưng xoá .next TRƯỚC build thì app đang chạy mất file suốt ~70s
+            #    build → route nào chưa nạp vào RAM trả 500 (sự cố /services/2d-art).
+            # Chép cache sang để build vẫn nhanh.
+            echo "🔨 Building vào .next-new..."
+            rm -rf .next-new
+            mkdir -p .next-new
+            cp -r .next/cache .next-new/cache 2>/dev/null || true
+            NEXT_DIST_DIR=.next-new npm run build
 
-            echo "🔨 Building..."
-            npm run build
+            echo "🔀 Swap .next-new -> .next..."
+            rm -rf .next-old
+            mv .next .next-old 2>/dev/null || true
+            mv .next-new .next
 
             echo "🔄 Restarting PM2..."
             pm2 restart tdgames-landingpage || pm2 start ecosystem.config.js
             pm2 save
 
-            # Curl trang HTML, KHÔNG phải /api — route handler vẫn 200 khi
-            # .next hỏng, chỉ trang HTML mới lộ (sự cố 2026-07-29).
+            # Curl trang HTML, KHÔNG phải /api — route handler vẫn 200 khi .next
+            # hỏng, chỉ trang HTML mới lộ. Quét nhiều route: sự cố 2026-07-29 chỉ
+            # /services/2d-art chết, healthcheck 1 route "/" không thấy gì.
+            # Request đầu cũng warm luôn từng route để user không ăn cold-start.
             echo "🩺 Healthcheck..."
-            for i in 1 2 3 4 5 6 7 8 9 10; do
-              code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ || true)
-              [ "$code" = "200" ] && break
-              echo "   thử $i: HTTP $code, đợi 3s..."
-              sleep 3
+            failed=""
+            for path in / /services/2d-art /services/2d-animation /services/2d-vfx /about /careers /blog /portfolio /admin; do
+              for i in 1 2 3 4 5 6 7 8 9 10; do
+                code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000$path" || true)
+                [ "$code" = "200" ] && break
+                sleep 3
+              done
+              echo "   $path -> $code"
+              [ "$code" = "200" ] || failed="$failed $path($code)"
             done
-            if [ "$code" != "200" ]; then
-              echo "❌ Trang chủ trả HTTP $code sau restart:"
+            if [ -n "$failed" ]; then
+              echo "❌ Route lỗi sau restart:$failed"
               pm2 logs tdgames-landingpage --err --lines 30 --nostream
               exit 1
             fi
 
-            echo "✅ Deploy completed at $(date) — trang chủ HTTP 200"
+            echo "🧹 Dọn build cũ..."
+            rm -rf .next-old
+
+            echo "✅ Deploy completed at $(date) — tất cả route HTTP 200"
 # Sat May 23 11:08:37 +07 2026
