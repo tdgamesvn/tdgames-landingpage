@@ -789,14 +789,14 @@ export default function HomePageLower() {
                 &ldquo;
               </span>
               <TypingText
-                text="Working with the team was a smooth experience from start to finish. Their animations felt responsive, polished, and perfectly matched our game's visual style. Communication was clear, revisions were handled quickly, and every milestone was delivered on schedule. We'd be happy to collaborate again."
+                text="We handed them a messy style guide and half our references contradicted each other. Instead of guessing, they asked the right questions in week one. By the second pass the animations already felt like our game. We changed the main character's silhouette mid-project and the schedule barely moved. Easiest art partner we've worked with this year."
                 cps={46}
                 className="mt-2 flex-1 text-[14px] leading-7 text-white/80"
               />
               <div className="mt-6 flex items-center gap-3 border-t border-white/12 pt-5">
                 <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-2 ring-[#ff8c3a]/40">
                   <Image
-                    src="https://cdn.tdgamestudio.com/landing/sinspired/character_1-min-1024x970.jpg"
+                    src="https://cdn.tdgamestudio.com/landing/testimonials/av-3.webp"
                     alt=""
                     fill
                     className="object-cover"
@@ -805,7 +805,7 @@ export default function HomePageLower() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold text-white">
-                    Sophia Martinez
+                    Elena Duarte
                   </div>
                   <div className="text-xs text-white/55">Art Director</div>
                 </div>
@@ -823,34 +823,34 @@ export default function HomePageLower() {
               {[
                 {
                   quote:
-                    "Every idle, attack, and skill animation added personality while maintaining excellent gameplay readability. Their attention to detail exceeded our expectations.",
-                  name: "Daniel Brooks",
-                  role: "Game Producer",
-                  avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_5-min-1024x970.jpg",
+                    "Idles and attacks came back with actual personality, and nothing turned to mush once we scaled the sprites down for mobile. We barely had to touch the timing.",
+                  name: "Hanna Weiss",
+                  role: "Producer",
+                  avatar: "https://cdn.tdgamestudio.com/landing/testimonials/av-1.webp",
                   stars: 5,
                 },
                 {
                   quote:
-                    "Their expertise in Spine animation significantly improved our production pipeline. The rigs were clean, animations were optimized, and implementation into the engine was straightforward. It saved our team a considerable amount of time.",
-                  name: "Ryan Mitchell",
-                  role: "Lead Game Designer",
-                  avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg",
+                    "Rigs came in clean and the Spine files were named the way I would have named them myself. Dropping everything into Unity took an afternoon, not the week I'd budgeted for.",
+                  name: "Tom Bergeron",
+                  role: "Co-founder, indie studio",
+                  avatar: "https://cdn.tdgamestudio.com/landing/testimonials/av-2.webp",
                   stars: 5,
                 },
                 {
                   quote:
-                    "The VFX work added a whole new level of impact to our combat system. Effects were visually striking without overwhelming the gameplay, and every iteration reflected our feedback accurately. Excellent quality throughout the project.",
-                  name: "Emily Foster",
-                  role: "Creative Director",
-                  avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_8-min-1024x970.jpg",
+                    "First VFX pass was a bit loud for our combat. We said so, and the next version landed. Effects read clearly now even with six units on screen, which was the whole reason we hired out.",
+                  name: "Greg Halvorsen",
+                  role: "Studio Lead",
+                  avatar: "https://cdn.tdgamestudio.com/landing/testimonials/av-4.webp",
                   stars: 4,
                 },
                 {
                   quote:
-                    "We've worked with several outsourcing teams before, and this was one of the most reliable collaborations we've had. They understood our production process, adapted quickly, and consistently delivered assets that required minimal revisions.",
-                  name: "Nathan Collins",
-                  role: "Project Manager",
-                  avatar: "https://cdn.tdgamestudio.com/landing/sinspired/character_10-min-1024x970.jpg",
+                    "We've cycled through a few outsourcing teams. This is the one that actually read the production doc. Deliveries hit the dates and most assets went straight in without a revision round.",
+                  name: "Dave Whitlock",
+                  role: "Creative Director",
+                  avatar: "https://cdn.tdgamestudio.com/landing/testimonials/av-5.webp",
                   stars: 5,
                 },
               ].map((r, idx) => (
