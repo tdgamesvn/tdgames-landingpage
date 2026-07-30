@@ -6,12 +6,19 @@ _(empty)_
 
 ## To do
 
-- [ ] Chốt testimonial trang chủ: `src/components/home-page-lower.tsx` đang dirty
-  (5 quote + tên đổi mới, chưa commit). Nội dung chốt hay nháp? Sếp xác nhận rồi
-  commit hoặc revert.
-
+- [ ] Set `DISCORD_WEBHOOK_SALES` trên VPS (chưa set → lead notify rơi về
+  `DISCORD_WEBHOOK_URL` chung). Không set thì vẫn lưu lead, chỉ mất ping.
+- [ ] `/crm` chưa link từ đâu cả (giống `/hr`) — sếp muốn nút trong `/admin` thì nói.
 
 ## Done
+
+- [x] CRM leads (2026-07-30): table `leads` + trigger updated_at + RLS,
+  `POST /api/leads` (validate whitelist service/budget, Discord `sales` notify
+  fire-and-forget), `GET /api/crm/leads` + `PATCH/DELETE /api/crm/leads/[id]`
+  (x-admin-key), board `/crm`. Form contact chuyển từ `mailto:` → POST thật,
+  thêm 2 select Service/Budget. Smoke test 201/400/401/200 + build OK.
+
+- [x] Testimonial trang chủ (2026-07-29): đã commit ở a6a3e64, không còn dirty.
 
 - [x] Card "What we do" 3 trang service vào Page Slots (2026-07-29):
   `resolveServiceCards()`, seed 18 row id 65-82, admin quick slot `service-card`.

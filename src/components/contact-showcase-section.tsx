@@ -5,8 +5,9 @@ import { motion, useReducedMotion } from "framer-motion";
 import { type FormEvent, useState } from "react";
 
 import { AccentHighlight } from "@/components/accent-highlight";
+import { LEAD_BUDGETS, LEAD_SERVICES } from "@/lib/leads";
 
-const CONTACT_EMAIL = "hello@tdgames.com";
+const CONTACT_EMAIL = "tdgames.vn@gmail.com";
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 /** Full-bleed section art (no overlay on the image). */
@@ -23,7 +24,8 @@ export default function ContactShowcaseSection({
   fitBelowHeader?: boolean;
   embedded?: boolean;
 }) {
-  const [sentHint, setSentHint] = useState(false);
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
   const reduceMotion = useReducedMotion();
 
   const listParent = {
@@ -53,21 +55,34 @@ export default function ContactShowcaseSection({
         },
   };
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    const name = (form.elements.namedItem("name") as HTMLInputElement).value;
-    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
-    const note = (form.elements.namedItem("note") as HTMLTextAreaElement).value;
-    const subject = encodeURIComponent(
-      `Project inquiry from ${name || "site"}`,
-    );
-    const body = encodeURIComponent(
-      `Name: ${name}\nEmail: ${email}\n\n${note}`,
-    );
-    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-    setSentHint(true);
-    window.setTimeout(() => setSentHint(false), 4000);
+    const data = new FormData(form);
+
+    setState("sending");
+    setErrorMsg("");
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: data.get("name"),
+          email: data.get("email"),
+          service: data.get("service"),
+          budget: data.get("budget") || null,
+          message: data.get("note"),
+          source: window.location.pathname,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Something went wrong");
+      form.reset();
+      setState("sent");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
+      setState("error");
+    }
   }
 
   const heightClass = embedded
@@ -163,6 +178,45 @@ export default function ContactShowcaseSection({
                 className="rounded-xl border border-white/14 bg-[#12131c]/90 px-4 py-4 text-base text-white placeholder:text-white/38 outline-none transition-colors focus:border-[#ff8c3a]/45 focus:bg-[#16171f] md:px-5 md:py-[1.125rem] md:text-lg"
               />
             </div>
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+              <label className="sr-only" htmlFor="contact-service">
+                Service
+              </label>
+              <select
+                id="contact-service"
+                name="service"
+                required
+                defaultValue=""
+                className="rounded-xl border border-white/14 bg-[#12131c]/90 px-4 py-4 text-base text-white outline-none transition-colors focus:border-[#ff8c3a]/45 focus:bg-[#16171f] md:px-5 md:py-[1.125rem] md:text-lg"
+              >
+                <option value="" disabled className="text-white/38">
+                  What do you need?
+                </option>
+                {LEAD_SERVICES.map((s) => (
+                  <option key={s} value={s} className="bg-[#12131c]">
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <label className="sr-only" htmlFor="contact-budget">
+                Budget
+              </label>
+              <select
+                id="contact-budget"
+                name="budget"
+                defaultValue=""
+                className="rounded-xl border border-white/14 bg-[#12131c]/90 px-4 py-4 text-base text-white outline-none transition-colors focus:border-[#ff8c3a]/45 focus:bg-[#16171f] md:px-5 md:py-[1.125rem] md:text-lg"
+              >
+                <option value="" className="text-white/38">
+                  Budget (optional)
+                </option>
+                {LEAD_BUDGETS.map((b) => (
+                  <option key={b} value={b} className="bg-[#12131c]">
+                    {b}
+                  </option>
+                ))}
+              </select>
+            </div>
             <label className="sr-only" htmlFor="contact-note">
               Message
             </label>
@@ -175,10 +229,11 @@ export default function ContactShowcaseSection({
             />
             <button
               type="submit"
-              className="group flex w-full items-center justify-center gap-3 rounded-xl bg-[#f59e0b] px-7 py-5 text-base font-black uppercase tracking-[0.12em] text-black shadow-[0_0_28px_rgba(245,158,11,0.35)] transition-[transform,box-shadow] hover:bg-[#fbbf24] hover:shadow-[0_0_36px_rgba(251,191,36,0.45)] active:scale-[0.99] md:text-lg md:tracking-[0.14em]"
+              disabled={state === "sending"}
+              className="group disabled:cursor-not-allowed disabled:opacity-60 flex w-full items-center justify-center gap-3 rounded-xl bg-[#f59e0b] px-7 py-5 text-base font-black uppercase tracking-[0.12em] text-black shadow-[0_0_28px_rgba(245,158,11,0.35)] transition-[transform,box-shadow] hover:bg-[#fbbf24] hover:shadow-[0_0_36px_rgba(251,191,36,0.45)] active:scale-[0.99] md:text-lg md:tracking-[0.14em]"
               style={{ fontFamily: "var(--font-nunito-sans), sans-serif" }}
             >
-              Send a message
+              {state === "sending" ? "Sending…" : "Send a message"}
               <svg
                 className="h-5 w-5 transition-transform group-hover:-translate-y-0.5"
                 viewBox="0 0 24 24"
@@ -194,10 +249,15 @@ export default function ContactShowcaseSection({
                 />
               </svg>
             </button>
-            {sentHint ? (
+            {state === "sent" ? (
               <p className="text-sm text-[#ffcc8e]/90 md:text-base">
-                Opening your email app… If nothing opens, write us at{" "}
-                {CONTACT_EMAIL}
+                Thanks! We&apos;ve got your request — our team will reply within
+                24 hours.
+              </p>
+            ) : null}
+            {state === "error" ? (
+              <p className="text-sm text-red-300/90 md:text-base">
+                {errorMsg} — please try again, or email us at {CONTACT_EMAIL}.
               </p>
             ) : null}
           </motion.form>

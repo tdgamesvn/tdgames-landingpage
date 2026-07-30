@@ -1604,3 +1604,39 @@ Fix 1 file dùng chung → cả Art / Animation / VFX cùng có:
 (`max-h-24`, `text-white/75`), transition 300ms. Khung nhãn thêm `right-4` +
 `max-w-full` để mô tả dài không tràn mép ảnh trên mobile.
 Verified prod: cả 3 trang có markup hover + text mô tả trong HTML.
+
+---
+
+## 2026-07-30 (session — CRM leads: form contact → DB thật)
+
+### Task
+Session trước để dở feature CRM leads (7 file untracked + 2 file dirty, chưa
+commit, migration chưa apply). Nhiệm vụ: verify + hoàn tất + ship.
+
+### Trạng thái nhận được
+Code đủ cả stack rồi: migration `20260730000000_leads_schema.sql`, `src/lib/leads.ts`
+(hằng số dùng chung), `POST /api/leads`, `GET /api/crm/leads`,
+`PATCH+DELETE /api/crm/leads/[id]`, board `/crm`, form contact đổi từ `mailto:`
+sang fetch POST. Typecheck sạch. **Nhưng `list_migrations` không có `leads`** →
+API sẽ 500 trên prod nếu push mà không apply.
+
+### Work Done
+- Apply migration lên Supabase (`leads` + trigger `set_leads_updated_at` + RLS
+  bật, không policy → chỉ service role đọc được + 2 index).
+- Smoke test qua dev server: POST valid → 201, service ngoài whitelist → 400,
+  GET `/api/crm/leads` không key → 401, có key → 200, PATCH status hợp lệ → 200
+  (updated_at nhảy đúng, trigger chạy), status rác → 400, DELETE → 200. Dọn lead test.
+- `npm run build` xanh.
+
+### Bẫy dính giữa đường
+`ADMIN_SECRET` trong `.env.local` **không phải** key đang dùng — `requireAdmin`
+ưu tiên row `app_settings.admin_secret` trong DB (key thật: xem DB). Thêm nữa
+`.env.local` là CRLF nên `cut -d=` để lại `\r` → header curl hỏng, Next trả 400
+chứ không phải 401, dễ tưởng bug route. Lần sau `tr -d '\r'`.
+
+### Result
+Ship được. Lead lưu DB, form trang contact không còn mở mail client nữa.
+
+### Next Step
+`DISCORD_WEBHOOK_SALES` chưa set trên VPS → notify rơi về webhook chung.
+`/crm` chưa có link vào từ UI nào (giống `/hr`).

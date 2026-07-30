@@ -10,7 +10,8 @@
 
 const CHANNEL_ENV = {
   hr: "DISCORD_WEBHOOK_HR",
-  // future: system, sales, ...
+  sales: "DISCORD_WEBHOOK_SALES",
+  // future: system, ...
 } as const;
 
 export type DiscordChannel = keyof typeof CHANNEL_ENV;
