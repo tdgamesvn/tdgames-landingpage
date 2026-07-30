@@ -1726,3 +1726,45 @@ bằng `group-hover:*` với `transition-all duration-300`. Padding giữ nguyê
 text không nhảy chỗ khi khung fade vào.
 Component dùng chung → áp cho cả 3 trang /services/2d-art, 2d-animation, 2d-vfx
 (đúng ý sếp: "tiếp tục cả 3 trang"). `tsc --noEmit` sạch. Chưa commit/push.
+
+---
+
+## 2026-07-30 (session — testimonials thật + about "How we work")
+
+### Task
+Sếp gửi 3 screenshot liên tiếp: (1) thay 5 avatar thật vào Testimonials home,
+(2) card testimonial lớn cao lệch cột phải, (3) hỏi section "Our Workspace"
+ở /about nên dùng ảnh gì.
+
+### Work Done
+1. **Testimonials home** (`src/components/home-page-lower.tsx`)
+   - 5 ảnh ở `~/Downloads/avatar/` → crop/resize 256px webp (ảnh 5 là full-body,
+     `cwebp -crop 93 2 64 64` lấy phần mặt) → upload R2 `landing/testimonials/av-1..5.webp`.
+     Script upload dùng 1 lần, đã xoá sau khi chạy.
+   - Viết lại tên/chức vụ/quote 5 testimonial cho tự nhiên: Elena Duarte,
+     Hanna Weiss, Tom Bergeron, Greg Halvorsen, Dave Whitlock. Có chi tiết cụ thể
+     + giữ 1 review 4 sao có chê (chống mùi AI).
+2. **Fix chiều cao card lớn** — bỏ `lg:row-span-2 lg:min-h-[420px]`. Cụm 4 card
+   phải nằm trong div `col-span-2` chỉ chiếm 1 row của grid ngoài, nên row-span-2
+   kéo card trái xuống hàng 2 trống. Verify prod: 327px = 327px.
+3. **`/about` — đổi "Our Workspace" → "How we work"** (`src/app/about/page.tsx`)
+   - Phát hiện chồng chéo 3 tầng: grid ảnh cũ trùng Portfolio; nếu thay ảnh văn
+     phòng thì trùng "Life at TD Games" ở /careers; nếu vẽ pipeline làm art thì
+     trùng "Our process" 5 bước ở `service-workflow-presets.ts`.
+   - Chốt: /about nói về **vận hành dự án** (góc nhìn khách hàng), khác hẳn
+     services (tay nghề) và careers (văn hoá).
+   - 4 card `PROCESS_STEPS`: Brief & scope → Style lock → Production sprints →
+     Handoff & aftercare. Mỗi card có thanh tiến độ dài dần 25/50/75/100% +
+     nhãn mốc thời gian (Day one / First asset / Every week / On delivery).
+   - Xoá `about.workspace` khỏi site.json + type `WorkspaceImage` (dead data).
+
+### Result
+3 commit đã push + deploy xanh: `ecc0fd3`, `30bac3a`, `627957d`.
+Verify prod: 5 tên mới render OK, chiều cao card bằng nhau, `/about` có
+"How we work". `npm run build` sạch.
+
+### Next Step
+- Nội dung 4 bước cố ý tránh cam kết cứng (không ghi "báo giá 24-48h", không nói
+  pilot asset free hay tính phí) vì sếp chưa xác nhận. Khi sếp chốt thì thêm vào.
+- `LIFE_PHOTOS` ở `/careers` vẫn là ảnh stock văn phòng nước ngoài — nên thay
+  ảnh team thật, ứng viên soi kỹ hơn khách.
