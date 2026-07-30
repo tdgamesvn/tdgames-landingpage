@@ -138,24 +138,6 @@
     ]
   },
   "about": {
-    "heroImage": "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png",
-    "workspace": [
-      {
-        "src": "https://cdn.tdgamestudio.com/landing/behance/2e9463653cd72994.jpg",
-        "alt": "Character design process at TD Games"
-      },
-      {
-        "src": "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg",
-        "alt": "2D character art in production"
-      },
-      {
-        "src": "https://cdn.tdgamestudio.com/landing/sinspired/Game_Animation-min-1024x612.jpg",
-        "alt": "Game animation pipeline"
-      },
-      {
-        "src": "https://cdn.tdgamestudio.com/landing/behance/87a63a36f47dc948.png",
-        "alt": "VFX and effects work"
-      }
-    ]
+    "heroImage": "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png"
   }
 }

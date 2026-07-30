@@ -13,8 +13,34 @@ export const revalidate = 60;
 const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
 
 type TeamMember = { id: string; name: string; title: string; photo: string };
-type WorkspaceImage = { src: string; alt: string };
-type AboutData = { heroImage: string; workspace: WorkspaceImage[] };
+type AboutData = { heroImage: string };
+
+const PROCESS_STEPS = [
+  {
+    n: "01",
+    when: "Day one",
+    title: "Brief & scope",
+    desc: "Send references, target style, and asset count. You get a fixed scope, a quote, and a delivery schedule back — before anyone starts drawing.",
+  },
+  {
+    n: "02",
+    when: "First asset",
+    title: "Style lock",
+    desc: "We produce one asset and iterate until it matches your game. Nothing goes into volume production until you sign off on that piece.",
+  },
+  {
+    n: "03",
+    when: "Every week",
+    title: "Production sprints",
+    desc: "Assets ship in batches with one producer as your only point of contact. Feedback lives in a single thread, not five inboxes.",
+  },
+  {
+    n: "04",
+    when: "On delivery",
+    title: "Handoff & aftercare",
+    desc: "Layered source files plus engine-ready exports — PSD, Spine, sprite sheets — and the revision rounds agreed in the scope.",
+  },
+];
 
 async function getAbout(): Promise<AboutData> {
   const filePath = path.join(process.cwd(), "src", "content", "site.json");
@@ -22,7 +48,6 @@ async function getAbout(): Promise<AboutData> {
   const data = JSON.parse(raw);
   const siteAbout = data.about ?? {
     heroImage: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80",
-    workspace: [],
   };
 
   // Resolve heroImage từ DB nếu có label "about-hero", fallback về site.json
@@ -249,7 +274,7 @@ export default async function AboutPage() {
           </div>
         </section>
 
-        {/* Studio Photos Grid */}
+        {/* How We Work — engagement process */}
         <section className="border-b border-white/10 py-16 md:py-20">
           <div
             className="mx-auto px-4"
@@ -261,28 +286,60 @@ export default async function AboutPage() {
               </span>
               <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#f59e0b]/55 to-white/12" />
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
-                Our Workspace
+                How we work
               </span>
             </div>
             <h2
               className="text-3xl font-black uppercase tracking-tight md:text-4xl"
               style={{ fontFamily: "var(--font-rajdhani)" }}
             >
-              Where the <span className="text-[#f59e0b]">magic happens</span>
+              From brief to{" "}
+              <span className="text-[#f59e0b]">final delivery</span>
             </h2>
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/65 md:text-base">
+              Outsourcing goes wrong in predictable ways: the style drifts, the
+              schedule slips, the files don&apos;t fit the engine. Here is how we
+              close each of those doors.
+            </p>
 
-            <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-              {about.workspace.map((img) => (
-                <div key={img.src} className="relative aspect-[4/3] overflow-hidden rounded-lg">
-                  <Image
-                    src={img.src}
-                    alt={img.alt}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+            <ol className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+              {PROCESS_STEPS.map((step, i) => (
+                <li
+                  key={step.n}
+                  className="flex flex-col rounded-xl border border-white/10 bg-[#121215] p-5 transition-colors duration-300 hover:border-[#f59e0b]/40"
+                >
+                  <div
+                    className="h-[3px] w-full overflow-hidden rounded-full bg-white/8"
+                    aria-hidden
+                  >
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#f59e0b]/40 to-[#f59e0b]"
+                      style={{ width: `${((i + 1) / PROCESS_STEPS.length) * 100}%` }}
+                    />
+                  </div>
+                  <div className="mt-5 flex items-baseline gap-3">
+                    <span
+                      className="text-2xl font-black italic tracking-tighter text-[#f59e0b]"
+                      style={{ fontFamily: "var(--font-rajdhani)" }}
+                    >
+                      {step.n}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40">
+                      {step.when}
+                    </span>
+                  </div>
+                  <h3
+                    className="mt-2 text-lg font-black uppercase tracking-tight text-white"
+                    style={{ fontFamily: "var(--font-rajdhani)" }}
+                  >
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/60">
+                    {step.desc}
+                  </p>
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
         </section>
 
