@@ -78,8 +78,10 @@ export default function ServiceCapabilitiesGrid({
 
                 {/* right-4: chặn khung tràn mép ảnh khi mô tả dài trên mobile. */}
                 <div className="pointer-events-none absolute bottom-4 left-4 right-4">
+                  {/* Khung chỉ hiện khi hover — mặc định trong suốt, padding giữ
+                      nguyên để text không nhảy chỗ lúc hiện khung. */}
                   <div
-                    className="inline-flex max-w-full items-center rounded-xl border border-[#ff8c3a]/35 bg-black/45 px-4 py-2 shadow-[0_18px_50px_rgba(0,0,0,0.35)] backdrop-blur"
+                    className="inline-flex max-w-full items-center rounded-xl border border-transparent bg-transparent px-4 py-2 transition-all duration-300 group-hover:border-[#ff8c3a]/35 group-hover:bg-black/45 group-hover:shadow-[0_18px_50px_rgba(0,0,0,0.35)] group-hover:backdrop-blur"
                   >
                     <div>
                       <h3

@@ -1640,3 +1640,89 @@ Ship được. Lead lưu DB, form trang contact không còn mở mail client n�
 ### Next Step
 `DISCORD_WEBHOOK_SALES` chưa set trên VPS → notify rơi về webhook chung.
 `/crm` chưa có link vào từ UI nào (giống `/hr`).
+
+---
+
+## 2026-07-30 (session — CRM login tách khỏi admin key)
+
+### Task
+Sếp: `/crm` phải đăng nhập bằng mật khẩu giống app HR, có lưu session, và đổi
+được mật khẩu trong `/admin`.
+
+### Work Done
+- `src/lib/crm-auth.ts` (mới): `getCRMSecret()` ưu tiên `app_settings.crm_secret`
+  → env `CRM_SECRET` → `getHRSecret()` (nên mặc định CRM dùng chung pass HR).
+  `requireCRM()` check header `x-crm-key`.
+- `/api/crm/leads` + `/api/crm/leads/[id]`: `requireAdmin` → `requireCRM`.
+- `CRMBoard.tsx`: gate cũ chỉ lưu key vào localStorage mà không verify (nhập bậy
+  vẫn vào được board rồi mới báo lỗi). Giờ signIn gọi `/api/crm/leads` trước, ok
+  mới lưu; auto-login từ `tdg.crm.key` (đổi từ `crm_admin_key`), key sai/đã đổi →
+  xoá localStorage về màn login. Header đổi sang `x-crm-key`.
+- `SettingsTab.tsx`: thêm meta `crm_secret` ("CRM Dashboard Password"). Đã insert
+  row `crm_secret` (value rỗng) vào `app_settings` để tab render ra ô nhập.
+
+### Result
+`tsc --noEmit` sạch. Curl dev: no key → 401, key bậy → 401, pass HR → 200.
+
+### Next Step
+Deploy: `git push origin main`. Muốn CRM có pass riêng thì vào /admin > Settings
+điền ô "CRM Dashboard Password"; để trống là dùng chung pass HR.
+
+---
+
+## 2026-07-30 (session — CRM pass riêng, tách hẳn khỏi HR)
+
+### Task
+Sếp: `/crm` không dùng chung mật khẩu với app HR. Pass tạm: `Tdgamescrm@123`.
+
+### Work Done
+- `app_settings.crm_secret` = `Tdgamescrm@123` (UPDATE trực tiếp, prod áp dụng ngay
+  vì cùng Supabase — không cần deploy).
+- `src/lib/crm-auth.ts`: bỏ fallback `getHRSecret()` (và import hr-auth).
+  Priority giờ chỉ còn `app_settings.crm_secret` → env `CRM_SECRET` → `""`.
+  Lý do: nếu ai xoá rỗng ô CRM password trong /admin > Settings thì code cũ sẽ
+  âm thầm quay về dùng pass HR — đúng cái sếp không muốn. Giờ rỗng → 500
+  "CRM_SECRET not configured", lỗi rõ ràng hơn là chia sẻ pass ngầm.
+
+### Result
+`tsc --noEmit` sạch. Smoke test dev: no key → 401, pass HR → 401, pass admin →
+401, pass CRM → 200. `/api/hr/applications` với pass HR vẫn 200 (không hồi tố HR).
+
+### Next Step
+Chưa commit/push — chờ sếp OK. DB đã đổi nên `/crm` trên prod đã cần pass mới rồi.
+Ai đang login `/crm` bằng pass HR sẽ bị đá về màn login (localStorage `tdg.crm.key`
+sai → tự xoá).
+
+---
+
+## 2026-07-30 (session — đổi thứ tự + tên card 2D VFX)
+
+### Task
+Sếp gửi screenshot section "OUR 2D VFX SERVICES", yêu cầu 6 mục theo thứ tự:
+Character / Combat / Environment / UI VFX / Spine VFX / Cinematic.
+
+### Work Done
+- Data thật nằm ở `page_slots` (page `services-2d-vfx`, slot `service-card`),
+  DEFAULT_CARDS trong code chỉ là fallback → phải sửa CẢ HAI cho khớp.
+- DB: UPDATE 6 row (sort_order lại + rename "UI & Feedback VFX" → "UI VFX",
+  "Unity & Spine Integration" → "Spine VFX" + đổi description Spine bỏ chữ Unity).
+  Bảng chỉ có PK trên id, không có unique (page,slot,sort_order) → renumber
+  1 statement an toàn.
+- `src/app/services/2d-vfx/page.tsx`: DEFAULT_CARDS sửa y hệt.
+
+### Result
+DB đã đổi → prod áp dụng sau khi cache ISR 60s hết hạn (không cần deploy để thấy).
+Code fallback đồng bộ, chưa commit/push.
+
+### Next Step
+`service-2d-vfx-featured-showcase.tsx` vẫn còn "Combat VFX"/"UI & Feedback VFX"
+(section Featured khác) — sếp muốn đồng bộ luôn thì nói.
+
+### Bổ sung (cùng session) — khung title card service chỉ hiện khi hover
+Sếp: khung viền bao quanh text trên card service nhìn xấu lúc idle.
+`src/components/service-capabilities-grid.tsx`: khung mặc định
+`border-transparent bg-transparent` (bỏ luôn backdrop-blur + shadow), bật lại
+bằng `group-hover:*` với `transition-all duration-300`. Padding giữ nguyên nên
+text không nhảy chỗ khi khung fade vào.
+Component dùng chung → áp cho cả 3 trang /services/2d-art, 2d-animation, 2d-vfx
+(đúng ý sếp: "tiếp tục cả 3 trang"). `tsc --noEmit` sạch. Chưa commit/push.

@@ -12,16 +12,16 @@ export const revalidate = 60;
 /** Card mặc định — dùng khi slot `service-card` của trang này chưa có row nào trong DB. */
 const DEFAULT_CARDS: ServiceCapabilityItem[] = [
   {
-    title: "Combat VFX",
-    description:
-      "Hit flashes, slams, and combo punctuation with clear telegraphing.",
-    image: "https://cdn.tdgamestudio.com/landing/images/bcc4707e-cae2-46a2-9c96-c254c28ba763.png",
-  },
-  {
     title: "Character VFX",
     description:
       "Skill and elemental effects built around each character's kit and silhouette.",
     image: "https://cdn.tdgamestudio.com/landing/images/3067c837-e030-403f-b7c5-0c7246bfe15f.png",
+  },
+  {
+    title: "Combat VFX",
+    description:
+      "Hit flashes, slams, and combo punctuation with clear telegraphing.",
+    image: "https://cdn.tdgamestudio.com/landing/images/bcc4707e-cae2-46a2-9c96-c254c28ba763.png",
   },
   {
     title: "Environment VFX",
@@ -30,22 +30,22 @@ const DEFAULT_CARDS: ServiceCapabilityItem[] = [
     image: "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
   },
   {
-    title: "UI & Feedback VFX",
+    title: "UI VFX",
     description:
       "Reward bursts, level-up sparks, and HUD-safe treatments.",
     image: "https://cdn.tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
+  },
+  {
+    title: "Spine VFX",
+    description:
+      "Packed sheets, pivots, and integration notes for your Spine rigs and shaders.",
+    image: "https://cdn.tdgamestudio.com/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",
   },
   {
     title: "Cinematic VFX",
     description:
       "Atmospheric overlays and mood-driven effects for cutscenes and key moments.",
     image: "https://cdn.tdgamestudio.com/landing/images/95bff405-e638-4cec-9260-e5c9af46f49b.png",
-  },
-  {
-    title: "Unity & Spine Integration",
-    description:
-      "Packed sheets, pivots, and integration notes for your shaders and tools.",
-    image: "https://cdn.tdgamestudio.com/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",
   },
 ];
 

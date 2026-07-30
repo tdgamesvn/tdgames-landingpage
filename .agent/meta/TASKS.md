@@ -12,6 +12,10 @@ _(empty)_
 
 ## Done
 
+- [x] CRM pass riêng (2026-07-30): `app_settings.crm_secret` = pass CRM riêng,
+  `crm-auth.ts` bỏ fallback sang `getHRSecret()` → CRM không bao giờ dùng chung
+  pass với HR nữa (rỗng → 500 chứ không âm thầm mượn pass HR).
+
 - [x] CRM leads (2026-07-30): table `leads` + trigger updated_at + RLS,
   `POST /api/leads` (validate whitelist service/budget, Discord `sales` notify
   fire-and-forget), `GET /api/crm/leads` + `PATCH/DELETE /api/crm/leads/[id]`

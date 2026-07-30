@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireCRM } from "@/lib/crm-auth";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/leads";
 
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authError = await requireAdmin(request);
+  const authError = await requireCRM(request);
   if (authError) return authError;
 
   const { id } = await params;
@@ -52,7 +52,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authError = await requireAdmin(request);
+  const authError = await requireCRM(request);
   if (authError) return authError;
 
   const { id } = await params;

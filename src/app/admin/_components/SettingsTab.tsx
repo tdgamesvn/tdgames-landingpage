@@ -37,6 +37,11 @@ const KEY_META: Record<string, { label: string; description: string }> = {
     description:
       "Mật khẩu để truy cập /hr. Để trống = dùng HR_SECRET env var (hoặc ADMIN_SECRET làm fallback).",
   },
+  crm_secret: {
+    label: "CRM Dashboard Password",
+    description:
+      "Mật khẩu để truy cập /crm. Để trống = dùng CRM_SECRET env var, không có thì dùng chung mật khẩu HR.",
+  },
 };
 
 export function SettingsTab({ adminKey, onAdminKeyChange }: Props) {

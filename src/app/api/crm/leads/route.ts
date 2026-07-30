@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireCRM } from "@/lib/crm-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const authError = await requireAdmin(request);
+  const authError = await requireCRM(request);
   if (authError) return authError;
 
   const supabase = getSupabaseAdmin();

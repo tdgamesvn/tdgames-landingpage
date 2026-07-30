@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { LEAD_STATUSES, type Lead, type LeadStatus } from "@/lib/leads";
 
-const KEY_STORE = "crm_admin_key";
+const KEY_STORE = "tdg.crm.key";
 
 const STATUS_COLOR: Record<LeadStatus, string> = {
   new: "bg-amber-500/15 text-amber-300 border-amber-500/30",
@@ -14,41 +14,57 @@ const STATUS_COLOR: Record<LeadStatus, string> = {
 };
 
 export default function CRMBoard() {
-  const [adminKey, setAdminKey] = useState("");
+  const [crmKey, setCrmKey] = useState("");
   const [keyInput, setKeyInput] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setAdminKey(localStorage.getItem(KEY_STORE) ?? "");
+  const load = useCallback(async (key: string) => {
+    const res = await fetch("/api/crm/leads", { headers: { "x-crm-key": key } });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ?? "Failed to load");
+    setLeads(json.leads);
   }, []);
 
-  const load = useCallback(async (key: string) => {
+  // Session: auto-login từ localStorage, key sai/đã đổi thì xoá
+  useEffect(() => {
+    const saved = localStorage.getItem(KEY_STORE);
+    if (!saved) return;
+    setLoading(true);
+    load(saved)
+      .then(() => setCrmKey(saved))
+      .catch(() => localStorage.removeItem(KEY_STORE))
+      .finally(() => setLoading(false));
+  }, [load]);
+
+  async function signIn(key: string) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/crm/leads", { headers: { "x-admin-key": key } });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to load");
-      setLeads(json.leads);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
-      setLeads([]);
+      await load(key);
+      setCrmKey(key);
+      localStorage.setItem(KEY_STORE, key);
+    } catch {
+      setError("Sai mật khẩu. Thử lại.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
-  useEffect(() => {
-    if (adminKey) load(adminKey);
-  }, [adminKey, load]);
+  function refresh() {
+    setLoading(true);
+    setError("");
+    load(crmKey)
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
+      .finally(() => setLoading(false));
+  }
 
   async function patch(id: string, body: Record<string, unknown>) {
     const res = await fetch(`/api/crm/leads/${id}`, {
       method: "PATCH",
-      headers: { "content-type": "application/json", "x-admin-key": adminKey },
+      headers: { "content-type": "application/json", "x-crm-key": crmKey },
       body: JSON.stringify(body),
     });
     const json = await res.json();
@@ -60,21 +76,19 @@ export default function CRMBoard() {
     if (!confirm("Xoá lead này?")) return;
     const res = await fetch(`/api/crm/leads/${id}`, {
       method: "DELETE",
-      headers: { "x-admin-key": adminKey },
+      headers: { "x-crm-key": crmKey },
     });
     if (!res.ok) return setError("Delete failed");
     setLeads((prev) => prev.filter((l) => l.id !== id));
   }
 
-  if (!adminKey) {
+  if (!crmKey) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] px-6">
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (!keyInput.trim()) return;
-            localStorage.setItem(KEY_STORE, keyInput.trim());
-            setAdminKey(keyInput.trim());
+            if (keyInput.trim()) void signIn(keyInput.trim());
           }}
           className="w-full max-w-sm space-y-4"
         >
@@ -85,14 +99,17 @@ export default function CRMBoard() {
             type="password"
             value={keyInput}
             onChange={(e) => setKeyInput(e.target.value)}
-            placeholder="Admin key"
+            placeholder="CRM password"
+            autoFocus
             className="w-full rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-white outline-none focus:border-amber-500/50"
           />
+          {error && <p className="text-xs text-red-400">{error}</p>}
           <button
             type="submit"
-            className="w-full rounded-lg bg-amber-500 px-4 py-3 font-bold uppercase text-black hover:bg-amber-400"
+            disabled={!keyInput.trim() || loading}
+            className="w-full rounded-lg bg-amber-500 px-4 py-3 font-bold uppercase text-black hover:bg-amber-400 disabled:opacity-40"
           >
-            Unlock
+            {loading ? "Đang vào…" : "Unlock"}
           </button>
         </form>
       </div>
@@ -107,7 +124,7 @@ export default function CRMBoard() {
         <h1 className="text-xl font-black uppercase tracking-wide">CRM — Leads</h1>
         <span className="text-sm text-white/40">{leads.length} total</span>
         <button
-          onClick={() => load(adminKey)}
+          onClick={refresh}
           className="rounded-md border border-white/15 px-3 py-1.5 text-xs uppercase text-white/70 hover:border-amber-500/40 hover:text-white"
         >
           {loading ? "Loading…" : "Refresh"}
@@ -115,7 +132,9 @@ export default function CRMBoard() {
         <button
           onClick={() => {
             localStorage.removeItem(KEY_STORE);
-            setAdminKey("");
+            setCrmKey("");
+            setKeyInput("");
+            setLeads([]);
           }}
           className="ml-auto text-xs text-white/30 hover:text-white/60"
         >
