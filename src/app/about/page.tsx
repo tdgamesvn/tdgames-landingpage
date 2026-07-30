@@ -500,95 +500,6 @@ export default async function AboutPage() {
           </div>
         </section>
 
-        {/* Values Section */}
-        <section className="border-b border-white/10 bg-[#0f0f0f] py-16 md:py-20">
-          <div
-            className="mx-auto px-4"
-            style={{ width: "min(90%, 1280px)" }}
-          >
-            <div className="mb-4 flex items-center gap-4">
-              <span className="text-sm font-black italic tracking-tighter text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
-                // 05
-              </span>
-              <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#f59e0b]/55 to-white/12" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
-                Our Values
-              </span>
-            </div>
-            <h2
-              className="text-3xl font-black uppercase tracking-tight md:text-4xl"
-              style={{ fontFamily: "var(--font-rajdhani)" }}
-            >
-              What drives us
-              <br />
-              <span className="text-[#f59e0b]">every day</span>
-            </h2>
-
-            <div className="mt-12 grid gap-6 md:grid-cols-3">
-              {[
-                {
-                  title: "PASSION",
-                  desc: "We love games and we love what we do.",
-                  icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z",
-                },
-                {
-                  title: "QUALITY",
-                  desc: "We care about details that project success.",
-                  icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-                },
-                {
-                  title: "COLLABORATION",
-                  desc: "Close partnership brings the best results.",
-                  icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
-                },
-                {
-                  title: "RELIABILITY",
-                  desc: "We make deadlines and keep our commitments.",
-                  icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-                },
-                {
-                  title: "GROWTH",
-                  desc: "We grow and level up together.",
-                  icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
-                },
-                {
-                  title: "INNOVATION",
-                  desc: "We explore new techniques and workflows.",
-                  icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
-                },
-              ].map((value) => (
-                <div
-                  key={value.title}
-                  className="rounded-xl border border-white/10 bg-white/5 p-6 transition hover:border-[#f59e0b]/30"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#f59e0b]/10">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-6 w-6 text-[#f59e0b]"
-                    >
-                      <path d={value.icon} />
-                    </svg>
-                  </div>
-                  <h3
-                    className="mt-4 text-lg font-black uppercase text-white"
-                    style={{ fontFamily: "var(--font-rajdhani)" }}
-                  >
-                    {value.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-white/70">
-                    {value.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Team Section */}
         <section className="border-b border-white/10 py-16 md:py-20">
           <div
@@ -597,7 +508,7 @@ export default async function AboutPage() {
           >
             <div className="mb-4 flex items-center gap-4">
               <span className="text-sm font-black italic tracking-tighter text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
-                // 06
+                // 05
               </span>
               <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#f59e0b]/55 to-white/12" />
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
