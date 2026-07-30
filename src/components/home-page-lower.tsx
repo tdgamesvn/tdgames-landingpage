@@ -780,7 +780,7 @@ export default function HomePageLower() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.45, ease: "easeOut" }}
-              className="flex flex-col rounded-2xl border border-white/14 bg-[#17171a] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.55)] lg:row-span-2 lg:min-h-[420px]"
+              className="flex flex-col rounded-2xl border border-white/14 bg-[#17171a] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.55)]"
             >
               <span
                 className="text-4xl font-serif leading-none text-[#ff8c3a]"
