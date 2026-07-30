@@ -18,7 +18,7 @@ type AboutData = { heroImage: string };
 const PROCESS_STEPS = [
   {
     n: "01",
-    when: "Day one",
+    when: "24–48h",
     title: "Brief & scope",
     desc: "Send references, target style, and asset count. You get a fixed scope, a quote, and a delivery schedule back — before anyone starts drawing.",
   },
