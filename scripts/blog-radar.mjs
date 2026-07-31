@@ -5,7 +5,8 @@
 //   node --env-file=.env.local scripts/blog-radar.mjs --dry-run   (in ra console)
 //   node --env-file=.env.local scripts/blog-radar.mjs             (gửi Discord)
 //
-// Env: AI_BASE_URL, AI_API_KEY, AI_MODEL, DISCORD_WEBHOOK_URL
+// Env: AI_BASE_URL, AI_API_KEY, AI_MODEL, DISCORD_WEBHOOK_URL,
+//      SUPABASE_URL, SUPABASE_ACCESS_TOKEN
 
 const DRY = process.argv.includes("--dry-run");
 
@@ -130,6 +131,28 @@ async function sendDiscord(topics, scanned) {
   if (!res.ok) throw new Error(`Discord ${res.status}: ${await res.text()}`);
 }
 
+async function saveTopics(topics) {
+  const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/blog_topics`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      apikey: process.env.SUPABASE_ACCESS_TOKEN,
+      authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`,
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(
+      topics.map((t) => ({
+        topic: t.topic,
+        why: t.why,
+        ask: t.ask,
+        source: t.source,
+      })),
+    ),
+  });
+  if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
 const items = (await Promise.all(FEEDS.map(fetchFeed))).flat();
 if (!items.length) {
   console.error("[radar] không lấy được tin nào — thoát");
@@ -148,6 +171,8 @@ if (DRY) {
     console.log(`\n${i + 1}. ${t.topic}\n   ${t.why}\n   Kể nghe: ${t.ask}\n   ${t.source}`);
   }
 } else {
+  const saved = await saveTopics(topics);
+  console.error(`[radar] lưu ${saved.length} chủ đề vào blog_topics`);
   await sendDiscord(topics, items.length);
   console.error(`[radar] đã gửi ${topics.length} chủ đề vào Discord`);
 }
