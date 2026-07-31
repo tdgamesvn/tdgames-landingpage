@@ -1768,3 +1768,16 @@ Verify prod: 5 tên mới render OK, chiều cao card bằng nhau, `/about` có
   pilot asset free hay tính phí) vì sếp chưa xác nhận. Khi sếp chốt thì thêm vào.
 - `LIFE_PHOTOS` ở `/careers` vẫn là ảnh stock văn phòng nước ngoài — nên thay
   ảnh team thật, ứng viên soi kỹ hơn khách.
+
+### Bổ sung (cùng session) — xoá Our Values + dựng Blog Radar
+- `/about`: xoá section `// 05 Our Values` (6 card PASSION/QUALITY/... đúng với
+  mọi công ty, trùng tên "Our Values" ở /careers, và `//02 How we work` đã chứng
+  minh mấy giá trị đó bằng cơ chế). Diff: +1 −90. Team renumber `//06` → `//05`.
+  Commit `afbab67`.
+- `scripts/blog-radar.mjs` (commit `0212174`): quét RSS Game Developer / 80 Level
+  / GamesIndustry → AI lọc 5 góc bài + câu hỏi cho CEO → gửi Discord embed qua
+  `DISCORD_WEBHOOK_URL`. Bỏ RSS Reddit (429, chặn IP datacenter).
+  Cron trên VPS `0 8 * * *` (VPS chạy +07 nên là 8h sáng VN), log ở
+  `/opt/tdgames-landingpage/logs/blog-radar.log`. Đã chạy thử trên VPS OK.
+  KHÔNG dùng GitHub Actions vì AI_*/DISCORD_* chưa có trong repo secrets, còn
+  VPS đã có sẵn trong .env.local.

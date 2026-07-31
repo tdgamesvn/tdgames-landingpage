@@ -100,3 +100,18 @@ Reason:
 Impact:
 - Cần task "Tách content → content/site.json" sau khi UI ổn định
 - Xem plan.md để biết schema dự kiến
+
+## 2026-07-31 — Blog AI: radar tự động, KHÔNG tự đăng
+Sếp muốn AI tự tìm tin viral → viết bài → sinh ảnh → đăng. Chốt lại kiến trúc lai:
+AI làm radar + thợ dựng bài, CEO chốt đề tài và góp góc nhìn thật.
+
+Lý do từ chối full-auto:
+1. **Ảnh AI phản chủ** — TD Games bán dịch vụ artist vẽ tay. Blog minh hoạ bằng
+   ảnh generate = tự tuyên bố thay artist bằng máy, mất cả khách lẫn ứng viên.
+   Dùng artwork sẵn có trong `media_assets` thay thế.
+2. **Viết lại tin viral không mang giá trị** — người quan tâm đã đọc nguồn gốc.
+3. **Google phạt scaled content abuse ở cấp domain** — kéo theo `/services/*`.
+
+Kênh: dùng Discord (đã có bot `tdgames-discord` chạy 24/7 + 2 webhook + AI env),
+KHÔNG dựng app mới, KHÔNG thêm bot Telegram. Chat để chọn đề tài; `/admin` tab
+Blog vẫn là nơi soạn/duyệt/đăng — không nhét editor vào chat.
