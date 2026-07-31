@@ -1810,3 +1810,36 @@ Playwright thấy card "UI ANIMATION" chạy video (các card dưới load khi s
 
 ### Next Step
 Chưa deploy. Push `main` để CI deploy khi sếp duyệt.
+
+---
+
+## 2026-08-01 (session — "Life at TD Games" quản lý từ admin + marquee)
+
+### Task
+Sếp gửi screenshot section `// 04 BEHIND THE SCENES` ở `/careers`, hỏi (1) add ảnh
+từ Admin được không, (2) ~10 ảnh thì layout nên thế nào.
+
+### Nguyên nhân / hiện trạng
+4 ảnh hardcode `LIFE_PHOTOS` trong `careers-client.tsx:85` — vẫn là stock Unsplash.
+`/careers` trước đó chỉ đọc 1 slot DB (`careers/hero`). Grid `md:grid-cols-4` với
+10 ảnh sẽ ra 3 hàng 4/4/2, hàng cuối hụt.
+
+### Work Done
+- `careers/page.tsx`: thêm `resolveSlots("careers","gallery")` (Promise.all cùng
+  hero) → prop `lifePhotos`.
+- `careers-client.tsx`: prop `lifePhotos?: string[]`, rỗng → fallback `LIFE_PHOTOS`.
+  Đổi grid → marquee cuộn ngang full-bleed, tái dùng `.animate-marquee` có sẵn
+  trong `globals.css` (dịch -33.333% → cần đúng 3 bản sao; nhân danh sách tới >= 8
+  ảnh trước khi nhân 3 để không hở màn rộng). Hover pause, mask fade 2 mép.
+  Render bằng `<SlotMedia>` (không phải `next/image`) → upload mp4 vào slot cũng chạy.
+- `PageSlotsTab.tsx`: `QUICK_SLOTS.careers` thêm `"gallery"` → có đường upload từ UI.
+
+Không cần migration — bảng `page_slots` + API admin đã có sẵn.
+
+### Result
+tsc sạch; lint chỉ còn lỗi có sẵn (eyebrow `// 0X`, useEffect cũ). Verify bằng dev
+server + Playwright: marquee chạy, fade 2 mép đúng.
+
+### Next Step
+Sếp vào `/admin` → Page Slots → page **Careers** → slot **gallery** upload ảnh studio
+thật thay 4 ảnh stock Unsplash.

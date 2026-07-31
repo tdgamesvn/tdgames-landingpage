@@ -532,7 +532,7 @@ const QUICK_SLOTS: Record<string, string[]> = {
   home: ["hero-carousel", "service-card", "showcase-character-art", "showcase-animation", "showcase-vfx", "client-logos"],
   portfolio: ["hero-carousel"],
   about: ["hero"],
-  careers: ["hero"],
+  careers: ["hero", "gallery"],
   "services-2d-art": ["hero", "service-card", "featured-card", "workflow-step"],
   "services-2d-animation": ["hero", "service-card", "featured-card", "workflow-step"],
   "services-2d-vfx": ["hero", "service-card", "featured-card", "workflow-step"],

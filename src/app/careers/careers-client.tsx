@@ -9,6 +9,7 @@ import { Changa_One, Nunito_Sans } from "next/font/google";
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
 import { AccentHighlight } from "@/components/accent-highlight";
+import SlotMedia from "@/components/slot-media";
 import type { Job } from "@/app/admin/_lib/types";
 
 const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
@@ -290,7 +291,24 @@ function BenefitIcon({ name, color }: { name: string; color: string }) {
   return null;
 }
 
-export default function CareersClient({ heroUrl }: { heroUrl: string }) {
+export default function CareersClient({
+  heroUrl,
+  lifePhotos,
+}: {
+  heroUrl: string;
+  lifePhotos?: string[];
+}) {
+  // Slot `careers/gallery` rỗng → giữ ảnh mặc định, section không bao giờ trống.
+  const photos = lifePhotos?.length ? lifePhotos : LIFE_PHOTOS;
+  // Marquee dịch -33.333% nên cần đúng 3 bản sao. Ít ảnh quá thì 1 bản không
+  // phủ hết màn rộng → nhân lên tới >= 8 ảnh trước khi nhân 3.
+  // ponytail: 8 ảnh × ~240px ≈ 2000px, đủ cho màn 1440. Màn > 2000px CSS thì
+  // nâng ngưỡng này.
+  const marqueePhotos = useMemo(() => {
+    const filled = [...photos];
+    while (filled.length < 8) filled.push(...photos);
+    return [...filled, ...filled, ...filled];
+  }, [photos]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -712,17 +730,29 @@ export default function CareersClient({ heroUrl }: { heroUrl: string }) {
                 We work. We play. We level up. Take a peek inside our studio — where creativity meets community.
               </p>
             </header>
-            <div className="mt-10 grid grid-cols-2 gap-3 md:mt-12 md:grid-cols-4">
-              {LIFE_PHOTOS.map((photo, i) => (
-                <div key={i} className="group relative aspect-[4/5] overflow-hidden rounded-lg border border-white/10">
-                  <Image
+          </div>
+          {/* Marquee full-bleed — thêm/bớt ảnh ở admin không làm vỡ layout */}
+          <div
+            className="group relative mt-10 overflow-hidden md:mt-12"
+            style={{
+              maskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
+              WebkitMaskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
+            }}
+          >
+            <div className="animate-marquee flex w-max gap-3 group-hover:[animation-play-state:paused]">
+              {marqueePhotos.map((photo, i) => (
+                <div
+                  key={i}
+                  className="relative aspect-[4/5] w-[150px] shrink-0 overflow-hidden rounded-lg border border-white/10 md:w-[240px]"
+                >
+                  {/* SlotMedia: sếp upload mp4 vào slot cũng chạy, alt="" vì ảnh
+                      lặp 3 lần — screen reader không cần đọc lại. */}
+                  <SlotMedia
                     src={photo}
-                    alt={`Life at TD Games ${i + 1}`}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-500 hover:scale-110"
+                    sizes="240px"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 </div>
               ))}
             </div>
