@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import SlotMedia from "@/components/slot-media";
 import siteContent from "@/content/site.json";
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
@@ -126,12 +126,9 @@ export function StudioServiceCardsGrid({
               className="absolute inset-0 z-10"
             />
             <div className="relative h-[250px] w-full shrink-0 overflow-hidden">
-              <Image
+              <SlotMedia
                 src={service.image}
-                alt=""
-                fill
                 className="object-cover transition-transform duration-[620ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.03]"
-                sizes="(max-width:768px) 100vw, 380px"
               />
               <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#0b0b0f] via-transparent to-transparent opacity-75" />
             </div>

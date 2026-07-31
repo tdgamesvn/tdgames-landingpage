@@ -1781,3 +1781,32 @@ Verify prod: 5 tên mới render OK, chiều cao card bằng nhau, `/about` có
   `/opt/tdgames-landingpage/logs/blog-radar.log`. Đã chạy thử trên VPS OK.
   KHÔNG dùng GitHub Actions vì AI_*/DISCORD_* chưa có trong repo secrets, còn
   VPS đã có sẵn trong .env.local.
+
+---
+
+## 2026-07-31 (session — video trong service cards không hiển thị)
+
+### Task
+Sếp gửi screenshot `/services/2d-animation`, section `// 01 WHAT WE DO` — 5/6 card
+trắng trơn, "không add được video".
+
+### Nguyên nhân
+Admin add video OK (DB `page_slots` slot `service-card` của `services-2d-animation`
+có 5 URL `.mp4`), nhưng `ServiceCapabilitiesGrid` render bằng `next/image` → next
+không xử lý mp4 → card trắng. `StudioServiceCardsGrid` (featured showcase) cùng lỗi,
+chỉ chưa lộ vì slot `featured-card` đang toàn ảnh.
+
+### Work Done
+- Thêm `src/components/slot-media.tsx`: video (`.mp4/.webm/.mov/.m4v`) → tái dùng
+  `AutoLoopMedia` (lazy theo IntersectionObserver, autoplay/loop/muted), còn lại →
+  `next/image fill` như cũ.
+- Thay `<Image>` → `<SlotMedia>` trong `service-capabilities-grid.tsx` và
+  `studio-service-cards.tsx`.
+
+### Result
+tsc + lint sạch. Verify bằng dev server: HTML SSR có 5 `<video>`, screenshot
+Playwright thấy card "UI ANIMATION" chạy video (các card dưới load khi scroll tới —
+đúng thiết kế lazy).
+
+### Next Step
+Chưa deploy. Push `main` để CI deploy khi sếp duyệt.

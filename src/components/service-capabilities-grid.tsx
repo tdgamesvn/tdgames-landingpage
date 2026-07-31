@@ -1,6 +1,5 @@
-import Image from "next/image";
-
 import { AccentHighlight } from "@/components/accent-highlight";
+import SlotMedia from "@/components/slot-media";
 
 export type ServiceCapabilityItem = {
   title: string;
@@ -66,12 +65,9 @@ export default function ServiceCapabilitiesGrid({
               className="group overflow-hidden rounded-2xl border border-[#ff8c3a]/20 bg-[#14141a] shadow-[0_18px_50px_rgba(0,0,0,0.35)]"
             >
               <div className="relative aspect-[16/10] w-full overflow-hidden">
-                <Image
+                <SlotMedia
                   src={item.image}
-                  alt=""
-                  fill
                   className="object-cover transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.18]"
-                  sizes="(max-width:768px) 100vw, 380px"
                 />
                 {/* Gradient & overlay content */}
                 <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14141a]/90 via-transparent to-transparent opacity-90" />
