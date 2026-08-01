@@ -68,7 +68,47 @@ Script: dry-run mặc định, `--apply`, `--limit N`, `--rollback`.
 thì bot phải thêm `-lossy`. CHƯA làm: đây là studio art, giữ chất lượng ưu tiên hơn.
 Nếu sếp đổi ý → sửa bên repo tdgames-discord rồi chạy lại script này.
 
-**Đang chạy nền** `--apply` cho cả 496 file, log `/tmp/claude/backfill.log`.
+### SẾP BẮT LỖI: "GIF có dùng đâu mà nén" — ĐÚNG
+Em đã nén 11 GIF rồi mới bị chặn. Kiểm chứng lại: 199 GIF (1.17GB) KHÔNG được
+tham chiếu ở đâu — không có trong projects/blog_posts/page_slots, không có trong
+source. Chúng chỉ nằm trong `media_assets`, mà bảng đó là **bảng TRACK**, không
+phải nơi hiển thị. Đã `--rollback` cả 11 file về nguyên trạng.
+
+**Bài học chung, không riêng GIF:** "có mặt trên R2" ≠ "đang được dùng".
+Sửa gốc bằng bộ lọc `collectUsedKeys()`: tập URL đang dùng = grep `cdn.tdgamestudio.com/*`
+trong `src/**` + JSON các API public (`/api/projects|blog|team|footer|jobs`) +
+bảng `page_slots` đọc thẳng REST (route `/api/page-slots` bắt buộc `?page=&slot=`
+nên không liệt kê được — thiếu nguồn này là hụt 46 file).
+Cờ `--all` để nén tất nếu cần.
+
+Kết quả lọc: **222 file / 400 MB thật sự dùng** — thay vì 496 file / 1958 MB.
+**274 file mồ côi / 1557 MB (79% khối lượng) là công toi.**
+
+**KẾT QUẢ: 222/222 nén, 0 lỗi, tiết kiệm 283 MB** (400.56 → 117.5 MB, giảm 71%).
+60 ảnh + 162 video. Bản gốc còn nguyên ở `backup/pre-compress/`.
+
+Kiểm tra thẳng R2 (bỏ qua CDN): `landing/images/summonerDetail.png` → ContentType
+`image/webp`, bytes ĐÚNG là webp 2400x1600, 368,468 B (gốc 9,457,725 B PNG 3072x2048).
+
+### ⚠ VIỆC CÒN LẠI: PHẢI PURGE CACHE CLOUDFLARE
+R2 đã đúng nhưng CDN vẫn phát bản CŨ:
+```
+cf-cache-status: HIT | age: 204390 | cache-control: max-age=604800
+GET .../summonerDetail.png        → 9,457,725 B (PNG cũ)
+GET .../summonerDetail.png?v=123  → 368,468 B (webp mới, cache MISS)
+```
+Cache 7 ngày ⇒ KHÔNG purge thì người dùng không hưởng gì, mà `Content-Type` header
+lại đã là webp trong khi body là png — lệch nhau.
+
+Bẫy đo đạc: `curl -I` (HEAD) trả 368468 (bản mới) còn `curl` (GET) trả 9457725
+(bản cũ) — HEAD và GET đi khác đường cache. **Luôn đo bằng GET thật + đọc
+`cf-cache-status`**, đừng tin mỗi HEAD.
+
+Cách purge (chưa làm — .env.local KHÔNG có Cloudflare API token):
+1. Dashboard Cloudflare → Caching → Purge Everything (1 click, nhanh nhất)
+2. Hoặc cấp `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ZONE_ID` → viết script purge theo
+   danh sách key trong manifest (API tối đa 30 URL/lần)
+3. Hoặc chờ 7 ngày cache tự hết
 Xong nhớ kiểm tra rồi mới xoá `backup/pre-compress/` (≈2GB, ~$0.03/tháng).
 
 ### ĐÃ DEPLOY PRODUCTION ✓ (commit 4632ca3)

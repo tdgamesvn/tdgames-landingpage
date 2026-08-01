@@ -11,7 +11,14 @@
  *   node --env-file=.env.local scripts/backfill-compress.mjs --rollback   # trả lại bản gốc
  */
 import { execFile } from "node:child_process";
-import { mkdirSync, writeFileSync, appendFileSync, readFileSync, existsSync } from "node:fs";
+import {
+  mkdirSync,
+  writeFileSync,
+  appendFileSync,
+  readFileSync,
+  readdirSync,
+  existsSync,
+} from "node:fs";
 import { promisify } from "node:util";
 import {
   S3Client,
@@ -26,7 +33,21 @@ const execFileAsync = promisify(execFile);
 
 const APPLY = process.argv.includes("--apply");
 const ROLLBACK = process.argv.includes("--rollback");
+const ALL = process.argv.includes("--all");
 const LIMIT = Number(process.argv[process.argv.indexOf("--limit") + 1]) || Infinity;
+
+// ponytail: "đang dùng" = xuất hiện trong source HOẶC trong JSON các API public.
+// KHÔNG tính media_assets — nó chỉ là bảng track, có cả file không ai render
+// (199 GIF behance 1.17GB nằm trong đó mà không trang nào dùng).
+const USED_API = [
+  "/api/projects",
+  "/api/blog",
+  "/api/team",
+  "/api/footer",
+  "/api/jobs",
+];
+const SITE = "https://tdgamestudio.com";
+const CDN_RE = /cdn\.tdgamestudio\.com\/([^\s"'`)\\]+)/g;
 
 const BACKUP_PREFIX = "backup/pre-compress/";
 const MIN_BYTES = 400 * 1024;
@@ -119,6 +140,48 @@ async function decodable(body, contentType) {
   return stdout.trim();
 }
 
+async function collectUsedKeys() {
+  const keys = new Set();
+  const scan = (text) => {
+    for (const m of text.matchAll(CDN_RE)) keys.add(decodeURIComponent(m[1]));
+  };
+
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === "node_modules" || e.name.startsWith(".")) continue;
+      const p = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(p);
+      else if (/\.(ts|tsx|js|jsx|json|md)$/.test(e.name)) scan(readFileSync(p, "utf8"));
+    }
+  };
+  walk("src");
+
+  for (const path of USED_API) {
+    try {
+      const r = await fetch(SITE + path, { signal: AbortSignal.timeout(30_000) });
+      if (r.ok) scan(await r.text());
+      else console.log(`  (bỏ qua ${path}: HTTP ${r.status})`);
+    } catch (e) {
+      console.log(`  (bỏ qua ${path}: ${e.message})`);
+    }
+  }
+
+  // page_slots không liệt kê được qua API (route bắt buộc ?page=&slot=) → đọc thẳng DB.
+  try {
+    const token = process.env.SUPABASE_ACCESS_TOKEN;
+    const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/page_slots?select=*`, {
+      headers: { apikey: token, authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (r.ok) scan(await r.text());
+    else console.log(`  (bỏ qua page_slots: HTTP ${r.status})`);
+  } catch (e) {
+    console.log(`  (bỏ qua page_slots: ${e.message})`);
+  }
+
+  return keys;
+}
+
 async function rollback() {
   if (!existsSync(MANIFEST)) return console.log("Chưa có manifest — không có gì để trả lại.");
   const rows = readFileSync(MANIFEST, "utf8")
@@ -146,13 +209,24 @@ async function main() {
   if (ROLLBACK) return rollback();
 
   const all = await listAll();
-  const targets = all
+  let pool = all
     .filter((o) => !o.Key.startsWith(BACKUP_PREFIX))
     .filter((o) => o.Size > MIN_BYTES)
-    .filter((o) => MIME[ext(o.Key)])
-    .sort((a, b) => b.Size - a.Size)
-    .slice(0, LIMIT);
+    .filter((o) => MIME[ext(o.Key)]);
 
+  if (!ALL) {
+    console.log("Đang dò file nào thực sự được dùng...");
+    const used = await collectUsedKeys();
+    const before = pool.length;
+    const beforeBytes = pool.reduce((s, o) => s + o.Size, 0);
+    pool = pool.filter((o) => used.has(o.Key));
+    const orphanBytes = beforeBytes - pool.reduce((s, o) => s + o.Size, 0);
+    console.log(
+      `${used.size} URL đang dùng → bỏ qua ${before - pool.length} file mồ côi (${mb(orphanBytes)}). Thêm --all để nén tất.`,
+    );
+  }
+
+  const targets = pool.sort((a, b) => b.Size - a.Size).slice(0, LIMIT);
   const total = targets.reduce((s, o) => s + o.Size, 0);
   console.log(`${targets.length} file cần nén, tổng ${mb(total)}`);
   if (!APPLY) {
