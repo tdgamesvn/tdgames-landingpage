@@ -127,6 +127,27 @@ Bẫy đã gặp khi commit lẻ cụm:
 - `npx tsc --noEmit` báo lỗi ma trỏ route vừa stash — đó là `.next/types/validator.ts`
   CŨ. Build lại rồi tsc mới sạch. Đừng hoảng.
 
+### Cron radar + hr-remind: CẢ HAI ĐANG HỎNG NGẦM, đã sửa
+Sếp bảo "làm cron cho radar". Hoá ra **crontab VPS đã có sẵn** entry 8:00 hằng ngày
+— task trong memory là stale. Nhưng nó **chưa bao giờ chạy được**: lệnh cron
+redirect `>> logs/blog-radar.log` mà **thư mục `logs/` không tồn tại** → redirect
+fail → cron chết im, không log, không ai biết.
+Fix: `mkdir -p /opt/tdgames-landingpage/logs`. Chạy tay verify: "quét 34 tin,
+lưu 5 chủ đề, đã gửi 5 chủ đề vào Discord" ✓
+
+Nhân tiện soi `hr-remind.yml`: **fail 5 ngày liên tiếp** (ít nhất). Nguyên nhân
+KHÔNG phải secret như tưởng — log cho thấy **HTTP 301**: workflow gọi
+`https://www.tdgamestudio.com/...`, Cloudflare redirect www → apex, `curl` không
+có `-L` nên nhận 301 rồi exit 1. Đã bỏ `www.`.
+⚠ CÒN LỖI THỨ HAI chưa sửa được: `gh secret list` chỉ có `VPS_*` — **secret
+`HR_SECRET` không tồn tại**, nên sửa URL xong vẫn sẽ 401. Sếp phải tự set:
+`gh secret set HR_SECRET` (giá trị = `app_settings.hr_secret`). Em không tự đưa
+credential sang GitHub.
+
+**Bài học chọn kiến trúc:** radar chạy bằng cron VPS chứ KHÔNG phải GitHub Actions
+— script cần 6 env (AI_*, SUPABASE_*, DISCORD_*) mà VPS đã có đủ; đi đường Actions
+là phải nhân bản 6 secret, đúng cái bẫy vừa làm hr-remind chết.
+
 ### Cụm blog-AI: ĐÃ DEPLOY (commit 0c62953, CI 1m26s)
 Sếp duyệt "cứ tiếp tục". Nghịch lý trước đó: DB đã sẵn sàng (cột `ai_prompt` có,
 bảng `blog_topics` 4 topic chờ) nhưng code UI/API kẹt ở máy → production không có

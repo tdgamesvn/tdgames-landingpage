@@ -16,7 +16,7 @@ jobs:
           STATUS=$(curl -s -o /tmp/remind_body.txt -w "%{http_code}" \
             -X GET \
             -H "x-hr-key: ${{ secrets.HR_SECRET }}" \
-            "https://www.tdgamestudio.com/api/hr/remind")
+            "https://tdgamestudio.com/api/hr/remind")
           echo "HTTP $STATUS"
           cat /tmp/remind_body.txt
           if [ "$STATUS" != "200" ]; then
