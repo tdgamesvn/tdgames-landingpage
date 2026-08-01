@@ -131,7 +131,26 @@ Bẫy đã gặp khi commit lẻ cụm:
 - `npx tsc --noEmit` báo lỗi ma trỏ route vừa stash — đó là `.next/types/validator.ts`
   CŨ. Build lại rồi tsc mới sạch. Đừng hoảng.
 
-### CÒN LẠI (chưa commit, vẫn dirty trên main)
+### Cụm blog-AI: ĐÃ DEPLOY (commit 0c62953, CI 1m26s)
+Sếp duyệt "cứ tiếp tục". Nghịch lý trước đó: DB đã sẵn sàng (cột `ai_prompt` có,
+bảng `blog_topics` 4 topic chờ) nhưng code UI/API kẹt ở máy → production không có
+đường nào duyệt topic.
+
+Verify dev trước khi push: 401 no-key ✓, 400 guard prompt nhân vật ✓, 400 note
+<40 ký tự ✓, GET topics trả đủ ✓.
+**Nhánh chưa ai từng chạy thật — ảnh AI qua đường nén MỚI** (route đã bỏ sharp
+riêng): gpt-image-2 → `.webp` **21KB** (trước là PNG 2.4MB, giảm 99%).
+Verify production sau deploy: 5 topic, guard 400, no-auth 401 ✓.
+
+Soi thêm: `GET /blog/topics` KHÔNG lọc status (trả cả `drafted`), nhưng
+`BlogTab.tsx:255` lọc client `new|picked` → topic đã dựng không hiện lại,
+không có lỗi dựng trùng bài. Không cần sửa.
+
+Dọn: xoá ảnh AI test (R2 + row media_assets). **KHÔNG xoá bài draft**
+`how-we-make-weapons-look-cool...` — nó có 7164 ký tự nội dung thật, không phải
+rác rỗng; `published: false` nên không lộ ra ngoài. Sếp tự quyết trong /admin.
+
+### CÒN LẠI
 Cụm blog-AI: `BlogTab.tsx`, `_lib/api.ts`, `ImagePicker.tsx`, `blog-ai.ts`,
 `api/admin/generate-image/`, `api/admin/blog/topics/`, `scripts/test-blog-ai.mjs`,
 migration `20260801000000_media_ai_prompt.sql`. Chưa verify trong session này.
