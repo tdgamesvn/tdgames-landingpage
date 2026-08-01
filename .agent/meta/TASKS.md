@@ -6,12 +6,18 @@ _(empty)_
 
 ## To do
 
-- [ ] Cron cho `scripts/blog-radar.mjs` — hiện chạy tay. Có `hr-remind.yml` làm khuôn.
-- [ ] 274 file mồ côi trên R2 (1.56 GB, riêng GIF behance 1.17 GB) — liệt kê cho sếp
-      duyệt rồi mới xoá. KHÔNG tự xoá.
+- [x] ~~Cron cho radar~~ (2026-08-01): crontab VPS ĐÃ có sẵn entry 8:00 nhưng chết im
+      vì thư mục `logs/` không tồn tại → redirect `>> logs/blog-radar.log` fail.
+      `mkdir -p logs` là xong. Chạy tay verify: quét 34 tin, lưu 5 chủ đề, ping Discord ✓
+- [ ] **Sếp set `HR_SECRET` trên GitHub**: `gh secret set HR_SECRET` (giá trị =
+      `app_settings.hr_secret`). `hr-remind.yml` fail 5+ ngày; đã sửa lỗi URL www→apex
+      (301) nhưng thiếu secret vẫn 401. Em không tự đưa credential sang GitHub.
+- [x] ~~274 file mồ côi~~ (2026-08-01): sếp duyệt dọn → chuyển sang `trash/2026-08-01/`
+      (KHÔNG xoá thẳng — "mồ côi" là kết luận heuristic). Manifest
+      `scripts/.orphan-manifest.jsonl`. Row `media_assets` vẫn còn.
+- [ ] Sau vài ngày: xoá hẳn `trash/2026-08-01/` (1.56 GB) nếu web không thiếu ảnh nào.
 - [ ] Sau vài ngày web chạy ổn: xoá `backup/pre-compress/` trên R2 (~2 GB).
-- [ ] Bot tdgames-discord dùng `gif2webp` LOSSLESS (GIF chỉ giảm 16%). Muốn ăn đậm
-      thì thêm `-lossy` — chưa làm vì studio art ưu tiên chất lượng.
+- [x] ~~GIF lossless bên bot~~ — sếp chốt KHÔNG cần `-lossy`, giữ chất lượng.
 
 
 - [x] ~~Bot `tdgames-discord`: `POST /compress`~~ (2026-08-01) — bot live tại

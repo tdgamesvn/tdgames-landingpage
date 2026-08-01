@@ -62,3 +62,4 @@ public/video/
 
 # manifest rollback cua backfill-compress (local, khong commit)
 scripts/.backfill-manifest.jsonl
+scripts/.orphan-manifest.jsonl

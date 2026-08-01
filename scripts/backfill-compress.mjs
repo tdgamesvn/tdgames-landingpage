@@ -26,6 +26,7 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   CopyObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 
@@ -34,6 +35,7 @@ const execFileAsync = promisify(execFile);
 const APPLY = process.argv.includes("--apply");
 const ROLLBACK = process.argv.includes("--rollback");
 const ALL = process.argv.includes("--all");
+const ORPHANS = process.argv.includes("--delete-orphans");
 const LIMIT = Number(process.argv[process.argv.indexOf("--limit") + 1]) || Infinity;
 
 // ponytail: "đang dùng" = xuất hiện trong source HOẶC trong JSON các API public.
@@ -52,6 +54,8 @@ const CDN_RE = /cdn\.tdgamestudio\.com\/([^\s"'`)\\]+)/g;
 const BACKUP_PREFIX = "backup/pre-compress/";
 const MIN_BYTES = 400 * 1024;
 const MANIFEST = "scripts/.backfill-manifest.jsonl";
+const TRASH_PREFIX = "trash/2026-08-01/";
+const TRASH_MANIFEST = "scripts/.orphan-manifest.jsonl";
 
 // Không tin content-type lưu trên R2 (nhiều object là application/octet-stream) —
 // suy từ đuôi file, đó mới là thứ quyết định bot chọn nhánh nén nào.
@@ -205,8 +209,56 @@ async function rollback() {
   console.log("Xong. Bản gốc vẫn còn ở", BACKUP_PREFIX, "— tự xoá khi đã yên tâm.");
 }
 
+/**
+ * Dọn file không trang nào dùng. ponytail: KHÔNG xoá thẳng — copy sang trash/
+ * trước, vì "mồ côi" là kết luận từ heuristic dò tham chiếu, sai một chỗ là mất
+ * file thật. Xoá hẳn trash/ sau vài ngày khi đã yên tâm.
+ */
+async function deleteOrphans() {
+  const all = await listAll();
+  const used = await collectUsedKeys();
+  const orphans = all
+    .filter((o) => !o.Key.startsWith(BACKUP_PREFIX) && !o.Key.startsWith(TRASH_PREFIX))
+    .filter((o) => o.Size > MIN_BYTES)
+    .filter((o) => MIME[ext(o.Key)])
+    .filter((o) => !used.has(o.Key))
+    .sort((a, b) => b.Size - a.Size);
+
+  const total = orphans.reduce((s, o) => s + o.Size, 0);
+  console.log(`${orphans.length} file mồ côi, tổng ${mb(total)}`);
+  if (!APPLY) {
+    console.log("(dry-run — thêm --apply để dọn thật)\n");
+    orphans.slice(0, 15).forEach((o) => console.log(mb(o.Size), o.Key));
+    if (orphans.length > 15) console.log(`... và ${orphans.length - 15} file nữa`);
+    return;
+  }
+
+  let moved = 0, failed = 0;
+  for (const [i, o] of orphans.entries()) {
+    try {
+      await s3.send(
+        new CopyObjectCommand({
+          Bucket: bucket,
+          Key: TRASH_PREFIX + o.Key,
+          CopySource: `${bucket}/${o.Key}`,
+        }),
+      );
+      await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: o.Key }));
+      appendFileSync(TRASH_MANIFEST, JSON.stringify({ key: o.Key, size: o.Size }) + "\n");
+      moved++;
+      if (moved % 25 === 0) console.log(`  ... ${moved}/${orphans.length}`);
+    } catch (err) {
+      failed++;
+      console.log(`[${i + 1}] ✗ ${o.Key} — ${err.message}`);
+    }
+  }
+  console.log(`\nĐã chuyển ${moved} file (${mb(total)}) sang ${TRASH_PREFIX}, ${failed} lỗi.`);
+  console.log(`Row media_assets tương ứng vẫn còn — xoá riêng nếu muốn kho ảnh admin sạch.`);
+}
+
 async function main() {
   if (ROLLBACK) return rollback();
+  if (ORPHANS) return deleteOrphans();
 
   const all = await listAll();
   let pool = all
