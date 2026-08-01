@@ -49,7 +49,10 @@ const USED_API = [
   "/api/jobs",
 ];
 const SITE = "https://tdgamestudio.com";
-const CDN_RE = /cdn\.tdgamestudio\.com\/([^\s"'`)\\]+)/g;
+// ⚠ Tên file CÓ dấu cách (vd "Screenshot 2026-05-13 232709.png"). Regex dừng ở
+// \s sẽ cắt cụt URL → key không khớp → file đang dùng bị coi là mồ côi và xoá oan.
+// Nên nuốt tới dấu đóng chuỗi/ngoặc/xuống dòng, KHÔNG dừng ở khoảng trắng.
+const CDN_RE = /cdn\.tdgamestudio\.com\/([^"'`)\\\n<>]+)/g;
 
 const BACKUP_PREFIX = "backup/pre-compress/";
 const MIN_BYTES = 400 * 1024;

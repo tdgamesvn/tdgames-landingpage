@@ -127,6 +127,30 @@ Bẫy đã gặp khi commit lẻ cụm:
 - `npx tsc --noEmit` báo lỗi ma trỏ route vừa stash — đó là `.next/types/validator.ts`
   CŨ. Build lại rồi tsc mới sạch. Đừng hoảng.
 
+### Dọn 274 file mồ côi — VÀ CÁI BẪY REGEX SUÝT XOÁ NHẦM
+Sếp duyệt dọn. Thêm `--delete-orphans`: chuyển sang `trash/2026-08-01/` chứ KHÔNG
+xoá thẳng, vì "mồ côi" chỉ là kết luận từ heuristic dò tham chiếu.
+
+**Quyết định đó cứu bàn thua.** Chạy được 251/274 thì phát hiện `CDN_RE` cũ là
+`[^\s"'`)\\]+` — **dừng ở khoảng trắng**. Tên file thật CÓ dấu cách:
+`landing/images/Screenshot 2026-05-13 232709.png` bị cắt thành
+`landing/images/Screenshot` → không khớp key nào → **file đang dùng bị coi là mồ côi**.
+Dừng script, sửa regex thành `[^"'`)\\\n<>]+` (nuốt tới dấu đóng chuỗi/ngoặc/
+xuống dòng, KHÔNG dừng ở space), khôi phục **3 file bị oan** từ trash → cả 3 trả 200 ✓
+- `landing/images/Screenshot 2026-05-13 232709.png`
+- `landing/images/Screenshot 2026-05-07 233917.png`
+- `landing/video/Super_Move/BIGBY-Long Arm of the Law_Closed.mp4`
+
+Phát hiện được là nhờ spot-check URL từ `/api/projects` thấy một cái 404 — cái 404
+đó chính là URL bị grep của tôi cắt cụt, tức là **cùng một lỗi biểu hiện ở hai chỗ**.
+
+Chạy nốt 23 file còn lại với regex mới. Tổng: **271 file trong `trash/2026-08-01/`**.
+Audit toàn diện sau khi dọn: **454 URL đang dùng, 0 ảnh vỡ** (đối chiếu từng key
+với danh sách object thật trên R2, không phải spot-check).
+
+**Bài học:** khi heuristic quyết định xoá dữ liệu, luôn cho nó đi qua thùng rác
+trung gian. Ở đây heuristic sai thật, và lưới an toàn là thứ duy nhất giữ lại 3 file.
+
 ### Cron radar + hr-remind: CẢ HAI ĐANG HỎNG NGẦM, đã sửa
 Sếp bảo "làm cron cho radar". Hoá ra **crontab VPS đã có sẵn** entry 8:00 hằng ngày
 — task trong memory là stale. Nhưng nó **chưa bao giờ chạy được**: lệnh cron
