@@ -9,9 +9,10 @@ _(empty)_
 - [x] ~~Cron cho radar~~ (2026-08-01): crontab VPS ĐÃ có sẵn entry 8:00 nhưng chết im
       vì thư mục `logs/` không tồn tại → redirect `>> logs/blog-radar.log` fail.
       `mkdir -p logs` là xong. Chạy tay verify: quét 34 tin, lưu 5 chủ đề, ping Discord ✓
-- [ ] **Sếp set `HR_SECRET` trên GitHub**: `gh secret set HR_SECRET` (giá trị =
-      `app_settings.hr_secret`). `hr-remind.yml` fail 5+ ngày; đã sửa lỗi URL www→apex
-      (301) nhưng thiếu secret vẫn 401. Em không tự đưa credential sang GitHub.
+- [x] ~~`HR_SECRET` trên GitHub~~ (2026-08-01): sếp bảo "bạn chạy cho tôi được không"
+      → đã set từ `app_settings.hr_secret`, không in giá trị ra đâu cả.
+      Chạy thử `gh workflow run hr-remind.yml` → **HTTP 200 success**, trả
+      `{"sent":true,"staleCount":3,"needsReview":3}` ⇒ nhắc HR sống lại sau 5+ ngày chết.
 - [x] ~~274 file mồ côi~~ (2026-08-01): sếp duyệt dọn → chuyển sang `trash/2026-08-01/`
       (KHÔNG xoá thẳng — "mồ côi" là kết luận heuristic). Manifest
       `scripts/.orphan-manifest.jsonl`. Row `media_assets` vẫn còn.

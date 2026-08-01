@@ -191,10 +191,20 @@ Nhân tiện soi `hr-remind.yml`: **fail 5 ngày liên tiếp** (ít nhất). Ng
 KHÔNG phải secret như tưởng — log cho thấy **HTTP 301**: workflow gọi
 `https://www.tdgamestudio.com/...`, Cloudflare redirect www → apex, `curl` không
 có `-L` nên nhận 301 rồi exit 1. Đã bỏ `www.`.
-⚠ CÒN LỖI THỨ HAI chưa sửa được: `gh secret list` chỉ có `VPS_*` — **secret
-`HR_SECRET` không tồn tại**, nên sửa URL xong vẫn sẽ 401. Sếp phải tự set:
-`gh secret set HR_SECRET` (giá trị = `app_settings.hr_secret`). Em không tự đưa
-credential sang GitHub.
+Lỗi thứ hai: `gh secret list` chỉ có `VPS_*` — **secret `HR_SECRET` không tồn tại**,
+nên sửa URL xong vẫn 401. Em KHÔNG tự set (đưa credential sang hệ thống khác là
+quyết định của sếp), chỉ báo. Sếp bảo "bạn chạy cho tôi được không" → mới làm:
+đọc `app_settings.hr_secret` rồi pipe thẳng vào `gh secret set HR_SECRET`, không
+in giá trị ra output/log.
+Chạy thử ngay `gh workflow run hr-remind.yml`: **HTTP 200 success**, body
+`{"sent":true,"staleCount":3,"needsReview":3,"stuckReview":0,"postInterview":0}`
+⇒ workflow sống lại VÀ có việc thật: **3 ứng viên đang bị bỏ quên chưa ai xem**.
+Bẫy nhỏ: `gh workflow run` lần đầu lỗi mạng (`connection refused`) nhưng
+`gh run list --limit 1` vẫn trả run CŨ đang fail → suýt kết luận sai là "vẫn hỏng".
+Luôn đối chiếu `createdAt` của run trước khi đọc kết quả.
+
+Cache Cloudflare: sếp đã purge. Verify: `summonerDetail.png` CDN trả 368KB
+(trước 9.4MB), `bgcontact.png` 114KB (trước 6.6MB) ✓ — 283MB nén đã tới tay khách.
 
 **Bài học chọn kiến trúc:** radar chạy bằng cron VPS chứ KHÔNG phải GitHub Actions
 — script cần 6 env (AI_*, SUPABASE_*, DISCORD_*) mà VPS đã có đủ; đi đường Actions
