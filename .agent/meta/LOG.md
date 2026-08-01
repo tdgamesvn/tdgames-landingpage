@@ -127,6 +127,19 @@ Bẫy đã gặp khi commit lẻ cụm:
 - `npx tsc --noEmit` báo lỗi ma trỏ route vừa stash — đó là `.next/types/validator.ts`
   CŨ. Build lại rồi tsc mới sạch. Đừng hoảng.
 
+### Badge SEO trong panel admin (9e8f655) + chạy radar thật lần đầu có chấm điểm
+Panel `/admin` tab Blog giờ hiện `[BOFU 10/10]` + keyword tiếng Anh, sắp theo điểm
+giảm dần. Màu badge phân tầng phễu: BOFU xanh lá, MOFU xanh dương, TOFU xám.
+
+Chạy radar thật, DB lưu đúng: BOFU 8–10 kèm keyword
+(`game art outsourcing cost / pricing / rates`, `outsourcing game art vs in-house team`,
+`how to choose a game art outsourcing partner`).
+
+⚠ Bẫy PostgREST: `order=score.desc` xếp **NULL LÊN ĐẦU** → query kiểm tra tưởng
+radar không lưu được score, hoá ra là 9 topic CŨ (chưa có cột này) chen lên trước.
+Phải `order=created_at.desc` mới thấy đúng. UI sort ở client `(b.score ?? 0)` nên
+không dính lỗi này.
+
 ### Radar chọn chủ đề theo SEO + tỉ lệ chuyển đổi (góc nhìn marketing)
 Sếp: "làm sao AI chọn được chủ đề SEO tốt và chuyển đổi cao".
 

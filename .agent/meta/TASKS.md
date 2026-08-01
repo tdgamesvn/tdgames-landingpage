@@ -6,8 +6,10 @@ _(empty)_
 
 ## To do
 
-- [ ] Panel RadarTopics trong `/admin`: hiện badge `intent` + `score` + `keyword`
-      (đã lưu DB từ migration `blog_topics_seo_fields`, UI chưa đọc).
+- [x] ~~Badge intent/score/keyword trong panel radar~~ (2026-08-01, 9e8f655):
+      hiện `[BOFU 9/10]` + keyword, sắp theo điểm giảm dần. Production verify OK.
+- [ ] 9 topic cũ (trước khi có chấm điểm) đang `score = null` nên trôi xuống cuối
+      panel. Không xoá — để `expireOld` tự dọn sau 7 ngày.
 
 - [x] ~~Cron cho radar~~ (2026-08-01): crontab VPS ĐÃ có sẵn entry 8:00 nhưng chết im
       vì thư mục `logs/` không tồn tại → redirect `>> logs/blog-radar.log` fail.
