@@ -245,6 +245,9 @@ function RadarTopics({
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
+  // Bộ câu hỏi phỏng vấn theo từng topic + câu trả lời của sếp.
+  const [qs, setQs] = useState<Record<string, { q: string; why: string }[]>>({});
+  const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
   async function load() {
     try {
@@ -279,9 +282,39 @@ function RadarTopics({
     });
   }
 
+  async function interview(t: BlogTopic) {
+    setBusyId(t.id);
+    setMsg("AI đang soạn câu hỏi phỏng vấn…");
+    try {
+      const res = await fetch("/api/admin/blog/topics/interview", {
+        method: "POST",
+        headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ id: t.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg(data.error ?? "Không soạn được câu hỏi");
+        return;
+      }
+      setQs((m) => ({ ...m, [t.id]: data.questions }));
+      setAnswers((m) => ({ ...m, [t.id]: data.questions.map(() => "") }));
+      setMsg("Trả lời được câu nào hay câu đó — bỏ trống cũng không sao.");
+    } catch {
+      setMsg("Lỗi mạng khi soạn câu hỏi");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function draft(t: BlogTopic) {
+    const qa = qs[t.id];
+    const filled = qa
+      ? qa.map((x, i) => ({ q: x.q, a: (answers[t.id]?.[i] ?? "").trim() })).filter((x) => x.a)
+      : null;
     const note = (notes[t.id] ?? "").trim();
-    if (note.length < 40) {
+    const total = filled?.length ? filled.map((x) => x.a).join(" ").length : note.length;
+
+    if (total < 40) {
       setMsg("Kể ít nhất 40 ký tự trải nghiệm thật — không có chất liệu thì bài sẽ nhạt.");
       return;
     }
@@ -291,7 +324,9 @@ function RadarTopics({
       const res = await fetch("/api/admin/blog/topics", {
         method: "POST",
         headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ id: t.id, ceo_note: note }),
+        body: JSON.stringify(
+          filled?.length ? { id: t.id, answers: filled } : { id: t.id, ceo_note: note },
+        ),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -355,14 +390,55 @@ function RadarTopics({
                   <span className="font-semibold">Kể nghe:</span> {t.ask}
                 </p>
               )}
-              <textarea
-                value={notes[t.id] ?? ""}
-                onChange={(e) => setNotes((n) => ({ ...n, [t.id]: e.target.value }))}
-                rows={3}
-                placeholder="Trả lời bằng trải nghiệm thật của studio — case cụ thể, con số, sai lầm từng mắc…"
-                className="mt-2 w-full resize-y rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none"
-              />
+              {qs[t.id] ? (
+                <div className="mt-3 space-y-3 rounded-md border border-amber-500/20 bg-amber-500/[0.03] p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/80">
+                    AI phỏng vấn — trả lời được câu nào hay câu đó
+                  </p>
+                  {qs[t.id].map((item, qi) => (
+                    <div key={qi}>
+                      <p className="text-xs font-medium text-white/80">
+                        {qi + 1}. {item.q}
+                      </p>
+                      {item.why && (
+                        <p className="mt-0.5 text-[11px] italic text-white/35">{item.why}</p>
+                      )}
+                      <textarea
+                        value={answers[t.id]?.[qi] ?? ""}
+                        onChange={(e) =>
+                          setAnswers((m) => {
+                            const arr = [...(m[t.id] ?? [])];
+                            arr[qi] = e.target.value;
+                            return { ...m, [t.id]: arr };
+                          })
+                        }
+                        rows={2}
+                        placeholder="Con số, tên dự án, sự cố thật…"
+                        className="mt-1 w-full resize-y rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm outline-none focus:border-amber-400/50"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <textarea
+                  value={notes[t.id] ?? ""}
+                  onChange={(e) => setNotes((n) => ({ ...n, [t.id]: e.target.value }))}
+                  rows={3}
+                  placeholder="Kể tự do, hoặc bấm “AI phỏng vấn” để được hỏi từng câu một"
+                  className="mt-2 w-full resize-y rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm outline-none focus:border-amber-400/50"
+                />
+              )}
               <div className="mt-2 flex items-center gap-2">
+                {!qs[t.id] && (
+                  <button
+                    onClick={() => interview(t)}
+                    disabled={busyId !== null}
+                    className="rounded-md border border-amber-500/40 px-3 py-1.5 text-xs font-medium text-amber-300 hover:bg-amber-500/10 disabled:opacity-40"
+                    title="AI hỏi 6 câu để moi chất liệu thật, rồi mới viết"
+                  >
+                    {busyId === t.id ? "Đang soạn câu hỏi…" : "AI phỏng vấn"}
+                  </button>
+                )}
                 <button
                   onClick={() => draft(t)}
                   disabled={busyId !== null}

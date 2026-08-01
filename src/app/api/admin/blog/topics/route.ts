@@ -76,9 +76,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "AI_BASE_URL / AI_API_KEY not configured" }, { status: 500 });
   }
 
-  const { id, ceo_note } = await req.json();
+  const { id, ceo_note, answers } = await req.json();
   if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
-  if (!ceo_note || String(ceo_note).trim().length < 40) {
+
+  // Chấp nhận cả 2 đường: bộ hỏi-đáp từ khâu phỏng vấn, hoặc một ghi chú tự do
+  // như trước. Gộp về cùng một chuỗi để chỗ dưới không phải phân biệt.
+  const note = Array.isArray(answers)
+    ? answers
+        .filter((a) => a && String(a.a ?? "").trim())
+        .map((a) => `**${String(a.q ?? "").trim()}**\n${String(a.a).trim()}`)
+        .join("\n\n")
+    : String(ceo_note ?? "");
+
+  if (!note || note.trim().length < 40) {
     // Không có chất liệu thật thì bài sẽ là generic content — đúng thứ Google phạt.
     return NextResponse.json(
       { error: "Cần ít nhất 40 ký tự trải nghiệm thật để AI có cái mà dựng bài" },
@@ -98,7 +108,7 @@ export async function POST(req: Request) {
     topic: topic.topic,
     why_us: topic.why,
     question_asked: topic.ask,
-    ceo_answer: ceo_note,
+    ceo_answer: note,
     source_link: topic.source,
   });
 
@@ -165,7 +175,7 @@ export async function POST(req: Request) {
 
   await supabase
     .from("blog_topics")
-    .update({ status: "drafted", ceo_note, post_id: post.id })
+    .update({ status: "drafted", ceo_note: note, post_id: post.id })
     .eq("id", id);
 
   return NextResponse.json({ post }, { status: 201 });
