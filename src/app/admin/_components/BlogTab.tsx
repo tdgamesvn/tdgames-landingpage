@@ -30,6 +30,9 @@ type BlogTopic = {
   why: string | null;
   ask: string | null;
   source: string | null;
+  keyword: string | null;
+  intent: string | null;
+  score: number | null;
   status: "new" | "picked" | "drafted" | "skipped";
   ceo_note: string | null;
   created_at: string;
@@ -261,7 +264,10 @@ function RadarTopics({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pending = topics.filter((t) => t.status === "new" || t.status === "picked");
+  // Điểm cao lên trước — sếp đọc từ trên xuống là gặp bài đáng viết nhất.
+  const pending = topics
+    .filter((t) => t.status === "new" || t.status === "picked")
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   if (pending.length === 0) return null;
 
   async function skip(t: BlogTopic) {
@@ -318,7 +324,31 @@ function RadarTopics({
           {msg && <p className="text-xs text-amber-300">{msg}</p>}
           {pending.map((t) => (
             <div key={t.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-              <p className="text-sm font-medium">{t.topic}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                {t.intent && (
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                      t.intent === "BOFU"
+                        ? "bg-emerald-500/20 text-emerald-300"
+                        : t.intent === "MOFU"
+                          ? "bg-sky-500/20 text-sky-300"
+                          : "bg-white/10 text-white/50"
+                    }`}
+                    title="BOFU = khách gần mua, MOFU = đang cân nhắc, TOFU = mới biết tới"
+                  >
+                    {t.intent}
+                  </span>
+                )}
+                {t.score != null && (
+                  <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+                    {t.score}/10
+                  </span>
+                )}
+                <p className="text-sm font-medium">{t.topic}</p>
+              </div>
+              {t.keyword && (
+                <p className="mt-1 font-mono text-[11px] text-white/40">🔎 {t.keyword}</p>
+              )}
               {t.why && <p className="mt-1 text-xs text-white/50">{t.why}</p>}
               {t.ask && (
                 <p className="mt-2 text-xs text-amber-300/90">
