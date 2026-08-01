@@ -743,7 +743,7 @@ export default function CareersClient({
               {marqueePhotos.map((photo, i) => (
                 <div
                   key={i}
-                  className="relative aspect-[4/5] w-[150px] shrink-0 overflow-hidden rounded-lg border border-white/10 md:w-[240px]"
+                  className="relative aspect-square w-[150px] shrink-0 overflow-hidden rounded-lg border border-white/10 md:w-[240px]"
                 >
                   {/* SlotMedia: sếp upload mp4 vào slot cũng chạy, alt="" vì ảnh
                       lặp 3 lần — screen reader không cần đọc lại. */}

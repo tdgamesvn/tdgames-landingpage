@@ -1843,3 +1843,20 @@ server + Playwright: marquee chạy, fade 2 mép đúng.
 ### Next Step
 Sếp vào `/admin` → Page Slots → page **Careers** → slot **gallery** upload ảnh studio
 thật thay 4 ảnh stock Unsplash.
+
+---
+
+## 2026-08-01 (session — marquee "Life at TD Games" đổi sang ảnh vuông)
+
+### Task
+Sếp gửi screenshot section `//04 BEHIND THE SCENES` ở `/careers`, muốn ảnh vuông.
+
+### Work Done
+- `careers-client.tsx:746`: `aspect-[4/5]` → `aspect-square` cho card marquee.
+  Ảnh vẫn `object-cover` nên crop giữa, không méo.
+
+### Result
+Diff 1 dòng, không đụng layout khác (marquee width `w-[150px]`/`md:w-[240px]` giữ nguyên).
+
+### Next Step
+Sếp xem trên dev server, ưng thì push.
