@@ -43,10 +43,98 @@ VPS: đã set `COMPRESSOR_URL` vào `/opt/tdgames-landingpage/.env.local` + `pm2
 VPS curl tới bot OK (415). NHƯNG production vẫn trả file nguyên 15.6MB vì **code nén
 chưa commit/push** — env đã sẵn, thiếu đúng bước deploy.
 
-### CHƯA COMMIT — chờ sếp quyết
-Cây làm việc `main` còn 2 cụm lẫn nhau: (a) cụm nén đã verify đủ, (b) cụm blog-AI /
-ImagePicker / generate-image / migration `20260801000000` từ session trước, chưa verify.
-Hỏi sếp cách tách rồi mới push.
+### Backfill nén toàn bộ media cũ trên R2 (`scripts/backfill-compress.mjs`)
+Sếp: "nén lại toàn bộ ảnh/video đang có, nhưng backup trước".
+
+**Quyết định then chốt — GIỮ NGUYÊN key, chỉ thay bytes + content-type.**
+`foo.gif` giờ chứa WebP là CỐ Ý: browser đọc `Content-Type`, không đọc đuôi file.
+Đổi tên `.gif`→`.webp` sẽ buộc phải sửa URL ở site.json + project-data.ts + 4 bảng
+DB — sót một chỗ là ảnh vỡ. Đã check `information_schema`: DB KHÔNG có cột nào lưu
+size/mime ⇒ ghi đè cùng key thì không phải đụng DB dòng nào.
+
+Hiện trạng R2 lúc bắt đầu: 771 file / 2034.9 MB. Cần nén: 496 file / 1957.6 MB.
+GIF 199 file (1211 MB) — nặng nhất; MP4 276 (583 MB); PNG 205 (185 MB).
+
+Script: dry-run mặc định, `--apply`, `--limit N`, `--rollback`.
+- Backup server-side CopyObject sang `backup/pre-compress/<key>` TRƯỚC khi đụng bản
+  gốc (không tải về, không tốn egress). Backup lỗi → không ghi đè.
+- Chốt chặn "lỗi bim bim": bytes mới phải DECODE ĐƯỢC (sharp cho ảnh, ffprobe cho
+  video) mới cho ghi đè. Bot trả 200 với file cụt vẫn là file cụt — chỉ so size là chưa đủ.
+- Manifest `scripts/.backfill-manifest.jsonl` để rollback/audit.
+- Không tin content-type lưu trên R2 (nhiều object là octet-stream) — suy từ đuôi file.
+
+Đã kiểm chứng end-to-end trên 3 GIF nặng nhất rồi ROLLBACK:
+- 31.24MB → 26.18MB, CDN trả `content-type: image/webp`, decode ra 700x393 **300
+  frames còn nguyên** ⇒ animation không mất.
+- `--rollback` trả về `image/gif` đúng 32,753,492 byte = khớp size gốc ✓
+
+⚠ GIF chỉ giảm ~16% vì bot dùng `gif2webp` LOSSLESS. Muốn ăn đậm (1.2GB → ~250MB)
+thì bot phải thêm `-lossy`. CHƯA làm: đây là studio art, giữ chất lượng ưu tiên hơn.
+Nếu sếp đổi ý → sửa bên repo tdgames-discord rồi chạy lại script này.
+
+### SẾP BẮT LỖI: "GIF có dùng đâu mà nén" — ĐÚNG
+Em đã nén 11 GIF rồi mới bị chặn. Kiểm chứng lại: 199 GIF (1.17GB) KHÔNG được
+tham chiếu ở đâu — không có trong projects/blog_posts/page_slots, không có trong
+source. Chúng chỉ nằm trong `media_assets`, mà bảng đó là **bảng TRACK**, không
+phải nơi hiển thị. Đã `--rollback` cả 11 file về nguyên trạng.
+
+**Bài học chung, không riêng GIF:** "có mặt trên R2" ≠ "đang được dùng".
+Sửa gốc bằng bộ lọc `collectUsedKeys()`: tập URL đang dùng = grep `cdn.tdgamestudio.com/*`
+trong `src/**` + JSON các API public (`/api/projects|blog|team|footer|jobs`) +
+bảng `page_slots` đọc thẳng REST (route `/api/page-slots` bắt buộc `?page=&slot=`
+nên không liệt kê được — thiếu nguồn này là hụt 46 file).
+Cờ `--all` để nén tất nếu cần.
+
+Kết quả lọc: **222 file / 400 MB thật sự dùng** — thay vì 496 file / 1958 MB.
+**274 file mồ côi / 1557 MB (79% khối lượng) là công toi.**
+
+**KẾT QUẢ: 222/222 nén, 0 lỗi, tiết kiệm 283 MB** (400.56 → 117.5 MB, giảm 71%).
+60 ảnh + 162 video. Bản gốc còn nguyên ở `backup/pre-compress/`.
+
+Kiểm tra thẳng R2 (bỏ qua CDN): `landing/images/summonerDetail.png` → ContentType
+`image/webp`, bytes ĐÚNG là webp 2400x1600, 368,468 B (gốc 9,457,725 B PNG 3072x2048).
+
+### ⚠ VIỆC CÒN LẠI: PHẢI PURGE CACHE CLOUDFLARE
+R2 đã đúng nhưng CDN vẫn phát bản CŨ:
+```
+cf-cache-status: HIT | age: 204390 | cache-control: max-age=604800
+GET .../summonerDetail.png        → 9,457,725 B (PNG cũ)
+GET .../summonerDetail.png?v=123  → 368,468 B (webp mới, cache MISS)
+```
+Cache 7 ngày ⇒ KHÔNG purge thì người dùng không hưởng gì, mà `Content-Type` header
+lại đã là webp trong khi body là png — lệch nhau.
+
+Bẫy đo đạc: `curl -I` (HEAD) trả 368468 (bản mới) còn `curl` (GET) trả 9457725
+(bản cũ) — HEAD và GET đi khác đường cache. **Luôn đo bằng GET thật + đọc
+`cf-cache-status`**, đừng tin mỗi HEAD.
+
+Cách purge (chưa làm — .env.local KHÔNG có Cloudflare API token):
+1. Dashboard Cloudflare → Caching → Purge Everything (1 click, nhanh nhất)
+2. Hoặc cấp `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ZONE_ID` → viết script purge theo
+   danh sách key trong manifest (API tối đa 30 URL/lần)
+3. Hoặc chờ 7 ngày cache tự hết
+Xong nhớ kiểm tra rồi mới xoá `backup/pre-compress/` (≈2GB, ~$0.03/tháng).
+
+### ĐÃ DEPLOY PRODUCTION ✓ (commit 4632ca3)
+Sếp giao quyền quyết → tách nhánh `feat/media-compression`, commit RIÊNG cụm nén
+(r2.ts + 2 upload route + package/lock + memory), `git stash -u` cụm blog-AI rồi
+`npm run build` + `tsc` trên ĐÚNG cây sẽ deploy (sạch cả hai) → ff-merge main → push.
+CI xanh 1m29s. Stash đã pop lại, nhánh đã xoá.
+
+Verify production thật: PNG 15.6MB → **517412B** `.webp`, MP4 1.28MB → **94292B**
+— khớp ĐÚNG từng byte với số đo trên dev ⇒ cùng một bot. File test đã xoá khỏi R2.
+
+Bẫy đã gặp khi commit lẻ cụm:
+- `sharp` là dep MỚI → package.json + lock BẮT BUỘC đi cùng. Lock có sẵn
+  `@img/sharp-linux-x64` và CI dùng `npm install` (không phải `npm ci`) nên VPS
+  Linux tải đúng binary. next/react không bị bump.
+- `npx tsc --noEmit` báo lỗi ma trỏ route vừa stash — đó là `.next/types/validator.ts`
+  CŨ. Build lại rồi tsc mới sạch. Đừng hoảng.
+
+### CÒN LẠI (chưa commit, vẫn dirty trên main)
+Cụm blog-AI: `BlogTab.tsx`, `_lib/api.ts`, `ImagePicker.tsx`, `blog-ai.ts`,
+`api/admin/generate-image/`, `api/admin/blog/topics/`, `scripts/test-blog-ai.mjs`,
+migration `20260801000000_media_ai_prompt.sql`. Chưa verify trong session này.
 
 ### Verify (e2e thật trên dev, fake compressor ở :8318)
 - `npx tsc --noEmit` + `npm run build` sạch.

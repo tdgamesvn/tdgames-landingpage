@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { marked } from "marked";
 import type { BlogPost } from "../_lib/types";
+import { ImagePicker } from "./ImagePicker";
 
 /* ─── helpers ──────────────────────────────────────────────── */
 function slugify(s: string) {
@@ -23,6 +24,17 @@ function fmtDate(iso: string) {
 }
 
 /* ─── types ─────────────────────────────────────────────────── */
+type BlogTopic = {
+  id: string;
+  topic: string;
+  why: string | null;
+  ask: string | null;
+  source: string | null;
+  status: "new" | "picked" | "drafted" | "skipped";
+  ceo_note: string | null;
+  created_at: string;
+};
+
 type FormData = {
   slug: string;
   title: string;
@@ -119,6 +131,15 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
   /* list view --------------------------------------------------- */
   return (
     <div className="space-y-4">
+      <RadarTopics
+        adminKey={adminKey}
+        onDrafted={(post) => {
+          void loadPosts();
+          setEditPost(post); // nhảy thẳng vào form để sếp sửa
+          setView("form");
+        }}
+      />
+
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Blog Posts</h2>
         <button
@@ -199,6 +220,143 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
   );
 }
 
+/* ─── Radar topics ───────────────────────────────────────────── */
+function RadarTopics({
+  adminKey,
+  onDrafted,
+}: {
+  adminKey: string;
+  onDrafted: (post: BlogPost) => void;
+}) {
+  const [topics, setTopics] = useState<BlogTopic[]>([]);
+  const [open, setOpen] = useState(false);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [msg, setMsg] = useState("");
+
+  async function load() {
+    try {
+      const res = await fetch("/api/admin/blog/topics", {
+        headers: { "x-admin-key": adminKey },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      setTopics(data.topics ?? []);
+    } catch {
+      /* radar chưa chạy lần nào — panel tự ẩn */
+    }
+  }
+
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const pending = topics.filter((t) => t.status === "new" || t.status === "picked");
+  if (pending.length === 0) return null;
+
+  async function skip(t: BlogTopic) {
+    setTopics((ts) => ts.filter((x) => x.id !== t.id));
+    await fetch("/api/admin/blog/topics", {
+      method: "PATCH",
+      headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ id: t.id, status: "skipped" }),
+    });
+  }
+
+  async function draft(t: BlogTopic) {
+    const note = (notes[t.id] ?? "").trim();
+    if (note.length < 40) {
+      setMsg("Kể ít nhất 40 ký tự trải nghiệm thật — không có chất liệu thì bài sẽ nhạt.");
+      return;
+    }
+    setBusyId(t.id);
+    setMsg("AI đang dựng bài, mất khoảng 1-2 phút…");
+    try {
+      const res = await fetch("/api/admin/blog/topics", {
+        method: "POST",
+        headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ id: t.id, ceo_note: note }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg(data.error ?? "Lỗi khi dựng bài");
+        return;
+      }
+      setMsg("");
+      onDrafted(data.post);
+    } catch {
+      setMsg("Network error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04]">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-2 px-4 py-3 text-left"
+      >
+        <span className="text-sm font-semibold text-amber-300">
+          📡 Chủ đề radar gợi ý ({pending.length})
+        </span>
+        <span className="ml-auto text-xs text-white/40">{open ? "Ẩn" : "Xem"}</span>
+      </button>
+
+      {open && (
+        <div className="space-y-3 border-t border-amber-500/15 p-4">
+          {msg && <p className="text-xs text-amber-300">{msg}</p>}
+          {pending.map((t) => (
+            <div key={t.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
+              <p className="text-sm font-medium">{t.topic}</p>
+              {t.why && <p className="mt-1 text-xs text-white/50">{t.why}</p>}
+              {t.ask && (
+                <p className="mt-2 text-xs text-amber-300/90">
+                  <span className="font-semibold">Kể nghe:</span> {t.ask}
+                </p>
+              )}
+              <textarea
+                value={notes[t.id] ?? ""}
+                onChange={(e) => setNotes((n) => ({ ...n, [t.id]: e.target.value }))}
+                rows={3}
+                placeholder="Trả lời bằng trải nghiệm thật của studio — case cụ thể, con số, sai lầm từng mắc…"
+                className="mt-2 w-full resize-y rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none"
+              />
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  onClick={() => draft(t)}
+                  disabled={busyId !== null}
+                  className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium hover:bg-amber-500 disabled:opacity-40"
+                >
+                  {busyId === t.id ? "Đang dựng…" : "Dựng bản nháp"}
+                </button>
+                <button
+                  onClick={() => skip(t)}
+                  disabled={busyId !== null}
+                  className="rounded border border-white/15 px-3 py-1.5 text-xs hover:bg-white/10 disabled:opacity-40"
+                >
+                  Bỏ qua
+                </button>
+                {t.source && (
+                  <a
+                    href={t.source}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ml-auto text-xs text-white/40 hover:text-white"
+                  >
+                    tin gốc ↗
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Form ───────────────────────────────────────────────────── */
 function BlogForm({
   adminKey,
@@ -228,8 +386,6 @@ function BlogForm({
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [previewTab, setPreviewTab] = useState<"write" | "preview">("write");
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   function set<K extends keyof FormData>(k: K, v: FormData[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -238,32 +394,6 @@ function BlogForm({
   function handleTitle(v: string) {
     set("title", v);
     if (!initial) set("slug", slugify(v));
-  }
-
-  async function uploadCover(file: File) {
-    setUploading(true);
-    setMsg("");
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("category", "blog");
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        headers: { "x-admin-key": adminKey },
-        body: fd,
-      });
-      const data = await res.json();
-      if (data.url) {
-        set("cover_image", data.url);
-        setMsg("Cover uploaded ✓");
-      } else {
-        setMsg("Upload failed");
-      }
-    } catch {
-      setMsg("Upload error");
-    } finally {
-      setUploading(false);
-    }
   }
 
   async function save() {
@@ -376,41 +506,13 @@ function BlogForm({
         </div>
 
         {/* Cover image */}
-        <div className="space-y-1.5 md:col-span-2">
-          <label className="text-xs font-medium text-white/60">Cover Image</label>
-          <div className="flex gap-2">
-            <input
-              value={form.cover_image}
-              onChange={(e) => set("cover_image", e.target.value)}
-              placeholder="https://cdn.tdgamestudio.com/…"
-              className="flex-1 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:border-indigo-400"
-            />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="rounded-md border border-white/15 px-3 py-2 text-sm hover:bg-white/10 disabled:opacity-40"
-            >
-              {uploading ? "Uploading…" : "Upload"}
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void uploadCover(f);
-              }}
-            />
-          </div>
-          {form.cover_image && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={form.cover_image}
-              alt="cover preview"
-              className="mt-2 h-28 w-full rounded-lg object-cover"
-            />
-          )}
+        <div className="md:col-span-2">
+          <ImagePicker
+            adminKey={adminKey}
+            label="Cover Image"
+            value={form.cover_image}
+            onChange={(url) => set("cover_image", url)}
+          />
         </div>
       </div>
 

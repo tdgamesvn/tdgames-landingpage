@@ -136,6 +136,19 @@ export async function uploadFile(args: {
   return jsonOrThrow<{ key: string; url: string; size: number; contentType: string }>(res);
 }
 
+export async function generateImage(args: {
+  adminKey: string;
+  prompt: string;
+  size?: string;
+}): Promise<{ url: string; key: string }> {
+  const res = await fetch(`/api/admin/generate-image`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-admin-key": args.adminKey },
+    body: JSON.stringify({ prompt: args.prompt, size: args.size }),
+  });
+  return jsonOrThrow<{ url: string; key: string }>(res);
+}
+
 // ─────────────────────────────────────────────────────────── Project content
 
 export async function fetchProjectSlugs(adminKey: string): Promise<string[]> {
