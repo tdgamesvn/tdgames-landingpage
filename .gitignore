@@ -59,3 +59,6 @@ public/images/
 public/logoCompany/
 public/sinspired/
 public/video/
+
+# manifest rollback cua backfill-compress (local, khong commit)
+scripts/.backfill-manifest.jsonl
