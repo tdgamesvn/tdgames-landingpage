@@ -127,6 +127,34 @@ Bẫy đã gặp khi commit lẻ cụm:
 - `npx tsc --noEmit` báo lỗi ma trỏ route vừa stash — đó là `.next/types/validator.ts`
   CŨ. Build lại rồi tsc mới sạch. Đừng hoảng.
 
+### Radar: chống trùng + tự hết hạn (sếp hỏi "có cộng dồn theo ngày không?")
+CÓ — radar `INSERT` thẳng, không dedup, không dọn. Mỗi sáng +5, panel admin phình
+vô hạn. Sếp duyệt làm cả 2 việc.
+
+**Dedup theo tiêu đề KHÔNG ĂN THUA — đo mới biết.** Làm xong bản so tiêu đề đã
+chuẩn hoá, chạy lại 2 lần: 0 lần bắt trùng, DB lên 19 topic trong 5 phút. Query DB
+mới lòi ra: cùng 1 bài `80.lv/...volumetric-fog...` đẻ ra **3 tiêu đề khác chữ
+nhưng cùng ý** ("Quy trình làm sương volumetric…" / "Quy trình dựng volumetric
+fog…" / "Dựng sương thể tích…"). AI diễn đạt lại mỗi lần → so chuỗi vô dụng.
+⇒ Khoá đúng là **`source` (URL bài gốc)**, ổn định. Giữ thêm tập tiêu đề chuẩn hoá
+để chặn trùng ý khác nguồn.
+
+Verify thật cả 2 nhánh (không mock):
+- Lùi `created_at` 1 topic về 10 ngày → chạy → "dọn 1 chủ đề quá 7 ngày → skipped" ✓
+- Chạy lại lần nữa cùng 34 tin → "bỏ 5 chủ đề đã gợi ý trong 30 ngày" +
+  "không có chủ đề mới nào — không làm phiền sếp" ✓ (không spam Discord khi rỗng)
+
+Dọn 9 topic trùng source do 3 lần chạy test sinh ra.
+
+### Preview bài nháp (commit ec8a1c4)
+Nút Preview trong tab Blog → `/api/admin/blog/preview` check admin secret → bật
+**Draft Mode của Next** (cookie) → ném sang `/blog/[slug]` thật.
+ponytail: KHÔNG dựng renderer markdown thứ hai trong admin — preview lệch giao diện
+thật thì vô nghĩa. Trang chỉ bỏ lọc `published` khi draftMode bật; preview không
+cộng views. Banner cam sticky + nút thoát.
+Verify production 4/4: draft không cookie → 404 (không lộ), sai secret → 401,
+đúng secret → 307 + cookie, có cookie → 200 + banner.
+
 ### Dọn 274 file mồ côi — VÀ CÁI BẪY REGEX SUÝT XOÁ NHẦM
 Sếp duyệt dọn. Thêm `--delete-orphans`: chuyển sang `trash/2026-08-01/` chứ KHÔNG
 xoá thẳng, vì "mồ côi" chỉ là kết luận từ heuristic dò tham chiếu.

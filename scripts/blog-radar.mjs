@@ -131,6 +131,62 @@ async function sendDiscord(topics, scanned) {
   if (!res.ok) throw new Error(`Discord ${res.status}: ${await res.text()}`);
 }
 
+const SUPA = () => ({
+  apikey: process.env.SUPABASE_ACCESS_TOKEN,
+  authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`,
+});
+
+/** So tiêu đề bỏ dấu câu / hoa thường / khoảng trắng thừa — AI hay đẻ lại cùng ý khác chữ. */
+const norm = (s) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+/**
+ * Đã gợi ý gì trong 30 ngày. Khoá chính là `source` (URL bài gốc) chứ KHÔNG phải
+ * tiêu đề: đo thực tế thấy cùng một bài 80.lv đẻ ra 3 tiêu đề khác chữ nhưng cùng
+ * một ý ("Quy trình làm sương volumetric…" / "Quy trình dựng volumetric fog…" /
+ * "Dựng sương thể tích…"). So chuỗi tiêu đề không bao giờ bắt được kiểu đó.
+ * Vẫn giữ thêm tập tiêu đề đã chuẩn hoá để chặn trường hợp trùng ý khác nguồn.
+ */
+async function recentTopics() {
+  const since = new Date(Date.now() - 30 * 864e5).toISOString();
+  const res = await fetch(
+    `${process.env.SUPABASE_URL}/rest/v1/blog_topics?select=topic,source&created_at=gte.${since}`,
+    { headers: SUPA() },
+  );
+  if (!res.ok) return { sources: new Set(), titles: new Set() }; // DB hỏng thì trùng còn hơn mất tin
+  const rows = await res.json();
+  return {
+    sources: new Set(rows.map((r) => r.source).filter(Boolean)),
+    titles: new Set(rows.map((r) => norm(r.topic))),
+  };
+}
+
+/**
+ * Tin quá 7 ngày thì hết thời sự — tự chuyển `new` → `skipped` để panel admin
+ * chỉ còn chủ đề trong tuần, không phình vô hạn (mỗi sáng +5).
+ */
+async function expireOld() {
+  const cutoff = new Date(Date.now() - 7 * 864e5).toISOString();
+  const res = await fetch(
+    `${process.env.SUPABASE_URL}/rest/v1/blog_topics?status=eq.new&created_at=lt.${cutoff}`,
+    {
+      method: "PATCH",
+      headers: { ...SUPA(), "content-type": "application/json", prefer: "return=representation" },
+      body: JSON.stringify({ status: "skipped" }),
+    },
+  );
+  if (!res.ok) {
+    console.error(`[radar] không dọn được topic cũ: ${res.status}`);
+    return 0;
+  }
+  return (await res.json()).length;
+}
+
 async function saveTopics(topics) {
   const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/blog_topics`, {
     method: "POST",
@@ -160,10 +216,16 @@ if (!items.length) {
 }
 console.error(`[radar] quét ${items.length} tin`);
 
-const topics = await pickTopics(items);
-if (!topics.length) {
+const picked = await pickTopics(items);
+if (!picked.length) {
   console.error("[radar] AI không chọn được chủ đề nào — thoát");
   process.exit(1);
+}
+
+const seen = await recentTopics();
+const topics = picked.filter((t) => !seen.sources.has(t.source) && !seen.titles.has(norm(t.topic)));
+if (picked.length !== topics.length) {
+  console.error(`[radar] bỏ ${picked.length - topics.length} chủ đề đã gợi ý trong 30 ngày`);
 }
 
 if (DRY) {
@@ -171,8 +233,15 @@ if (DRY) {
     console.log(`\n${i + 1}. ${t.topic}\n   ${t.why}\n   Kể nghe: ${t.ask}\n   ${t.source}`);
   }
 } else {
-  const saved = await saveTopics(topics);
-  console.error(`[radar] lưu ${saved.length} chủ đề vào blog_topics`);
-  await sendDiscord(topics, items.length);
-  console.error(`[radar] đã gửi ${topics.length} chủ đề vào Discord`);
+  const expired = await expireOld();
+  if (expired) console.error(`[radar] dọn ${expired} chủ đề quá 7 ngày → skipped`);
+
+  if (!topics.length) {
+    console.error("[radar] không có chủ đề mới nào — không làm phiền sếp");
+  } else {
+    const saved = await saveTopics(topics);
+    console.error(`[radar] lưu ${saved.length} chủ đề vào blog_topics`);
+    await sendDiscord(topics, items.length);
+    console.error(`[radar] đã gửi ${topics.length} chủ đề vào Discord`);
+  }
 }
