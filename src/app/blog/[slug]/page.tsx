@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { draftMode } from "next/headers";
 import { notFound } from "next/navigation";
 import { Nunito_Sans } from "next/font/google";
 import { marked } from "marked";
@@ -18,23 +19,26 @@ type Props = { params: Promise<{ slug: string }> };
 
 async function getPost(slug: string) {
   try {
+    // Draft Mode bật = đang preview từ /admin → cho xem cả bài chưa publish.
+    // Cookie chỉ set được qua /api/admin/blog/preview (đã check admin secret).
+    const isPreview = (await draftMode()).isEnabled;
+
     const supabase = getSupabaseAdmin();
-    const { data: post, error } = await supabase
-      .from("blog_posts")
-      .select("*")
-      .eq("slug", slug)
-      .eq("published", true)
-      .single();
+    let query = supabase.from("blog_posts").select("*").eq("slug", slug);
+    if (!isPreview) query = query.eq("published", true);
+    const { data: post, error } = await query.single();
 
     if (error || !post) return null;
 
-    // Increment views (fire-and-forget)
-    void supabase
-      .from("blog_posts")
-      .update({ views: post.views + 1 })
-      .eq("id", post.id);
+    // Increment views (fire-and-forget) — KHÔNG đếm lượt xem của chính sếp khi preview.
+    if (!isPreview) {
+      void supabase
+        .from("blog_posts")
+        .update({ views: post.views + 1 })
+        .eq("id", post.id);
+    }
 
-    return post;
+    return { ...post, isPreview };
   } catch {
     return null;
   }
@@ -70,6 +74,15 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
+      {/* Không để sếp nhầm bản nháp với bài đã đăng thật. */}
+      {post.isPreview && (
+        <div className="sticky top-0 z-50 bg-[#f59e0b] px-4 py-2 text-center text-sm font-bold text-black">
+          ĐANG XEM BẢN NHÁP{post.published ? "" : " — bài này CHƯA đăng"} ·{" "}
+          <a href="/api/admin/blog/preview/exit" className="underline">
+            Thoát preview
+          </a>
+        </div>
+      )}
       <SiteHeader />
       <main
         className={`min-h-screen bg-[#090a10] text-white ${nunitoSans.className}`}

@@ -196,6 +196,15 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
                       >
                         {p.published ? "Unpublish" : "Publish"}
                       </button>
+                      <a
+                        href={`/api/admin/blog/preview?secret=${encodeURIComponent(adminKey)}&slug=${encodeURIComponent(p.slug)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded border border-white/15 px-2 py-1 text-xs hover:bg-white/10"
+                        title="Xem bài bằng giao diện thật của web"
+                      >
+                        Preview
+                      </a>
                       <button
                         onClick={() => openEdit(p)}
                         className="rounded border border-white/15 px-2 py-1 text-xs hover:bg-white/10"
