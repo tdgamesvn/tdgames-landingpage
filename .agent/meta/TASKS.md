@@ -6,6 +6,14 @@ _(empty)_
 
 ## To do
 
+- [ ] Cron cho `scripts/blog-radar.mjs` — hiện chạy tay. Có `hr-remind.yml` làm khuôn.
+- [ ] 274 file mồ côi trên R2 (1.56 GB, riêng GIF behance 1.17 GB) — liệt kê cho sếp
+      duyệt rồi mới xoá. KHÔNG tự xoá.
+- [ ] Sau vài ngày web chạy ổn: xoá `backup/pre-compress/` trên R2 (~2 GB).
+- [ ] Bot tdgames-discord dùng `gif2webp` LOSSLESS (GIF chỉ giảm 16%). Muốn ăn đậm
+      thì thêm `-lossy` — chưa làm vì studio art ưu tiên chất lượng.
+
+
 - [ ] **Bot `tdgames-discord`: thêm `POST /compress`** (`src/features/compressor/http.ts`
   + gọi trong `index.ts`, port 8318). Landing page đã gọi sẵn qua `COMPRESSOR_URL`;
   chưa set env ⇒ chạy đường lùi sharp như cũ, không hỏng gì. Xong thì set
