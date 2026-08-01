@@ -14,10 +14,10 @@ _(empty)_
       thì thêm `-lossy` — chưa làm vì studio art ưu tiên chất lượng.
 
 
-- [ ] **Bot `tdgames-discord`: thêm `POST /compress`** (`src/features/compressor/http.ts`
-  + gọi trong `index.ts`, port 8318). Landing page đã gọi sẵn qua `COMPRESSOR_URL`;
-  chưa set env ⇒ chạy đường lùi sharp như cũ, không hỏng gì. Xong thì set
-  `COMPRESSOR_URL=http://100.126.162.96:8318` trên VPS rồi test 1 ảnh + 1 video.
+- [x] ~~Bot `tdgames-discord`: `POST /compress`~~ (2026-08-01) — bot live tại
+  `http://100.126.162.96:8787` (launchd `com.tdgames.discord-bot`, KHÔNG phải PM2).
+  `COMPRESSOR_URL` đã set trên VPS. Production verify: PNG 15.6MB → 517KB,
+  MP4 1.28MB → 94KB. ⚠ env là BASE, không kèm `/compress`.
 - [x] ~~Điều tra `POST /api/admin/upload` trả 400~~ (2026-08-01): KHÔNG phải bug app.
   `.env.local` là CRLF → key lấy bằng grep dính `\r` → header không hợp lệ, Node HTTP
   parser vứt request trước khi vào Next. Body JSON cũng 400 y hệt ⇒ không liên quan
@@ -58,7 +58,7 @@ _(empty)_
   `POST /api/admin/generate-image` (gpt-image-2 → R2 → media_assets row),
   component `ImagePicker` (Kho/Upload/AI) cắm vào BlogTab cover. Guard chặn
   prompt character theo DECISIONS 07-31. Verify end-to-end trên dev: CDN 200 +
-  DB row đúng. Chưa commit.
+  DB row đúng. ĐÃ DEPLOY 2026-08-01 (0c62953); ảnh AI giờ đi đường nén → .webp 21KB.
 
 - [x] CRM pass riêng (2026-07-30): `app_settings.crm_secret` = pass CRM riêng,
   `crm-auth.ts` bỏ fallback sang `getHRSecret()` → CRM không bao giờ dùng chung
