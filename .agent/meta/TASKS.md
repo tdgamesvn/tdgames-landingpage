@@ -6,6 +6,9 @@ _(empty)_
 
 ## To do
 
+- [ ] Panel RadarTopics trong `/admin`: hiện badge `intent` + `score` + `keyword`
+      (đã lưu DB từ migration `blog_topics_seo_fields`, UI chưa đọc).
+
 - [x] ~~Cron cho radar~~ (2026-08-01): crontab VPS ĐÃ có sẵn entry 8:00 nhưng chết im
       vì thư mục `logs/` không tồn tại → redirect `>> logs/blog-radar.log` fail.
       `mkdir -p logs` là xong. Chạy tay verify: quét 34 tin, lưu 5 chủ đề, ping Discord ✓

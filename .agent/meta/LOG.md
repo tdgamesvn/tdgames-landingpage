@@ -127,6 +127,41 @@ Bẫy đã gặp khi commit lẻ cụm:
 - `npx tsc --noEmit` báo lỗi ma trỏ route vừa stash — đó là `.next/types/validator.ts`
   CŨ. Build lại rồi tsc mới sạch. Đừng hoảng.
 
+### Radar chọn chủ đề theo SEO + tỉ lệ chuyển đổi (góc nhìn marketing)
+Sếp: "làm sao AI chọn được chủ đề SEO tốt và chuyển đổi cao".
+
+**Sai lầm gốc: radar 100% chạy bằng TIN TỨC — sai kênh cho SEO.** Tin hết thời sự
+sau một tuần, lại phải đọ với báo lớn, và người sắp thuê studio KHÔNG search tin tức.
+Bằng chứng ngay trong nhà: bài đang chạy tốt nhất của blog là
+"Outsourcing Game Art: A Complete Guide for Developers" — evergreen, KHÔNG đến từ tin nào.
+
+Sửa thành 3 tầng:
+1. **`SEED_QUERIES`** — danh sách truy vấn TIẾNG ANH khách thật gõ, chia BOFU
+   (2d game art outsourcing studio, cost/pricing, vs in-house, how to choose partner,
+   studio in vietnam) và MOFU (how to brief, style guide, QA checklist, engine-ready
+   asset, spine rig handoff, NDA/IP, timezone). Đây mới là xương sống SEO.
+2. **Tỉ lệ bắt buộc: ≥3 evergreen / ≤2 newsjacking.** Chủ đề evergreen KHÔNG cần bám
+   tin — `source` để rỗng. Radar không còn bị tin trong tuần trói tay.
+3. **AI tự chấm `score` 1-10** theo "vừa lên top vừa ra khách", script bỏ mọi topic
+   dưới 6 và sắp xếp giảm dần. Prompt nói thẳng: một bài BOFU ra một khách hơn bài
+   TOFU nghìn view vô ích; ưu tiên thứ đối thủ không copy được (con số thật, sự cố thật).
+
+Migration `blog_topics_seo_fields`: thêm `keyword` (truy vấn tiếng Anh — blog xuất bản
+tiếng Anh), `intent` (BOFU/MOFU/TOFU), `score`. Discord + dry-run hiện `[BOFU · 9/10]`
+kèm keyword.
+
+Chỉnh dedup cho hợp: topic evergreen không có `source` → chỉ so tiêu đề, đừng để
+`undefined` khớp nhau.
+
+Đo kết quả thật (dry-run): **4 BOFU + 1 MOFU**, điểm 8–10.
+- TRƯỚC: "Dựng sương thể tích điện ảnh trong Blender" (TOFU, không ai mua)
+- SAU: "Báo giá outsource art game: studio thường tính phí thế nào?" (BOFU 10/10,
+  kw `game art outsourcing cost`), "Thuê ngoài hay in-house…" (BOFU 9/10)
+Câu "Kể nghe" cũng đổi chất: giờ hỏi con số ("đã báo giá bao nhiêu", "giảm rework
+bao nhiêu lần") thay vì hỏi cảm nhận chung.
+
+CHƯA làm: badge intent/score trong panel `/admin` (dữ liệu đã có trong DB).
+
 ### Radar: nhắm lại nguồn + prompt theo tệp khách outsource
 Sếp: "muốn tập trung visual art/animation/VFX for game + game developer, target
 đúng tệp khách tìm đối tác outsource".

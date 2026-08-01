@@ -67,32 +67,60 @@ async function fetchFeed({ name, url, limit }) {
   }
 }
 
-const PROMPT = `Bạn là biên tập viên nội dung của TD Games — studio Việt Nam nhận outsourcing 2D game art, animation (Spine) và VFX cho các studio game nước ngoài.
+// Truy vấn TIẾNG ANH mà người sắp thuê studio outsource thật sự gõ vào Google.
+// ponytail: đây là xương sống SEO, KHÔNG phải tin tức. Tin tức hết thời sự sau một
+// tuần và cạnh tranh với báo lớn; mấy truy vấn này thì tháng nào cũng có người tìm
+// và người tìm đang cầm ngân sách.
+const SEED_QUERIES = `
+BOFU (đang chọn nhà cung cấp — ưu tiên cao nhất):
+- 2d game art outsourcing studio / company
+- hire 2d game artist / animator for game
+- game art outsourcing cost / pricing / rates
+- spine animation outsourcing service
+- game vfx outsourcing studio
+- outsourcing game art vs in-house team
+- how to choose a game art outsourcing partner
+- game art studio in vietnam / southeast asia
 
-Blog này có ĐÚNG MỘT việc: khiến người đang cân nhắc thuê studio outsource art tin rằng TD Games làm được việc. Hai tệp người đọc:
-1. Art director / producer / studio lead đang tìm đối tác outsource 2D art, animation hoặc VFX.
-2. Game developer tự làm art, đang mắc ở khâu sản xuất — họ đọc rồi nhận ra tự làm tốn hơn thuê.
+MOFU (đang chuẩn bị thuê — xây niềm tin):
+- how to brief a game art outsourcing team
+- game art style guide for outsourcing
+- managing an outsourced art pipeline
+- game art QA checklist before delivery
+- engine-ready 2d asset requirements (Unity / Unreal)
+- spine rig handoff best practices
+- art outsourcing contract / NDA / IP ownership
+- timezone and communication with an offshore art team
+`;
 
-Dưới đây là headline đang được chú ý trong ngành. Chọn ĐÚNG 5 chủ đề TD Games nên viết.
+const PROMPT = `Bạn là trưởng bộ phận nội dung của TD Games — studio Việt Nam nhận outsourcing 2D game art, animation (Spine) và VFX cho studio game nước ngoài. Blog XUẤT BẢN BẰNG TIẾNG ANH cho khách nước ngoài.
 
-ƯU TIÊN (theo thứ tự):
-- Chủ đề chạm trực tiếp 2D art / animation (Spine) / VFX cho game — cái TD Games bán.
-- Chủ đề về quy trình sản xuất, bàn giao, phối hợp với studio thuê ngoài, kiểm soát chất lượng, engine-ready asset. Đây là thứ người sắp thuê outsource lo nhất.
-- Chủ đề mà chỉ studio làm nghề thật mới viết nổi: con số thật, lỗi thật, cách xử lý thật.
+MỤC TIÊU DUY NHẤT của blog: lên top Google cho truy vấn mà người đang tìm đối tác outsource gõ, rồi biến người đọc đó thành khách hỏi báo giá.
 
-LOẠI BỎ:
-- Tin thuần thương mại: gọi vốn, doanh thu, sa thải, thương vụ.
-- Tin chỉ nói về game hay/dở, review, cốt truyện.
-- Chủ đề 3D nặng, lập trình gameplay, engine internals — không phải cái TD Games bán.
-- Chủ đề chung chung ai cũng viết được, không có chỗ cho trải nghiệm studio.
+Đây là những truy vấn khách thật gõ:
+${SEED_QUERIES}
 
-Với mỗi chủ đề, trả về:
-- "topic": góc bài cụ thể, TIẾNG VIỆT, tối đa 18 từ
-- "why": vì sao bài này kéo được đúng người đang cân nhắc thuê outsource, TIẾNG VIỆT, 1 câu
-- "ask": MỘT câu hỏi để CEO trả lời bằng trải nghiệm thật (dự án cụ thể, con số, sự cố), TIẾNG VIỆT
-- "source": link tin gốc liên quan nhất
+Dưới đây là tin ngành tuần này. Chọn ĐÚNG 5 chủ đề, theo tỉ lệ BẮT BUỘC:
+- ÍT NHẤT 3 chủ đề EVERGREEN bám thẳng vào danh sách truy vấn trên. Loại này KHÔNG cần dính tin tức — nếu tin trong tuần không hợp thì cứ tự đề xuất, để "source" rỗng.
+- TỐI ĐA 2 chủ đề bám tin thời sự, và chỉ khi tin đó thật sự chạm tới việc thuê ngoài art/animation/VFX.
 
-Chỉ trả về JSON: {"topics":[{"topic":"","why":"","ask":"","source":""}]}`;
+Nguyên tắc chấm chủ đề:
+- BOFU (khách gần mua: so sánh, chi phí, cách chọn đối tác, thuê ngoài vs tự làm) đáng giá hơn TOFU (kỹ thuật thuần) rất nhiều, dù lượt tìm ít hơn. Một bài BOFU ra một khách còn hơn bài TOFU ra nghìn lượt xem vô ích.
+- Ưu tiên chủ đề mà TD Games có LỢI THẾ KHÔNG AI COPY ĐƯỢC: con số thật, dự án thật, sự cố thật, quy trình thật. Google xếp hạng thứ này cao hơn bài AI viết chung chung.
+- Ưu tiên định dạng dễ lên top và dễ chuyển đổi: hướng dẫn đầy đủ, checklist, bảng so sánh, phân tích chi phí, case study có trước/sau.
+- Tránh chủ đề mà studio nào cũng viết được, không có chỗ cho trải nghiệm thật.
+- Tránh 3D nặng, code gameplay, engine internals — TD Games không bán thứ đó.
+
+Với mỗi chủ đề trả về:
+- "topic": tiêu đề bài, viết TIẾNG VIỆT cho CEO duyệt, tối đa 18 từ
+- "keyword": truy vấn TIẾNG ANH chính mà bài này nhắm (đúng chữ khách gõ)
+- "intent": "BOFU" | "MOFU" | "TOFU"
+- "why": vì sao bài này vừa có cửa lên top vừa kéo được khách hỏi báo giá, TIẾNG VIỆT, 1 câu
+- "ask": MỘT câu hỏi để CEO trả lời bằng trải nghiệm thật — hỏi con số, tên dự án, sự cố cụ thể, TIẾNG VIỆT
+- "score": 1-10, chấm khả năng VỪA lên top VỪA ra khách. Dưới 6 là không đáng viết.
+- "source": link tin gốc nếu bám tin, để "" nếu là chủ đề evergreen
+
+Chỉ trả về JSON: {"topics":[{"topic":"","keyword":"","intent":"","why":"","ask":"","score":0,"source":""}]}`;
 
 async function pickTopics(items) {
   const list = items
@@ -142,8 +170,8 @@ async function sendDiscord(topics, scanned) {
             "Chọn 1 chủ đề, trả lời câu hỏi ở cuối bằng trải nghiệm thật (gõ hoặc ghi âm cũng được). Phần còn lại để AI dựng bài.",
           color: 0xf59e0b,
           fields: topics.slice(0, 5).map((t, i) => ({
-            name: `${i + 1}. ${t.topic}`,
-            value: `${t.why}\n**Kể nghe:** ${t.ask}\n[tin gốc](${t.source})`.slice(0, 1024),
+            name: `${i + 1}. [${t.intent ?? "?"} · ${t.score ?? "?"}/10] ${t.topic}`,
+            value: `🔎 \`${t.keyword ?? "—"}\`\n${t.why}\n**Kể nghe:** ${t.ask}${t.source ? `\n[tin gốc](${t.source})` : ""}`.slice(0, 1024),
           })),
           footer: { text: `Quét ${scanned} tin từ ${FEEDS.length} nguồn` },
         },
@@ -223,7 +251,10 @@ async function saveTopics(topics) {
         topic: t.topic,
         why: t.why,
         ask: t.ask,
-        source: t.source,
+        source: t.source || null,
+        keyword: t.keyword ?? null,
+        intent: t.intent ?? null,
+        score: Number.isFinite(t.score) ? t.score : null,
       })),
     ),
   });
@@ -250,14 +281,25 @@ if (!picked.length) {
 }
 
 const seen = await recentTopics();
-const topics = picked.filter((t) => !seen.sources.has(t.source) && !seen.titles.has(norm(t.topic)));
-if (picked.length !== topics.length) {
-  console.error(`[radar] bỏ ${picked.length - topics.length} chủ đề đã gợi ý trong 30 ngày`);
+const fresh = picked.filter(
+  (t) => !(t.source && seen.sources.has(t.source)) && !seen.titles.has(norm(t.topic)),
+);
+// Điểm dưới 6 là AI tự khai "không đáng viết" — đừng bắt sếp đọc rác.
+const topics = fresh
+  .filter((t) => !Number.isFinite(t.score) || t.score >= 6)
+  .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+if (fresh.length !== topics.length) {
+  console.error(`[radar] bỏ ${fresh.length - topics.length} chủ đề điểm dưới 6`);
+}
+if (picked.length !== fresh.length) {
+  console.error(`[radar] bỏ ${picked.length - fresh.length} chủ đề đã gợi ý trong 30 ngày`);
 }
 
 if (DRY) {
   for (const [i, t] of topics.entries()) {
-    console.log(`\n${i + 1}. ${t.topic}\n   ${t.why}\n   Kể nghe: ${t.ask}\n   ${t.source}`);
+    console.log(
+      `\n${i + 1}. [${t.intent} · ${t.score}/10] ${t.topic}\n   KW: ${t.keyword}\n   ${t.why}\n   Kể nghe: ${t.ask}${t.source ? `\n   ${t.source}` : ""}`,
+    );
   }
 } else {
   const expired = await expireOld();
