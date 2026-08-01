@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   return Response.json({
     key: uploaded.key,
     url: uploaded.url,
-    size: file.size,
-    contentType: file.type,
+    size: uploaded.size,
+    contentType: uploaded.contentType,
   });
 }

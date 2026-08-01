@@ -115,3 +115,20 @@ Lý do từ chối full-auto:
 Kênh: dùng Discord (đã có bot `tdgames-discord` chạy 24/7 + 2 webhook + AI env),
 KHÔNG dựng app mới, KHÔNG thêm bot Telegram. Chat để chọn đề tài; `/admin` tab
 Blog vẫn là nơi soạn/duyệt/đăng — không nhét editor vào chat.
+
+## 2026-08-01 — Phụ lục 07-31: ảnh AI được mở hẹp, chỉ nền/trừu tượng
+Sếp chốt nới lệnh cấm ảnh AI ở entry 2026-07-31, nhưng chỉ nới một phần:
+
+- **Được:** nền, texture, gradient, sơ đồ khái niệm minh hoạ blog.
+- **Cấm:** character, mascot, portrait, art asset — phải do artist vẽ.
+
+Lý do giữ ranh giới: lập luận thương hiệu ở 07-31 (TD Games bán artist vẽ tay,
+minh hoạ bằng character AI = tự tuyên bố thay artist bằng máy) chỉ đúng với
+character. Ảnh nền trừu tượng không cạnh tranh với thứ studio đang bán.
+
+Cưỡng chế bằng code, không bằng niềm tin: `src/app/api/admin/generate-image/route.ts`
+có regex `BANNED` chặn prompt character → 400, và append `STYLE_SUFFIX` vào mọi
+prompt hợp lệ. Muốn đổi phạm vi thì sửa 2 hằng số đó, và sửa entry này.
+
+Ảnh AI lưu như media_assets row bình thường (`source_type: external`, host R2),
+phân biệt bằng `ai_prompt not null` → luôn biết ảnh nào là máy vẽ.

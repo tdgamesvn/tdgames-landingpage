@@ -6,11 +6,51 @@ _(empty)_
 
 ## To do
 
+- [ ] **Bot `tdgames-discord`: thêm `POST /compress`** (`src/features/compressor/http.ts`
+  + gọi trong `index.ts`, port 8318). Landing page đã gọi sẵn qua `COMPRESSOR_URL`;
+  chưa set env ⇒ chạy đường lùi sharp như cũ, không hỏng gì. Xong thì set
+  `COMPRESSOR_URL=http://100.126.162.96:8318` trên VPS rồi test 1 ảnh + 1 video.
+- [x] ~~Điều tra `POST /api/admin/upload` trả 400~~ (2026-08-01): KHÔNG phải bug app.
+  `.env.local` là CRLF → key lấy bằng grep dính `\r` → header không hợp lệ, Node HTTP
+  parser vứt request trước khi vào Next. Body JSON cũng 400 y hệt ⇒ không liên quan
+  multipart. Ngoài ra secret thật ở DB `app_settings.admin_secret`, không phải env.
+  Curl test: `-H 'x-admin-key: <value trong app_settings>'`.
+
+## Done (mới)
+
+- [x] **Nén ảnh mọi đường upload** (2026-08-01): nén trong `uploadToR2()` —
+  image/(jpeg|png|webp|avif|tiff) + >400KB → webp q90, max 2400px, key đổi .webp.
+  `spine/upload` skipCompress. `generate-image` bỏ sharp riêng. Verify: tsc sạch,
+  PNG 3.47MB → 226KB. Khảo sát cũ:
+  nén trong `src/lib/r2.ts` → `uploadToR2()` — cổng duy nhất của 6 route
+  (admin/upload, hr/upload, applications/upload-cv, admin/spine/upload,
+  admin/media/migrate, admin/generate-image). Nén ở 1 chỗ, route mới tự hưởng.
+  - Tham số chốt từ `tdgames-discord` (sếp đã tune thực tế): **quality 90**,
+    ngưỡng ~400KB, max width ~2400px. `sharp` đã có sẵn (0.35.3), không thêm dep.
+  - ⚠️ `admin/spine/upload` PHẢI `skipCompress: true` — file `.png` là atlas,
+    tên bị `.atlas` tham chiếu cứng, đổi sang `.webp` là vỡ runtime Spine.
+  - ⚠️ gif/svg bỏ qua (mất animation / vector). PDF (CV) tự động không match.
+  - `admin/upload` trả `size: file.size` → đổi thành `body.length` sau nén.
+- [x] **Video: nén qua bot, không dựng ffmpeg trên VPS** (2026-08-01). Landing page
+  POST thẳng tới bot qua tailscale (`COMPRESSOR_URL`), KHÔNG đi vòng channel Discord
+  (limit 10MB cả 2 chiều). Bot chết → video upload thô, ảnh lùi về sharp. Lý do cũ:
+  ffmpeg trên vps6core (6 core, 11 app) =
+  30–90s ăn hết CPU/clip + route timeout. Dùng bot `tdgames-discord` đã deploy
+  trên Mac: thả video vào channel `compressor-ai` → nhận file nén
+  (`libx264 -crf 20 -preset slow`) → upload `/admin`. Chỉ dựng pipeline thật khi
+  có box nén 24/7 (Mac ngủ = chết, xem LOG 2026-07-31 bot im lặng 19 ngày).
+
 - [ ] Set `DISCORD_WEBHOOK_SALES` trên VPS (chưa set → lead notify rơi về
   `DISCORD_WEBHOOK_URL` chung). Không set thì vẫn lưu lead, chỉ mất ping.
 - [ ] `/crm` chưa link từ đâu cả (giống `/hr`) — sếp muốn nút trong `/admin` thì nói.
 
 ## Done
+
+- [x] ImagePicker 3 tab + ảnh AI (2026-08-01): cột `media_assets.ai_prompt`,
+  `POST /api/admin/generate-image` (gpt-image-2 → R2 → media_assets row),
+  component `ImagePicker` (Kho/Upload/AI) cắm vào BlogTab cover. Guard chặn
+  prompt character theo DECISIONS 07-31. Verify end-to-end trên dev: CDN 200 +
+  DB row đúng. Chưa commit.
 
 - [x] CRM pass riêng (2026-07-30): `app_settings.crm_secret` = pass CRM riêng,
   `crm-auth.ts` bỏ fallback sang `getHRSecret()` → CRM không bao giờ dùng chung

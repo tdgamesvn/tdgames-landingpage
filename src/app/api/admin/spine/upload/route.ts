@@ -65,7 +65,8 @@ export async function POST(request: Request) {
 
   const bytes = await file.arrayBuffer();
   const body = Buffer.from(bytes);
-  const uploaded = await uploadToR2({ key, body, contentType });
+  // skipCompress: .png ở đây là atlas texture, file .atlas tham chiếu cứng tên file
+  const uploaded = await uploadToR2({ key, body, contentType, skipCompress: true });
 
-  return NextResponse.json({ key: uploaded.key, url: uploaded.url, size: file.size });
+  return NextResponse.json({ key: uploaded.key, url: uploaded.url, size: uploaded.size });
 }

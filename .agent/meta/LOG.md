@@ -1,5 +1,170 @@
 # LOG
 
+## 2026-08-01 (session — nén qua bot tdgames-discord, cả video)
+### Task
+Sếp: "nén cả video nữa, đi qua tdgames-discord channel compressor-ai".
+
+### Quyết định
+KHÔNG đi vòng qua channel Discord: limit 10MB cả 2 chiều (upload + bot reply gửi
+file về) → video studio không lọt, lại phải poll message. Thay vào đó gọi HTTP
+thẳng tới bot qua tailscale — cùng pattern `AI_BASE_URL` đã dùng.
+
+### Work Done (repo landingpage)
+- `src/lib/r2.ts` + `compressViaBot()`: POST raw body → `COMPRESSOR_URL/compress`,
+  match `image/(?!svg)|video/` và >400KB, timeout 300s. Trả null khi chưa cấu hình
+  / bot chết / kết quả không nhỏ hơn → KHÔNG BAO GIỜ throw.
+- `uploadToR2()`: bot trước, sharp là đường lùi. Bot chết + là ảnh → sharp q90 như cũ;
+  bot chết + là video → upload thô (không mất file). `skipCompress` (spine) chặn cả hai.
+- Bot nén được gif động (gif2webp) và video (libx264 crf20) — sharp không làm được.
+- `COMPRESSOR_URL` chưa set ⇒ hành vi y hệt trước khi sửa.
+
+### Việc CHƯA làm (repo tdgames-discord — session này không được ghi ngoài repo)
+- Thêm `src/features/compressor/http.ts` (code đã đưa sếp) + gọi trong `index.ts`.
+- Env VPS: `COMPRESSOR_URL=http://100.126.162.96:8318`.
+
+### Nối bot THẬT (2026-08-01, cuối session)
+Bot tdgames-discord đã live: `http://100.126.162.96:8787` (host tailscale
+`mac-mini-ca-tdgames-mac01`), chạy bằng **launchd** label `com.tdgames.discord-bot`
+(KHÔNG phải PM2). Restart: `launchctl kickstart -k gui/$(id -u)/com.tdgames.discord-bot`.
+Bot trả 415 mime lạ / 501 thiếu binary / 413 body >500MB.
+
+⚠ `COMPRESSOR_URL` phải là **base**, KHÔNG kèm `/compress` — code tự nối.
+
+E2E qua bot thật (dev):
+- PNG 15.6MB → **517KB** `.webp` (sharp fallback cùng ảnh chỉ được 1.05MB ⇒ đúng là đi qua bot)
+- MP4 1.28MB → **94KB** `.mp4` ⇒ nhánh video chạy, thứ sharp không làm được
+- 7 file test đã xoá khỏi R2.
+
+VPS: đã set `COMPRESSOR_URL` vào `/opt/tdgames-landingpage/.env.local` + `pm2 restart --update-env`.
+VPS curl tới bot OK (415). NHƯNG production vẫn trả file nguyên 15.6MB vì **code nén
+chưa commit/push** — env đã sẵn, thiếu đúng bước deploy.
+
+### CHƯA COMMIT — chờ sếp quyết
+Cây làm việc `main` còn 2 cụm lẫn nhau: (a) cụm nén đã verify đủ, (b) cụm blog-AI /
+ImagePicker / generate-image / migration `20260801000000` từ session trước, chưa verify.
+Hỏi sếp cách tách rồi mới push.
+
+### Verify (e2e thật trên dev, fake compressor ở :8318)
+- `npx tsc --noEmit` + `npm run build` sạch.
+- Bot sống (fake nén q20): PNG 15.6MB → **198KB**, key `.webp`, size khớp ĐÚNG byte
+  output của fake ⇒ bytes thật sự đi qua bot.
+- Bot chết (connection refused): rơi về sharp → 1.05MB, không throw, upload vẫn 200 ✓
+- Ảnh nhiễu ngẫu nhiên 1.27MB: webp KHÔNG nhỏ hơn → giữ nguyên PNG ✓ (đúng logic).
+
+### Bug "400 multipart trên dev" — ĐÃ ĐÓNG, chẩn đoán cũ SAI
+Route hoàn toàn bình thường. `.env.local` là **CRLF** → `$(grep ADMIN_SECRET ...)`
+kéo theo `\r` → header `x-admin-key: ...=\r` là header không hợp lệ → Node HTTP
+parser vứt request (400 + `Connection: close`, KHÔNG có log Next). Không liên quan
+multipart: body JSON cũng 400 y hệt.
+Thêm một tầng nữa: secret thật nằm ở DB `app_settings.admin_secret` (`getAdminSecret()`
+ưu tiên DB > env), nên key trong `.env.local` có sạch `\r` cũng vẫn 401.
+⇒ curl test admin: `-H 'x-admin-key: <value trong app_settings>'`, đừng lấy từ .env.local.
+
+### Next Step
+- Dựng endpoint bot rồi test thật 1 ảnh + 1 video.
+- Mac ngủ = mất nén (im lặng, chỉ console.warn). Muốn cảnh báo thì nói.
+
+---
+
+## 2026-08-01 (session — nén ảnh tại cổng uploadToR2)
+### Task
+To-do "Nén ảnh mọi đường upload" — nén ở 1 chỗ duy nhất là `src/lib/r2.ts`.
+
+### Work Done
+- `uploadToR2()` nén nội bộ: contentType khớp `image/(jpeg|png|webp|avif|tiff)`
+  VÀ body > 400KB → sharp `.rotate().resize({width:2400,withoutEnlargement})
+  .webp({quality:90})`. Chỉ thay khi webp NHỎ HƠN bản gốc. Key đổi đuôi → `.webp`.
+  gif/svg/pdf/video không match regex → đi thẳng, không đụng.
+- Thêm `skipCompress?: boolean` + return thêm `size`/`contentType`.
+- `admin/spine/upload` → `skipCompress: true` (atlas .png bị .atlas tham chiếu cứng tên).
+- `admin/upload` trả `size`/`contentType` từ uploaded (trước trả `file.size`/`file.type` — sai sau nén).
+- `admin/generate-image` XOÁ sharp riêng (q82) → truyền PNG thô + key `.png`,
+  để uploadToR2 lo. Bớt 1 chỗ trùng logic.
+- `media/migrate` truyền `application/octet-stream` → không match → giữ nguyên
+  (đúng ý: key phải khớp `original_url` mapping).
+
+### Verify
+- `npx tsc --noEmit` sạch ✓
+- Pipeline thật: PNG 3.47MB → WebP 226KB (q90, 2400px) ✓
+- E2E qua `POST /api/admin/upload` trên dev KHÔNG chạy được: mọi multipart upload
+  (kể cả file 653 byte, không đi nhánh nén) đều trả `400` body rỗng +
+  `Connection: close`. Không auth → 401 đúng ⇒ lỗi tầng dev server/multipart,
+  CÓ TỪ TRƯỚC, không phải do thay đổi này. Cần điều tra riêng.
+
+### Next Step
+- Điều tra 400 multipart trên dev (`/api/admin/upload`) — nghi Next dev body limit.
+- Chưa commit. Vẫn còn cụm ImagePicker/generate-image/blog-ai dirty từ session trước.
+
+---
+
+## 2026-08-01 (session — nén ảnh AI sang WebP)
+### Task
+Sếp hỏi xác nhận CliproxyApi gọi qua Mac bằng tailscale, rồi yêu cầu nén ảnh AI.
+
+### Xác nhận hạ tầng AI
+- VPS `/opt/tdgames-landingpage/.env.local`: `AI_BASE_URL=http://100.126.162.96:8317/v1`
+  → tailscale IP của `mac-mini-ca-tdgames-mac01` (Mac dev). Mac sleep = HR evaluate,
+  blog topics, generate-image chết theo.
+- Local `.env.local`: `http://localhost:8317/v1` (không qua tailscale).
+
+### Work Done
+- `npm i sharp` (0.35.3) — trước đó chỉ là transitive dep của Next, không khai báo.
+- `POST /api/admin/generate-image` — b64 PNG từ gpt-image-2 → `sharp().webp({quality:82})`
+  → R2 với key `.webp` + `content-type: image/webp`. Bỏ biến `format`/`output_format`.
+- Không dùng service nén nào trên Mac: quét thấy Mac chỉ có CLI `cwebp`/`sips`/`ffmpeg`,
+  không có endpoint HTTP. sharp trong app lazy hơn — không thêm hop tailscale,
+  không phụ thuộc Mac bật/tắt.
+
+### Verify
+- `npx tsc --noEmit` sạch ✓
+- sharp native binding chạy: PNG 1536x1024 23KB → WebP 2.8KB (ảnh test phẳng;
+  ảnh AI thật ~2MB → kỳ vọng ~200KB) ✓
+
+### Next Step
+- Chạy thử 1 lần trên dev/prod với prompt thật để chốt con số nén.
+- `POST /api/admin/upload` (upload tay) vẫn CHƯA nén — nếu sếp muốn thì thêm
+  nhánh `isImage` gọi sharp y hệt.
+
+---
+
+## 2026-08-01 (session — ImagePicker 3 tab + ảnh AI gpt-image-2)
+### Task
+Sếp muốn chọn ảnh cover blog từ 3 nguồn: kho media, upload, và AI generate
+(gpt-image-2 qua cliproxyapi).
+
+### Work Done
+- Migration `20260801000000_media_ai_prompt.sql` — thêm cột `ai_prompt` vào
+  `media_assets`. `ai_prompt not null` = ảnh AI → truy vết được prompt gốc.
+- `POST /api/admin/generate-image` — gọi `AI_BASE_URL/images/generations`
+  (model `gpt-image-2`, override qua `AI_IMAGE_MODEL`), nhận `b64_json` →
+  `uploadToR2` → insert `media_assets` row → trả `{url, key}`. Ảnh AI đi đúng
+  đường R2 như upload thường, KHÔNG nhúng base64, KHÔNG hotlink provider.
+- `ImagePicker.tsx` (mới) — 3 tab Kho / Upload / AI dùng chung. Tab AI chỉ là
+  "tab Upload với nguồn file khác" → code thêm mỏng.
+- `BlogTab.tsx` — thay khối cover image cũ (input + nút Upload + `uploadCover`
+  + `fileRef`) bằng `<ImagePicker>`. Net -30 dòng.
+- `_lib/api.ts` — thêm `generateImage()`.
+
+### Guard thương hiệu (theo DECISIONS 2026-07-31)
+Route chặn prompt chứa từ khoá character (`character|nhân vật|portrait|mascot|
+anime|chibi|hero|girl|face|...`) → 400. Prompt hợp lệ bị append
+`", abstract background artwork, no characters, no people, no creatures, no faces"`.
+
+### Verify (dev server thật, không phải mock)
+- Guard: prompt "nhân vật chibi cầm kiếm" → 400 đúng thông điệp ✓
+- Happy path: 200 → `https://cdn.tdgamestudio.com/ai/2026/08/5328bb33-….png`
+- CDN: `HTTP/2 200`, `content-type: image/png` ✓
+- DB: row `035df3ee-…` có `ai_prompt` + `r2_key` khớp ✓
+- `tsc --noEmit` sạch; lint không phát sinh lỗi mới (91 problems là baseline cũ).
+
+### Chưa làm (cố ý)
+- Ảnh gpt-image-2 ra ~2.4MB PNG, chưa nén/convert webp. Thêm sharp khi nào
+  thấy nặng thật.
+- `ImagePicker` mới cắm ở BlogTab. Portfolio/Team/PageSlots vẫn dùng UI cũ —
+  cắm thêm khi cần, props đã sẵn sàng.
+- Chưa commit/deploy — chờ sếp review dev.
+
+
 ## 2026-07-29 (session — logo client vào Page Slots)
 ### Task
 Sếp gửi screenshot tab Page Slots (`/admin`, page `home`), hỏi tại sao không
@@ -1860,3 +2025,37 @@ Diff 1 dòng, không đụng layout khác (marquee width `w-[150px]`/`md:w-[240p
 
 ### Next Step
 Sếp xem trên dev server, ưng thì push.
+
+---
+
+## 2026-08-01 (session — AI blog: khâu CEO duyệt trong /admin)
+
+### Task
+Sếp hỏi tính năng AI tạo blog tới đâu. Radar (`scripts/blog-radar.mjs` + table
+`blog_topics`) đã chạy, có 5 topic `new` chờ — nhưng chưa có đường nào để CEO
+chốt đề tài và dựng bài. Sếp cũng chỉ ra Discord webhook 1 chiều, không nhận
+reply được → bỏ Discord khỏi khâu duyệt, làm gọn trong `/admin` tab Blog.
+
+### Work Done
+- `src/lib/blog-ai.ts` (mới): `slugify`, `nextFreeSlug`, `extractJson` — thuần,
+  test được.
+- `src/app/api/admin/blog/topics/route.ts` (mới): GET list topics, PATCH đổi
+  status (bỏ qua), POST dựng bài từ topic + `ceo_note` → insert `blog_posts`
+  với `published: false` **hardcode** (AI không bao giờ tự đăng), rồi set topic
+  `status: drafted` + `post_id`. Chặn `ceo_note` < 40 ký tự (không chất liệu
+  thật = generic content, đúng thứ Google phạt). `cover_image` để rỗng — sếp
+  chọn artwork thật, không dùng ảnh AI (DECISIONS 07-31).
+- `BlogTab.tsx`: panel `RadarTopics` phía trên list, tự ẩn khi không có topic
+  chờ. Mỗi topic hiện why + câu "Kể nghe" + textarea. Dựng xong nhảy thẳng vào
+  form edit của bài mới.
+- `scripts/test-blog-ai.mjs` (mới): self-check slug collision + parse JSON.
+
+### Result
+`node scripts/test-blog-ai.mjs` pass, tsc sạch. Smoke test dev server:
+401 no-key, 400 note ngắn, 404 id sai, 201 dựng bài thật (draft
+`how-we-make-weapons-look-cool-and-still-read-in-gameplay`).
+
+### Next Step
+- Xoá bài draft test ở `/admin` nếu không dùng.
+- Radar chưa có cron — đang phải chạy tay. Thêm workflow giống `hr-remind.yml`
+  khi sếp muốn tự động hàng sáng.
