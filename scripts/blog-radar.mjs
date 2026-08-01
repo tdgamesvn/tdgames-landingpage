@@ -12,11 +12,18 @@ const DRY = process.argv.includes("--dry-run");
 
 // ponytail: bỏ RSS của Reddit — trả 429 cả từ máy nhà lẫn server (chặn IP
 // datacenter). Muốn thêm Reddit thì phải qua OAuth API, chưa đáng.
+// ponytail: bỏ GamesIndustry.biz — đo 11 topic đầu tiên thì nó đóng góp ĐÚNG 0.
+// Nó là báo thương mại (funding/doanh thu/layoffs), không phải nơi bàn art pipeline.
+// 80 Level đẻ 10/11 topic nên cho nó hạn ngạch gấp đôi.
 const FEEDS = [
-  { name: "Game Developer", url: "https://www.gamedeveloper.com/rss.xml" },
-  { name: "80 Level", url: "https://80.lv/feed/" },
-  { name: "GamesIndustry.biz", url: "https://www.gamesindustry.biz/feed" },
+  { name: "80 Level", url: "https://80.lv/feed/", limit: 24 },
+  { name: "Game Developer", url: "https://www.gamedeveloper.com/rss.xml", limit: 12 },
+  { name: "CGPress", url: "https://cgpress.org/feed", limit: 12 },
 ];
+
+// Lọc thô TRƯỚC khi tốn token AI: tin không có lấy một chữ nào về art/animation/vfx
+// thì khỏi đưa vào danh sách. AI đọc ít tin rác thì chọn trúng hơn.
+const ART_WORDS = /\b(art|artist|animat|vfx|effect|shader|render|texture|material|sprite|pixel|2d|3d|rig|spine|character|environment|concept|illustrat|visual|style|stylized|lighting|particle|motion|cutscene|cinematic|ui|ux|asset|pipeline|workflow|blender|substance|photoshop|maya|unreal|unity|outsourc|studio|indie|game ?dev)/i;
 
 const decode = (s) =>
   s
@@ -46,14 +53,14 @@ function parseFeed(xml, limit) {
     .filter((i) => i.title);
 }
 
-async function fetchFeed({ name, url }) {
+async function fetchFeed({ name, url, limit }) {
   try {
     const res = await fetch(url, {
       headers: { "user-agent": "tdgames-blog-radar/1.0" },
       signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return parseFeed(await res.text(), 12).map((i) => ({ ...i, source: name }));
+    return parseFeed(await res.text(), limit ?? 12).map((i) => ({ ...i, source: name }));
   } catch (err) {
     console.error(`[radar] bỏ qua ${name}: ${err.message}`);
     return [];
@@ -62,12 +69,27 @@ async function fetchFeed({ name, url }) {
 
 const PROMPT = `Bạn là biên tập viên nội dung của TD Games — studio Việt Nam nhận outsourcing 2D game art, animation (Spine) và VFX cho các studio game nước ngoài.
 
-Dưới đây là headline đang được chú ý trong ngành tuần này. Chọn ĐÚNG 5 chủ đề mà TD Games nên viết blog, ưu tiên chủ đề mà một studio làm nghề thật mới nói được — kỹ thuật sản xuất, quy trình, bài học thực chiến. Bỏ qua tin thuần thương mại (gọi vốn, doanh thu, sa thải) và tin không dính tới 2D art/animation/VFX.
+Blog này có ĐÚNG MỘT việc: khiến người đang cân nhắc thuê studio outsource art tin rằng TD Games làm được việc. Hai tệp người đọc:
+1. Art director / producer / studio lead đang tìm đối tác outsource 2D art, animation hoặc VFX.
+2. Game developer tự làm art, đang mắc ở khâu sản xuất — họ đọc rồi nhận ra tự làm tốn hơn thuê.
+
+Dưới đây là headline đang được chú ý trong ngành. Chọn ĐÚNG 5 chủ đề TD Games nên viết.
+
+ƯU TIÊN (theo thứ tự):
+- Chủ đề chạm trực tiếp 2D art / animation (Spine) / VFX cho game — cái TD Games bán.
+- Chủ đề về quy trình sản xuất, bàn giao, phối hợp với studio thuê ngoài, kiểm soát chất lượng, engine-ready asset. Đây là thứ người sắp thuê outsource lo nhất.
+- Chủ đề mà chỉ studio làm nghề thật mới viết nổi: con số thật, lỗi thật, cách xử lý thật.
+
+LOẠI BỎ:
+- Tin thuần thương mại: gọi vốn, doanh thu, sa thải, thương vụ.
+- Tin chỉ nói về game hay/dở, review, cốt truyện.
+- Chủ đề 3D nặng, lập trình gameplay, engine internals — không phải cái TD Games bán.
+- Chủ đề chung chung ai cũng viết được, không có chỗ cho trải nghiệm studio.
 
 Với mỗi chủ đề, trả về:
-- "topic": góc bài cụ thể, viết TIẾNG VIỆT, tối đa 18 từ
-- "why": vì sao TD Games viết được bài này thuyết phục hơn người khác, TIẾNG VIỆT, 1 câu
-- "ask": MỘT câu hỏi để CEO trả lời bằng trải nghiệm thật của studio, TIẾNG VIỆT
+- "topic": góc bài cụ thể, TIẾNG VIỆT, tối đa 18 từ
+- "why": vì sao bài này kéo được đúng người đang cân nhắc thuê outsource, TIẾNG VIỆT, 1 câu
+- "ask": MỘT câu hỏi để CEO trả lời bằng trải nghiệm thật (dự án cụ thể, con số, sự cố), TIẾNG VIỆT
 - "source": link tin gốc liên quan nhất
 
 Chỉ trả về JSON: {"topics":[{"topic":"","why":"","ask":"","source":""}]}`;
@@ -214,9 +236,14 @@ if (!items.length) {
   console.error("[radar] không lấy được tin nào — thoát");
   process.exit(1);
 }
-console.error(`[radar] quét ${items.length} tin`);
+const relevant = items.filter((i) => ART_WORDS.test(i.title));
+console.error(`[radar] quét ${items.length} tin → ${relevant.length} tin dính art/animation/vfx`);
+if (!relevant.length) {
+  console.error("[radar] không tin nào liên quan — thoát");
+  process.exit(0);
+}
 
-const picked = await pickTopics(items);
+const picked = await pickTopics(relevant);
 if (!picked.length) {
   console.error("[radar] AI không chọn được chủ đề nào — thoát");
   process.exit(1);
@@ -241,7 +268,7 @@ if (DRY) {
   } else {
     const saved = await saveTopics(topics);
     console.error(`[radar] lưu ${saved.length} chủ đề vào blog_topics`);
-    await sendDiscord(topics, items.length);
+    await sendDiscord(topics, relevant.length);
     console.error(`[radar] đã gửi ${topics.length} chủ đề vào Discord`);
   }
 }

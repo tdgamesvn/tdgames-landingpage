@@ -127,6 +127,31 @@ Bẫy đã gặp khi commit lẻ cụm:
 - `npx tsc --noEmit` báo lỗi ma trỏ route vừa stash — đó là `.next/types/validator.ts`
   CŨ. Build lại rồi tsc mới sạch. Đừng hoảng.
 
+### Radar: nhắm lại nguồn + prompt theo tệp khách outsource
+Sếp: "muốn tập trung visual art/animation/VFX for game + game developer, target
+đúng tệp khách tìm đối tác outsource".
+
+Đo trước khi sửa — 11 topic đầu đến từ: **80 Level 10, Game Developer 1,
+GamesIndustry.biz 0**. Test feed ứng viên bằng curl thật (ArtStation 403,
+Polycount 403, Reddit chặn, Unity/Unreal RSS nghèo 1–3 item, CGPress 200/10 item ✓).
+
+3 thay đổi:
+1. **Nguồn**: bỏ GamesIndustry.biz (đóng góp ĐÚNG 0 — báo thương mại), thêm
+   CGPress, cho 80 Level hạn ngạch gấp đôi (24 vs 12) vì nó đẻ 10/11 topic.
+2. **Prefilter `ART_WORDS`** trước khi gọi AI: tin không có chữ nào về
+   art/animation/vfx/pipeline thì không đưa vào. Đo thật: 32 tin → 12 tin liên quan.
+   AI đọc ít rác thì chọn trúng hơn, lại đỡ token.
+3. **Prompt viết lại theo BUYER INTENT**, không còn là "chủ đề hay để viết":
+   nêu rõ 2 tệp đọc (art director/producer đang tìm đối tác outsource; game dev
+   tự làm art đang mắc khâu sản xuất), ưu tiên chủ đề về bàn giao/QA/engine-ready
+   asset — thứ người sắp thuê lo nhất. Loại thẳng 3D nặng, gameplay code, engine
+   internals (không phải cái TD Games bán) và tin review game.
+   `why` giờ phải trả lời "vì sao bài này kéo được đúng người đang cân nhắc thuê".
+
+Khác biệt thấy ngay ở dry-run: trước là "Dựng sương thể tích trong Blender",
+giờ là "Bàn giao asset theo engine: vì sao đẹp chưa đủ, phải chạy đúng trong build"
+và "Asset store bão hòa: vì sao tự mua asset không giải quyết bài toán sản xuất".
+
 ### Radar: chống trùng + tự hết hạn (sếp hỏi "có cộng dồn theo ngày không?")
 CÓ — radar `INSERT` thẳng, không dedup, không dọn. Mỗi sáng +5, panel admin phình
 vô hạn. Sếp duyệt làm cả 2 việc.
