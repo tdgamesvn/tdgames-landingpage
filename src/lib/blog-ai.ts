@@ -5,8 +5,11 @@ export const BANNED =
 // gpt-image-2 render chữ rất tốt: prompt "pricing tiers" cho ra bảng giá SaaS
 // $19/$49/$99 kèm nút "START FREE TRIAL" — số bịa, mâu thuẫn nội dung bài, và
 // khách đọc tưởng là giá thật. Chặn prompt đòi vẽ UI/bảng biểu có chữ.
+// Chỉ chặn cụm thật sự có nghĩa "vẽ một giao diện" — chặn rộng hơn (ui, text,
+// card, button, number) thì prompt trừu tượng bình thường cũng dính và bài ra
+// không còn ảnh nào. Việc cấm chữ do STYLE_SUFFIX của ai-image.ts lo.
 export const BANNED_UI =
-  /\b(pricing table|price tag|rate card|invoice|receipt|dashboard|ui|interface|screenshot|mockup|website|landing page|app screen|button|logo|text|typography|word|number|label|caption)\b/i;
+  /\b(pricing table|price tag|rate card|invoice|receipt|dashboard|screenshot|mockup|landing page|app screen|web page|logo)\b/i;
 
 // Helpers thuần cho luồng "radar → bản nháp". Tách ra khỏi route để test được
 // bằng scripts/test-blog-ai.mjs (không cần dựng server hay gọi AI).

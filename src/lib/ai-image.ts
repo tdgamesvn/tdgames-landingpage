@@ -66,12 +66,14 @@ export async function generateAiImage(prompt: string, size = "1536x1024"): Promi
   if (typeof b64 !== "string") return { error: "Image API không trả b64_json", status: 502 };
 
   // Backend PHỚT LỜ `size`: xin 1536x1024 (ngang) vẫn trả 1122x1402 (dọc) —
-  // cover blog dọc là vỡ layout. Crop về đúng tỉ lệ; `withoutEnlargement` để
-  // không phóng to ảnh gốc cho mờ, chỉ cắt bớt.
+  // cover blog dọc là vỡ layout. Crop về đúng tỉ lệ.
+  // KHÔNG dùng `withoutEnlargement`: khi ảnh gốc nhỏ hơn target sharp bỏ luôn
+  // crop và trả về đúng ảnh gốc (đã gặp: ra 1402x1024 thay vì 1536x1024).
+  // Phóng ~10% thì mắt không thấy, sai tỉ lệ thì vỡ layout.
   const [w, h] = (SIZES.has(size) ? size : "1536x1024").split("x").map(Number);
   let png = Buffer.from(b64, "base64");
   try {
-    png = await sharp(png).resize(w, h, { fit: "cover", withoutEnlargement: true }).png().toBuffer();
+    png = await sharp(png).resize(w, h, { fit: "cover" }).png().toBuffer();
   } catch (e) {
     console.error("[ai-image] crop lỗi, dùng ảnh gốc", e);
   }

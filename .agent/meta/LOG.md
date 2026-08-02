@@ -2402,3 +2402,22 @@ thành "0 to 4, as many as the post genuinely needs" + trần cứng `slice(0, 4
 Test 2 bài (~1100 từ, dạng so sánh) đều ra 2 ảnh — hợp lý cho độ dài đó, nhưng
 CHƯA chứng minh được số ảnh thật sự biến thiên theo bài. Nếu cần chắc chắn thì
 phải cho chọn số ảnh ở UI /admin.
+
+### Test bài hoàn chỉnh trên production — 3 bug nữa (cùng session)
+1. **nginx cắt ở 60s → 504.** Luồng dựng bài mất ~90s, `proxy_read_timeout`
+   mặc định 60s. Tệ hơn: server VẪN chạy tiếp và tạo bài, nên sếp thấy lỗi rồi
+   bấm lại là ra 2 bài trùng. Fix trên VPS: thêm `proxy_read_timeout 300s` +
+   `proxy_send_timeout 300s` vào `location ~ ^/(api|admin)/` trong
+   `/etc/nginx/sites-enabled/tdgamestudio.com` (backup: `/root/tdgamestudio.com.bak`).
+   CONFIG NÀY NGOÀI REPO — deploy không đụng tới, nhưng dựng lại VPS thì phải nhớ.
+2. **Ảnh AI bịa bảng giá.** gpt-image-2 render chữ rất tốt: prompt về pricing
+   cho ra bảng giá SaaS $19/$49/$99 kèm nút "START FREE TRIAL" — số bịa, mâu
+   thuẫn nội dung bài, khách tưởng giá thật. Fix: `BANNED_UI` + STYLE_SUFFIX
+   cấm chữ/số/UI. Lần đầu chặn quá rộng (`ui|text|number|card|button`) → chặn
+   sạch cả 3 ảnh, bài ra trắng ảnh; thu hẹp còn cụm thật sự nghĩa "vẽ giao diện".
+3. **`withoutEnlargement` làm hỏng tỉ lệ.** Ảnh gốc nhỏ hơn target thì sharp bỏ
+   luôn crop → ra 1402x1024 thay vì 1536x1024. Bỏ flag đó; phóng ~10% không ai
+   thấy, sai tỉ lệ thì vỡ layout.
+
+Bản chạy cuối (local, sau cả 3 fix): 2 ảnh inline + cover, đều 1536x1024,
+sạch chữ, đúng amber/near-black, `imageErrors: []`.

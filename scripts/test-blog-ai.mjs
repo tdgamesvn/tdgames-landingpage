@@ -20,10 +20,11 @@ assert.deepEqual(extractJson('Sure! {"a":[1,2]} hope that helps'), { a: [1, 2] }
 assert.throws(() => extractJson("no json here"), /không trả JSON/);
 
 // prompt đòi vẽ UI/bảng giá → chặn, không thì ảnh bịa giá $19/$49/$99
-for (const bad of ["glowing pricing table", "abstract dashboard ui", "amber logo mark"]) {
+for (const bad of ["glowing pricing table", "abstract dashboard glow", "amber logo mark"]) {
   assert.ok(BANNED_UI.test(bad), `phải chặn: ${bad}`);
 }
-for (const ok of ["abstract stacked translucent amber planes", "soft volumetric light on charcoal"]) {
+// đừng chặn rộng tới mức prompt trừu tượng bình thường cũng chết
+for (const ok of ["abstract stacked translucent amber planes", "soft volumetric light on charcoal", "layered amber cost structure, abstract", "translucent panels showing revision loops"]) {
   assert.ok(!BANNED_UI.test(ok), `không được chặn: ${ok}`);
 }
 
