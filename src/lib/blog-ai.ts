@@ -22,7 +22,9 @@ export function slugify(s: string) {
     .replace(/đ/g, "d")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80)
+    // Cắt ở ranh giới từ: `.slice(0, 80)` trần trụi đẻ ra
+    // `...where-hidden-fees-hi` (chữ "hide" cụt) — xấu cả URL lẫn SEO.
+    .replace(/^(.{0,80})(-|$)[\s\S]*$/, "$1")
     .replace(/-+$/, "");
 }
 

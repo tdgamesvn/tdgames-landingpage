@@ -2421,3 +2421,12 @@ phải cho chọn số ảnh ở UI /admin.
 
 Bản chạy cuối (local, sau cả 3 fix): 2 ảnh inline + cover, đều 1536x1024,
 sạch chữ, đúng amber/near-black, `imageErrors: []`.
+
+### Soi kỹ bài demo — 2 lỗi nữa
+1. **Slug cắt cụt giữa từ**: `slugify` dùng `.slice(0, 80)` trần trụi →
+   `...where-hidden-fees-hi`. Sửa: cắt ở ranh giới gạch nối.
+2. **Chèn nguyên văn tiếng Việt vào bài tiếng Anh**: AI trích y nguyên câu trả
+   lời của sếp làm blockquote ("Khách hỏi giá thường chỉ nhìn đơn giá mỗi
+   asset...") giữa bài viết cho khách nước ngoài. Prompt cũ chỉ bảo "write in
+   ENGLISH" mà không cấm quote nguyên văn. Đã cấm rõ: dịch ý ra tiếng Anh và
+   nói như thực hành của mình, không blockquote ghi chú gốc.

@@ -28,6 +28,12 @@ for (const ok of ["abstract stacked translucent amber planes", "soft volumetric 
   assert.ok(!BANNED_UI.test(ok), `không được chặn: ${ok}`);
 }
 
+// slug dài phải cắt ở gạch nối, không cụt giữa từ
+const longSlug = slugify("2D Game Art Outsourcing Pricing What Really Drives Cost and Where Hidden Fees Hide");
+assert.ok(longSlug.length <= 80, "slug quá 80 ký tự");
+assert.ok(!longSlug.endsWith("-"), "slug thừa gạch nối cuối");
+assert.ok(longSlug.endsWith("hidden-fees"), `cắt cụt giữa từ: ${longSlug}`);
+
 console.log("blog-ai ok");
 
 // --- placeholder ảnh AI ---

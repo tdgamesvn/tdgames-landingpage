@@ -16,6 +16,7 @@ The CEO picked the topic and answered one question from real studio experience. 
 
 Rules:
 - Write in ENGLISH (the site is English), even though the topic/notes are Vietnamese.
+- NEVER quote the CEO's Vietnamese words verbatim. Readers are foreign studios and cannot read Vietnamese. Translate the substance into English prose and state it as our own practice ("We include two revision rounds"), not as a quoted saying. No blockquote of the raw note.
 - 700-1100 words of Markdown. Start with the substance — no "In today's fast-paced games industry" intros.
 - Voice: first-person plural ("we"), practical, specific, no hype, no emoji.
 - Use ## subheads. Do NOT repeat the title as an H1 inside the body.
