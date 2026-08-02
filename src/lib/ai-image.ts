@@ -11,6 +11,7 @@ import { BANNED, BANNED_UI } from "@/lib/blog-ai";
 const STYLE_SUFFIX =
   ", photographic still life of real materials, single directional light, shallow depth of field" +
   ", visible film grain and surface texture, off-centre composition, muted amber and charcoal palette" +
+  ", dark near-black background, low-key lighting, deep shadows, never a white or bright background" +
   ", no characters, no people, no creatures, no faces" +
   ", absolutely no text, no letters, no numbers, no words, no labels, no logos, no watermarks" +
   ", no user interface, no cards, no buttons, no charts with figures" +

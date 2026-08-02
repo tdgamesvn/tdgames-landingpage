@@ -2472,3 +2472,9 @@ Bài giữ lại: `the-7-point-brief-we-use-to-cut-art-revisions-and-delays`
 palette near-black của web. Chưa sửa; nếu lặp lại thì thêm luật "nền phải tối"
 vào STYLE_SUFFIX. Ngoài ra `ADMIN_SECRET` trong `.env.local` KHÁC secret thật
 (secret thật nằm ở `app_settings.admin_secret` trong DB) — curl bằng env var sẽ 401.
+
+### Sửa nốt: nền ảnh AI phải tối (2026-08-02)
+Lấn cấn còn lại từ demo lần 2 — ảnh bụi than chì ra nền gần trắng, lệch palette
+near-black của web. Thêm 1 dòng vào `STYLE_SUFFIX` (`src/lib/ai-image.ts`):
+"dark near-black background, low-key lighting, deep shadows, never a white or
+bright background". Prompt-only, chưa dựng bài verify lại.
