@@ -4,13 +4,12 @@ import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { BANNED, BANNED_UI } from "@/lib/blog-ai";
 
-// DECISIONS 2026-07-31 + phụ lục 2026-08-01: TD Games bán dịch vụ artist vẽ tay
-// → ảnh AI chỉ được dùng làm nền/trừu tượng/sơ đồ. Cấm character & art asset.
-export const BANNED =
-  /\b(character|nhân vật|portrait|chân dung|mascot|creature|quái|anime|chibi|waifu|hero|knight|warrior|girl|boy|man|woman|người|face|mặt)\b/i;
 const STYLE_SUFFIX =
-  ", abstract background artwork, no characters, no people, no creatures, no faces";
+  ", abstract background artwork, no characters, no people, no creatures, no faces" +
+  ", absolutely no text, no letters, no numbers, no words, no labels, no logos, no watermarks" +
+  ", no user interface, no cards, no buttons, no charts with figures";
 
 export const SIZES = new Set(["1024x1024", "1536x1024", "1024x1536"]);
 
@@ -22,6 +21,12 @@ export async function generateAiImage(prompt: string, size = "1536x1024"): Promi
     return {
       error:
         "Ảnh AI chỉ dùng cho nền/trừu tượng/sơ đồ. Character và art asset phải do artist vẽ (DECISIONS 2026-07-31).",
+      status: 400,
+    };
+  }
+  if (BANNED_UI.test(prompt)) {
+    return {
+      error: "Prompt đòi vẽ UI/chữ/số — ảnh AI sẽ bịa giá và nhãn sai. Dùng mô tả trừu tượng.",
       status: 400,
     };
   }

@@ -25,6 +25,7 @@ Rules:
 IMAGE PROMPT rules (these images are machine-generated, so they must never look like our artists' work):
 - Abstract only: backgrounds, textures, gradients, geometric/conceptual diagrams of the pipeline idea being discussed.
 - FORBIDDEN in image prompts: characters, people, faces, creatures, mascots, portraits, anime, hero/knight/warrior, any word naming a living figure. A prompt containing those words is dropped and the article loses that image.
+- NO TEXT OF ANY KIND: no words, numbers, prices, labels, logos, UI cards, buttons, pricing tables, dashboards or screenshots. The generator renders text well and will invent fake prices that contradict the article. Describe light, material, shape and composition — never a thing that would carry a label.
 - Palette: dark near-black background with amber/orange accents (our brand).
 - Example: ![Layered VFX passes](ai:abstract stacked translucent amber and charcoal planes on near-black, soft volumetric light, minimal, cinematic)
 
