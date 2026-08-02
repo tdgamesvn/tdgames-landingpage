@@ -246,7 +246,7 @@ function RadarTopics({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
   // Bộ câu hỏi phỏng vấn theo từng topic + câu trả lời của sếp.
-  const [qs, setQs] = useState<Record<string, { q: string; why: string }[]>>({});
+  const [qs, setQs] = useState<Record<string, { q: string; why: string; a?: string }[]>>({});
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
   async function load() {
@@ -297,8 +297,12 @@ function RadarTopics({
         return;
       }
       setQs((m) => ({ ...m, [t.id]: data.questions }));
-      setAnswers((m) => ({ ...m, [t.id]: data.questions.map(() => "") }));
-      setMsg("Trả lời được câu nào hay câu đó — bỏ trống cũng không sao.");
+      // AI viết sẵn bản nháp trả lời → sếp sửa hoặc dùng luôn.
+      setAnswers((m) => ({
+        ...m,
+        [t.id]: data.questions.map((x: { a?: string }) => x.a ?? ""),
+      }));
+      setMsg("AI đã trả lời nháp sẵn — sửa lại chỗ [?] rồi dựng bài.");
     } catch {
       setMsg("Lỗi mạng khi soạn câu hỏi");
     } finally {
@@ -318,8 +322,13 @@ function RadarTopics({
       setMsg("Kể ít nhất 40 ký tự trải nghiệm thật — không có chất liệu thì bài sẽ nhạt.");
       return;
     }
+    // Marker [?] là chỗ AI cố tình chừa cho số liệu thật — lọt xuống bài public là claim sai.
+    if (filled?.some((x) => /\[[^\]]*\?\]/.test(x.a))) {
+      setMsg("Còn chỗ [?] trong câu trả lời — điền số thật hoặc xoá đi rồi dựng.");
+      return;
+    }
     setBusyId(t.id);
-    setMsg("AI đang dựng bài, mất khoảng 1-2 phút…");
+    setMsg("AI đang dựng bài + sinh ảnh, mất khoảng 2-3 phút…");
     try {
       const res = await fetch("/api/admin/blog/topics", {
         method: "POST",
@@ -333,7 +342,12 @@ function RadarTopics({
         setMsg(data.error ?? "Lỗi khi dựng bài");
         return;
       }
-      setMsg("");
+      // Ảnh lỗi không chặn bài — nhưng phải báo, không thì sếp tưởng AI cố ý bỏ ảnh.
+      setMsg(
+        data.imageErrors?.length
+          ? `Bài đã dựng nhưng ${data.imageErrors.length} ảnh AI sinh lỗi — tự thêm ảnh trong form.`
+          : "",
+      );
       onDrafted(data.post);
     } catch {
       setMsg("Network error");
@@ -393,7 +407,7 @@ function RadarTopics({
               {qs[t.id] ? (
                 <div className="mt-3 space-y-3 rounded-md border border-amber-500/20 bg-amber-500/[0.03] p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/80">
-                    AI phỏng vấn — trả lời được câu nào hay câu đó
+                    AI phỏng vấn — đã trả lời nháp sẵn, sếp sửa hoặc dùng luôn
                   </p>
                   {qs[t.id].map((item, qi) => (
                     <div key={qi}>
@@ -412,7 +426,7 @@ function RadarTopics({
                             return { ...m, [t.id]: arr };
                           })
                         }
-                        rows={2}
+                        rows={4}
                         placeholder="Con số, tên dự án, sự cố thật…"
                         className="mt-1 w-full resize-y rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm outline-none focus:border-amber-400/50"
                       />

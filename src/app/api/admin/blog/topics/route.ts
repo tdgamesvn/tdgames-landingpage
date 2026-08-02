@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
-import { slugify, nextFreeSlug, extractJson } from "@/lib/blog-ai";
+import { slugify, nextFreeSlug, extractJson, findAiImages, applyAiImages } from "@/lib/blog-ai";
+import { generateAiImage } from "@/lib/ai-image";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,10 +20,16 @@ Rules:
 - Voice: first-person plural ("we"), practical, specific, no hype, no emoji.
 - Use ## subheads. Do NOT repeat the title as an H1 inside the body.
 - End with one short paragraph on how TD Games works with clients on this — a soft close, not a sales pitch.
-- No image markdown — covers are picked by hand from our own artwork.
+- MANDATORY: insert exactly 2 illustrations in the body (not 1, not 3), spread far apart (never adjacent to each other, never before the first subhead), each on its own line as: ![short alt text, max 8 words](ai:IMAGE PROMPT)
+
+IMAGE PROMPT rules (these images are machine-generated, so they must never look like our artists' work):
+- Abstract only: backgrounds, textures, gradients, geometric/conceptual diagrams of the pipeline idea being discussed.
+- FORBIDDEN in image prompts: characters, people, faces, creatures, mascots, portraits, anime, hero/knight/warrior, any word naming a living figure. A prompt containing those words is dropped and the article loses that image.
+- Palette: dark near-black background with amber/orange accents (our brand).
+- Example: ![Layered VFX passes](ai:abstract stacked translucent amber and charcoal planes on near-black, soft volumetric light, minimal, cinematic)
 
 Reply with ONLY a JSON object, no markdown fence, no prose:
-{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "content_md": "..."}`;
+{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "abstract image prompt for the cover, same rules as above", "content_md": "the markdown, containing exactly 2 ![alt](ai:prompt) images"}`;
 
 /** GET — danh sách chủ đề radar đã gợi ý (mới nhất trước). */
 export async function GET(req: Request) {
@@ -136,7 +143,13 @@ export async function POST(req: Request) {
   if (!res.ok) return NextResponse.json({ error: `AI backend error ${res.status}` }, { status: 502 });
 
   const raw: string = (await res.json())?.choices?.[0]?.message?.content ?? "";
-  let draft: { title: string; excerpt: string; tag: string; content_md: string };
+  let draft: {
+    title: string;
+    excerpt: string;
+    tag: string;
+    content_md: string;
+    cover_prompt: string;
+  };
   try {
     const p = extractJson(raw) as Record<string, unknown>;
     draft = {
@@ -144,6 +157,7 @@ export async function POST(req: Request) {
       excerpt: String(p.excerpt ?? "").trim(),
       tag: String(p.tag ?? "Insights").trim(),
       content_md: String(p.content_md ?? "").trim(),
+      cover_prompt: String(p.cover_prompt ?? "").trim(),
     };
     if (!draft.title || !draft.content_md) throw new Error("thiếu title/content");
   } catch {
@@ -152,6 +166,30 @@ export async function POST(req: Request) {
       { status: 502 }
     );
   }
+
+  // Sinh cover + ảnh trong bài song song. Sếp replace lại ở form /admin nếu
+  // không ưng. Ảnh nào lỗi thì bỏ ảnh đó — không bao giờ vứt cả bài đã viết.
+  const inline = findAiImages(draft.content_md).slice(0, 3); // ponytail: chặn AI spam ảnh
+  const [cover, ...images] = await Promise.all([
+    draft.cover_prompt ? generateAiImage(draft.cover_prompt, "1536x1024") : null,
+    ...inline.map((img) => generateAiImage(img.prompt, "1536x1024")),
+  ]);
+  const imageErrors: string[] = [];
+  const url = (r: Awaited<ReturnType<typeof generateAiImage>> | null) => {
+    if (!r) return null;
+    if ("error" in r) {
+      imageErrors.push(r.error);
+      return null;
+    }
+    return r.url;
+  };
+  const coverUrl = url(cover);
+  draft.content_md = applyAiImages(
+    draft.content_md,
+    inline.map((img, i) => ({ raw: img.raw, url: url(images[i]) })),
+    draft.title,
+  );
+  if (imageErrors.length) console.error("[blog draft] ảnh AI lỗi:", imageErrors);
 
   const base = slugify(draft.title);
   const { data: existing } = await supabase.from("blog_posts").select("slug").like("slug", `${base}%`);
@@ -164,7 +202,7 @@ export async function POST(req: Request) {
       title: draft.title,
       excerpt: draft.excerpt,
       tag: draft.tag,
-      cover_image: "", // sếp chọn artwork thật trong form — không dùng ảnh AI
+      cover_image: coverUrl ?? "", // ảnh AI nền/trừu tượng; sếp replace ở form nếu muốn artwork thật
       content_md: draft.content_md,
       published: false, // hardcode: AI không bao giờ tự đăng
       author: "TD Games",
@@ -178,5 +216,5 @@ export async function POST(req: Request) {
     .update({ status: "drafted", ceo_note: note, post_id: post.id })
     .eq("id", id);
 
-  return NextResponse.json({ post }, { status: 201 });
+  return NextResponse.json({ post, imageErrors }, { status: 201 });
 }

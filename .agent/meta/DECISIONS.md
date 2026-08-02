@@ -132,3 +132,21 @@ prompt hợp lệ. Muốn đổi phạm vi thì sửa 2 hằng số đó, và s�
 
 Ảnh AI lưu như media_assets row bình thường (`source_type: external`, host R2),
 phân biệt bằng `ai_prompt not null` → luôn biết ảnh nào là máy vẽ.
+
+## 2026-08-02 — Ảnh AI tự sinh thẳng trong bài blog (nới tiếp 08-01)
+Sếp: "tự render ảnh AI trong bài viết, tôi sẽ replace lại nếu cần". Ranh giới
+nội dung ảnh KHÔNG đổi (vẫn cấm character — regex `BANNED`), chỉ đổi ai bấm nút:
+trước là sếp tự gọi `/api/admin/generate-image`, giờ luồng dựng bài tự sinh
+**1 cover + tối đa 3 ảnh trong bài**.
+
+Cưỡng chế: prompt `DRAFT_PROMPT` bắt AI xuất placeholder `![alt](ai:prompt)`;
+route resolve qua `generateAiImage()` — cùng regex `BANNED` + `STYLE_SUFFIX`, nên
+AI không có đường lách. Prompt dính từ cấm ⇒ ảnh đó bị bỏ, không phải cả bài.
+
+Fail-soft là bắt buộc: ảnh lỗi (AI backend chết / timeout 120s / prompt cấm) →
+bỏ ảnh, bài vẫn lưu draft, trả `imageErrors[]` cho UI báo. Không bao giờ vứt
+bài đã viết vì hỏng ảnh. (Sếp không trả lời 2 câu hỏi hướng đi → chọn mặc định
+an toàn; muốn cover để trống như cũ thì bỏ `cover_prompt` trong prompt.)
+
+Tách `src/lib/ai-image.ts` khỏi route để dùng chung — route generate-image giờ
+chỉ là vỏ auth + map status.

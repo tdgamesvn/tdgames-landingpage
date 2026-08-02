@@ -24,6 +24,38 @@ export function nextFreeSlug(base: string, taken: Iterable<string>) {
   }
 }
 
+/**
+ * AI chèn ảnh bằng placeholder `![alt](ai:prompt)` — chưa phải URL. Tìm hết ra
+ * để route đi sinh ảnh thật rồi thay lại.
+ */
+export function findAiImages(md: string) {
+  return [...md.matchAll(/!\[([^\]]*)\]\(ai:([^)]*)\)/g)].map((m) => ({
+    raw: m[0],
+    alt: m[1].trim(),
+    prompt: m[2].trim(),
+  }));
+}
+
+/**
+ * Thay placeholder bằng URL thật. `url: null` (sinh ảnh lỗi / prompt dính regex
+ * cấm) → xoá hẳn placeholder, bài vẫn đăng được, chỉ thiếu ảnh.
+ */
+export function applyAiImages(
+  md: string,
+  results: { raw: string; url: string | null }[],
+  fallbackAlt = "",
+) {
+  let out = md;
+  for (const { raw, url } of results) {
+    let alt = (raw.match(/!\[([^\]]*)\]/)?.[1] ?? "").trim();
+    // AI hay dán nguyên prompt vào alt → alt dài lê thê, lộ là ảnh máy, hại SEO.
+    if (!alt || alt.length > 100) alt = fallbackAlt;
+    out = out.split(raw).join(url ? `![${alt}](${url})` : "");
+  }
+  // dọn dòng trống thừa do xoá placeholder
+  return out.replace(/\n{3,}/g, "\n\n").trim();
+}
+
 /** Lấy object JSON đầu tiên trong text — AI hay bọc thêm ```json hoặc lời dẫn. */
 export function extractJson(text: string): unknown {
   const match = text.match(/\{[\s\S]*\}/);

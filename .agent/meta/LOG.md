@@ -2322,3 +2322,76 @@ reply được → bỏ Discord khỏi khâu duyệt, làm gọn trong `/admin` 
 - Xoá bài draft test ở `/admin` nếu không dùng.
 - Radar chưa có cron — đang phải chạy tay. Thêm workflow giống `hr-remind.yml`
   khi sếp muốn tự động hàng sáng.
+
+---
+
+## 2026-08-02 (session — AI phỏng vấn tự trả lời nháp)
+### Task
+Sếp: bấm "AI phỏng vấn" ở Admin → Blog thì AI gợi ý luôn câu trả lời, sếp sửa
+hoặc dùng nguyên.
+
+### Quyết định
+AI được viết trọn phần khung/lập luận/quy trình, NHƯNG mọi con số, tên dự án,
+tên khách, mốc thời gian phải để marker `[bao nhiêu ngày?]` chứ không bịa —
+blog public, số sai = claim sai. `draft()` chặn dựng bài nếu còn marker `[...?]`.
+(Sếp không phản hồi câu hỏi 2 hướng → chọn mặc định an toàn; muốn AI tự điền số
+luôn thì nói, sửa 1 đoạn prompt là xong.)
+
+### Work Done
+- `src/app/api/admin/blog/topics/interview/route.ts`: prompt thêm field `a`
+  (bản nháp trả lời + luật marker), parse thêm `a`.
+- `BlogTab.tsx`: prefill `answers` bằng `x.a`, rows 2→4, guard regex
+  `/\[[^\]]*\?\]/` trong `draft()`, đổi text hướng dẫn.
+
+### Result
+`npx tsc --noEmit` sạch. Chưa smoke test API thật (cần AI backend chạy).
+
+### Next Step
+Bấm thử "AI phỏng vấn" trên /admin để xem chất lượng bản nháp; prompt còn chỉnh
+được nếu AI chừa quá nhiều marker.
+
+---
+
+## 2026-08-02 (session — ảnh AI tự sinh trong bài blog)
+### Task
+Sếp: "tự render ảnh AI trong bài viết, tôi sẽ replace lại nếu cần thiết".
+
+### Work Done
+- `src/lib/ai-image.ts` (mới): `generateAiImage(prompt, size)` — tách nguyên
+  lõi từ `api/admin/generate-image/route.ts` (BANNED regex, STYLE_SUFFIX,
+  R2 upload, media_assets row). Thêm `AbortSignal.timeout(120s)`. DB insert lỗi
+  → log chứ không vứt ảnh đã lên R2.
+- `api/admin/generate-image/route.ts`: rút còn 18 dòng vỏ auth.
+- `blog-ai.ts`: `findAiImages` + `applyAiImages` (thuần, test được).
+- `api/admin/blog/topics/route.ts`: DRAFT_PROMPT yêu cầu 2 placeholder
+  `![alt](ai:prompt)` + field `cover_prompt`; resolve song song `Promise.all`
+  (cover + tối đa 3 ảnh), fail-soft, trả `imageErrors[]`. `cover_image` không
+  còn hardcode rỗng.
+- `BlogTab.tsx`: đổi text chờ 2-3 phút, hiện cảnh báo khi có `imageErrors`.
+
+### Result
+`node scripts/test-blog-ai.mjs` pass (thêm 6 assert cho placeholder),
+`npx tsc --noEmit` sạch. CHƯA smoke test API thật — cần AI backend chạy.
+
+### Next Step
+Bấm "Dựng bài" trên /admin với 1 topic thật để xem chất lượng ảnh + chi phí
+thời gian (4 ảnh song song). Ảnh xấu quá thì chỉnh `STYLE_SUFFIX` trong
+`src/lib/ai-image.ts`.
+
+### Test thật (cùng session, 2026-08-02)
+Dev server + cliproxyapi (`localhost:8317`, có `gpt-image-2`). 2 bug tìm ra khi test:
+1. **Backend PHỚT LỜ `size`** — xin 1536x1024 nhận về 1122x1402 (dọc) ⇒ cover vỡ
+   layout. Fix: crop bằng `sharp(...).resize(w,h,{fit:"cover",withoutEnlargement:true})`
+   trong `ai-image.ts`. Verify lại: đúng 1536x1024.
+2. **AI dán nguyên prompt vào alt** (alt dài 120+ ký tự, lộ ảnh máy, hại SEO) và
+   chỉ xuất 1 ảnh thay vì 2. Fix: `applyAiImages(md, results, fallbackAlt)` thay
+   alt >100 ký tự bằng title bài; prompt đổi thành "MANDATORY ... (not 1, not 3)"
+   + "max 8 words" cho alt.
+
+Kết quả lần chạy cuối: 201, 86s, `imageErrors: []`, 2 ảnh inline alt ngắn
+("Cost stack layers", "Review loop paths"), cover có, `published: false`,
+không sót placeholder `ai:`. Guard verify: 401 no-key, 400 prompt cấm
+("anime girl mascot"), 400 prompt rỗng.
+
+Dọn sau test: xoá 2 bài draft test, revert 2 topic về `status: new`. 3 ảnh AI
+rác còn trên R2 (`ai/2026/08/`) — vô hại, để `media_assets` giữ row.

@@ -6,6 +6,10 @@ _(empty)_
 
 ## To do
 
+- [ ] Smoke test "Dựng bài" ở /admin tab Blog: giờ tự sinh cover + 2 ảnh trong bài
+      (2026-08-02). Xem chất lượng ảnh + thời gian chạy. Ảnh xấu → chỉnh
+      `STYLE_SUFFIX` trong `src/lib/ai-image.ts`.
+
 - [x] ~~Badge intent/score/keyword trong panel radar~~ (2026-08-01, 9e8f655):
       hiện `[BOFU 9/10]` + keyword, sắp theo điểm giảm dần. Production verify OK.
 - [ ] 9 topic cũ (trước khi có chấm điểm) đang `score = null` nên trôi xuống cuối

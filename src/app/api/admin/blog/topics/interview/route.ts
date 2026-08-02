@@ -30,8 +30,14 @@ Nguyên tắc:
 Với mỗi câu hỏi trả về:
 - "q": câu hỏi, TIẾNG VIỆT
 - "why": một mệnh đề RẤT ngắn nói vì sao câu này làm bài mạnh hơn (để CEO biết đáng công trả lời)
+- "a": BẢN NHÁP câu trả lời viết sẵn hộ CEO, TIẾNG VIỆT, 2-4 câu, giọng kể chuyện của người trong nghề. CEO sẽ đọc và sửa, hoặc dùng luôn.
 
-Chỉ trả về JSON: {"questions":[{"q":"","why":""}]}`;
+Quy tắc cho "a" — quan trọng:
+- Viết phần khung, phần lập luận, phần quy trình theo hiểu biết chuẩn của ngành 2D game art outsourcing. Chỗ này cứ viết đầy đủ.
+- NHƯNG mọi CON SỐ, TÊN DỰ ÁN, TÊN KHÁCH, MỐC THỜI GIAN cụ thể mà chỉ người trong TD Games mới biết thì TUYỆT ĐỐI KHÔNG được bịa. Thay bằng marker vuông mô tả cái cần điền, ví dụ: [bao nhiêu ngày?], [tên dự án?], [giảm bao nhiêu %?], [team mấy người?].
+- Thà nhiều marker còn hơn một con số sai — bài này đăng public, số sai là claim sai.
+
+Chỉ trả về JSON: {"questions":[{"q":"","why":"","a":""}]}`;
 
 export async function POST(req: Request) {
   const authError = await requireAdmin(req);
@@ -91,9 +97,13 @@ export async function POST(req: Request) {
 
   const raw: string = (await res.json())?.choices?.[0]?.message?.content ?? "";
   try {
-    const parsed = extractJson(raw) as { questions?: { q?: string; why?: string }[] };
+    const parsed = extractJson(raw) as { questions?: { q?: string; why?: string; a?: string }[] };
     const questions = (parsed.questions ?? [])
-      .map((x) => ({ q: String(x.q ?? "").trim(), why: String(x.why ?? "").trim() }))
+      .map((x) => ({
+        q: String(x.q ?? "").trim(),
+        why: String(x.why ?? "").trim(),
+        a: String(x.a ?? "").trim(),
+      }))
       .filter((x) => x.q);
     if (!questions.length) throw new Error("rỗng");
     return NextResponse.json({ questions });
