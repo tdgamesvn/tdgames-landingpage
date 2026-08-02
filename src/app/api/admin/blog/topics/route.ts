@@ -31,18 +31,19 @@ Formatting (the site renders full Markdown — use it, a wall of grey paragraphs
 - End with one short paragraph on how TD Games works with clients on this — a soft close, not a sales pitch.
 - Illustrations: insert as many as the post genuinely needs, 0 to 4. A long pipeline/comparison piece earns 3-4; a short opinion piece may want one or none. Never illustrate a section just to fill it, and never place two next to each other or one before the first subhead. Each on its own line as: ![short alt text, max 8 words](ai:IMAGE PROMPT)
 
-IMAGE PROMPT rules (these images are machine-generated, so they must never look like our artists' work AND must not look like generic AI wallpaper):
-- Write them as PHOTOGRAPHS of real materials, not as digital artwork. Macro shots of paper, vellum, ground glass, brushed metal, ink, dust in a light beam, stacked card stock, worn desk surfaces.
-- Always include: one directional light source, shallow depth of field, visible grain or fibre, off-centre composition.
-- FORBIDDEN: characters, people, faces, creatures, mascots, portraits, anime, hero/knight/warrior, any word naming a living figure. Also forbidden: neon glow, glossy 3D render, perfect symmetry, swirling energy ribbons, lens flare, sci-fi HUD — that is the look that screams "AI stock image".
+IMAGE PROMPT rules:
+- YOU choose the render style, and you choose it from what THIS post is about. A pipeline/pricing/process post may want photographed real materials (vellum, brushed steel, ink on blotting paper). A post about 2D art, animation or VFX craft should look like the work itself — hand-painted 2D mobile game art: parallax environment, prop set, tileset, an effect frame, a paint-over study. Other posts may call for a technical schematic, a blueprint, a lit diorama. Never default to one house look because the last post used it.
+- Decide the style ONCE per post and state it in plain words at the start of every prompt ("hand-painted 2D mobile game art of...", "macro photograph of..."). All images in one post, cover included, must share that one style — a photo next to a painted asset reads as two different articles.
+- Within that one style, every image must differ in SUBJECT and composition from the others and from the cover. Three near-identical shots is one idea repeated, not three illustrations.
+- The image should echo what the section is about — layered sheets for layered cost, a torn edge for a broken handoff, a half-finished paint-over for revision rounds. Suggest the idea, never illustrate it literally.
+- FORBIDDEN: characters, people, faces, creatures, mascots, portraits, anime, hero/knight/warrior, any word naming a living figure. Environments, props, effects and materials only.
 - FORBIDDEN: any text, numbers, prices, labels, logos, UI cards, buttons, pricing tables, dashboards or screenshots. The generator renders text well and will invent fake prices that contradict the article.
-- The material should echo what the section is about — layered sheets for layered cost, a torn edge for a broken handoff, two surfaces barely overlapping for poor timezone overlap. Suggest the idea through material, never illustrate it literally.
-- Every image in one post must use a DIFFERENT material and a different camera angle from the others AND from the cover. Three shots of stacked paper is one idea repeated, not three illustrations. Start every prompt by naming its material, and never reuse a material already spent — the cover counts as one. Pick from: translucent vellum, torn kraft card, brushed steel, ground glass, wet ink on blotting paper, masking tape on black board, machined brass, coarse linen, graphite dust, cracked wax seal.
-- Palette: near-black and deep charcoal with muted amber warmth from the light source. Restrained, not saturated.
-- Example: ![Layered source files](ai:macro photograph of translucent vellum sheets stacked slightly out of register on a matte charcoal surface, single warm amber key light raking from the left, visible paper fibre and dust motes, shallow depth of field, 35mm film grain, off-centre)
+- Palette (fixed, the site is near-black): deep charcoal and near-black with muted amber warmth. Restrained, not saturated, never a bright or white background.
+- Example (materials): ![Layered source files](ai:macro photograph of translucent vellum sheets stacked slightly out of register on a matte charcoal surface, single warm amber key light raking from the left, visible paper fibre, shallow depth of field, off-centre)
+- Example (game art): ![Parallax background layers](ai:hand-painted 2D mobile game art, side-scroller parallax background of a cliff edge and distant ruins in three depth layers, casual stylised painterly shading, amber key light and cool rim, near-black sky)
 
 Reply with ONLY a JSON object, no markdown fence, no prose:
-{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "material photograph prompt for the cover, same rules as above, using a material none of the in-post images use", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;
+{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "cover image prompt, same rules and same chosen style as the in-post images, but a subject none of them use", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;
 
 /** GET — danh sách chủ đề radar đã gợi ý (mới nhất trước). */
 export async function GET(req: Request) {

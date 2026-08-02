@@ -2507,3 +2507,47 @@ Chạy lại y nguyên payload thì 201 ⇒ lỗi thuộc tầng nginx/upstream,
 
 Bài đang `published: false`, chờ sếp điền số thật (ngày công, số vòng sửa, tên
 dự án) rồi mới đăng — bản hiện tại đúng nhưng chung chung, không có số liệu riêng.
+
+### Sếp chê ảnh AI trừu tượng — thử hướng "2D game art" (2026-08-02)
+Sếp: "ảnh chất lượng trừu tượng chả ra chất game 2D mobile gì cả". Gốc rễ không
+phải AI dở mà là **luật cố ý**: `STYLE_SUFFIX` (`src/lib/ai-image.ts`) ép
+"photographic still life of real materials", `topics/route.ts` bắt chọn chất liệu
+từ whitelist 10 món. Lý do cũ: DECISIONS 2026-07-31 — studio bán artist vẽ tay
+nên cấm ảnh AI ra game art.
+
+Chưa sửa repo. Chạy script tạm `scripts/tmp-gameart-demo.mjs` (gọi thẳng AI API
+bằng key `.env.local`, KHÔNG qua endpoint vì endpoint tự nối STYLE_SUFFIX cũ) với
+suffix thử nghiệm: "hand-painted 2D mobile game art asset, casual stylised,
+painterly shading, amber key + cool rim, dark near-black bg" + vẫn giữ cấm
+character/face/chữ/UI.
+
+**Kết quả 3/3 đạt** (`.tmp/gameart/`, ~110-140s mỗi ảnh): parallax background
+(cliff + ruins + floating islands), prop set (chest/potion/crate/lantern trên nền
+đen), VFX explosion frame. Ra đúng chất game 2D mobile, vẫn giữ palette near-black
+của web và không có nhân vật ⇒ không phá DECISIONS 2026-07-31.
+
+**Chờ sếp chốt** trước khi sửa `STYLE_SUFFIX` + luật chất liệu trong `topics/route.ts`
+rồi dựng 1 bài đầy đủ. Script tạm chưa xoá, chưa commit.
+
+### Thả style ảnh AI theo nội dung bài (2026-08-02)
+Sếp chốt: bỏ style cố định, AI tự quyết render style bám nội dung từng bài.
+
+- `src/lib/ai-image.ts` — `STYLE_SUFFIX` bỏ hết phần chỉ đạo style ("photographic
+  still life of real materials", grain, off-centre, "not a 3d render / no neon
+  glow / no lens flare / no perfect symmetry"). Còn giữ 2 nhóm KHÔNG thả:
+  palette near-black + amber (hợp layout web), và luật cứng (không nhân vật —
+  DECISIONS 2026-07-31; không chữ/số/UI — generator bịa giá).
+- `blog/topics/route.ts` — IMAGE PROMPT rules viết lại: AI tự chọn style theo bài
+  (pipeline/pricing → material photo; 2D Art/Animation/VFX → hand-painted 2D
+  mobile game art; có thể schematic/diorama), chốt 1 style/bài và nêu style ở đầu
+  mỗi prompt, cover cùng style với inline. Bỏ whitelist 10 chất liệu + luật "khác
+  chất liệu" → thay bằng "khác SUBJECT và bố cục". `cover_prompt` sửa theo.
+
+Xoá `scripts/tmp-gameart-demo.mjs` + `.tmp/gameart/` (script thử nghiệm session
+trước, đã hết việc). Lint: 0 lỗi mới ở 2 file sửa (92 lỗi tồn có sẵn nơi khác).
+
+**Chưa verify** — chưa deploy, chưa dựng bài thật. Cần dựng 2 bài để kiểm: 1 bài
+tag Pipeline/Guide (kỳ vọng ra material photo) + 1 bài tag 2D Art/VFX (kỳ vọng ra
+game art), xem AI có đổi style theo nội dung thật không, và cover có cùng style
+với inline không (rủi ro chính: `cover_prompt` là field JSON riêng — đúng chỗ
+từng hỏng ở luật chất liệu).

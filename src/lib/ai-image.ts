@@ -6,16 +6,16 @@ import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { BANNED, BANNED_UI } from "@/lib/blog-ai";
 
-// Hướng nhiếp ảnh chất liệu thật. "abstract artwork" + glow cho ra đúng kiểu
-// wallpaper AI ai cũng nhận ra; grain + lệch tâm + thiếu sáng tự nhiên thì không.
+// Render style do prompt tự quyết (bám nội dung từng bài) — suffix chỉ còn 2 thứ
+// KHÔNG được thả: palette hợp layout near-black của web, và mấy luật cứng
+// (không nhân vật theo DECISIONS 2026-07-31, không chữ vì generator bịa số).
+// ponytail: nếu muốn thả cả palette thì xoá dòng đầu, nhưng ảnh nền trắng
+// nằm giữa bài near-black là vỡ mắt — đã tốn 1 session sửa.
 const STYLE_SUFFIX =
-  ", photographic still life of real materials, single directional light, shallow depth of field" +
-  ", visible film grain and surface texture, off-centre composition, muted amber and charcoal palette" +
-  ", dark near-black background, low-key lighting, deep shadows, never a white or bright background" +
+  ", dark near-black background, low-key lighting, muted amber and charcoal palette, never a white or bright background" +
   ", no characters, no people, no creatures, no faces" +
   ", absolutely no text, no letters, no numbers, no words, no labels, no logos, no watermarks" +
-  ", no user interface, no cards, no buttons, no charts with figures" +
-  ", not a 3d render, no neon glow, no lens flare, no perfect symmetry, no swirling energy ribbons";
+  ", no user interface, no cards, no buttons, no charts with figures";
 
 export const SIZES = new Set(["1024x1024", "1536x1024", "1024x1536"]);
 
