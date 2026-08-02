@@ -2486,3 +2486,24 @@ Chạy lại đúng prompt từng ra nền gần trắng (`graphite dust...`) qu
 Soi mắt: macro bụi than chì, nền near-black, ánh sáng xiên, không chữ — đúng
 hướng nhiếp ảnh + palette web. Lấn cấn cuối của luồng dựng bài AI đã đóng.
 Script verify là tạm, đã xoá (không đưa vào repo — chạy 1 lần, tốn tiền ảnh).
+
+### Demo bài 3 — Animation/VFX (2026-08-02)
+Sếp: "thử dựng bài AI về Animation/Art 2D". Chọn topic `fcb19cca` (VFX vải bay:
+cloth sim hay fake frame-by-frame). Chạy đúng luồng: `/topics/interview` → 6 câu hỏi
+kèm nháp trả lời. Demo này KHÔNG có câu trả lời thật của sếp → bỏ mọi câu chứa
+marker `[bao nhiêu ngày?]`, chỉ giữ phần khung nghề (1627 ký tự, 6/6 câu còn đủ dài).
+
+**Kết quả:** 201, 125s, slug
+`cloth-simulation-or-frame-by-frame-choosing-the-right-flying-fabric-vfx`
+(`93c74cab`, published: false, tag VFX). 3 ảnh inline + cover, `imageErrors: []`,
+~950 từ, có bảng so sánh 5 dòng + checklist 5 mục + 1 blockquote.
+4 ảnh 4 chất liệu khác nhau (mực ướt / vellum / kraft rách / thép chải),
+brightness 21-45/255 — luật nền tối + luật khác chất liệu giữ được ở bài thứ 3.
+
+**Bắt được:** lần POST đầu trả về HTML (`<!DOCTYPE`) thay vì JSON, DB không có bài
+nào được tạo ⇒ chết trước khi insert, không phải 504-nhưng-vẫn-chạy như hôm trước.
+Chạy lại y nguyên payload thì 201 ⇒ lỗi thuộc tầng nginx/upstream, không tái hiện
+được. Chưa điều tra tiếp — nếu lặp lại thì xem `pm2 logs` đúng thời điểm.
+
+Bài đang `published: false`, chờ sếp điền số thật (ngày công, số vòng sửa, tên
+dự án) rồi mới đăng — bản hiện tại đúng nhưng chung chung, không có số liệu riêng.
