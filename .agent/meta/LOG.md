@@ -2478,3 +2478,11 @@ Lấn cấn còn lại từ demo lần 2 — ảnh bụi than chì ra nền gầ
 near-black của web. Thêm 1 dòng vào `STYLE_SUFFIX` (`src/lib/ai-image.ts`):
 "dark near-black background, low-key lighting, deep shadows, never a white or
 bright background". Prompt-only, chưa dựng bài verify lại.
+
+### Verify luật nền tối (2026-08-02)
+Chạy lại đúng prompt từng ra nền gần trắng (`graphite dust...`) qua
+`POST /api/admin/generate-image` trên production (commit 41caa36 đã deploy):
+200, 47s, 1536x1024, **mean brightness 30.7/255** (ngưỡng đặt <90) → PASS.
+Soi mắt: macro bụi than chì, nền near-black, ánh sáng xiên, không chữ — đúng
+hướng nhiếp ảnh + palette web. Lấn cấn cuối của luồng dựng bài AI đã đóng.
+Script verify là tạm, đã xoá (không đưa vào repo — chạy 1 lần, tốn tiền ảnh).
