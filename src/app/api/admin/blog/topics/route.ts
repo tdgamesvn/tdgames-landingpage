@@ -37,12 +37,12 @@ IMAGE PROMPT rules (these images are machine-generated, so they must never look 
 - FORBIDDEN: characters, people, faces, creatures, mascots, portraits, anime, hero/knight/warrior, any word naming a living figure. Also forbidden: neon glow, glossy 3D render, perfect symmetry, swirling energy ribbons, lens flare, sci-fi HUD — that is the look that screams "AI stock image".
 - FORBIDDEN: any text, numbers, prices, labels, logos, UI cards, buttons, pricing tables, dashboards or screenshots. The generator renders text well and will invent fake prices that contradict the article.
 - The material should echo what the section is about — layered sheets for layered cost, a torn edge for a broken handoff, two surfaces barely overlapping for poor timezone overlap. Suggest the idea through material, never illustrate it literally.
-- Every image in one post must use a DIFFERENT material and a different camera angle from the others AND from the cover. Three shots of stacked paper is one idea repeated, not three illustrations.
+- Every image in one post must use a DIFFERENT material and a different camera angle from the others AND from the cover. Three shots of stacked paper is one idea repeated, not three illustrations. Start every prompt by naming its material, and never reuse a material already spent — the cover counts as one. Pick from: translucent vellum, torn kraft card, brushed steel, ground glass, wet ink on blotting paper, masking tape on black board, machined brass, coarse linen, graphite dust, cracked wax seal.
 - Palette: near-black and deep charcoal with muted amber warmth from the light source. Restrained, not saturated.
 - Example: ![Layered source files](ai:macro photograph of translucent vellum sheets stacked slightly out of register on a matte charcoal surface, single warm amber key light raking from the left, visible paper fibre and dust motes, shallow depth of field, 35mm film grain, off-centre)
 
 Reply with ONLY a JSON object, no markdown fence, no prose:
-{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "abstract image prompt for the cover, same rules as above", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;
+{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "material photograph prompt for the cover, same rules as above, using a material none of the in-post images use", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;
 
 /** GET — danh sách chủ đề radar đã gợi ý (mới nhất trước). */
 export async function GET(req: Request) {

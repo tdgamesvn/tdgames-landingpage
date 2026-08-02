@@ -2446,3 +2446,29 @@ prompt chứ không phải sửa trang.
   Kết quả khác hẳn — nhìn như ảnh chụp studio.
 - Chất liệu phải khác nhau giữa các ảnh trong cùng bài (cover + 2 ảnh đầu ra
   bị giống nhau, đều là giấy xếp lớp). Luật này CHƯA test thực tế.
+
+### Demo lần 2 — luật "mỗi ảnh một chất liệu" (cùng session, 2026-08-02)
+Dựng thêm 1 bài từ topic "Checklist brief" (e6866f55) qua đúng luồng thật:
+`/interview` → điền câu trả lời → POST `/topics`. 201, ~110s, 3 ảnh inline +
+cover, `imageErrors: []`, tỉ lệ 1536x1024 đủ 4 ảnh.
+
+**Lỗi bắt được:** cover và ảnh inline đầu tiên gần như trùng nhau (đều vellum
+trong mờ xếp lệch trên charcoal). Luật "khác chất liệu" giữ được giữa các ảnh
+inline nhưng KHÔNG giữ giữa cover và inline — vì `cover_prompt` là field JSON
+riêng, AI viết tách rời nên không nhớ đã tiêu chất liệu nào.
+
+**Fix (prompt-only, `topics/route.ts`):** bắt mỗi prompt mở đầu bằng tên chất
+liệu, cấm tái dùng chất liệu đã tiêu (cover tính là một), kèm whitelist 10 chất
+liệu. Sửa luôn chữ "abstract image prompt" ở field `cover_prompt` — nó mâu thuẫn
+với hướng nhiếp ảnh đặt ở trên.
+
+**Verify:** chạy lại cùng payload → linen (cover) / vellum / băng keo giấy /
+bụi than chì. 4 chất liệu, 4 góc khác nhau, `imageErrors: []`.
+
+Bài giữ lại: `the-7-point-brief-we-use-to-cut-art-revisions-and-delays`
+(`published: false`). Bản demo lần 1 đã xoá khỏi `blog_posts`.
+
+**Còn lấn cấn:** ảnh bụi than chì nền gần trắng, sáng hơn hẳn 3 ảnh kia — lệch
+palette near-black của web. Chưa sửa; nếu lặp lại thì thêm luật "nền phải tối"
+vào STYLE_SUFFIX. Ngoài ra `ADMIN_SECRET` trong `.env.local` KHÁC secret thật
+(secret thật nằm ở `app_settings.admin_secret` trong DB) — curl bằng env var sẽ 401.
