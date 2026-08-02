@@ -2395,3 +2395,10 @@ không sót placeholder `ai:`. Guard verify: 401 no-key, 400 prompt cấm
 
 Dọn sau test: xoá 2 bài draft test, revert 2 topic về `status: new`. 3 ảnh AI
 rác còn trên R2 (`ai/2026/08/`) — vô hại, để `media_assets` giữ row.
+
+### Sửa tiếp: số ảnh linh hoạt (cùng session)
+Sếp bác cái "exactly 2": bài dài cần nhiều ảnh, bài ngắn cần ít. Prompt đổi
+thành "0 to 4, as many as the post genuinely needs" + trần cứng `slice(0, 4)`.
+Test 2 bài (~1100 từ, dạng so sánh) đều ra 2 ảnh — hợp lý cho độ dài đó, nhưng
+CHƯA chứng minh được số ảnh thật sự biến thiên theo bài. Nếu cần chắc chắn thì
+phải cho chọn số ảnh ở UI /admin.

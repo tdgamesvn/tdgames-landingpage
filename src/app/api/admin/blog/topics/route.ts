@@ -20,7 +20,7 @@ Rules:
 - Voice: first-person plural ("we"), practical, specific, no hype, no emoji.
 - Use ## subheads. Do NOT repeat the title as an H1 inside the body.
 - End with one short paragraph on how TD Games works with clients on this — a soft close, not a sales pitch.
-- MANDATORY: insert exactly 2 illustrations in the body (not 1, not 3), spread far apart (never adjacent to each other, never before the first subhead), each on its own line as: ![short alt text, max 8 words](ai:IMAGE PROMPT)
+- Illustrations: insert as many as the post genuinely needs, 0 to 4. A long pipeline/comparison piece earns 3-4; a short opinion piece may want one or none. Never illustrate a section just to fill it, and never place two next to each other or one before the first subhead. Each on its own line as: ![short alt text, max 8 words](ai:IMAGE PROMPT)
 
 IMAGE PROMPT rules (these images are machine-generated, so they must never look like our artists' work):
 - Abstract only: backgrounds, textures, gradients, geometric/conceptual diagrams of the pipeline idea being discussed.
@@ -29,7 +29,7 @@ IMAGE PROMPT rules (these images are machine-generated, so they must never look 
 - Example: ![Layered VFX passes](ai:abstract stacked translucent amber and charcoal planes on near-black, soft volumetric light, minimal, cinematic)
 
 Reply with ONLY a JSON object, no markdown fence, no prose:
-{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "abstract image prompt for the cover, same rules as above", "content_md": "the markdown, containing exactly 2 ![alt](ai:prompt) images"}`;
+{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "abstract image prompt for the cover, same rules as above", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;
 
 /** GET — danh sách chủ đề radar đã gợi ý (mới nhất trước). */
 export async function GET(req: Request) {
@@ -169,7 +169,7 @@ export async function POST(req: Request) {
 
   // Sinh cover + ảnh trong bài song song. Sếp replace lại ở form /admin nếu
   // không ưng. Ảnh nào lỗi thì bỏ ảnh đó — không bao giờ vứt cả bài đã viết.
-  const inline = findAiImages(draft.content_md).slice(0, 3); // ponytail: chặn AI spam ảnh
+  const inline = findAiImages(draft.content_md).slice(0, 4); // ponytail: trần cứng, AI tự chọn số ảnh dưới mức này
   const [cover, ...images] = await Promise.all([
     draft.cover_prompt ? generateAiImage(draft.cover_prompt, "1536x1024") : null,
     ...inline.map((img) => generateAiImage(img.prompt, "1536x1024")),
