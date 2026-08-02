@@ -6,10 +6,15 @@ import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { BANNED, BANNED_UI } from "@/lib/blog-ai";
 
+// Hướng nhiếp ảnh chất liệu thật. "abstract artwork" + glow cho ra đúng kiểu
+// wallpaper AI ai cũng nhận ra; grain + lệch tâm + thiếu sáng tự nhiên thì không.
 const STYLE_SUFFIX =
-  ", abstract background artwork, no characters, no people, no creatures, no faces" +
+  ", photographic still life of real materials, single directional light, shallow depth of field" +
+  ", visible film grain and surface texture, off-centre composition, muted amber and charcoal palette" +
+  ", no characters, no people, no creatures, no faces" +
   ", absolutely no text, no letters, no numbers, no words, no labels, no logos, no watermarks" +
-  ", no user interface, no cards, no buttons, no charts with figures";
+  ", no user interface, no cards, no buttons, no charts with figures" +
+  ", not a 3d render, no neon glow, no lens flare, no perfect symmetry, no swirling energy ribbons";
 
 export const SIZES = new Set(["1024x1024", "1536x1024", "1024x1536"]);
 

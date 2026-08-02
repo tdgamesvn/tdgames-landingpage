@@ -2430,3 +2430,19 @@ sạch chữ, đúng amber/near-black, `imageErrors: []`.
    asset...") giữa bài viết cho khách nước ngoài. Prompt cũ chỉ bảo "write in
    ENGLISH" mà không cấm quote nguyên văn. Đã cấm rõ: dịch ý ra tiếng Anh và
    nói như thực hành của mình, không blockquote ghi chú gốc.
+
+### Sếp yêu cầu: format đẹp + ảnh bớt "mùi AI"
+Đọc `src/app/blog/[slug]/page.tsx` trước: render bằng `marked`, đã có CSS sẵn
+cho bảng, blockquote, hr, list, code — renderer đủ giàu, nên format là việc của
+prompt chứ không phải sửa trang.
+
+- **Format**: prompt thêm mục Formatting — đoạn 2-4 câu, đúng 1 bảng so sánh
+  (2-3 cột, 4-7 dòng), 1 checklist ≤7 mục, bold 1 cụm/section, 1 blockquote
+  tiếng Anh, subhead là câu khẳng định cụ thể chứ không phải "Introduction".
+- **Ảnh**: đổi hẳn hướng từ "abstract artwork" (ra wallpaper AI ai cũng nhận ra)
+  sang NHIẾP ẢNH CHẤT LIỆU THẬT — macro giấy/vellum/kim loại/kính mờ, 1 nguồn
+  sáng xiên, DOF nông, film grain, lệch tâm. STYLE_SUFFIX cấm thêm: 3d render,
+  neon glow, lens flare, đối xứng hoàn hảo, dải năng lượng xoáy.
+  Kết quả khác hẳn — nhìn như ảnh chụp studio.
+- Chất liệu phải khác nhau giữa các ảnh trong cùng bài (cover + 2 ảnh đầu ra
+  bị giống nhau, đều là giấy xếp lớp). Luật này CHƯA test thực tế.

@@ -19,16 +19,27 @@ Rules:
 - NEVER quote the CEO's Vietnamese words verbatim. Readers are foreign studios and cannot read Vietnamese. Translate the substance into English prose and state it as our own practice ("We include two revision rounds"), not as a quoted saying. No blockquote of the raw note.
 - 700-1100 words of Markdown. Start with the substance — no "In today's fast-paced games industry" intros.
 - Voice: first-person plural ("we"), practical, specific, no hype, no emoji.
-- Use ## subheads. Do NOT repeat the title as an H1 inside the body.
+- Use ## subheads, phrased as a concrete claim ("Revision rounds cost more than the unit price"), never "Introduction" or "Conclusion". Do NOT repeat the title as an H1 inside the body.
+
+Formatting (the site renders full Markdown — use it, a wall of grey paragraphs looks lazy):
+- Paragraphs of 2-4 sentences. Break up anything longer.
+- Exactly one Markdown table where the post compares options, criteria or trade-offs. Keep it to 2-3 columns and 4-7 rows.
+- One bullet list of short, scannable items (max 7). Not every section needs one.
+- Bold the key term once per section, at most. Never bold a whole sentence.
+- One short blockquote (>) carrying the single most important takeaway, IN ENGLISH, written as our own statement.
+- No horizontal rules, no nested lists, no headings deeper than ###.
 - End with one short paragraph on how TD Games works with clients on this — a soft close, not a sales pitch.
 - Illustrations: insert as many as the post genuinely needs, 0 to 4. A long pipeline/comparison piece earns 3-4; a short opinion piece may want one or none. Never illustrate a section just to fill it, and never place two next to each other or one before the first subhead. Each on its own line as: ![short alt text, max 8 words](ai:IMAGE PROMPT)
 
-IMAGE PROMPT rules (these images are machine-generated, so they must never look like our artists' work):
-- Abstract only: backgrounds, textures, gradients, geometric/conceptual diagrams of the pipeline idea being discussed.
-- FORBIDDEN in image prompts: characters, people, faces, creatures, mascots, portraits, anime, hero/knight/warrior, any word naming a living figure. A prompt containing those words is dropped and the article loses that image.
-- NO TEXT OF ANY KIND: no words, numbers, prices, labels, logos, UI cards, buttons, pricing tables, dashboards or screenshots. The generator renders text well and will invent fake prices that contradict the article. Describe light, material, shape and composition — never a thing that would carry a label.
-- Palette: dark near-black background with amber/orange accents (our brand).
-- Example: ![Layered VFX passes](ai:abstract stacked translucent amber and charcoal planes on near-black, soft volumetric light, minimal, cinematic)
+IMAGE PROMPT rules (these images are machine-generated, so they must never look like our artists' work AND must not look like generic AI wallpaper):
+- Write them as PHOTOGRAPHS of real materials, not as digital artwork. Macro shots of paper, vellum, ground glass, brushed metal, ink, dust in a light beam, stacked card stock, worn desk surfaces.
+- Always include: one directional light source, shallow depth of field, visible grain or fibre, off-centre composition.
+- FORBIDDEN: characters, people, faces, creatures, mascots, portraits, anime, hero/knight/warrior, any word naming a living figure. Also forbidden: neon glow, glossy 3D render, perfect symmetry, swirling energy ribbons, lens flare, sci-fi HUD — that is the look that screams "AI stock image".
+- FORBIDDEN: any text, numbers, prices, labels, logos, UI cards, buttons, pricing tables, dashboards or screenshots. The generator renders text well and will invent fake prices that contradict the article.
+- The material should echo what the section is about — layered sheets for layered cost, a torn edge for a broken handoff, two surfaces barely overlapping for poor timezone overlap. Suggest the idea through material, never illustrate it literally.
+- Every image in one post must use a DIFFERENT material and a different camera angle from the others AND from the cover. Three shots of stacked paper is one idea repeated, not three illustrations.
+- Palette: near-black and deep charcoal with muted amber warmth from the light source. Restrained, not saturated.
+- Example: ![Layered source files](ai:macro photograph of translucent vellum sheets stacked slightly out of register on a matte charcoal surface, single warm amber key light raking from the left, visible paper fibre and dust motes, shallow depth of field, 35mm film grain, off-centre)
 
 Reply with ONLY a JSON object, no markdown fence, no prose:
 {"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "abstract image prompt for the cover, same rules as above", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;
