@@ -37,6 +37,8 @@ export const COVER_RULES = `COVER IMAGE — extra rules on top of the above, bec
   - One dramatic light source doing real work — warm amber rim light, glow spilling from a window or a fire, light raking across a surface. Flat even lighting reads as a stock asset.
   - A hero angle: low and looking up for scale, or a wide cinematic establishing shot. Not a flat catalogue view.
   - Atmosphere sells it: haze, drifting dust, mist, rain, embers, light shafts. One such effect, not all of them.
+  - Prefer a living hero subject — a character or a creature, large and centred — over a townscape, a prop shelf or a diagram. At 200px a face and a silhouette still read; a wide scene of small buildings or floating objects turns to grey mush and gets scrolled past.
+  - The page behind the card is near-black. An image that is ALSO near-black everywhere reads as an empty rectangle in the list. Keep the palette low-key, but the focal subject must be clearly brighter than the page — a glow, a fire, a rim light carrying the eye to it.
   - Give it a mood that matches the post's argument — a calm confident scene for a "how we work" piece, tension and contrast for a "this goes wrong" piece.
 - Still relevant, never decorative. Arresting does not mean generic epic fantasy: the scene must be something a reader of THIS post would recognise as belonging to it. If the post compares two options, show two, in one composition.
 - End the cover prompt with "no text, no lettering, no signage". The generator invents signs and banners unprompted, and half a made-up word sliced by the thumbnail crop is the first thing a reader sees on the blog list. In-post images can take the risk; the cover cannot.`;

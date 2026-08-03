@@ -2875,3 +2875,27 @@ Sếp chốt "1 tuần dọn 1 lần".
 
 Cron VPS giờ có 3 job của project này: blog-radar (8h/ngày), clean-orphan (CN 4h),
 certbot renew (3h/ngày, không thuộc project).
+
+## 2026-08-03 (session — render lại 2 cover blog + siết COVER_RULES)
+### Task
+Sếp gửi ảnh 2 card blog: cover cũ tối mù, chủ thể là cảnh vật / collage đồ vật →
+ở thumbnail ~200px không đọc ra gì, không hút click.
+
+### Work Done
+- Phát hiện `COVER_RULES` ("MAKE IT ARRESTING", commit 15b9007) đã có sẵn — 2 ảnh
+  cũ render TRƯỚC commit đó nên chưa ăn rule. Không viết rule mới từ đầu.
+- Render lại 2 cover qua `POST /api/admin/generate-image` (prod, noText):
+  - why-vietnam-...: nữ chiến binh Việt + rồng lửa, low angle, sương + đèn lồng
+    → `ai/2026/08/515a9e15-...webp`
+  - outsource-or-in-house-...: 1 hero split-light amber/teal (2 lựa chọn trong 1
+    khung) → `ai/2026/08/0d3a64bb-...webp`
+- UPDATE `blog_posts.cover_image` cho 2 bài (Supabase MCP).
+- `src/lib/blog-ai.ts` — thêm 2 luật cover: (1) ưu tiên nhân vật/sinh vật làm chủ
+  thể thay vì cảnh vật/collage; (2) chủ thể phải sáng rõ hơn nền trang near-black.
+
+### Gotcha
+`ADMIN_SECRET` trong `.env.local` KHÔNG phải key thật — `requireAdmin` ưu tiên row
+`app_settings.admin_secret` trong DB. Gọi API admin phải lấy key từ đó.
+
+### Next Step
+Commit + push (CI tự deploy). Ảnh đã live ngay vì cover đọc thẳng từ DB.
