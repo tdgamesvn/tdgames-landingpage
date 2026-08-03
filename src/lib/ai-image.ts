@@ -20,8 +20,20 @@ export const SIZES = new Set(["1024x1024", "1536x1024", "1024x1536"]);
 
 export type AiImageResult = { url: string; key: string } | { error: string; status: number };
 
-export async function generateAiImage(prompt: string, size = "1536x1024"): Promise<AiImageResult> {
+// Sếp chốt 2026-08-03: COVER không bao giờ có chữ. Generator tự đẻ biển hiệu
+// ("SEAWARD HARBOR") dù prompt không xin, mà cover bị crop vuông ở card /blog →
+// chữ bịa đứt nửa là thứ đầu tiên người đọc thấy. Cưỡng chế ở đây chứ không
+// trông vào việc AI có nhớ viết vào prompt hay không. Ảnh trong bài vẫn tự do.
+const NO_TEXT_SUFFIX =
+  ", absolutely no text, no lettering, no words, no signage, no banners with writing, no logos, no watermarks";
+
+export async function generateAiImage(
+  prompt: string,
+  size = "1536x1024",
+  opts: { noText?: boolean } = {},
+): Promise<AiImageResult> {
   if (!prompt) return { error: "prompt is required", status: 400 };
+  if (opts.noText) prompt += NO_TEXT_SUFFIX;
 
   const baseUrl = process.env.AI_BASE_URL;
   const apiKey = process.env.AI_API_KEY;

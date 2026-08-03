@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
 
-  const result = await generateAiImage(prompt, body.size);
+  const result = await generateAiImage(prompt, body.size, { noText: body.noText === true });
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }

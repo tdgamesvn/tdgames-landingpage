@@ -659,8 +659,9 @@ function BlogForm({
         return;
       }
 
-      const jobs: { prompt: string; apply: (url: string) => void }[] = [];
-      if (plan.cover_prompt) jobs.push({ prompt: plan.cover_prompt, apply: (u) => set("cover_image", u) });
+      const jobs: { prompt: string; noText?: boolean; apply: (url: string) => void }[] = [];
+      if (plan.cover_prompt)
+        jobs.push({ prompt: plan.cover_prompt, noText: true, apply: (u) => set("cover_image", u) });
       let md = form.content_md;
       for (const img of plan.images as { raw: string; alt: string; prompt: string }[]) {
         jobs.push({
@@ -683,7 +684,7 @@ function BlogForm({
           const r = await fetch("/api/admin/generate-image", {
             method: "POST",
             headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: job.prompt, size: "1536x1024" }),
+            body: JSON.stringify({ prompt: job.prompt, size: "1536x1024", noText: job.noText }),
           });
           const d = await r.json();
           if (d.url) job.apply(d.url);

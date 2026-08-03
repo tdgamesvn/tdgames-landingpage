@@ -236,7 +236,7 @@ export async function POST(req: Request) {
   const inline = found.slice(0, wantImages);
   const extra = found.slice(wantImages);
   const [cover, ...images] = await Promise.all([
-    draft.cover_prompt ? generateAiImage(draft.cover_prompt, "1536x1024") : null,
+    draft.cover_prompt ? generateAiImage(draft.cover_prompt, "1536x1024", { noText: true }) : null,
     ...inline.map((img) => generateAiImage(img.prompt, "1536x1024")),
   ]);
   const imageErrors: string[] = [];

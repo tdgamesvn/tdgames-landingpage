@@ -2828,3 +2828,19 @@ NHƯNG generator tự đẻ chữ "SEAWARD HARBOR" trên biển hiệu dù promp
 là ngoại lệ hẹp cho riêng cover, không đụng tới quyết định "bỏ giới hạn nội dung"
 2026-08-03 — ảnh trong bài vẫn tự do. Lý do: chữ bịa bị crop nửa chừng trên
 thumbnail là thứ đầu tiên người đọc thấy ở danh sách blog.
+
+### Cover không chữ — cưỡng chế bằng code (2026-08-03)
+Sếp chốt "cover không chữ". Trước đó mới chỉ là hướng dẫn mềm trong `COVER_RULES`
+(AI phải tự nhớ viết "no text" vào prompt). Giờ ép ở tầng code:
+
+`generateAiImage(prompt, size, { noText })` — bật thì append `NO_TEXT_SUFFIX`
+("absolutely no text, no lettering, no words, no signage, no banners with writing,
+no logos, no watermarks"). 3 chỗ bật cờ:
+- `blog/topics` — cover lúc dựng bài mới
+- `BlogTab.reimage()` — cover khi bấm nút Render lại ảnh
+- `generate-image` route đọc `body.noText`, mặc định false
+
+Ảnh trong bài và prompt sếp gõ tay ở tab Media KHÔNG bật → vẫn vẽ chữ được nếu
+muốn. Không đụng quyết định "bỏ giới hạn nội dung ảnh AI" 2026-08-03; đây là ngoại
+lệ hẹp cho riêng cover vì cover bị crop vuông ở card /blog, chữ bịa đứt nửa là thứ
+đầu tiên người đọc thấy.
