@@ -2772,3 +2772,20 @@ Chi tiết:
   `scripts/test-blog-ai.mjs`.
 
 `temperature: 0.8` (cao hơn 0.7 lúc dựng bài) vì bấm render lại tức là đang muốn khác đi.
+
+### Fix ảnh AI bị cắt cụt ở mép (2026-08-03)
+Sếp gửi ảnh: lineup 6 character, 2 đứa ngoài cùng bị xẻ đôi ở rìa. Hai nguồn cắt:
+
+1. **Generator bố cục tràn khung** — xin "a row of six characters" thì nó vẽ hàng
+   dài hơn khung. Fix: `FRAMING_SUFFIX` trong `ai-image.ts` (suffix duy nhất còn
+   lại sau khi bỏ STYLE_SUFFIX, và nó nói về KHUNG HÌNH chứ không phải nội dung):
+   "full composition fits entirely inside the frame with generous empty margin on
+   all four sides, nothing cropped at the edges, centred and complete".
+2. **`sharp` tự cắt** — backend phớt lờ `size`, trả ảnh sai tỉ lệ, `fit: "cover"`
+   cắt phần thừa (ảnh dọc ép sang ngang = mất đầu/chân). Đổi `fit: "contain"` +
+   `background: #0a0a0a` trùng nền web nên phần đệm không lộ.
+
+Thêm 1 dòng vào `IMAGE_RULES`: nhắc AI xin ít phần tử có lề thay vì hàng dài.
+
+Verify: render lại đúng ảnh đó với prompt 3 nhân vật → trọn vẹn, lề đều 4 phía,
+1536x1024. Đã swap URL vào bài `c7a41d96` bằng SQL.
