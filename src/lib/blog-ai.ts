@@ -31,7 +31,8 @@ export const COVER_RULES = `COVER IMAGE — extra rules on top of the above, bec
 - So the whole idea must live in the CENTRE SQUARE of the frame. Treat the left and right thirds as decoration that will be cut off. Never put the main subject off to one side, and never build the image around a wide row of small items — a row of six props becomes two props in the thumbnail.
 - One clear focal subject, large in frame, on a simple uncluttered background. Busy scenes with many small elements turn to mush at 200px.
 - Strong silhouette and high contrast against the dark background, so the thumbnail still reads at a glance in a list of cards.
-- No important detail near any edge — top, bottom, left or right — one of the three crops will eat it.`;
+- No important detail near any edge — top, bottom, left or right — one of the three crops will eat it.
+- End the cover prompt with "no text, no lettering, no signage". The generator invents signs and banners unprompted, and half a made-up word sliced by the thumbnail crop is the first thing a reader sees on the blog list. In-post images can take the risk; the cover cannot.`;
 
 /** Ảnh markdown thường (đã có URL thật) — dùng khi render lại ảnh bài cũ. */
 export function findMarkdownImages(md: string) {

@@ -2809,3 +2809,22 @@ không nằm nguyên trong bài.
 
 Log `[blog draft] bốc N ảnh cho "<topic>"` để sau này soi pm2 log xem phân bố thật.
 Route reimage KHÔNG random — render lại là thay ảnh đúng vị trí cũ, giữ nguyên số.
+
+### Luật riêng cho ảnh cover blog (2026-08-03)
+Sếp chỉ ra cover còn dùng làm thumbnail ở /blog + trang chủ, không chỉ hero trang bài.
+
+Cover render 1536x1024 nhưng hiển thị 3 tỉ lệ, tất cả `object-cover` (CẮT, không co):
+- card /blog + home: ~210x180 (gần vuông) → mất 2 bên
+- hero trang bài: full width h-96 → mất trên/dưới
+
+Thêm `COVER_RULES` (blog-ai.ts, dùng chung cho topics + reimage): chủ thể phải nằm
+gọn trong ô vuông giữa khung, một tiêu điểm lớn, silhouette rõ + tương phản cao để
+đọc được ở 200px, nền đơn giản, không chi tiết sát mép, cấm hàng ngang nhiều món
+nhỏ (6 prop thành 2 prop trong thumbnail).
+
+Verify: render thử cover rồi tự crop về đúng 7:6 như card → chủ thể trọn vẹn.
+NHƯNG generator tự đẻ chữ "SEAWARD HARBOR" trên biển hiệu dù prompt không xin.
+→ thêm 1 dòng: cover phải kết thúc bằng "no text, no lettering, no signage". Đây
+là ngoại lệ hẹp cho riêng cover, không đụng tới quyết định "bỏ giới hạn nội dung"
+2026-08-03 — ảnh trong bài vẫn tự do. Lý do: chữ bịa bị crop nửa chừng trên
+thumbnail là thứ đầu tiên người đọc thấy ở danh sách blog.
