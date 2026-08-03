@@ -2693,3 +2693,25 @@ Thêm `post_id` vào type `BlogTopic`.
 
 Không đụng server: route vẫn `maxDuration = 300`. Nếu sau này muốn bỏ hẳn cảnh chờ,
 hướng đúng là tách thành job nền + poll trạng thái ngay từ đầu, nhưng chưa cần.
+
+### Ảnh AI trong blog: bỏ luật ẩn dụ, vẽ đúng thứ bài nói (2026-08-03)
+Sếp: "AI tạo ảnh chán quá, chả liên quan gì bài viết".
+
+**Root cause — do prompt, không phải model.** `DRAFT_PROMPT` trong
+`api/admin/blog/topics/route.ts` có dòng *"The image should echo what the section is
+about — layered sheets for layered cost... Suggest the idea, never illustrate it
+literally"*. AI làm đúng lời: 6 ảnh gần nhất trong `media_assets.ai_prompt` đều là
+"macro photograph of translucent vellum sheets on charcoal" — giấy nến chồng lớp,
+ẩn dụ cho chi phí nhiều tầng. Ảnh đẹp, không sai luật, nhưng vô nghĩa với người đọc.
+
+**Fix (prompt-only):** đổi khối IMAGE PROMPT rules →
+- Cấm ẩn dụ (nêu đích danh vellum/ink/torn edge/stacked paper là stock filler).
+- Style mặc định = hand-painted 2D mobile game art, tức đúng thứ studio bán:
+  parallax layer, prop sheet, tileset, VFX frame sequence, animation keyframe strip.
+  Chỉ dùng schematic khi đoạn đó nói về quy trình/so sánh, không có artifact để vẽ.
+- Thêm 3 ví dụ mới (2 game art + 1 schematic), bỏ ví dụ vellum vì AI copy y nguyên.
+- Giữ nguyên cấm character (DECISIONS 2026-07-31 — bán artist vẽ tay), giữ cấm chữ/số.
+
+Đã hỏi sếp 2 câu (hướng ảnh / có nới cấm character) nhưng sếp chưa chọn → ship mặc
+định "vẽ đúng thứ bài nói + giữ cấm character". Hai hướng còn lại nếu sau này cần:
+dùng artwork thật từ `media_assets` thay ảnh AI, hoặc chỉ giữ 1 ảnh cover.
