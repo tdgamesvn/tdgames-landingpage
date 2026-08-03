@@ -2862,3 +2862,16 @@ Sếp phát hiện ảnh cũ đã thay vẫn nằm trong tab Media. Đo thật: 
 
 Phải chạy trên VPS (R2 creds ở đó). CHƯA chạy --apply — chờ sếp duyệt.
 Ghi chú: danh sách bảng hard-code, thêm bảng chứa URL ảnh thì phải cập nhật script.
+
+### Dọn ảnh mồ côi: chạy lần đầu + cron hàng tuần (2026-08-03)
+Sếp chốt "1 tuần dọn 1 lần".
+
+- Cron VPS: `0 4 * * 0` (Chủ nhật 4h sáng, tránh certbot 3h và blog-radar 8h)
+  → `scripts/clean-orphan-ai-images.mjs --apply >> logs/clean-ai-images.log`
+- Chạy lần đầu: **xoá 38 ảnh**. Kiểm lại: 31 ảnh AI · 22 đang dùng · 0 mồ côi ·
+  9 mới dưới 60 phút. Ảnh đang dùng vẫn HTTP 200.
+- Lưu ý: ảnh vừa xoá vẫn trả 200 vì Cloudflare còn cache CDN — file trên R2 đã
+  mất, cache tự hết hạn. Không ảnh hưởng vì ảnh mồ côi không được link ở đâu.
+
+Cron VPS giờ có 3 job của project này: blog-radar (8h/ngày), clean-orphan (CN 4h),
+certbot renew (3h/ngày, không thuộc project).
