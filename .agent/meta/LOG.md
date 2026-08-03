@@ -1,5 +1,24 @@
 # LOG
 
+## 2026-08-03 (session — glow cho logo header)
+### Task
+Sếp: "Logo tdgames này cho glow nhẹ cho nổi bật và đẹp hơn chút".
+
+### Work Done
+- `src/components/site-header.tsx` — thêm `[filter:drop-shadow(...)]` 2 lớp màu
+  amber `rgba(245,158,11,…)` cho `<Image>` logo (6px/0.35 + 20px/0.18), hover
+  đậm hơn (8px/0.55 + 26px/0.28), `transition-[filter] duration-300`.
+  Dùng drop-shadow thay box-shadow để glow ôm hình dạng PNG.
+
+### Result
+Chỉ đổi className, impact LOW (0 caller). Logo tách khỏi nền hero video tối.
+Logo footer chưa đụng.
+
+### Next Step
+Không có.
+
+---
+
 ## 2026-08-03 (session — fix flash media cũ ở hero trang chủ)
 ### Task
 Sếp: "load mới vẫn hiện video nền + card cũ ~1s rồi mới đổi sang cái mới".

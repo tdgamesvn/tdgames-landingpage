@@ -269,7 +269,7 @@ export default function SiteHeader() {
               alt=""
               width={260}
               height={76}
-              className="h-[46px] w-auto object-contain object-left md:h-[54px] lg:h-[58px]"
+              className="h-[46px] w-auto object-contain object-left transition-[filter] duration-300 [filter:drop-shadow(0_0_6px_rgba(245,158,11,0.35))_drop-shadow(0_0_20px_rgba(245,158,11,0.18))] hover:[filter:drop-shadow(0_0_8px_rgba(245,158,11,0.55))_drop-shadow(0_0_26px_rgba(245,158,11,0.28))] md:h-[54px] lg:h-[58px]"
               priority
             />
           </Link>
