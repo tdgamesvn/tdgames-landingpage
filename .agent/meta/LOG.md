@@ -2642,3 +2642,14 @@ Sếp: "chạy ngang đang nhanh quá". Chỉ đổi duration, không sửa logi
   luôn code chết: `FILTERS`, `FilterType`, `getPrimaryFilter()`, state `activeFilter`,
   memo `counts`. `filteredRoles` chỉ còn lọc theo search. Tag trên card giữ nguyên.
 `npx tsc --noEmit` sạch.
+
+### Hero mobile: title to hơn, subtitle + button nhỏ lại (2026-08-03)
+Sếp: "subtitle và button hơi to, title lại hơi nhỏ" (ảnh mobile ~390px).
+`src/components/home-hero.tsx`:
+- Container hero: `width: min(88%, max(var(--layout-width,75%), 340px))` — thay
+  media query bằng min/max, mobile nới 75% → ~87% để title có chỗ, desktop giữ
+  nguyên giá trị admin set (verify @1440: container 1091px, không đổi).
+- Title cap `8vw` → `9vw` (390px: 31 → 35px; text line 1 rộng 329/340 → không cắt).
+- Subtitle: `min(var(--hero-subtitle-size,16px), 3.4vw)` → mobile 13.3px, desktop 16px.
+- 2 button hero: `px-22 py-12 text-14` + `md:` giữ nguyên 32/16/18px.
+Verify bằng Playwright @390 và @1440 (đo computed style, không đoán).

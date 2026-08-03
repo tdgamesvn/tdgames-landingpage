@@ -550,9 +550,10 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
       </div>
 
       {/* Main Container */}
+      {/* ponytail: min/max thay media query — mobile nới lên ~88% (sàn 340px) để title có chỗ, desktop giữ nguyên var admin */}
       <motion.div
         className="relative z-10 mx-auto flex min-h-screen items-center pt-24 md:pt-0"
-        style={{ width: "var(--layout-width, 75%)", opacity: contentOpacity }}
+        style={{ width: "min(88%, max(var(--layout-width, 75%), 340px))", opacity: contentOpacity }}
       >
         <motion.div className="w-full" style={{ y: contentY }}>
           {/* LEFT: Text Content with Y-axis control */}
@@ -565,7 +566,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 className={`leading-[1] font-black ${changaOne.className}`}
                 style={{
                   // ponytail: 8vw cap giữ chữ trong khung trên mobile, desktop vẫn ăn var của admin
-                  fontSize: "min(var(--hero-title-size, 100px), 8vw)",
+                  fontSize: "min(var(--hero-title-size, 100px), 9vw)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
@@ -579,7 +580,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className={`leading-[1] font-black ${changaOne.className}`}
                 style={{
-                  fontSize: "min(var(--hero-title-size, 100px), 8vw)",
+                  fontSize: "min(var(--hero-title-size, 100px), 9vw)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
@@ -597,7 +598,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
               <h3
                 className="font-bold tracking-[0.16em] uppercase"
                 style={{
-                  fontSize: "var(--hero-subtitle-size, 16px)",
+                  fontSize: "min(var(--hero-subtitle-size, 16px), 3.4vw)",
                   color: "var(--hero-subtitle-color, #f59e0b)"
                 }}
               >
@@ -617,7 +618,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
               <div className="flex flex-wrap items-center gap-3">
                 <Link
                   href="/contact"
-                  className="inline-block rounded-xl border-2 px-[32px] py-[16px] text-[18px] font-bold uppercase tracking-wider text-black transition-colors duration-300 hover:bg-transparent hover:text-white"
+                  className="inline-block rounded-xl border-2 px-[22px] py-[12px] text-[14px] md:px-[32px] md:py-[16px] md:text-[18px] font-bold uppercase tracking-wider text-black transition-colors duration-300 hover:bg-transparent hover:text-white"
                   style={{
                     backgroundColor: "var(--hero-btn-bg, #f59e0b)",
                     borderColor: "var(--hero-btn-bg, #f59e0b)",
@@ -627,7 +628,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 </Link>
                 <Link
                   href="/portfolio"
-                  className="inline-block rounded-xl border-2 border-white/25 px-[32px] py-[16px] text-[18px] font-bold uppercase tracking-wider text-white/90 transition-colors duration-300 hover:border-white/50 hover:bg-white/10"
+                  className="inline-block rounded-xl border-2 border-white/25 px-[22px] py-[12px] text-[14px] md:px-[32px] md:py-[16px] md:text-[18px] font-bold uppercase tracking-wider text-white/90 transition-colors duration-300 hover:border-white/50 hover:bg-white/10"
                 >
                   View Our Work
                 </Link>

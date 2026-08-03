@@ -26,7 +26,7 @@ Playwright viewport 393×852: title fit 2 dòng, không cắt, không đè logo;
 `scrollWidth == clientWidth` (không có overflow ngang). Impact LOW (0 caller).
 
 ### Next Step
-Chưa commit/push — chờ sếp duyệt.
+Sếp duyệt → commit + push main (CI tự deploy).
 
 ---
 
