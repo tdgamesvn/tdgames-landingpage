@@ -2672,3 +2672,24 @@ Sếp yêu cầu 3 thứ trên panel "Chủ đề radar gợi ý" (/admin → Bl
    `startInPreview` → nhảy thẳng tab Preview thay vì tab Write.
 `npm run typecheck` sạch. 2 lỗi eslint `react-hooks/set-state-in-effect` là có sẵn
 trên main từ trước, không đụng tới.
+
+### Fix: "Dựng bản nháp" báo Network error dù bài đã dựng xong (2026-08-03)
+Sếp bấm "Dựng bản nháp", spinner chạy xong thì panel báo **Network error**, không thấy
+bài đâu. Thực tế bài ĐÃ nằm trong DB (`why-vietnam-is-a-strong-outsourcing-base-...`,
+15:03, published=false) và `blog_topics.status` đã là `drafted`.
+
+**Root cause:** tdgamestudio.com chạy sau Cloudflare proxy (`server: cloudflare`) →
+timeout cứng **100s**. Route `POST /api/admin/blog/topics` mất 2-3 phút (AI viết +
+sinh tối đa 5 ảnh). CF trả 524 HTML lúc 100s → `res.json()` throw → rơi vào
+`catch { setMsg("Network error") }`. Origin (PM2/Node) không bị huỷ, vẫn viết xong
+và insert bình thường → mọi lần "lỗi" đều để lại một bài mồ côi trong Blog Posts.
+
+**Fix (client-only, `BlogTab.tsx`):** thêm `waitForDraft(topicId, prevPostId)` — khi
+fetch throw thì poll `GET /api/admin/blog/topics` mỗi 5s trong 4 phút, thấy `post_id`
+mới (khác `post_id` cũ để không nhận nhầm bài của lần dựng trước) thì lấy bài từ
+`GET /api/admin/blog` và `onDrafted()` như đường thành công. Message đổi thành
+"Kết nối bị ngắt giữa chừng (Cloudflare 100s) — đang chờ AI viết xong, đừng đóng tab…".
+Thêm `post_id` vào type `BlogTopic`.
+
+Không đụng server: route vẫn `maxDuration = 300`. Nếu sau này muốn bỏ hẳn cảnh chờ,
+hướng đúng là tách thành job nền + poll trạng thái ngay từ đầu, nhưng chưa cần.

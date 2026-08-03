@@ -37,6 +37,7 @@ type BlogTopic = {
   ceo_note: string | null;
   /** Buổi phỏng vấn đã lưu — có thì sếp trả lời dở hôm trước, hydrate lại. */
   interview: { q: string; why: string; a: string }[] | null;
+  post_id: string | null;
   created_at: string;
 };
 
@@ -372,6 +373,35 @@ function RadarTopics({
     return runDraft(t, filled?.length ? { id: t.id, answers: filled } : { id: t.id, ceo_note: note });
   }
 
+  /**
+   * Chờ bài xuất hiện trong DB. Cloudflare cắt kết nối ở 100s nhưng server vẫn
+   * viết xong và lưu bài — không poll thì sếp thấy "Network error" dù bài đã có.
+   */
+  async function waitForDraft(topicId: string, prevPostId: string | null) {
+    for (let i = 0; i < 48; i++) {
+      // ponytail: poll 5s x 4 phút; đủ cho maxDuration 300s của route
+      await new Promise((r) => setTimeout(r, 5000));
+      try {
+        const res = await fetch("/api/admin/blog/topics", {
+          headers: { "x-admin-key": adminKey },
+          cache: "no-store",
+        });
+        const topic = ((await res.json()).topics as BlogTopic[])?.find((x) => x.id === topicId);
+        const postId = topic?.post_id;
+        if (!postId || postId === prevPostId) continue;
+        const posts = await fetch("/api/admin/blog", {
+          headers: { "x-admin-key": adminKey },
+          cache: "no-store",
+        });
+        const post = ((await posts.json()).posts as BlogPost[])?.find((p) => p.id === postId);
+        if (post) return post;
+      } catch {
+        /* mạng chập chờn — vòng sau thử lại */
+      }
+    }
+    return null;
+  }
+
   async function runDraft(t: BlogTopic, body: Record<string, unknown>) {
     setBusyId(t.id);
     setMsg("AI đang dựng bài + sinh ảnh, mất khoảng 2-3 phút…");
@@ -394,7 +424,16 @@ function RadarTopics({
       );
       onDrafted(data.post);
     } catch {
-      setMsg("Network error");
+      // Không phân biệt được "CF cắt ở 100s" với "mất mạng" từ phía client →
+      // cứ chờ DB, có bài thì mở, hết 4 phút không thấy mới báo lỗi.
+      setMsg("Kết nối bị ngắt giữa chừng (Cloudflare 100s) — đang chờ AI viết xong, đừng đóng tab…");
+      const post = await waitForDraft(t.id, t.post_id ?? null);
+      if (post) {
+        setMsg("");
+        onDrafted(post);
+      } else {
+        setMsg("Không thấy bài sau 4 phút — kiểm tra danh sách Blog Posts bên dưới trước khi dựng lại.");
+      }
     } finally {
       setBusyId(null);
     }
