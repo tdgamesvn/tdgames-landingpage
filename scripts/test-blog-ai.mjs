@@ -1,6 +1,18 @@
 // Self-check cho src/lib/blog-ai.ts — chạy: node scripts/test-blog-ai.mjs
 import assert from "node:assert/strict";
-import { slugify, nextFreeSlug, extractJson } from "../src/lib/blog-ai.ts";
+import { slugify, nextFreeSlug, extractJson, findMarkdownImages } from "../src/lib/blog-ai.ts";
+
+// render lại ảnh: chỉ bắt ảnh đã có URL thật, bỏ qua ![alt](ai:prompt) chưa render
+{
+  const md = "intro\n\n![Prop sheet](https://cdn.x/a.webp)\n\n![Chưa render](ai:some prompt)\n\ntext ![B](https://cdn.x/b.webp) end";
+  const found = findMarkdownImages(md);
+  assert.equal(found.length, 2, "phải bỏ qua ai: prompt chưa render");
+  assert.equal(found[0].alt, "Prop sheet");
+  assert.equal(found[0].raw, "![Prop sheet](https://cdn.x/a.webp)");
+  assert.equal(found[1].url, "https://cdn.x/b.webp");
+  // raw phải replace được nguyên vẹn, không thì client thay nhầm chỗ
+  assert.ok(md.includes(found[0].raw));
+}
 
 assert.equal(slugify("Outsourcing Game Art: A Guide"), "outsourcing-game-art-a-guide");
 assert.equal(slugify("Đồng bộ animation & nhạc"), "dong-bo-animation-nhac");

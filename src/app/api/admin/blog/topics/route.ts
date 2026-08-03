@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
-import { slugify, nextFreeSlug, extractJson, findAiImages, applyAiImages } from "@/lib/blog-ai";
+import {
+  slugify,
+  nextFreeSlug,
+  extractJson,
+  findAiImages,
+  applyAiImages,
+  IMAGE_RULES,
+} from "@/lib/blog-ai";
 import { generateAiImage } from "@/lib/ai-image";
 
 export const runtime = "nodejs";
@@ -31,16 +38,7 @@ Formatting (the site renders full Markdown — use it, a wall of grey paragraphs
 - End with one short paragraph on how TD Games works with clients on this — a soft close, not a sales pitch.
 - Illustrations: insert as many as the post genuinely needs, 0 to 4. A long pipeline/comparison piece earns 3-4; a short opinion piece may want one or none. Never illustrate a section just to fill it, and never place two next to each other or one before the first subhead. Each on its own line as: ![short alt text, max 8 words](ai:IMAGE PROMPT)
 
-IMAGE PROMPT rules — you have full creative freedom. There is no allow-list and no forbidden subject. Pick whatever image genuinely serves THIS section: characters, environments, props, tilesets, VFX frames, an animation strip, a workshop scene, a schematic, a photograph, a diorama, an abstract study. Judge every prompt by one question: does a reader who sees only this image understand what this part of the post is about?
-- Write the prompt like an art director briefing an illustrator: subject first, then composition, lighting and finish. Be specific — "three depth layers of a cliffside parallax with distant ruins" beats "game art background".
-- Do NOT settle for a vague metaphor when the section has something concrete to show. Stacked paper for "layered cost" and torn edges for "a broken handoff" are stock filler; show the actual asset, step, or scene instead. Use an abstract or metaphorical image only when the section truly has no concrete subject.
-- Decide a render style ONCE per post, state it at the start of every prompt ("hand-painted 2D mobile game art of...", "cinematic photograph of...", "clean schematic diagram of..."), and keep every image in the post — cover included — in that one style. Mixing styles reads as two different articles.
-- Every image shows a DIFFERENT subject from the others and from the cover.
-- The site is near-black, so images that sit on a dark, low-key, restrained palette (charcoal with amber warmth) blend best. Break that when the post genuinely calls for it, but never for no reason.
-- One hard caution, not a ban: the generator renders text very well and will happily invent prices, percentages and labels that contradict the article. If you ask for any text, numbers or a UI in an image, you own the risk — prefer wordless compositions unless the text is the whole point.
-- Example: ![Parallax background layers](ai:hand-painted 2D mobile game art, side-scroller parallax background of a cliff edge and distant ruins separated into three depth layers, casual stylised painterly shading, amber key light and cool rim, near-black sky)
-- Example: ![Impact effect frame sequence](ai:hand-painted 2D mobile game art, a row of five frames of a fire impact effect breaking apart into embers and smoke, stylised game VFX shapes, amber and charcoal, near-black background)
-- Example: ![Art production pipeline stages](ai:clean schematic diagram of five connected production stages flowing left to right as simple geometric blocks and arrows, thin amber lines on near-black)
+${IMAGE_RULES}
 
 Reply with ONLY a JSON object, no markdown fence, no prose:
 {"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "cover image prompt, same rules and same chosen style as the in-post images, but a subject none of them use", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;

@@ -2,6 +2,31 @@
 // STYLE_SUFFIX). Sếp chốt AI tự quyết ảnh, miễn hợp bài. Bài luôn published:false
 // nên sếp vẫn là chốt chặn cuối trước khi đăng.
 
+/**
+ * Luật viết prompt ảnh — dùng chung cho lúc dựng bài mới (api/admin/blog/topics)
+ * và lúc render lại ảnh bài cũ (api/admin/blog/reimage). Để ở một chỗ, không thì
+ * sửa một bên là hai luồng ra hai gu ảnh khác nhau.
+ */
+export const IMAGE_RULES = `IMAGE PROMPT rules — you have full creative freedom. There is no allow-list and no forbidden subject. Pick whatever image genuinely serves THIS section: characters, environments, props, tilesets, VFX frames, an animation strip, a workshop scene, a schematic, a photograph, a diorama, an abstract study. Judge every prompt by one question: does a reader who sees only this image understand what this part of the post is about?
+- Write the prompt like an art director briefing an illustrator: subject first, then composition, lighting and finish. Be specific — "three depth layers of a cliffside parallax with distant ruins" beats "game art background".
+- Do NOT settle for a vague metaphor when the section has something concrete to show. Stacked paper for "layered cost" and torn edges for "a broken handoff" are stock filler; show the actual asset, step, or scene instead. Use an abstract or metaphorical image only when the section truly has no concrete subject.
+- Decide a render style ONCE per post, state it at the start of every prompt ("hand-painted 2D mobile game art of...", "cinematic photograph of...", "clean schematic diagram of..."), and keep every image in the post — cover included — in that one style. Mixing styles reads as two different articles.
+- Every image shows a DIFFERENT subject from the others and from the cover.
+- The site is near-black, so images that sit on a dark, low-key, restrained palette (charcoal with amber warmth) blend best. Break that when the post genuinely calls for it, but never for no reason.
+- One hard caution, not a ban: the generator renders text very well and will happily invent prices, percentages and labels that contradict the article. If you ask for any text, numbers or a UI in an image, you own the risk — prefer wordless compositions unless the text is the whole point.
+- Example: hand-painted 2D mobile game art, side-scroller parallax background of a cliff edge and distant ruins separated into three depth layers, casual stylised painterly shading, amber key light and cool rim, near-black sky
+- Example: hand-painted 2D mobile game art, a row of five frames of a fire impact effect breaking apart into embers and smoke, stylised game VFX shapes, amber and charcoal, near-black background
+- Example: clean schematic diagram of five connected production stages flowing left to right as simple geometric blocks and arrows, thin amber lines on near-black`;
+
+/** Ảnh markdown thường (đã có URL thật) — dùng khi render lại ảnh bài cũ. */
+export function findMarkdownImages(md: string) {
+  return [...md.matchAll(/!\[([^\]]*)\]\((?!ai:)([^)\s]+)\)/g)].map((m) => ({
+    raw: m[0],
+    alt: m[1],
+    url: m[2],
+  }));
+}
+
 // Helpers thuần cho luồng "radar → bản nháp". Tách ra khỏi route để test được
 // bằng scripts/test-blog-ai.mjs (không cần dựng server hay gọi AI).
 

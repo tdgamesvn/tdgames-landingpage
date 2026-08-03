@@ -631,9 +631,78 @@ function BlogForm({
   const [previewTab, setPreviewTab] = useState<"write" | "preview">(
     startInPreview ? "preview" : "write",
   );
+  const [reimaging, setReimaging] = useState(false);
+  const [reimageMsg, setReimageMsg] = useState("");
 
   function set<K extends keyof FormData>(k: K, v: FormData[K]) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  /**
+   * Render lại toàn bộ ảnh của bài: AI soạn prompt mới (1 request), rồi client
+   * gọi generate-image cho từng ảnh. Từng bước dưới 100s nên không dính
+   * Cloudflare timeout. Chỉ đổi form — sếp xem Preview rồi mới bấm Save.
+   */
+  async function reimage() {
+    setReimaging(true);
+    setMsg("");
+    setReimageMsg("AI đang soạn prompt…");
+    try {
+      const res = await fetch("/api/admin/blog/reimage", {
+        method: "POST",
+        headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ title: form.title, excerpt: form.excerpt, content_md: form.content_md }),
+      });
+      const plan = await res.json();
+      if (!res.ok) {
+        setMsg(plan.error ?? "Không soạn được prompt ảnh");
+        return;
+      }
+
+      const jobs: { prompt: string; apply: (url: string) => void }[] = [];
+      if (plan.cover_prompt) jobs.push({ prompt: plan.cover_prompt, apply: (u) => set("cover_image", u) });
+      let md = form.content_md;
+      for (const img of plan.images as { raw: string; alt: string; prompt: string }[]) {
+        jobs.push({
+          prompt: img.prompt,
+          apply: (u) => {
+            md = md.replace(img.raw, `![${img.alt}](${u})`);
+            set("content_md", md); // ghi dần: ảnh nào xong thấy ngay ở Preview
+          },
+        });
+      }
+      if (!jobs.length) {
+        setMsg("Bài không có ảnh nào để render.");
+        return;
+      }
+
+      const failed: string[] = [];
+      for (const [i, job] of jobs.entries()) {
+        setReimageMsg(`Đang render ${i + 1}/${jobs.length}…`);
+        try {
+          const r = await fetch("/api/admin/generate-image", {
+            method: "POST",
+            headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: job.prompt, size: "1536x1024" }),
+          });
+          const d = await r.json();
+          if (d.url) job.apply(d.url);
+          else failed.push(d.error ?? "lỗi không rõ");
+        } catch {
+          // Ảnh này CF cắt hoặc mạng rớt — bỏ qua, ảnh cũ giữ nguyên.
+          failed.push("kết nối bị ngắt");
+        }
+      }
+      setPreviewTab("preview");
+      setMsg(
+        failed.length
+          ? `Xong ${jobs.length - failed.length}/${jobs.length} ảnh, ${failed.length} lỗi (${failed[0]}). Bấm Save nếu ưng.`
+          : `Đã render ${jobs.length} ảnh mới — xem Preview rồi bấm Save.`,
+      );
+    } finally {
+      setReimaging(false);
+      setReimageMsg("");
+    }
   }
 
   function handleTitle(v: string) {
@@ -765,6 +834,18 @@ function BlogForm({
       <div className="space-y-2">
         <div className="flex items-center gap-1 border-b border-white/10 pb-2">
           <label className="mr-auto text-xs font-medium text-white/60">Content (Markdown)</label>
+          <button
+            onClick={() => {
+              if (reimaging) return;
+              if (confirm("AI soạn prompt mới rồi render lại toàn bộ ảnh trong bài (kể cả cover). Ảnh cũ vẫn nằm trên CDN. Mất vài phút. Tiếp?"))
+                void reimage();
+            }}
+            disabled={reimaging || !form.content_md}
+            className="mr-2 flex items-center gap-2 rounded bg-amber-600/80 px-3 py-1 text-xs font-medium hover:bg-amber-500 disabled:opacity-50"
+          >
+            {reimaging && <Spinner />}
+            {reimaging ? reimageMsg || "Đang render…" : "Render lại ảnh"}
+          </button>
           <button
             onClick={() => setPreviewTab("write")}
             className={`rounded px-3 py-1 text-xs font-medium transition-colors ${

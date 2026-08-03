@@ -2750,3 +2750,25 @@ Swap URL + alt text vào `blog_posts` bằng SQL. Bài vẫn `published: false`.
 
 Ghi chú cho sau: chưa có nút "render lại ảnh" trong /admin — muốn đổi ảnh vẫn phải
 paste URL tay ở BlogForm hoặc chạy script. Chỉ làm nếu sếp thấy phải sửa thường xuyên.
+
+### Nút "Render lại ảnh" trong /admin → Blog (2026-08-03)
+Sếp yêu cầu sau khi phải nhờ em chạy script tay để đổi ảnh bài cũ.
+
+**Kiến trúc 2 bước** (cố ý, vì Cloudflare cắt ở 100s):
+1. `POST /api/admin/blog/reimage` — AI đọc cả bài, soạn prompt + alt mới cho từng
+   ảnh đang có, KHÔNG render. ~30-60s. Trả `{cover_prompt, images:[{raw, alt, prompt}]}`,
+   trong đó `raw` là chuỗi markdown ảnh cũ để client replace không lệch index.
+2. Client lặp từng prompt gọi `POST /api/admin/generate-image` (~60s/ảnh). Mỗi
+   request đều dưới 100s → không cần polling, lại hiện được "Đang render 2/4".
+
+Chi tiết:
+- Nút amber cạnh tab Write/Preview, có confirm + Spinner + đếm tiến độ.
+- Ảnh xong tới đâu ghi vào form tới đó → xem Preview thấy ngay, không phải chờ hết.
+- Chỉ sửa form, KHÔNG tự save — sếp xem rồi bấm Save. Ảnh cũ vẫn nằm trên R2.
+- Ảnh lỗi giữa chừng thì giữ ảnh cũ, báo "Xong 3/4, 1 lỗi".
+- `IMAGE_RULES` tách ra `src/lib/blog-ai.ts`, dùng chung cho cả dựng bài mới và
+  render lại — không thì sửa một bên là hai luồng ra hai gu ảnh khác nhau.
+- Thêm `findMarkdownImages()` (bỏ qua `![](ai:...)` chưa render) + self-check trong
+  `scripts/test-blog-ai.mjs`.
+
+`temperature: 0.8` (cao hơn 0.7 lúc dựng bài) vì bấm render lại tức là đang muốn khác đi.
