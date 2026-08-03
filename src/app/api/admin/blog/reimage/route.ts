@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { extractJson, findMarkdownImages, IMAGE_RULES } from "@/lib/blog-ai";
+import { extractJson, findMarkdownImages, IMAGE_RULES, COVER_RULES } from "@/lib/blog-ai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +35,8 @@ export async function POST(req: Request) {
 A blog post already exists. Your job is to write BETTER image prompts for it. Read the post, look at where each image sits, and brief an illustrator for that exact spot.
 
 ${IMAGE_RULES}
+
+${COVER_RULES}
 
 The post currently has ${existing.length} in-post image slot(s), listed below in order with their current alt text and the markdown around them. Write one fresh prompt per slot, in the SAME order. Also write a new alt text (max 8 words, plain description of what the image shows).
 

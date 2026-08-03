@@ -19,6 +19,20 @@ export const IMAGE_RULES = `IMAGE PROMPT rules — you have full creative freedo
 - Example: hand-painted 2D mobile game art, a row of five frames of a fire impact effect breaking apart into embers and smoke, stylised game VFX shapes, amber and charcoal, near-black background
 - Example: clean schematic diagram of five connected production stages flowing left to right as simple geometric blocks and arrows, thin amber lines on near-black`;
 
+/**
+ * Luật riêng cho ảnh cover. Cover render 1536x1024 nhưng hiển thị 3 chỗ với 3 tỉ
+ * lệ khác nhau, tất cả đều `object-cover` (tức là CẮT, không co):
+ *   - card danh sách /blog + trang chủ: ~210x180, gần vuông → cắt mất 2 bên
+ *   - hero trang bài: full width, h-96 → cắt mất trên/dưới
+ * Nên chủ thể phải nằm gọn trong ô vuông giữa ảnh, và bé như avatar vẫn đọc ra.
+ */
+export const COVER_RULES = `COVER IMAGE — extra rules on top of the above, because the cover is reused at three different crops:
+- It is displayed full-width at the top of the article, AND as a small near-square thumbnail (about 200x180) in the blog list and on the homepage. The browser crops, never shrinks: the square version keeps only the MIDDLE of the image and throws both sides away.
+- So the whole idea must live in the CENTRE SQUARE of the frame. Treat the left and right thirds as decoration that will be cut off. Never put the main subject off to one side, and never build the image around a wide row of small items — a row of six props becomes two props in the thumbnail.
+- One clear focal subject, large in frame, on a simple uncluttered background. Busy scenes with many small elements turn to mush at 200px.
+- Strong silhouette and high contrast against the dark background, so the thumbnail still reads at a glance in a list of cards.
+- No important detail near any edge — top, bottom, left or right — one of the three crops will eat it.`;
+
 /** Ảnh markdown thường (đã có URL thật) — dùng khi render lại ảnh bài cũ. */
 export function findMarkdownImages(md: string) {
   return [...md.matchAll(/!\[([^\]]*)\]\((?!ai:)([^)\s]+)\)/g)].map((m) => ({
