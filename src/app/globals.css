@@ -78,7 +78,7 @@ html {
   }
 }
 .animate-marquee {
-  animation: marquee 20s linear infinite;
+  animation: marquee 36s linear infinite;
 }
 
 /* Scan line animation for cyber cards */

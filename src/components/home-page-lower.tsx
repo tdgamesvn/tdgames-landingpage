@@ -1071,7 +1071,7 @@ export default function HomePageLower() {
               <motion.div
                 className="relative flex w-max items-center gap-20 px-10 md:gap-28 md:px-20"
                 animate={{ x: ["0%", "-50%"] }}
-                transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+                transition={{ repeat: Infinity, duration: 55, ease: "linear" }}
               >
                 {/* nhân đôi danh sách để marquee -50% nối liền mạch */}
                 {[...clientLogos, ...clientLogos].map((src, idx) => (

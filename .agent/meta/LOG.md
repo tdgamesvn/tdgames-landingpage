@@ -2581,3 +2581,9 @@ tag Pipeline/Guide (kỳ vọng ra material photo) + 1 bài tag 2D Art/VFX (kỳ
 game art), xem AI có đổi style theo nội dung thật không, và cover có cùng style
 với inline không (rủi ro chính: `cover_prompt` là field JSON riêng — đúng chỗ
 từng hỏng ở luật chất liệu).
+
+### Chậm lại marquee ở TRUST OUR CLIENTS + Life at TD Games (2026-08-03)
+Sếp: "chạy ngang đang nhanh quá". Chỉ đổi duration, không sửa logic:
+- `src/components/home-page-lower.tsx` — logo marquee (framer-motion) 30s → 55s.
+- `src/app/globals.css` — `.animate-marquee` (careers "Life at TD Games") 20s → 36s.
+  Class này chỉ dùng ở `careers-client.tsx:742`, không ảnh hưởng chỗ khác.
