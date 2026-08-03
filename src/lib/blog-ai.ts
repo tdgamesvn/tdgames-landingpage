@@ -32,6 +32,13 @@ export const COVER_RULES = `COVER IMAGE — extra rules on top of the above, bec
 - One clear focal subject, large in frame, on a simple uncluttered background. Busy scenes with many small elements turn to mush at 200px.
 - Strong silhouette and high contrast against the dark background, so the thumbnail still reads at a glance in a list of cards.
 - No important detail near any edge — top, bottom, left or right — one of the three crops will eat it.
+- MAKE IT ARRESTING. The cover is the first and often only thing a reader sees — it has to earn the click against every other card on the page. Brief it as key art / a splash screen, never as a neutral illustration:
+  - Depth, not a flat cutout. Build a foreground, a midground and a background so the eye travels into the image. Objects floating on an empty black field look like clip art.
+  - One dramatic light source doing real work — warm amber rim light, glow spilling from a window or a fire, light raking across a surface. Flat even lighting reads as a stock asset.
+  - A hero angle: low and looking up for scale, or a wide cinematic establishing shot. Not a flat catalogue view.
+  - Atmosphere sells it: haze, drifting dust, mist, rain, embers, light shafts. One such effect, not all of them.
+  - Give it a mood that matches the post's argument — a calm confident scene for a "how we work" piece, tension and contrast for a "this goes wrong" piece.
+- Still relevant, never decorative. Arresting does not mean generic epic fantasy: the scene must be something a reader of THIS post would recognise as belonging to it. If the post compares two options, show two, in one composition.
 - End the cover prompt with "no text, no lettering, no signage". The generator invents signs and banners unprompted, and half a made-up word sliced by the thumbnail crop is the first thing a reader sees on the blog list. In-post images can take the risk; the cover cannot.`;
 
 /** Ảnh markdown thường (đã có URL thật) — dùng khi render lại ảnh bài cũ. */
