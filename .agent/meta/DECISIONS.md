@@ -150,3 +150,24 @@ an toàn; muốn cover để trống như cũ thì bỏ `cover_prompt` trong pro
 
 Tách `src/lib/ai-image.ts` khỏi route để dùng chung — route generate-image giờ
 chỉ là vỏ auth + map status.
+
+## 2026-08-03 — Ảnh AI blog: bỏ hết giới hạn nội dung
+Đảo ngược ranh giới ở entry 2026-07-31 và phụ lục 2026-08-01. Sếp chốt: **AI tự
+quyết ảnh, bất kỳ nội dung gì miễn hợp bài viết** — kể cả character.
+
+Đã xoá khỏi code:
+- `BANNED` / `BANNED_UI` regex trong `src/lib/blog-ai.ts` (chặn character, art
+  asset, UI/bảng giá) — xoá hẳn, không còn ai import.
+- `STYLE_SUFFIX` trong `src/lib/ai-image.ts` (ép palette near-black + cấm
+  character/chữ/UI) — prompt giờ đi thẳng tới generator, nguyên văn.
+- Khối test `BANNED_UI` trong `scripts/test-blog-ai.mjs`.
+
+Định hướng còn lại nằm ở `DRAFT_PROMPT` (`api/admin/blog/topics/route.ts`), dạng
+**mềm** — AI đè được: ưu tiên ảnh cụ thể thay vì ẩn dụ, giữ một style xuyên bài,
+nền tối hợp layout, và một cảnh báo (không phải lệnh cấm) rằng generator render
+chữ rất tốt nên sẽ bịa giá/nhãn sai nếu prompt đòi chữ.
+
+Lý do chấp nhận rủi ro thương hiệu ở 07-31 ("bán artist vẽ tay mà minh hoạ bằng
+character AI = tự nói máy thay được artist"): sếp cân nhắc và chọn đổi. Chốt chặn
+còn lại là con người — route luôn insert `published: false`, mọi bài phải qua tay
+sếp duyệt ở /admin trước khi lên production.

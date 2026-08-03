@@ -4,18 +4,10 @@ import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { BANNED, BANNED_UI } from "@/lib/blog-ai";
 
-// Render style do prompt tự quyết (bám nội dung từng bài) — suffix chỉ còn 2 thứ
-// KHÔNG được thả: palette hợp layout near-black của web, và mấy luật cứng
-// (không nhân vật theo DECISIONS 2026-07-31, không chữ vì generator bịa số).
-// ponytail: nếu muốn thả cả palette thì xoá dòng đầu, nhưng ảnh nền trắng
-// nằm giữa bài near-black là vỡ mắt — đã tốn 1 session sửa.
-const STYLE_SUFFIX =
-  ", dark near-black background, low-key lighting, muted amber and charcoal palette, never a white or bright background" +
-  ", no characters, no people, no creatures, no faces" +
-  ", absolutely no text, no letters, no numbers, no words, no labels, no logos, no watermarks" +
-  ", no user interface, no cards, no buttons, no charts with figures";
+// DECISIONS 2026-08-03: prompt đi thẳng tới generator, không suffix, không regex
+// chặn. Định hướng ảnh (hợp bài, hợp nền tối) nằm trong DRAFT_PROMPT ở
+// api/admin/blog/topics/route.ts — mềm, AI đè được khi bài cần khác.
 
 export const SIZES = new Set(["1024x1024", "1536x1024", "1024x1536"]);
 
@@ -23,19 +15,6 @@ export type AiImageResult = { url: string; key: string } | { error: string; stat
 
 export async function generateAiImage(prompt: string, size = "1536x1024"): Promise<AiImageResult> {
   if (!prompt) return { error: "prompt is required", status: 400 };
-  if (BANNED.test(prompt)) {
-    return {
-      error:
-        "Ảnh AI chỉ dùng cho nền/trừu tượng/sơ đồ. Character và art asset phải do artist vẽ (DECISIONS 2026-07-31).",
-      status: 400,
-    };
-  }
-  if (BANNED_UI.test(prompt)) {
-    return {
-      error: "Prompt đòi vẽ UI/chữ/số — ảnh AI sẽ bịa giá và nhãn sai. Dùng mô tả trừu tượng.",
-      status: 400,
-    };
-  }
 
   const baseUrl = process.env.AI_BASE_URL;
   const apiKey = process.env.AI_API_KEY;
@@ -50,7 +29,7 @@ export async function generateAiImage(prompt: string, size = "1536x1024"): Promi
       headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: process.env.AI_IMAGE_MODEL || "gpt-image-2",
-        prompt: prompt + STYLE_SUFFIX,
+        prompt,
         n: 1,
         size: SIZES.has(size) ? size : "1536x1024",
       }),

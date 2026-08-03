@@ -2715,3 +2715,19 @@ literally"*. AI làm đúng lời: 6 ảnh gần nhất trong `media_assets.ai_p
 Đã hỏi sếp 2 câu (hướng ảnh / có nới cấm character) nhưng sếp chưa chọn → ship mặc
 định "vẽ đúng thứ bài nói + giữ cấm character". Hai hướng còn lại nếu sau này cần:
 dùng artwork thật từ `media_assets` thay ảnh AI, hoặc chỉ giữ 1 ảnh cover.
+
+### Bỏ hết giới hạn nội dung ảnh AI (2026-08-03)
+Tiếp theo phàn nàn "ảnh chán, chả liên quan bài". Sau khi sửa prompt vòng 1
+(126b35e) sếp chốt luôn: bỏ giới hạn, AI tự render bất kỳ ảnh gì miễn hợp bài.
+
+Xoá: `BANNED` + `BANNED_UI` (blog-ai.ts), `STYLE_SUFFIX` + 2 guard 400 trong
+`generateAiImage()` (ai-image.ts), khối test BANNED_UI. Prompt giờ gửi nguyên văn
+tới generator. Ảnh hưởng cả `/api/admin/generate-image` (tab Media) — sếp gõ prompt
+tay cũng không còn bị chặn.
+
+`DRAFT_PROMPT` viết lại khối IMAGE PROMPT rules: nói rõ "full creative freedom,
+no forbidden subject", giữ lại dạng khuyến nghị mềm: ảnh cụ thể > ẩn dụ, một style
+xuyên bài, nền tối hợp layout, và cảnh báo generator bịa giá nếu prompt đòi chữ.
+
+`node scripts/test-blog-ai.mjs` + `tsc --noEmit` sạch. DECISIONS.md có entry mới
+đảo ngược ranh giới 2026-07-31 / 2026-08-01.

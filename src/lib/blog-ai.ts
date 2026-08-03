@@ -1,15 +1,6 @@
-// DECISIONS 2026-07-31 + phụ lục 2026-08-01: TD Games bán dịch vụ artist vẽ tay
-// → ảnh AI chỉ được dùng làm nền/trừu tượng/sơ đồ. Cấm character & art asset.
-export const BANNED =
-  /\b(character|nhân vật|portrait|chân dung|mascot|creature|quái|anime|chibi|waifu|hero|knight|warrior|girl|boy|man|woman|người|face|mặt)\b/i;
-// gpt-image-2 render chữ rất tốt: prompt "pricing tiers" cho ra bảng giá SaaS
-// $19/$49/$99 kèm nút "START FREE TRIAL" — số bịa, mâu thuẫn nội dung bài, và
-// khách đọc tưởng là giá thật. Chặn prompt đòi vẽ UI/bảng biểu có chữ.
-// Chỉ chặn cụm thật sự có nghĩa "vẽ một giao diện" — chặn rộng hơn (ui, text,
-// card, button, number) thì prompt trừu tượng bình thường cũng dính và bài ra
-// không còn ảnh nào. Việc cấm chữ do STYLE_SUFFIX của ai-image.ts lo.
-export const BANNED_UI =
-  /\b(pricing table|price tag|rate card|invoice|receipt|dashboard|screenshot|mockup|landing page|app screen|web page|logo)\b/i;
+// DECISIONS 2026-08-03: bỏ hết chặn nội dung ảnh AI (regex BANNED / BANNED_UI,
+// STYLE_SUFFIX). Sếp chốt AI tự quyết ảnh, miễn hợp bài. Bài luôn published:false
+// nên sếp vẫn là chốt chặn cuối trước khi đăng.
 
 // Helpers thuần cho luồng "radar → bản nháp". Tách ra khỏi route để test được
 // bằng scripts/test-blog-ai.mjs (không cần dựng server hay gọi AI).

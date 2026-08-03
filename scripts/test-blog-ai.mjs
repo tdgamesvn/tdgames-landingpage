@@ -1,6 +1,6 @@
 // Self-check cho src/lib/blog-ai.ts — chạy: node scripts/test-blog-ai.mjs
 import assert from "node:assert/strict";
-import { slugify, nextFreeSlug, extractJson, BANNED_UI } from "../src/lib/blog-ai.ts";
+import { slugify, nextFreeSlug, extractJson } from "../src/lib/blog-ai.ts";
 
 assert.equal(slugify("Outsourcing Game Art: A Guide"), "outsourcing-game-art-a-guide");
 assert.equal(slugify("Đồng bộ animation & nhạc"), "dong-bo-animation-nhac");
@@ -18,15 +18,6 @@ assert.equal(nextFreeSlug("guide", ["guidelines-for-vfx"]), "guide");
 assert.deepEqual(extractJson('```json\n{"title":"A"}\n```'), { title: "A" });
 assert.deepEqual(extractJson('Sure! {"a":[1,2]} hope that helps'), { a: [1, 2] });
 assert.throws(() => extractJson("no json here"), /không trả JSON/);
-
-// prompt đòi vẽ UI/bảng giá → chặn, không thì ảnh bịa giá $19/$49/$99
-for (const bad of ["glowing pricing table", "abstract dashboard glow", "amber logo mark"]) {
-  assert.ok(BANNED_UI.test(bad), `phải chặn: ${bad}`);
-}
-// đừng chặn rộng tới mức prompt trừu tượng bình thường cũng chết
-for (const ok of ["abstract stacked translucent amber planes", "soft volumetric light on charcoal", "layered amber cost structure, abstract", "translucent panels showing revision loops"]) {
-  assert.ok(!BANNED_UI.test(ok), `không được chặn: ${ok}`);
-}
 
 // slug dài phải cắt ở gạch nối, không cụt giữa từ
 const longSlug = slugify("2D Game Art Outsourcing Pricing What Really Drives Cost and Where Hidden Fees Hide");
