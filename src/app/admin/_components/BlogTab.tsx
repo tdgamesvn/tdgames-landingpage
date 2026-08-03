@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { marked } from "marked";
 import type { BlogPost } from "../_lib/types";
 import { ImagePicker } from "./ImagePicker";
@@ -35,6 +35,8 @@ type BlogTopic = {
   score: number | null;
   status: "new" | "picked" | "drafted" | "skipped";
   ceo_note: string | null;
+  /** Buổi phỏng vấn đã lưu — có thì sếp trả lời dở hôm trước, hydrate lại. */
+  interview: { q: string; why: string; a: string }[] | null;
   created_at: string;
 };
 
@@ -66,6 +68,8 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"list" | "form">("list");
   const [editPost, setEditPost] = useState<BlogPost | null>(null);
+  // Bài AI vừa dựng → mở thẳng tab Preview để sếp đọc trước khi sửa.
+  const [startInPreview, setStartInPreview] = useState(false);
 
   /* list -------------------------------------------------------- */
   async function loadPosts() {
@@ -91,11 +95,13 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
 
   function openNew() {
     setEditPost(null);
+    setStartInPreview(false);
     setView("form");
   }
 
   function openEdit(p: BlogPost) {
     setEditPost(p);
+    setStartInPreview(false);
     setView("form");
   }
 
@@ -122,6 +128,7 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
       <BlogForm
         adminKey={adminKey}
         initial={editPost}
+        startInPreview={startInPreview}
         onSaved={() => {
           setView("list");
           void loadPosts();
@@ -139,6 +146,7 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
         onDrafted={(post) => {
           void loadPosts();
           setEditPost(post); // nhảy thẳng vào form để sếp sửa
+          setStartInPreview(true);
           setView("form");
         }}
       />
@@ -232,6 +240,13 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
   );
 }
 
+/** ponytail: vòng xoay CSS thuần — không kéo icon lib chỉ để quay một cái vòng. */
+function Spinner() {
+  return (
+    <span className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+  );
+}
+
 /* ─── Radar topics ───────────────────────────────────────────── */
 function RadarTopics({
   adminKey,
@@ -248,6 +263,8 @@ function RadarTopics({
   // Bộ câu hỏi phỏng vấn theo từng topic + câu trả lời của sếp.
   const [qs, setQs] = useState<Record<string, { q: string; why: string; a?: string }[]>>({});
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
+  const [savedAt, setSavedAt] = useState<Record<string, number>>({});
+  const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   async function load() {
     try {
@@ -256,10 +273,33 @@ function RadarTopics({
         cache: "no-store",
       });
       const data = await res.json();
-      setTopics(data.topics ?? []);
+      const list: BlogTopic[] = data.topics ?? [];
+      setTopics(list);
+      // Phỏng vấn dở từ hôm trước → dựng lại y nguyên.
+      setQs(Object.fromEntries(list.filter((t) => t.interview?.length).map((t) => [t.id, t.interview!])));
+      setAnswers(
+        Object.fromEntries(
+          list.filter((t) => t.interview?.length).map((t) => [t.id, t.interview!.map((x) => x.a ?? "")]),
+        ),
+      );
+      setNotes(Object.fromEntries(list.filter((t) => t.ceo_note).map((t) => [t.id, t.ceo_note!])));
     } catch {
       /* radar chưa chạy lần nào — panel tự ẩn */
     }
+  }
+
+  /** Autosave 1.2s sau lần gõ cuối — không có nút Lưu, sếp cứ đóng tab lúc nào cũng được. */
+  function autosave(topicId: string, body: Record<string, unknown>) {
+    clearTimeout(saveTimers.current[topicId]);
+    saveTimers.current[topicId] = setTimeout(() => {
+      void fetch("/api/admin/blog/topics", {
+        method: "PATCH",
+        headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ id: topicId, ...body }),
+      })
+        .then(() => setSavedAt((m) => ({ ...m, [topicId]: Date.now() })))
+        .catch(() => {});
+    }, 1200);
   }
 
   useEffect(() => {
@@ -302,7 +342,8 @@ function RadarTopics({
         ...m,
         [t.id]: data.questions.map((x: { a?: string }) => x.a ?? ""),
       }));
-      setMsg("AI đã trả lời nháp sẵn — sửa lại chỗ [?] rồi dựng bài.");
+      autosave(t.id, { interview: data.questions });
+      setMsg("AI đã trả lời nháp sẵn — sửa lại chỗ [?] rồi dựng bài. Tự lưu, thoát ra vào lại vẫn còn.");
     } catch {
       setMsg("Lỗi mạng khi soạn câu hỏi");
     } finally {
@@ -310,7 +351,8 @@ function RadarTopics({
     }
   }
 
-  async function draft(t: BlogTopic) {
+  async function draft(t: BlogTopic, auto = false) {
+    if (auto) return runDraft(t, { id: t.id, auto: true });
     const qa = qs[t.id];
     const filled = qa
       ? qa.map((x, i) => ({ q: x.q, a: (answers[t.id]?.[i] ?? "").trim() })).filter((x) => x.a)
@@ -327,15 +369,17 @@ function RadarTopics({
       setMsg("Còn chỗ [?] trong câu trả lời — điền số thật hoặc xoá đi rồi dựng.");
       return;
     }
+    return runDraft(t, filled?.length ? { id: t.id, answers: filled } : { id: t.id, ceo_note: note });
+  }
+
+  async function runDraft(t: BlogTopic, body: Record<string, unknown>) {
     setBusyId(t.id);
     setMsg("AI đang dựng bài + sinh ảnh, mất khoảng 2-3 phút…");
     try {
       const res = await fetch("/api/admin/blog/topics", {
         method: "POST",
         headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
-        body: JSON.stringify(
-          filled?.length ? { id: t.id, answers: filled } : { id: t.id, ceo_note: note },
-        ),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -370,7 +414,13 @@ function RadarTopics({
 
       {open && (
         <div className="space-y-3 border-t border-amber-500/15 p-4">
-          {msg && <p className="text-xs text-amber-300">{msg}</p>}
+          {busyId && (
+            <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              <Spinner />
+              {msg || "AI đang làm việc…"}
+            </div>
+          )}
+          {!busyId && msg && <p className="text-xs text-amber-300">{msg}</p>}
           {pending.map((t) => (
             <div key={t.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
               <div className="flex flex-wrap items-center gap-2">
@@ -408,6 +458,7 @@ function RadarTopics({
                 <div className="mt-3 space-y-3 rounded-md border border-amber-500/20 bg-amber-500/[0.03] p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/80">
                     AI phỏng vấn — đã trả lời nháp sẵn, sếp sửa hoặc dùng luôn
+                    {savedAt[t.id] && <span className="ml-2 normal-case text-white/35">đã lưu ✓</span>}
                   </p>
                   {qs[t.id].map((item, qi) => (
                     <div key={qi}>
@@ -423,6 +474,13 @@ function RadarTopics({
                           setAnswers((m) => {
                             const arr = [...(m[t.id] ?? [])];
                             arr[qi] = e.target.value;
+                            autosave(t.id, {
+                              interview: qs[t.id].map((x, i) => ({
+                                q: x.q,
+                                why: x.why,
+                                a: arr[i] ?? "",
+                              })),
+                            });
                             return { ...m, [t.id]: arr };
                           })
                         }
@@ -436,7 +494,10 @@ function RadarTopics({
               ) : (
                 <textarea
                   value={notes[t.id] ?? ""}
-                  onChange={(e) => setNotes((n) => ({ ...n, [t.id]: e.target.value }))}
+                  onChange={(e) => {
+                    setNotes((n) => ({ ...n, [t.id]: e.target.value }));
+                    autosave(t.id, { ceo_note: e.target.value });
+                  }}
                   rows={3}
                   placeholder="Kể tự do, hoặc bấm “AI phỏng vấn” để được hỏi từng câu một"
                   className="mt-2 w-full resize-y rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm outline-none focus:border-amber-400/50"
@@ -450,15 +511,27 @@ function RadarTopics({
                     className="rounded-md border border-amber-500/40 px-3 py-1.5 text-xs font-medium text-amber-300 hover:bg-amber-500/10 disabled:opacity-40"
                     title="AI hỏi 6 câu để moi chất liệu thật, rồi mới viết"
                   >
-                    {busyId === t.id ? "Đang soạn câu hỏi…" : "AI phỏng vấn"}
+                    {busyId === t.id && <Spinner />}
+                    {busyId === t.id ? " Đang soạn câu hỏi…" : "AI phỏng vấn"}
                   </button>
                 )}
                 <button
                   onClick={() => draft(t)}
                   disabled={busyId !== null}
-                  className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium hover:bg-amber-500 disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium hover:bg-amber-500 disabled:opacity-40"
                 >
+                  {busyId === t.id && <Spinner />}
                   {busyId === t.id ? "Đang dựng…" : "Dựng bản nháp"}
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm("AI tự viết từ chủ đề, không dùng gì sếp nhập. Tiếp?")) void draft(t, true);
+                  }}
+                  disabled={busyId !== null}
+                  className="rounded-md border border-white/15 px-3 py-1.5 text-xs hover:bg-white/10 disabled:opacity-40"
+                  title="Không bổ sung gì — AI viết theo hiểu biết ngành, cấm bịa số liệu"
+                >
+                  AI tự viết
                 </button>
                 <button
                   onClick={() => skip(t)}
@@ -492,11 +565,13 @@ function BlogForm({
   initial,
   onSaved,
   onCancel,
+  startInPreview = false,
 }: {
   adminKey: string;
   initial: BlogPost | null;
   onSaved: () => void;
   onCancel: () => void;
+  startInPreview?: boolean;
 }) {
   const [form, setForm] = useState<FormData>(
     initial
@@ -514,7 +589,9 @@ function BlogForm({
   );
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-  const [previewTab, setPreviewTab] = useState<"write" | "preview">("write");
+  const [previewTab, setPreviewTab] = useState<"write" | "preview">(
+    startInPreview ? "preview" : "write",
+  );
 
   function set<K extends keyof FormData>(k: K, v: FormData[K]) {
     setForm((f) => ({ ...f, [k]: v }));

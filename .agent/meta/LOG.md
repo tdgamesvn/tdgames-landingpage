@@ -2653,3 +2653,22 @@ Sếp: "subtitle và button hơi to, title lại hơi nhỏ" (ảnh mobile ~390p
 - Subtitle: `min(var(--hero-subtitle-size,16px), 3.4vw)` → mobile 13.3px, desktop 16px.
 - 2 button hero: `px-22 py-12 text-14` + `md:` giữ nguyên 32/16/18px.
 Verify bằng Playwright @390 và @1440 (đo computed style, không đoán).
+
+### Blog radar: lưu phỏng vấn dở, AI tự viết, spinner + auto preview (2026-08-03)
+Sếp yêu cầu 3 thứ trên panel "Chủ đề radar gợi ý" (/admin → Blog):
+1. **Lưu câu trả lời phỏng vấn realtime** — trước đây `qs`/`answers` chỉ nằm trong
+   React state, reload là mất, không trả lời nhiều hôm được.
+   - Migration `20260803000000_blog_topics_interview.sql`: `blog_topics.interview jsonb`
+     (`[{q, why, a}]`, `a` = câu trả lời mới nhất, đè bản nháp AI). Đã apply lên Supabase.
+   - `PATCH /api/admin/blog/topics` nhận thêm `interview` + `ceo_note`, build patch
+     object theo field có mặt (trước chỉ nhận `status`, bắt buộc).
+   - `BlogTab.tsx`: `autosave()` debounce 1.2s sau lần gõ cuối (không có nút Lưu),
+     `load()` hydrate lại `qs`/`answers`/`notes` từ DB. Có nhãn "đã lưu ✓".
+2. **AI toàn quyền viết** — nút "AI tự viết" → POST `{id, auto:true}`, server bỏ
+   check 40 ký tự và dùng `DRAFT_PROMPT + AUTO_SUFFIX` (cấm bịa số liệu / tên khách /
+   case study, viết theo chuẩn ngành). Có confirm trước khi chạy.
+3. **UX khi dựng** — `<Spinner>` CSS thuần (không thêm lib) trong button + banner
+   "AI đang làm việc…" phía trên panel; dựng xong `onDrafted` mở `BlogForm` với
+   `startInPreview` → nhảy thẳng tab Preview thay vì tab Write.
+`npm run typecheck` sạch. 2 lỗi eslint `react-hooks/set-state-in-effect` là có sẵn
+trên main từ trước, không đụng tới.

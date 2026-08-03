@@ -45,6 +45,18 @@ IMAGE PROMPT rules:
 Reply with ONLY a JSON object, no markdown fence, no prose:
 {"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "cover image prompt, same rules and same chosen style as the in-post images, but a subject none of them use", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;
 
+/**
+ * Dùng khi sếp bấm "AI tự viết" — không có chất liệu thật nào từ CEO.
+ * Bài vẫn phải đăng được, nên siết chặt: cấm bịa số liệu và case study.
+ */
+const AUTO_SUFFIX = `
+
+NO CEO INPUT FOR THIS POST. Write from the topic alone.
+- Use industry-standard practice and reasoning that any experienced 2D game art outsourcing studio could stand behind.
+- NEVER invent numbers, prices, turnaround times, percentages, client names, project names, team sizes, incidents or case studies. Not one.
+- Where a specific figure would normally go, write the trade-off or the range-free principle instead ("pricing depends on asset complexity and revision policy"), not a made-up figure.
+- Keep the same structure, formatting and image rules above.`;
+
 /** GET — danh sách chủ đề radar đã gợi ý (mới nhất trước). */
 export async function GET(req: Request) {
   const authError = await requireAdmin(req);
@@ -65,18 +77,34 @@ export async function GET(req: Request) {
   }
 }
 
-/** PATCH — đổi trạng thái chủ đề (dùng để bỏ qua chủ đề không thích). */
+/**
+ * PATCH — cập nhật chủ đề: đổi trạng thái (bỏ qua), hoặc lưu buổi phỏng vấn /
+ * ghi chú đang viết dở. Client autosave sau mỗi lần gõ → sếp trả lời nhiều hôm,
+ * thoát ra vào lại vẫn còn nguyên.
+ */
 export async function PATCH(req: Request) {
   const authError = await requireAdmin(req);
   if (authError) return authError;
 
   try {
-    const { id, status } = await req.json();
-    if (!id || !["new", "picked", "skipped"].includes(status)) {
-      return NextResponse.json({ error: "id and valid status are required" }, { status: 400 });
+    const { id, status, interview, ceo_note } = await req.json();
+    if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+
+    const patch: Record<string, unknown> = {};
+    if (status !== undefined) {
+      if (!["new", "picked", "skipped"].includes(status)) {
+        return NextResponse.json({ error: "invalid status" }, { status: 400 });
+      }
+      patch.status = status;
     }
+    if (interview !== undefined) patch.interview = interview;
+    if (ceo_note !== undefined) patch.ceo_note = String(ceo_note);
+    if (!Object.keys(patch).length) {
+      return NextResponse.json({ error: "nothing to update" }, { status: 400 });
+    }
+
     const supabase = getSupabaseAdmin();
-    const { error } = await supabase.from("blog_topics").update({ status }).eq("id", id);
+    const { error } = await supabase.from("blog_topics").update(patch).eq("id", id);
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -97,7 +125,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "AI_BASE_URL / AI_API_KEY not configured" }, { status: 500 });
   }
 
-  const { id, ceo_note, answers } = await req.json();
+  const { id, ceo_note, answers, auto } = await req.json();
   if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 
   // Chấp nhận cả 2 đường: bộ hỏi-đáp từ khâu phỏng vấn, hoặc một ghi chú tự do
@@ -109,7 +137,8 @@ export async function POST(req: Request) {
         .join("\n\n")
     : String(ceo_note ?? "");
 
-  if (!note || note.trim().length < 40) {
+  // auto = sếp không bổ sung gì, giao AI toàn quyền viết từ chủ đề.
+  if (!auto && (!note || note.trim().length < 40)) {
     // Không có chất liệu thật thì bài sẽ là generic content — đúng thứ Google phạt.
     return NextResponse.json(
       { error: "Cần ít nhất 40 ký tự trải nghiệm thật để AI có cái mà dựng bài" },
@@ -141,7 +170,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: DRAFT_PROMPT },
+          { role: "system", content: note.trim() ? DRAFT_PROMPT : DRAFT_PROMPT + AUTO_SUFFIX },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,
