@@ -6,6 +6,8 @@
 //   node --env-file=.env.local scripts/clean-orphan-ai-images.mjs          # dry-run
 //   node --env-file=.env.local scripts/clean-orphan-ai-images.mjs --apply  # xoá thật
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import fs from "node:fs";
+import path from "node:path";
 
 const APPLY = process.argv.includes("--apply");
 
@@ -41,6 +43,25 @@ for (const table of TABLES_TO_SCAN) {
     // Bảng không tồn tại thì bỏ qua; bảng lỗi mạng thì DỪNG, không được đoán bừa.
     if (!String(e.message).includes("42P01") && !String(e.message).includes("404")) throw e;
     console.log(`  bỏ qua ${table} (không có bảng)`);
+  }
+}
+
+// DB chưa đủ: sếp có thể dán URL ảnh AI thẳng vào site.json hoặc một component.
+// Quét luôn source, không thì script tự tin xoá mất ảnh đang hiển thị trên web.
+function scanDir(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name !== "node_modules" && entry.name !== ".next" && entry.name !== ".git") scanDir(full);
+    } else if (/\.(tsx?|jsx?|json|md|mdx|css)$/.test(entry.name)) {
+      haystack += fs.readFileSync(full, "utf8");
+    }
+  }
+}
+for (const dir of ["src", "public"]) {
+  if (fs.existsSync(dir)) {
+    scanDir(dir);
+    console.log(`  đã quét ${dir}/`);
   }
 }
 
