@@ -2789,3 +2789,23 @@ Thêm 1 dòng vào `IMAGE_RULES`: nhắc AI xin ít phần tử có lề thay v�
 
 Verify: render lại đúng ảnh đó với prompt 3 nhân vật → trọn vẹn, lề đều 4 phía,
 1536x1024. Đã swap URL vào bài `c7a41d96` bằng SQL.
+
+### Random số ảnh mỗi bài blog (2026-08-03)
+Sếp: "bài nào cũng cố định 4 ảnh". Đúng — prompt ghi "0 to 4, as many as the post
+needs" nhưng LLM cho khoảng thì gần như luôn chọn kịch trần.
+
+Fix: **server bốc số trước, ép AI viết đúng số đó.** `DRAFT_PROMPT` const → hàm
+`draftPrompt(imageCount)`; `IMAGE_COUNT_POOL = [1,2,2,2,3,3,3,4]` nghiêng về 2-3
+(bài 700-1100 chữ nhét 4 ảnh là loãng), không bao giờ bốc 0. Phân bố thực đo 8000
+lần: 1→12.5%, 2→36%, 3→39%, 4→12.5%.
+
+Prompt đổi thành "insert EXACTLY N in-post images — not more, not fewer... With
+only N slots, spend them on the sections where a picture explains something words
+struggle with", và dòng schema JSON cũng nói "exactly N".
+
+Chống AI cãi lệnh: `findAiImages()` cắt `slice(0, wantImages)`, phần dư đưa xuống
+`applyAiImages` với `url: null` để placeholder `![alt](ai:prompt)` bị xoá sạch chứ
+không nằm nguyên trong bài.
+
+Log `[blog draft] bốc N ảnh cho "<topic>"` để sau này soi pm2 log xem phân bố thật.
+Route reimage KHÔNG random — render lại là thay ảnh đúng vị trí cũ, giữ nguyên số.

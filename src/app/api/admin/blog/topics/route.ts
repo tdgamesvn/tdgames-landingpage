@@ -15,7 +15,19 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const DRAFT_PROMPT = `You are the content editor of TD Games Studio — a Vietnam-based studio doing 2D game art, Spine animation and VFX outsourcing for game studios abroad.
+/**
+ * Số ảnh trong bài, bốc ngẫu nhiên phía server.
+ *
+ * Để AI tự quyết ("0 to 4, as many as the post needs") thì bài nào cũng ra kịch
+ * trần — LLM luôn chọn max khi được cho một khoảng. Bốc số trước rồi bắt nó viết
+ * đúng số đó mới thật sự có bài ít bài nhiều.
+ * ponytail: nghiêng về 2-3 vì bài 700-1100 chữ nhét 4 ảnh là loãng. Không bao giờ
+ * bốc 0 — bài trắng ảnh giữa loạt bài có ảnh trông như bị lỗi.
+ */
+const IMAGE_COUNT_POOL = [1, 2, 2, 2, 3, 3, 3, 4];
+const pickImageCount = () => IMAGE_COUNT_POOL[Math.floor(Math.random() * IMAGE_COUNT_POOL.length)];
+
+const draftPrompt = (imageCount: number) => `You are the content editor of TD Games Studio — a Vietnam-based studio doing 2D game art, Spine animation and VFX outsourcing for game studios abroad.
 
 Write a blog post for tdgamestudio.com. Readers are game developers and studio decision-makers who might hire us.
 
@@ -36,12 +48,13 @@ Formatting (the site renders full Markdown — use it, a wall of grey paragraphs
 - One short blockquote (>) carrying the single most important takeaway, IN ENGLISH, written as our own statement.
 - No horizontal rules, no nested lists, no headings deeper than ###.
 - End with one short paragraph on how TD Games works with clients on this — a soft close, not a sales pitch.
-- Illustrations: insert as many as the post genuinely needs, 0 to 4. A long pipeline/comparison piece earns 3-4; a short opinion piece may want one or none. Never illustrate a section just to fill it, and never place two next to each other or one before the first subhead. Each on its own line as: ![short alt text, max 8 words](ai:IMAGE PROMPT)
+- Illustrations: insert EXACTLY ${imageCount} in-post image${imageCount === 1 ? "" : "s"} — not more, not fewer. This number is fixed for this post; do not add one because a section feels bare. Spread them across the post's strongest sections, never two next to each other and never one before the first subhead. Each on its own line as: ![short alt text, max 8 words](ai:IMAGE PROMPT)
+- With only ${imageCount} slot${imageCount === 1 ? "" : "s"}, spend ${imageCount === 1 ? "it" : "them"} on the section${imageCount === 1 ? "" : "s"} where a picture explains something words struggle with. Sections that are pure argument or numbers do not get one.
 
 ${IMAGE_RULES}
 
 Reply with ONLY a JSON object, no markdown fence, no prose:
-{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "cover image prompt, same rules and same chosen style as the in-post images, but a subject none of them use", "content_md": "the markdown, with 0-4 ![alt](ai:prompt) images as the post needs"}`;
+{"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "cover image prompt, same rules and same chosen style as the in-post images, but a subject none of them use", "content_md": "the markdown, containing exactly ${imageCount} ![alt](ai:prompt) image(s)"}`;
 
 /**
  * Dùng khi sếp bấm "AI tự viết" — không có chất liệu thật nào từ CEO.
@@ -152,6 +165,9 @@ export async function POST(req: Request) {
     .single();
   if (topicError || !topic) return NextResponse.json({ error: "Topic not found" }, { status: 404 });
 
+  const wantImages = pickImageCount();
+  console.log(`[blog draft] bốc ${wantImages} ảnh cho "${topic.topic}"`);
+
   const userPrompt = JSON.stringify({
     topic: topic.topic,
     why_us: topic.why,
@@ -168,7 +184,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: note.trim() ? DRAFT_PROMPT : DRAFT_PROMPT + AUTO_SUFFIX },
+          { role: "system", content: draftPrompt(wantImages) + (note.trim() ? "" : AUTO_SUFFIX) },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,
@@ -210,7 +226,12 @@ export async function POST(req: Request) {
 
   // Sinh cover + ảnh trong bài song song. Sếp replace lại ở form /admin nếu
   // không ưng. Ảnh nào lỗi thì bỏ ảnh đó — không bao giờ vứt cả bài đã viết.
-  const inline = findAiImages(draft.content_md).slice(0, 4); // ponytail: trần cứng, AI tự chọn số ảnh dưới mức này
+  // Cắt theo đúng số đã bốc: AI thỉnh thoảng vẫn nhét dư một ảnh dù prompt nói
+  // EXACTLY. Ảnh dư KHÔNG render nhưng vẫn phải đưa xuống applyAiImages với
+  // url=null, không thì placeholder ![alt](ai:prompt) nằm nguyên trong bài.
+  const found = findAiImages(draft.content_md);
+  const inline = found.slice(0, wantImages);
+  const extra = found.slice(wantImages);
   const [cover, ...images] = await Promise.all([
     draft.cover_prompt ? generateAiImage(draft.cover_prompt, "1536x1024") : null,
     ...inline.map((img) => generateAiImage(img.prompt, "1536x1024")),
@@ -227,7 +248,10 @@ export async function POST(req: Request) {
   const coverUrl = url(cover);
   draft.content_md = applyAiImages(
     draft.content_md,
-    inline.map((img, i) => ({ raw: img.raw, url: url(images[i]) })),
+    [
+      ...inline.map((img, i) => ({ raw: img.raw, url: url(images[i]) })),
+      ...extra.map((img) => ({ raw: img.raw, url: null })),
+    ],
     draft.title,
   );
   if (imageErrors.length) console.error("[blog draft] ảnh AI lỗi:", imageErrors);
