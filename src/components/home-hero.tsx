@@ -551,7 +551,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
 
       {/* Main Container */}
       <motion.div
-        className="relative z-10 mx-auto flex min-h-screen items-center"
+        className="relative z-10 mx-auto flex min-h-screen items-center pt-24 md:pt-0"
         style={{ width: "var(--layout-width, 75%)", opacity: contentOpacity }}
       >
         <motion.div className="w-full" style={{ y: contentY }}>
@@ -564,7 +564,8 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className={`leading-[1] font-black ${changaOne.className}`}
                 style={{
-                  fontSize: "var(--hero-title-size, 100px)",
+                  // ponytail: 8vw cap giữ chữ trong khung trên mobile, desktop vẫn ăn var của admin
+                  fontSize: "min(var(--hero-title-size, 100px), 8vw)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
@@ -578,7 +579,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className={`leading-[1] font-black ${changaOne.className}`}
                 style={{
-                  fontSize: "var(--hero-title-size, 100px)",
+                  fontSize: "min(var(--hero-title-size, 100px), 8vw)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >

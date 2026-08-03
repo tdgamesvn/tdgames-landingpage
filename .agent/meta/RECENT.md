@@ -4,6 +4,51 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-08-03 (session — fix hero title tràn khung trên mobile)
+### Task
+Sếp gửi ảnh mobile: title "2D ART & ANIMATION OUTSOURCING STUDIO" bị cắt chữ
+("ANIMAT|", "OUTSOU") và đè lên logo header.
+
+### Nguyên nhân
+`--hero-title-size` mặc định **100px cố định** (không responsive) trong
+`home-hero.tsx`; container hero `width: var(--layout-width, 75%)` → trên màn
+~390px khung chữ chỉ ~290px, chữ 100px tràn ra và bị `overflow-hidden` cắt.
+Hero căn `items-center` không chừa chỗ cho header fixed → chữ đè logo.
+
+### Work Done
+- `src/components/home-hero.tsx` — 2 dòng title:
+  `fontSize: min(var(--hero-title-size, 100px), 8vw)` → desktop (>1250px) vẫn
+  ăn giá trị admin set, mobile tự co.
+- Container hero thêm `pt-24 md:pt-0` để không chui dưới header fixed.
+
+### Result
+Playwright viewport 393×852: title fit 2 dòng, không cắt, không đè logo;
+`scrollWidth == clientWidth` (không có overflow ngang). Impact LOW (0 caller).
+
+### Next Step
+Chưa commit/push — chờ sếp duyệt.
+
+---
+
+## 2026-08-03 (session — glow cho logo header)
+### Task
+Sếp: "Logo tdgames này cho glow nhẹ cho nổi bật và đẹp hơn chút".
+
+### Work Done
+- `src/components/site-header.tsx` — thêm `[filter:drop-shadow(...)]` 2 lớp màu
+  amber `rgba(245,158,11,…)` cho `<Image>` logo (6px/0.35 + 20px/0.18), hover
+  đậm hơn (8px/0.55 + 26px/0.28), `transition-[filter] duration-300`.
+  Dùng drop-shadow thay box-shadow để glow ôm hình dạng PNG.
+
+### Result
+Chỉ đổi className, impact LOW (0 caller). Logo tách khỏi nền hero video tối.
+Logo footer chưa đụng.
+
+### Next Step
+Không có.
+
+---
+
 ## 2026-08-03 (session — fix flash media cũ ở hero trang chủ)
 ### Task
 Sếp: "load mới vẫn hiện video nền + card cũ ~1s rồi mới đổi sang cái mới".
@@ -421,172 +466,6 @@ Sếp hỏi xác nhận CliproxyApi gọi qua Mac bằng tailscale, rồi yêu c
 - Chạy thử 1 lần trên dev/prod với prompt thật để chốt con số nén.
 - `POST /api/admin/upload` (upload tay) vẫn CHƯA nén — nếu sếp muốn thì thêm
   nhánh `isImage` gọi sharp y hệt.
-
----
-
-## 2026-08-01 (session — ImagePicker 3 tab + ảnh AI gpt-image-2)
-### Task
-Sếp muốn chọn ảnh cover blog từ 3 nguồn: kho media, upload, và AI generate
-(gpt-image-2 qua cliproxyapi).
-
-### Work Done
-- Migration `20260801000000_media_ai_prompt.sql` — thêm cột `ai_prompt` vào
-  `media_assets`. `ai_prompt not null` = ảnh AI → truy vết được prompt gốc.
-- `POST /api/admin/generate-image` — gọi `AI_BASE_URL/images/generations`
-  (model `gpt-image-2`, override qua `AI_IMAGE_MODEL`), nhận `b64_json` →
-  `uploadToR2` → insert `media_assets` row → trả `{url, key}`. Ảnh AI đi đúng
-  đường R2 như upload thường, KHÔNG nhúng base64, KHÔNG hotlink provider.
-- `ImagePicker.tsx` (mới) — 3 tab Kho / Upload / AI dùng chung. Tab AI chỉ là
-  "tab Upload với nguồn file khác" → code thêm mỏng.
-- `BlogTab.tsx` — thay khối cover image cũ (input + nút Upload + `uploadCover`
-  + `fileRef`) bằng `<ImagePicker>`. Net -30 dòng.
-- `_lib/api.ts` — thêm `generateImage()`.
-
-### Guard thương hiệu (theo DECISIONS 2026-07-31)
-Route chặn prompt chứa từ khoá character (`character|nhân vật|portrait|mascot|
-anime|chibi|hero|girl|face|...`) → 400. Prompt hợp lệ bị append
-`", abstract background artwork, no characters, no people, no creatures, no faces"`.
-
-### Verify (dev server thật, không phải mock)
-- Guard: prompt "nhân vật chibi cầm kiếm" → 400 đúng thông điệp ✓
-- Happy path: 200 → `https://cdn.tdgamestudio.com/ai/2026/08/5328bb33-….png`
-- CDN: `HTTP/2 200`, `content-type: image/png` ✓
-- DB: row `035df3ee-…` có `ai_prompt` + `r2_key` khớp ✓
-- `tsc --noEmit` sạch; lint không phát sinh lỗi mới (91 problems là baseline cũ).
-
-### Chưa làm (cố ý)
-- Ảnh gpt-image-2 ra ~2.4MB PNG, chưa nén/convert webp. Thêm sharp khi nào
-  thấy nặng thật.
-- `ImagePicker` mới cắm ở BlogTab. Portfolio/Team/PageSlots vẫn dùng UI cũ —
-  cắm thêm khi cần, props đã sẵn sàng.
-- Chưa commit/deploy — chờ sếp review dev.
-
-
-## 2026-07-29 (session — logo client vào Page Slots)
-### Task
-Sếp gửi screenshot tab Page Slots (`/admin`, page `home`), hỏi tại sao không
-thấy phần logo client. Sếp muốn quản lý logo client từ admin.
-
-### Nguyên nhân
-`home-page-lower.tsx:415` đọc slot `home/client-logos`, rỗng → rơi về mảng
-hardcode `FALLBACK_CLIENT_LOGOS` (5 logo CDN). Trong DB `page_slots` không có
-row `client-logos` nào → tab admin không render nhóm nào (chỉ render nhóm có
-row). Thêm nữa, cả 2 dropdown slot trong `PageSlotsTab.tsx` đều thiếu option
-`client-logos` → không có đường thêm từ UI.
-
-### Work Done
-- `PageSlotsTab.tsx`: thêm `<option value="client-logos">` vào form "Add Slot
-  Manually" (dòng ~461) + thêm `"client-logos"` vào `QUICK_SLOTS.home`.
-- Seed 5 logo fallback vào `page_slots` (id 44-48, page `home`, slot
-  `client-logos`, sort_order 0-4, display_name Client 1-5) qua Supabase MCP.
-
-### Result
-Trang chủ giờ đọc logo từ DB; `FALLBACK_CLIENT_LOGOS` giữ lại làm lưới an toàn
-khi API lỗi. Chưa commit/deploy — chờ sếp review dev.
-
-### Bổ sung — deploy: hoá ra đã tự động từ lâu
-Sếp hỏi có cách deploy nhanh hơn không. Kiểm tra: `.github/workflows/deploy.yml`
-**đã có auto-deploy on push từ 2026-05-23** (ssh-action → pull → npm i → build →
-pm2 restart, ~1m30s). Doc `CLAUDE.md` ghi "Deploy (manual, trên VPS)" → agent
-các session trước cứ ssh build tay sau khi push.
-
-Đó cũng chính là nguyên nhân 4/5 run gần nhất fail sau ~26s: build tay chạy
-song song với CI → `⨯ Another next build process is already running`. Prod vẫn
-đúng vì build tay hoàn tất, nhưng CI đỏ.
-
-Fix: `deploy.yml` thêm `concurrency: {group: deploy-vps, cancel-in-progress: false}`
-(không cancel — kill giữa chừng để lại lock) + `workflow_dispatch` để chạy lại
-tay. `CLAUDE.md` viết lại mục Deploy: push xong là xong, KHÔNG ssh build tay.
-
-Commit `445b88c` → CI xanh, deploy 1m30s không cần thao tác gì.
-
-### Bổ sung 2 — prod 500 toàn site (đã fix)
-Sau deploy `445b88c`, `https://tdgamestudio.com/` trả **500** (API `/api/*` vẫn
-200 nên dễ tưởng lành). PM2 err log:
-`InvariantError: The client reference manifest for route "/" does not exist`.
-
-Nguyên nhân: `.next` trên VPS là artifact **lai giữa 2 lần build đè lên nhau**
-(build tay + build CI cùng ngày). Next build không xoá `.next` cũ → manifest cũ
-sót lại, không khớp chunk mới.
-
-Fix ngay: ssh VPS → `rm -rf .next && npm run build && pm2 restart`. Prod 200 lại
-(home / admin / careers).
-
-Chặn tái diễn — `deploy.yml` trước bước build:
-`find .next -mindepth 1 -maxdepth 1 ! -name cache -exec rm -rf {} +`
-(xoá sạch build cũ, giữ `.next/cache` để build vẫn nhanh). Commit `4f...` CI xanh.
-
-**Bài học:** sau deploy phải curl trang HTML, không chỉ curl API.
-
-### Bổ sung 3 — rà QUICK_SLOTS thiếu slot
-Grep toàn bộ `resolveSlot` / `usePageSlots` để đối chiếu với `QUICK_SLOTS` trong
-`PageSlotsTab.tsx` → thiếu: `home/hero-carousel`, `about/hero`, `careers/hero`,
-`services-2d-*/hero`. Đã bổ sung (commit `58839d1`) kèm comment: slot nào code
-đọc thì phải có ở đây, không thì không có đường upload từ UI.
-
-### Bổ sung 4 — healthcheck sau deploy (+ phát hiện port sai)
-`deploy.yml` sau `pm2 restart`: curl `http://127.0.0.1:3000/` tối đa 10 lần
-(3s/lần), không 200 → in `pm2 logs --err` rồi `exit 1`. Curl trang **HTML**,
-không phải `/api` — `/api` vẫn 200 khi `.next` hỏng.
-
-Lần chạy đầu fail: healthcheck curl port **3001** (lấy từ `ecosystem.config.js`)
-→ HTTP 307 về `/login`. Hoá ra **3001 là app khác** (platforms); landing page
-chạy trên **3000** và nginx cũng proxy về 3000. `ecosystem.config.js` ghi 3001
-là bẫy: nếu PM2 rơi vào nhánh fallback `pm2 start ecosystem.config.js` thì app
-bind nhầm port → site chết. Đã sửa cả hai về 3000 (commit `1ae...`).
-
-Run sau xanh, log: `thử 1: HTTP 000` → `✅ trang chủ HTTP 200` (retry loop đúng
-là cần, app mất ~3s boot).
-
-### Next Step
-Sếp thay 5 logo tạm bằng logo khách thật ngay trong tab Page Slots.
-
----
-
-## 2026-07-29 (session — viết lại Our Values `/careers`)
-### Task
-Sếp gửi screenshot section "Our Values" trang `/careers`, hỏi sửa sao cho ứng
-viên đọc thấy hấp dẫn để apply. Sếp bảo làm theo đề xuất của agent.
-
-### Vấn đề của bản cũ
-5 value toàn nói về *không khí* (trung thực, ấm áp, "big family", quan tâm) —
-paste sang studio nào cũng đúng, không trả lời câu ứng viên artist thực sự
-scan tìm: dự án gì, học được gì, có crunch không. "Big family" trong ngành
-outsource còn bị đọc thành "OT không tính lương" → phản tác dụng.
-
-### Work Done
-`src/app/careers/careers-client.tsx`:
-- Viết lại toàn bộ `BENEFITS` (5 item, dòng 92-124): Work that ships /
-  Feedback, not silence / Level up on the clock / Planned, not panicked /
-  Say it straight. Mỗi desc ép về ~22-26 từ để 5 card cao bằng nhau; mỗi
-  value kèm 1 chi tiết kiểm chứng được thay vì tính từ.
-- Gán lại field `icon` cho khớp nghĩa mới — KHÔNG viết SVG mới, tái dùng 5
-  icon sẵn có trong `BenefitIcon`.
-- Grid: bỏ `xl:grid-cols-5` → dừng ở `lg:grid-cols-3` (5 cột làm mỗi card
-  chỉ ~150px, title card 1 xuống 2 dòng gây lệch chiều cao).
-- Subtitle section đổi sang "Not slogans — what you can actually expect from
-  your first week here."
-
-### Result
-`npx tsc --noEmit` sạch. Chưa commit/deploy — chờ sếp review dev.
-
-### Bổ sung trong cùng session — dải hard benefits
-Sếp cấp policy thật → thêm mảng `PERKS` (9 chip) + render dải chip bo tròn
-dưới 5 card. Fact sếp xác nhận: remote 1 ngày/tuần, T2-T6 8h nghỉ T7-CN,
-không OT (có OT thì trả lương), thử việc 100% lương; lương 13 / bảo hiểm /
-thiết bị / phép / review lương "đều có" (không có con số cụ thể → viết
-không kèm số: "Full social insurance", "Paid annual leave", "Regular salary
-reviews").
-
-Kèm 2 claim treo đã xử:
-- Bỏ "artists who have shipped 50+ projects" → "senior artists across 2D art,
-  animation and VFX" (sếp không xác nhận con số gán cho người).
-- Card "Planned, not panicked" giờ viết được "when overtime happens, it is
-  paid" vì sếp đã confirm.
-
-### Next Step
-Sếp review dev → commit + deploy. Vẫn treo: testimonial thật cho
-home-page-lower, có làm trang Game Development riêng không.
 
 ---
 

@@ -1,5 +1,31 @@
 # LOG
 
+## 2026-08-03 (session — fix hero title tràn khung trên mobile)
+### Task
+Sếp gửi ảnh mobile: title "2D ART & ANIMATION OUTSOURCING STUDIO" bị cắt chữ
+("ANIMAT|", "OUTSOU") và đè lên logo header.
+
+### Nguyên nhân
+`--hero-title-size` mặc định **100px cố định** (không responsive) trong
+`home-hero.tsx`; container hero `width: var(--layout-width, 75%)` → trên màn
+~390px khung chữ chỉ ~290px, chữ 100px tràn ra và bị `overflow-hidden` cắt.
+Hero căn `items-center` không chừa chỗ cho header fixed → chữ đè logo.
+
+### Work Done
+- `src/components/home-hero.tsx` — 2 dòng title:
+  `fontSize: min(var(--hero-title-size, 100px), 8vw)` → desktop (>1250px) vẫn
+  ăn giá trị admin set, mobile tự co.
+- Container hero thêm `pt-24 md:pt-0` để không chui dưới header fixed.
+
+### Result
+Playwright viewport 393×852: title fit 2 dòng, không cắt, không đè logo;
+`scrollWidth == clientWidth` (không có overflow ngang). Impact LOW (0 caller).
+
+### Next Step
+Sếp duyệt → commit + push main (CI tự deploy).
+
+---
+
 ## 2026-08-03 (session — glow cho logo header)
 ### Task
 Sếp: "Logo tdgames này cho glow nhẹ cho nổi bật và đẹp hơn chút".
