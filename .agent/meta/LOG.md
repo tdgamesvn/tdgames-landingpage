@@ -2844,3 +2844,21 @@ no logos, no watermarks"). 3 chỗ bật cờ:
 muốn. Không đụng quyết định "bỏ giới hạn nội dung ảnh AI" 2026-08-03; đây là ngoại
 lệ hẹp cho riêng cover vì cover bị crop vuông ở card /blog, chữ bịa đứt nửa là thứ
 đầu tiên người đọc thấy.
+
+### Ảnh AI mồ côi — script dọn (2026-08-03)
+Sếp phát hiện ảnh cũ đã thay vẫn nằm trong tab Media. Đo thật: 69 ảnh AI, chỉ 22
+đang dùng → **38 mồ côi (55%)** chỉ sau 3 ngày. Mỗi lần "Render lại ảnh" bỏ lại
+4 ảnh cũ trên R2 + media_assets, không ai dọn.
+
+`scripts/clean-orphan-ai-images.mjs` — dry-run mặc định, `--apply` mới xoá:
+- Chỉ đụng ảnh có `ai_prompt` (ảnh máy sinh).
+- Quét reference ở blog_posts, page_slots, projects, team_members, jobs, + toàn bộ
+  `src/` (site.json và component có thể hardcode URL). Gom hết thành 1 chuỗi rồi
+  `includes(url)` — thô nhưng không bỏ sót cột nào.
+- **Guard tuổi 60 phút**: ảnh vừa render mà sếp chưa bấm Save thì chưa ai tham
+  chiếu → xoá là mất trắng. Không có guard này thì script ăn luôn ảnh đang chờ.
+- Xoá R2 trước, row sau: đứt gánh thì còn row trỏ file đã mất (lần sau dọn nốt),
+  không để lại file mồ côi không ai biết đường tìm.
+
+Phải chạy trên VPS (R2 creds ở đó). CHƯA chạy --apply — chờ sếp duyệt.
+Ghi chú: danh sách bảng hard-code, thêm bảng chứa URL ảnh thì phải cập nhật script.
