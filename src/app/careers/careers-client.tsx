@@ -20,21 +20,6 @@ const nunitoSans = Nunito_Sans({
 
 const isVideoUrl = (url: string) => /\.(mp4|webm|mov)(\?|$)/i.test(url);
 
-const FILTERS = ["All", "Art", "Production", "Marketing"] as const;
-type FilterType = (typeof FILTERS)[number];
-
-function getPrimaryFilter(categories: string[]): FilterType {
-  if (
-    categories.some((c) =>
-      ["Art", "Animation", "Illustration", "Design", "VFX"].includes(c)
-    )
-  )
-    return "Art";
-  if (categories.includes("Production")) return "Production";
-  if (categories.includes("Marketing")) return "Marketing";
-  return "All";
-}
-
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const days = Math.floor(diff / 86400000);
@@ -312,7 +297,6 @@ export default function CareersClient({
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [selectedRole, setSelectedRole] = useState<Job | null>(null);
 
   useEffect(() => {
@@ -323,28 +307,15 @@ export default function CareersClient({
       .finally(() => setLoadingJobs(false));
   }, []);
 
-  const counts = useMemo(
-    () => ({
-      All: jobs.length,
-      Art: jobs.filter((j) => getPrimaryFilter(j.categories) === "Art").length,
-      Production: jobs.filter((j) => getPrimaryFilter(j.categories) === "Production").length,
-      Marketing: jobs.filter((j) => getPrimaryFilter(j.categories) === "Marketing").length,
-    }),
-    [jobs],
-  );
-
   const filteredRoles = useMemo(() => {
-    return jobs.filter((job) => {
-      const q = searchQuery.toLowerCase();
-      const matchesSearch =
-        q === "" ||
+    const q = searchQuery.toLowerCase();
+    if (q === "") return jobs;
+    return jobs.filter(
+      (job) =>
         job.title.toLowerCase().includes(q) ||
-        (job.description ?? "").toLowerCase().includes(q);
-      const matchesFilter =
-        activeFilter === "All" || getPrimaryFilter(job.categories) === activeFilter;
-      return matchesSearch && matchesFilter;
-    });
-  }, [jobs, searchQuery, activeFilter]);
+        (job.description ?? "").toLowerCase().includes(q),
+    );
+  }, [jobs, searchQuery]);
 
   return (
     <>
@@ -468,7 +439,7 @@ export default function CareersClient({
               </header>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                {/* Search */}
+                {/* Search — bỏ filter theo category (2026-08-03): 5 job, không cần lọc */}
                 <div className="relative">
                   <svg
                     className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40"
@@ -490,23 +461,6 @@ export default function CareersClient({
                     placeholder="Search positions..."
                     className="w-full rounded-lg border border-white/15 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus:border-[#f59e0b]/50 focus:outline-none sm:w-64"
                   />
-                </div>
-
-                {/* Filter buttons */}
-                <div className="flex flex-wrap gap-2">
-                  {FILTERS.map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => setActiveFilter(filter)}
-                      className={`rounded-lg border px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-                        activeFilter === filter
-                          ? "border-[#f59e0b] bg-[#f59e0b] text-black"
-                          : "border-white/15 bg-white/5 text-white/80 hover:border-white/30"
-                      }`}
-                    >
-                      {filter} ({counts[filter]})
-                    </button>
-                  ))}
                 </div>
               </div>
             </div>
@@ -560,27 +514,23 @@ export default function CareersClient({
                                     </span>
                                   ))}
                                 </div>
+                                {/* Employment type — pill xanh, tách hẳn khỏi địa chỉ */}
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-400/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+                                  {job.type}
+                                </span>
                               </div>
-                              <p className="mt-2 text-sm leading-relaxed text-white/60">
+                              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">
                                 {job.description ?? ""}
                               </p>
-                            </div>
-
-                            {/* Meta info */}
-                            <div className="flex flex-wrap items-center gap-4 text-xs text-white/70 lg:shrink-0">
-                              <span className="flex items-center gap-1.5">
-                                <svg className="h-4 w-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              {/* Địa chỉ — dòng meta mờ, nằm dưới mô tả để không còn khoảng trống giữa card */}
+                              <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-white/45">
+                                <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/35" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                                 {job.location}
-                              </span>
-                              <span className="flex items-center gap-1.5">
-                                <svg className="h-4 w-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                {job.type}
-                              </span>
+                              </p>
                             </div>
 
                             {/* Action button */}

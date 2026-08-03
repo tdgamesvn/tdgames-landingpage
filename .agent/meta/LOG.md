@@ -2587,3 +2587,13 @@ Sếp: "chạy ngang đang nhanh quá". Chỉ đổi duration, không sửa logi
 - `src/components/home-page-lower.tsx` — logo marquee (framer-motion) 30s → 55s.
 - `src/app/globals.css` — `.animate-marquee` (careers "Life at TD Games") 20s → 36s.
   Class này chỉ dùng ở `careers-client.tsx:742`, không ảnh hưởng chỗ khác.
+
+### Careers: gọn lại card job + bỏ filter theo category (2026-08-03)
+`src/app/careers/careers-client.tsx`:
+- Card job: `job.type` (fulltime) thành pill emerald + chấm sáng, đặt cạnh title
+  cùng hàng tag category → không lẫn vào địa chỉ. Địa chỉ chuyển xuống dưới mô tả
+  thành dòng meta mờ (white/45) → hết khoảng trống lớn giữa card. Mô tả `max-w-2xl`.
+- Bỏ hàng nút lọc ALL/ART/PRODUCTION/MARKETING (sếp: 5 job không cần lọc). Xoá
+  luôn code chết: `FILTERS`, `FilterType`, `getPrimaryFilter()`, state `activeFilter`,
+  memo `counts`. `filteredRoles` chỉ còn lọc theo search. Tag trên card giữ nguyên.
+`npx tsc --noEmit` sạch.
