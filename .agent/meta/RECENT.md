@@ -4,6 +4,36 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-08-03 (session — fix flash media cũ ở hero trang chủ)
+### Task
+Sếp: "load mới vẫn hiện video nền + card cũ ~1s rồi mới đổi sang cái mới".
+
+### Nguyên nhân (không phải cache browser)
+`useMediaListListener` khởi tạo state bằng `site.json → hero.media` (dữ liệu cũ),
+rồi `useEffect` mới fetch `/api/page-slots?page=home&slot=hero-carousel` sau khi
+hydrate → HTML đầu + first paint luôn là media cũ. `src/app/page.tsx` là
+`"use client"` nên không fetch server-side được.
+
+### Work Done
+- `src/app/page.tsx` → **server component** (`async`), gọi `resolveSlots("home",
+  "hero-carousel")` và truyền `initialMedia` xuống `<HomeHero>`. Thêm
+  `export const dynamic = "force-dynamic"` để không prerender stale (route `/`
+  từ ○ → ƒ).
+- `src/components/home-page-lower-client.tsx` (mới) — giữ `dynamic(ssr:false)`
+  cho HomePageLower, thứ duy nhất buộc page.tsx phải là client.
+- `src/components/home-hero.tsx` — nhận prop `initialMedia?: MediaItem[]`.
+- `src/components/hero-layout-state.tsx` — **xoá hẳn** effect fetch page-slots
+  (server lo rồi); hook nhận `initial`, rỗng → rơi về site.json. CustomEvent
+  live-preview của admin giữ nguyên.
+
+### Result
+`npm run build` pass; `curl localhost:3111/` → HTML đầu tiên đã chứa URL media
+từ DB (`/projects/2026/...`), không còn `landing/video/CutScene_SE/*` của
+site.json. Hết flash.
+
+### Next Step
+Sếp review dev rồi commit + push (CI tự deploy). CHƯA commit.
+
 ## 2026-08-01 (session — nén qua bot tdgames-discord, cả video)
 ### Task
 Sếp: "nén cả video nữa, đi qua tdgames-discord channel compressor-ai".

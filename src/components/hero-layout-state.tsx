@@ -35,45 +35,15 @@ export type MediaItem = {
 /** Hero media list loaded from src/content/site.json */
 export const defaultMediaList: MediaItem[] = siteContent.hero.media as MediaItem[];
 
-export function useMediaListListener(): MediaItem[] {
-  const [list, setList] = useState<MediaItem[]>(defaultMediaList);
-
-  // Fetch from DB on mount; fall back to site.json if error
-  useEffect(() => {
-    async function fetchSlots() {
-      try {
-        const res = await fetch(
-          "/api/page-slots?page=home&slot=hero-carousel",
-          { cache: "no-store" },
-        );
-        if (!res.ok) return;
-        const json = (await res.json()) as {
-          items: Array<{
-            id: number;
-            url: string;
-            thumb_url?: string | null;
-            display_name?: string | null;
-            display_label?: string | null;
-            sort_order: number;
-          }>;
-        };
-        if (!Array.isArray(json.items) || json.items.length === 0) return;
-        const mapped: MediaItem[] = json.items.map((item) => ({
-          id: String(item.id),
-          name: item.display_name ?? "",
-          label: item.display_label ?? "",
-          thumbnail: item.thumb_url ?? item.url,
-          path: item.url,
-          isBgVideo: true,
-          isIframe: false,
-        }));
-        setList(mapped);
-      } catch {
-        // keep defaultMediaList
-      }
-    }
-    void fetchSlots();
-  }, []);
+/**
+ * Media hero. `initial` do server component truyền xuống (đọc DB page_slots) —
+ * render đúng ngay từ HTML đầu tiên, không còn flash media cũ khi hydrate.
+ * Rỗng (DB lỗi / chưa cấu hình slot) → rơi về site.json.
+ */
+export function useMediaListListener(initial?: MediaItem[]): MediaItem[] {
+  const [list, setList] = useState<MediaItem[]>(
+    initial?.length ? initial : defaultMediaList,
+  );
 
   // Support live-preview CustomEvent override (admin panel)
   useEffect(() => {

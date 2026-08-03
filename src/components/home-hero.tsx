@@ -458,7 +458,7 @@ function DraggableStack({
 }
 
 // --- MAIN HERO COMPONENT ---
-export default function HomeHero() {
+export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const bgVideoRef = useRef<HTMLVideoElement>(null);
@@ -483,7 +483,7 @@ export default function HomeHero() {
   const cardVignette = useCardVignetteListener();
   const cardMode = useCardModeListener();
   const layoutMode = useLayoutModeListener();
-  const mediaList = useMediaListListener();
+  const mediaList = useMediaListListener(initialMedia);
   const bgOverlay = useBgOverlayListener();
 
   const activeMedia = mediaList[currentIdx];
