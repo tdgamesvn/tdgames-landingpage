@@ -2731,3 +2731,22 @@ xuyên bài, nền tối hợp layout, và cảnh báo generator bịa giá nế
 
 `node scripts/test-blog-ai.mjs` + `tsc --noEmit` sạch. DECISIONS.md có entry mới
 đảo ngược ranh giới 2026-07-31 / 2026-08-01.
+
+### Render lại 4 ảnh cho bài "Why Vietnam Is a Strong Outsourcing Base…" (2026-08-03)
+Chạy thử luật ảnh mới trên bài đã dựng sẵn (`c7a41d96`). Prompt do em viết tay theo
+đúng nội dung từng đoạn, style thống nhất "hand-painted 2D mobile game art":
+- cover → phố cảng SEA nhà sàn + đèn lồng, 3 lớp parallax
+- đoạn "SEA saves more than the unit price" → asset sheet 12 prop cùng hướng sáng
+- đoạn rework/sai reference → cùng một cổng đền, bản blocking dở cạnh bản final
+- đoạn "50 characters trong 3 tháng" → **character lineup 6 nhân vật cùng style**
+  (ảnh này regex `BANNED` cũ chặn thẳng, giờ mới ra được)
+
+Cách chạy: local `.env.local` không có `SUPABASE_ACCESS_TOKEN` đúng, và `ADMIN_SECRET`
+thật nằm ở `app_settings.admin_secret` trong DB (sếp đổi qua tab Settings) chứ không
+phải env → chạy script trên VPS, tự query key rồi POST `localhost:3000/api/admin/generate-image`.
+Gọi localhost cũng tránh luôn Cloudflare 100s. 4 ảnh: 52-96s/ảnh.
+
+Swap URL + alt text vào `blog_posts` bằng SQL. Bài vẫn `published: false`.
+
+Ghi chú cho sau: chưa có nút "render lại ảnh" trong /admin — muốn đổi ảnh vẫn phải
+paste URL tay ở BlogForm hoặc chạy script. Chỉ làm nếu sếp thấy phải sửa thường xuyên.
