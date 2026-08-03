@@ -5,9 +5,16 @@ import sharp from "sharp";
 import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-// DECISIONS 2026-08-03: prompt đi thẳng tới generator, không suffix, không regex
-// chặn. Định hướng ảnh (hợp bài, hợp nền tối) nằm trong DRAFT_PROMPT ở
-// api/admin/blog/topics/route.ts — mềm, AI đè được khi bài cần khác.
+// DECISIONS 2026-08-03: prompt đi thẳng tới generator, không regex chặn NỘI DUNG.
+// Định hướng nội dung nằm trong IMAGE_RULES (blog-ai.ts) — mềm, AI đè được.
+//
+// Suffix duy nhất còn lại là về KHUNG HÌNH, không phải nội dung: generator hay bố
+// cục tràn mép (dàn 6 character thì 2 đứa ngoài cùng bị xẻ đôi ở rìa ảnh). Nó
+// không quan tâm sếp muốn vẽ gì, chỉ bắt vẽ trọn trong khung.
+const FRAMING_SUFFIX =
+  ", full composition fits entirely inside the frame with generous empty margin on all four sides" +
+  ", nothing cropped or cut off at the edges, no subject touching or bleeding past the image border" +
+  ", centred and complete, wide establishing framing";
 
 export const SIZES = new Set(["1024x1024", "1536x1024", "1024x1536"]);
 
@@ -29,7 +36,7 @@ export async function generateAiImage(prompt: string, size = "1536x1024"): Promi
       headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: process.env.AI_IMAGE_MODEL || "gpt-image-2",
-        prompt,
+        prompt: prompt + FRAMING_SUFFIX,
         n: 1,
         size: SIZES.has(size) ? size : "1536x1024",
       }),
@@ -51,16 +58,21 @@ export async function generateAiImage(prompt: string, size = "1536x1024"): Promi
   if (typeof b64 !== "string") return { error: "Image API không trả b64_json", status: 502 };
 
   // Backend PHỚT LỜ `size`: xin 1536x1024 (ngang) vẫn trả 1122x1402 (dọc) —
-  // cover blog dọc là vỡ layout. Crop về đúng tỉ lệ.
+  // cover blog dọc là vỡ layout, nên vẫn phải ép về đúng tỉ lệ.
+  // `contain` chứ KHÔNG `cover`: cover cắt mất phần thừa, mà phần thừa của ảnh
+  // dọc ép sang ngang là đầu với chân nhân vật — cắt cụt trông rất vô duyên.
+  // Contain giữ trọn ảnh, phần đệm tô #0a0a0a đúng nền web nên không thấy viền.
   // KHÔNG dùng `withoutEnlargement`: khi ảnh gốc nhỏ hơn target sharp bỏ luôn
-  // crop và trả về đúng ảnh gốc (đã gặp: ra 1402x1024 thay vì 1536x1024).
-  // Phóng ~10% thì mắt không thấy, sai tỉ lệ thì vỡ layout.
+  // resize và trả về đúng ảnh gốc (đã gặp: ra 1402x1024 thay vì 1536x1024).
   const [w, h] = (SIZES.has(size) ? size : "1536x1024").split("x").map(Number);
   let png = Buffer.from(b64, "base64");
   try {
-    png = await sharp(png).resize(w, h, { fit: "cover" }).png().toBuffer();
+    png = await sharp(png)
+      .resize(w, h, { fit: "contain", background: { r: 10, g: 10, b: 10, alpha: 1 } })
+      .png()
+      .toBuffer();
   } catch (e) {
-    console.error("[ai-image] crop lỗi, dùng ảnh gốc", e);
+    console.error("[ai-image] resize lỗi, dùng ảnh gốc", e);
   }
 
   // uploadToR2 tự nén sang WebP + đổi key .png → .webp
