@@ -88,7 +88,9 @@ export default function AdminPage() {
   const [verifyMsg, setVerifyMsg] = useState("");
 
   useEffect(() => {
-    const cached = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null;
+    // ponytail: localStorage (không phải sessionStorage) — key sống qua lần đóng
+    // tab, giống /hr và /crm. Sai key thì verifyKey xoá.
+    const cached = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
     if (cached) {
       setAdminKey(cached);
       void verifyKey(cached);
@@ -106,9 +108,14 @@ export default function AdminPage() {
       if (res.ok) {
         setKeyVerified(true);
         setVerifyMsg("Admin key OK");
-        if (typeof window !== "undefined") sessionStorage.setItem(STORAGE_KEY, value);
+        if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, value);
       } else {
         setKeyVerified(false);
+        // Chỉ xoá key đã lưu khi chắc chắn sai (401). Lỗi 5xx/mạng thì giữ lại,
+        // không bắt sếp gõ lại key vì server hắt hơi.
+        if (res.status === 401 && typeof window !== "undefined") {
+          localStorage.removeItem(STORAGE_KEY);
+        }
         // Tách 401 (sai key) khỏi lỗi hệ thống — gộp chung làm mất cả buổi
         // truy lỗi khi thật ra key trong DB đã bị đổi.
         setVerifyMsg(
@@ -129,7 +136,7 @@ export default function AdminPage() {
     setAdminKey("");
     setKeyVerified(false);
     setVerifyMsg("");
-    if (typeof window !== "undefined") sessionStorage.removeItem(STORAGE_KEY);
+    if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
   }
 
   if (!keyVerified) {
@@ -170,7 +177,7 @@ export default function AdminPage() {
           </form>
           {verifyMsg ? <p className="text-xs text-white/60">{verifyMsg}</p> : null}
           <p className="text-[10px] text-white/40">
-            Key được lưu trong <code className="font-mono">sessionStorage</code> (chỉ phiên này).
+            Key được lưu trong <code className="font-mono">localStorage</code> (giữ qua các lần mở lại).
           </p>
         </div>
       </div>
@@ -232,9 +239,9 @@ export default function AdminPage() {
             onAdminKeyChange={(newKey) => {
               setAdminKey(newKey);
               if (newKey) {
-                sessionStorage.setItem(STORAGE_KEY, newKey);
+                localStorage.setItem(STORAGE_KEY, newKey);
               } else {
-                sessionStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(STORAGE_KEY);
                 setKeyVerified(false); // sign out — user must re-login with env var
               }
             }}
