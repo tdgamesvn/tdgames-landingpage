@@ -2924,3 +2924,28 @@ DB chưa có data cho 2 tab đó — không phải bug.
 ### Next Step
 Commit + push (CI auto deploy). Cân nhắc `generateMetadata` theo `?tab=` nếu cần
 title/OG riêng khi share link.
+
+---
+
+## 2026-08-05 (session — showreel: upload nhiều file + fix video không hiện)
+### Task
+Sếp upload video vào tab VFX qua /admin nhưng /showreel không thấy gì.
+
+### Work Done
+- `feat(showreel)`: admin tab cho chọn nhiều file 1 lần (707c18c).
+- `fix`: bật RLS cho `showreel_items` + policy read `active` (c36df00).
+- `fix`: `src/app/api/showreel/route.ts` bỏ `export const revalidate = 60`
+  → `dynamic = "force-dynamic"` (c1c491d).
+
+### Result
+Row nằm trong DB đúng từ đầu (tab vfx, category UI, active). Thủ phạm là ISR
+cache của route handler: bản cache sinh lúc bảng còn rỗng nên client fetch
+`/api/showreel` mãi nhận `{"items":[]}`. Bằng chứng: `?t=123` (URL khác → miss
+cache) trả đúng data. Sau deploy: prod trả `cache-control: no-store` + đúng 1
+item. Quét lại toàn bộ `src/app/api/**` — mọi route đã `force-dynamic`, không
+còn route public nào dính ISR. `revalidate = 60` còn ở 5 page.tsx (services x3,
+careers, about) — cố ý giữ, đó là HTML page, trễ ≤60s chấp nhận được.
+
+### Next Step
+Không có. Nếu /showreel thành hot path thì quay lại ISR + `revalidatePath`
+trong admin PUT thay vì force-dynamic.
