@@ -594,9 +594,11 @@ export default function CompanyProfilePage() {
             <StudioServiceCardsGrid items={SERVICE_CARDS} large />
           </Wrap>
           <Wrap className="pt-16">
-            <div className="grid gap-12 md:grid-cols-3">
+            {/* Cùng container với StudioServiceCardsGrid (max-w-6xl, gap-5/lg:gap-6)
+                + px-7 = padding trong card, để chữ thẳng cột với tiêu đề card trên. */}
+            <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3 lg:gap-6">
               {SERVICES.map((s, i) => (
-                <Reveal key={s.title} delay={i * 0.08}>
+                <Reveal key={s.title} delay={i * 0.08} className="px-7">
                   <div className="mb-5 h-px w-12" style={{ background: A }} />
                   <h4 className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-white">
                     {s.title}

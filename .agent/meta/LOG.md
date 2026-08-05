@@ -3458,3 +3458,30 @@ Commit + push → CI deploy.
 
 ### Next Step
 DỮ LIỆU BỊA vẫn còn (TESTIMONIALS rủi ro pháp lý nhất, TEAM/CAPACITY/RATES/STATS/MST).
+
+---
+
+## 2026-08-05 (session — căn lại list bullet dưới card services)
+
+### Task
+Sếp khoanh đỏ: 3 cột bullet dưới lưới card services bị lệch so với card.
+
+### Nguyên nhân
+Lưới card render bởi `StudioServiceCardsGrid` → `mx-auto max-w-6xl gap-5/lg:gap-6`.
+List bullet lại nằm thẳng trong `<Wrap>` (`min(88%, 1280px)`, gap-12) → khác cả chiều
+rộng lẫn khoảng cột, cộng thêm card có padding trong `px-7` nên chữ trong card thụt vào
+mà chữ list thì sát mép → nhìn lệch hẳn sang trái.
+
+### Work Done (`src/app/company-profile/page.tsx`)
+- List: `grid gap-12 md:grid-cols-3` → `mx-auto grid max-w-6xl gap-5 md:grid-cols-3 lg:gap-6`
+  (khớp container + gap của lưới card), mỗi cột thêm `px-7` = padding trong card.
+
+### Verify
+Đo bằng Playwright `getBoundingClientRect().left`: tiêu đề "2D Art" trong card = 172.5,
+trong list = 171.5 → lệch 1px, đúng bằng độ dày viền card. tsc + eslint sạch.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+DỮ LIỆU BỊA vẫn còn (TESTIMONIALS rủi ro pháp lý nhất, TEAM/CAPACITY/RATES/STATS/MST).
