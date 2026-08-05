@@ -3062,3 +3062,9 @@ Skeleton loading cũng đổi sang aspect-video cho khớp.
 `site-header.tsx` — comment dòng `{ label: "SHOWREEL", href: "/showreel" }`.
 Trang `/showreel` vẫn chạy bình thường để gửi link riêng cho khách, chỉ không
 hiện trên menu. Xong nội dung thì bỏ comment (1 dòng).
+
+### Ẩn SHOWREEL khỏi nav (cùng session)
+`site-header.tsx` — comment dòng `{ label: "SHOWREEL", href: "/showreel" }` trong
+NAV_ITEMS (mobile menu dùng chung mảng này nên ẩn cả 2 nơi). Trang `/showreel`
+vẫn chạy bình thường để sếp gửi link riêng cho khách, chỉ là không lên menu.
+Xong showreel thì bỏ comment 1 dòng. Footer không có link showreel.
