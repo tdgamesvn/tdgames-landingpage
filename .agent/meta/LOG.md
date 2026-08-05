@@ -3094,3 +3094,47 @@ kebab-case rồi push.
 ### Next Step
 Số liệu đang **hardcode** trong page.tsx: thành lập 2023, 50+ projects, 12+
 clients, 1200+ assets, team 7. Sếp verify lại trước khi gửi khách.
+
+---
+
+## 2026-08-05 (session 2 — Company Profile dựng lại theo nhịp deck)
+
+### Task
+Sếp gửi PDF company profile của Icetea Software (ITS), 22 trang, yêu cầu làm
+portfolio chuyên nghiệp tương tự.
+
+### Work Done
+Đọc hết 22 trang ITS, rút ra công thức: **mỗi ý một màn hình riêng**, eyebrow
+đỏ nhỏ + tiêu đề cực to, ít chữ, và 4 **slide ngăn chương** ảnh full-bleed
+(About / What We Offer / Why Choose Us / How We Work). Trang cũ của mình nhồi
+9 section kiểu web-scroll → sai nhịp hoàn toàn.
+
+- `src/app/company-profile/page.tsx` viết lại phần render thành **deck 20 slide**,
+  giữ nguyên toàn bộ data constants cũ (không mất nội dung đã viết):
+  01 Cover → 02 Content Highlights → 03 ▸About → 04 Who We Are (4 ô số + ảnh) →
+  05 Pipeline → 06 Geography+Genre (2 donut) → 07 ▸What We Offer → 08 Main
+  Services → 09-11 mỗi dịch vụ 1 slide → 12 ▸Why Choose Us → 13 Value Props →
+  14 Technical Capability → 15 Selected Work → 16 Clients → 17 ▸How We Work →
+  18 Engagement Models → 19 Process → 20 Closing + liên hệ.
+- 2 primitive mới trong file: `Slide` (min-h-100svh + số trang góc phải kiểu
+  PDF) và `Divider` (ảnh full-bleed + tiêu đề trắng). `Donut` giữ nguyên.
+- Ảnh lấy từ R2 sẵn có (Summoner Era, Mytheria, Axie, Horse Racing, Kayn,
+  Reaper, art-study) — gom vào const `IMG`. URL Kayn có dấu cách nên phải
+  `encodeURI()` mới qua được next/image.
+- `ENGAGEMENT[].fit` dịch VI → EN cho đồng bộ (trang toàn tiếng Anh).
+
+### Bỏ qua (có chủ đích)
+- **snap-scroll**: `snap-y snap-mandatory` dễ kẹt trên mobile khi slide cao hơn
+  viewport. Thêm khi sếp thực sự muốn cảm giác "lật trang".
+- **Logo khách dạng ảnh**: đang render text, cần file logo mới làm được.
+- **Print CSS xuất PDF**: sếp chưa chốt có cần bản PDF gửi email hay không.
+
+### Result
+`tsc --noEmit` sạch, dev `/company-profile` → 200. Push → CI deploy.
+
+### Next Step
+⚠️ Số liệu vẫn là **placeholder, chưa ai verify**: 2023 / 50+ projects / 12+
+clients / 1200+ assets. Tỉ lệ 2 donut (VN 45 / APAC 30 / US-EU 25 và genre
+40/25/20/15) là **bịa để có layout** — đây là chỗ khách soi đầu tiên. Danh sách
+`CLIENTS` có Funtap / Gamota / VNG cần sếp xác nhận là khách thật (ghi sai =
+rủi ro pháp lý, không chỉ sai chữ).
