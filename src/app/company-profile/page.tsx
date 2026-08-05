@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import SiteFooter from "@/components/site-footer";
-import SiteHeader from "@/components/site-header";
 import Reveal from "./_reveal";
 
 export const metadata: Metadata = {
@@ -36,6 +34,11 @@ export const metadata: Metadata = {
 
 const A = "#f59e0b";
 
+// ponytail: hardcode thay vì useSlotUrl() — slot hook là client-side, kéo cả
+// trang thành client component chỉ để đổi 1 cái logo. Sếp đổi logo qua /admin
+// thì nhớ sửa cả dòng này.
+const BRAND_LOGO = "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td2.png";
+
 const CDN = "https://cdn.tdgamestudio.com/landing";
 const IMG = {
   summoner: `${CDN}/images/summonerDetail.png`,
@@ -53,10 +56,10 @@ const COMPANY = [
   ["Legal name", "TD Games Company Limited"],
   ["Founded", "2023"],
   ["Business registration", "0110xxxxxx — sếp điền MST"],
-  ["Head office", "Xom Ngoai, Dong Anh Commune, Hanoi, Vietnam"],
+  ["Head office", "Floor 4, Hoa Binh Green City, 505 Minh Khai, Vinh Tuy Ward, Hanoi, Vietnam"],
   ["Time zone", "GMT+7 (ICT)"],
   ["Working languages", "English, Vietnamese"],
-  ["Email", "tdgames.vn@gmail.com"],
+  ["Email", "info@tdgamestudio.com"],
   ["Phone", "+84 xxx xxx xxx — sếp điền"],
   ["Website", "tdgamestudio.com"],
   ["Payment", "Bank transfer (USD/VND), Wise, Payoneer"],
@@ -381,14 +384,25 @@ function Facts({ rows }: { rows: (readonly [string, string])[] | string[][] }) {
 
 export default function CompanyProfilePage() {
   return (
-    <>
-      <SiteHeader />
-      <main className="bg-[#0a0a0a]">
-        {/* Hero */}
-        <section className="relative flex min-h-[92svh] items-end overflow-hidden">
+    <main className="bg-[#0a0a0a]">
+      {/* Hero */}
+        <section className="relative flex min-h-[100svh] items-end overflow-hidden">
           <Image src={IMG.summoner} alt="" fill sizes="100vw" priority className="object-cover" aria-hidden />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-[#0a0a0a]/30" />
-          <Wrap className="relative w-full pb-20 pt-40">
+          {/* ponytail: không dùng SiteHeader — trang này là tài liệu độc lập gửi
+              khách, không phải trang trong site. Logo tĩnh thay cho nav. */}
+          <div className="absolute left-0 right-0 top-0 z-10">
+            <Wrap className="py-8">
+              <Image
+                src={BRAND_LOGO}
+                alt="TD Games Studio"
+                width={160}
+                height={44}
+                className="h-10 w-auto"
+              />
+            </Wrap>
+          </div>
+          <Wrap className="relative w-full pb-20 pt-32">
             <p className="mb-6 text-[11px] uppercase tracking-[0.4em] text-white/50">
               TD Games Studio — Company Profile
             </p>
@@ -816,14 +830,14 @@ export default function CompanyProfilePage() {
                 <div>
                   <dt className="text-[11px] uppercase tracking-[0.25em] text-white/35">Studio</dt>
                   <dd className="mt-3 text-white/75">
-                    Xom Ngoai, Dong Anh Commune
+                    Floor 4, Hoa Binh Green City
                     <br />
-                    Hanoi, Vietnam (GMT+7)
+                    505 Minh Khai, Hanoi (GMT+7)
                   </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] uppercase tracking-[0.25em] text-white/35">Email</dt>
-                  <dd className="mt-3 text-white/75">tdgames.vn@gmail.com</dd>
+                  <dd className="mt-3 text-white/75">info@tdgamestudio.com</dd>
                 </div>
                 <div>
                   <dt className="text-[11px] uppercase tracking-[0.25em] text-white/35">Web</dt>
@@ -840,8 +854,25 @@ export default function CompanyProfilePage() {
             </Reveal>
           </Wrap>
         </section>
-      </main>
-      <SiteFooter />
-    </>
+
+      {/* ponytail: không dùng SiteFooter — phần Contact ngay trên đã có địa chỉ,
+          email, web. Footer đầy đủ sẽ kéo khách ra khỏi tài liệu. */}
+      <div className="border-t border-white/10 py-10">
+        <Wrap>
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <Image
+              src={BRAND_LOGO}
+              alt="TD Games Studio"
+              width={140}
+              height={38}
+              className="h-8 w-auto opacity-60"
+            />
+            <p className="text-xs uppercase tracking-[0.2em] text-white/30">
+              TD Games Company Limited — Hanoi, Vietnam
+            </p>
+          </div>
+        </Wrap>
+      </div>
+    </main>
   );
 }

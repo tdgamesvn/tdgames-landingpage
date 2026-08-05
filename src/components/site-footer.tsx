@@ -381,7 +381,7 @@ export default function SiteFooter() {
         </div>
 
         <div className="mt-12 border-t border-white/10 pt-6 text-xs text-white/40">
-          <div>Â© {new Date().getFullYear()} TD Games. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} TD Games. All rights reserved.</div>
           <div className="mt-2 text-[10px] text-white/28">
             Running icon by{" "}
             <a
