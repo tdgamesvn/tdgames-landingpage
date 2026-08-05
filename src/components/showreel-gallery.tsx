@@ -26,10 +26,22 @@ const TABS = [
   { id: "vfx", label: "VFX" },
 ] as const;
 
+// ponytail: phân cấp nằm ngay trong ô Category của admin, dạng
+// "Spine Effect / Sky Fantasy" — không cần cột DB mới, không đụng API.
+// Cần quản lý dự án như thực thể (đổi tên hàng loạt, sắp thứ tự) thì tách cột
+// `project` riêng sau, chỗ đọc chỉ có hàm này.
+function splitCategory(raw: string) {
+  const [cat, ...rest] = (raw ?? "").split("/").map((s) => s.trim());
+  return { cat: cat || "", project: rest.join(" / ") || "" };
+}
+
+const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))];
+
 export default function ShowreelGallery() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [cat, setCat] = useState("all");
+  const [project, setProject] = useState("all");
   const [lightbox, setLightbox] = useState<Item | null>(null);
   const logoUrl = useSlotUrl("global", "brand-logo", BRAND_LOGO_FALLBACK);
 
@@ -47,23 +59,35 @@ export default function ShowreelGallery() {
       .finally(() => setLoading(false));
   }, []);
 
-  const tabItems = useMemo(() => items.filter((i) => i.tab === tab), [items, tab]);
+  const tabItems = useMemo(
+    () => items.filter((i) => i.tab === tab).map((i) => ({ ...i, ...splitCategory(i.category) })),
+    [items, tab],
+  );
 
-  // Category pills sinh từ dữ liệu thật, không hardcode — sếp gõ category nào
-  // trong admin thì nó hiện ở đây.
-  const cats = useMemo(() => {
-    const seen: string[] = [];
-    for (const i of tabItems) if (i.category && !seen.includes(i.category)) seen.push(i.category);
-    return seen;
-  }, [tabItems]);
+  // Category + project sinh từ dữ liệu thật, không hardcode — sếp gõ gì trong
+  // admin thì hiện đúng thế.
+  const cats = useMemo(() => uniq(tabItems.map((i) => i.cat)), [tabItems]);
 
-  const visible = useMemo(
-    () => (cat === "all" ? tabItems : tabItems.filter((i) => i.category === cat)),
+  const catItems = useMemo(
+    () => (cat === "all" ? tabItems : tabItems.filter((i) => i.cat === cat)),
     [tabItems, cat],
   );
 
-  // Đổi tab thì reset category, nếu không sẽ lọc bằng category không tồn tại → grid rỗng.
-  useEffect(() => setCat("all"), [tab]);
+  // Tầng 2 chỉ xuất hiện khi category đang chọn thực sự có nhiều dự án con.
+  const projects = useMemo(() => uniq(catItems.map((i) => i.project)), [catItems]);
+
+  const visible = useMemo(
+    () => (project === "all" ? catItems : catItems.filter((i) => i.project === project)),
+    [catItems, project],
+  );
+
+  // Đổi tab/category thì reset tầng dưới, nếu không sẽ lọc bằng giá trị không
+  // tồn tại → grid rỗng.
+  useEffect(() => {
+    setCat("all");
+    setProject("all");
+  }, [tab]);
+  useEffect(() => setProject("all"), [cat]);
 
   useEffect(() => {
     if (!lightbox) return;
@@ -120,24 +144,61 @@ export default function ShowreelGallery() {
 
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
 
-        {/* Category con */}
+        {/* Tầng 1 — loại việc. Underline giống tab header cho cả trang một hệ. */}
         {cats.length > 0 ? (
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
-            {["all", ...cats].map((c) => (
-              <button
-                key={c}
-                onClick={() => setCat(c)}
-                className={`rounded-full border px-4 py-1.5 text-xs sm:text-sm transition-colors ${
-                  cat === c
-                    ? "border-amber-400 bg-amber-400/15 text-amber-300"
-                    : "border-white/15 text-white/55 hover:border-white/40 hover:text-white"
-                }`}
-              >
-                {c === "all" ? "All" : c}
-              </button>
-            ))}
+          <div className="mb-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 border-b border-white/8 pb-px">
+            {["all", ...cats].map((c) => {
+              const active = cat === c;
+              const n = c === "all" ? tabItems.length : tabItems.filter((i) => i.cat === c).length;
+              return (
+                <button
+                  key={c}
+                  onClick={() => setCat(c)}
+                  aria-pressed={active}
+                  className={`${changaOne.className} relative pb-3 pt-1 text-sm tracking-[0.18em] uppercase transition-colors ${
+                    active ? "text-amber-400" : "text-white/40 hover:text-white/75"
+                  }`}
+                >
+                  {c === "all" ? "Tất cả" : c}
+                  <span className="ml-1.5 align-super text-[10px] tracking-normal text-white/25">
+                    {n}
+                  </span>
+                  <span
+                    className={`absolute -bottom-px left-0 h-[2px] bg-amber-400 transition-all duration-300 ${
+                      active ? "w-full opacity-100" : "w-0 opacity-0"
+                    }`}
+                  />
+                </button>
+              );
+            })}
           </div>
         ) : null}
+
+        {/* Tầng 2 — dự án bên trong loại đó. Chỉ hiện khi thật sự có >1 dự án,
+            không thì thành hàng nút thừa. */}
+        {projects.length > 1 ? (
+          <div className="mb-8 flex flex-wrap justify-center gap-2">
+            {["all", ...projects].map((p) => {
+              const active = project === p;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setProject(p)}
+                  aria-pressed={active}
+                  className={`rounded-full px-3.5 py-1 text-xs transition-all duration-200 ${
+                    active
+                      ? "bg-amber-400 font-semibold text-black"
+                      : "bg-white/[0.06] text-white/55 hover:bg-white/12 hover:text-white"
+                  }`}
+                >
+                  {p === "all" ? "Tất cả dự án" : p}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mb-8" />
+        )}
 
         {loading ? (
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
@@ -208,7 +269,10 @@ function Tile({ item, onOpen }: { item: Item; onOpen: () => void }) {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 p-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
         {item.category ? (
           <span className="text-[10px] uppercase tracking-[0.2em] text-amber-400">
-            {item.category}
+            {splitCategory(item.category).cat}
+            {splitCategory(item.category).project ? (
+              <span className="text-white/50"> · {splitCategory(item.category).project}</span>
+            ) : null}
           </span>
         ) : null}
         {item.title ? (

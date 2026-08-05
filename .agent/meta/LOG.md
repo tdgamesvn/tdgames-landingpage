@@ -3003,3 +3003,16 @@ Chạy thật 20 file × 8MB TUẦN TỰ từ VPS vào `http://127.0.0.1:3000/ap
 02:44 UTC) là `upstream prematurely closed connection` × 8 trên cùng 1 connection
 HTTP/2 — đúng dấu hiệu process bị giết giữa 8 request song song, và xảy ra TRƯỚC
 khi bản tuần tự deploy lúc 02:48.
+
+## 2026-08-05 (session — showreel: filter 2 tầng + design lại hàng lọc)
+### Work Done
+- `showreel-gallery.tsx` — `splitCategory()`: category dạng "Loại / Dự án" tách
+  2 tầng lọc. Tầng 1 (loại) đổi từ pill sang underline-tab Changa One + số đếm,
+  đồng bộ header ART/ANIMATION/VFX. Tầng 2 (dự án) là pill amber, CHỈ hiện khi
+  loại đang chọn có >1 dự án. Tile badge hiện "Loại · Dự án".
+- `ShowreelTab.tsx` — placeholder + tooltip hướng dẫn cú pháp "Loại / Dự án".
+
+### Quyết định
+Không thêm cột `project` vào DB: cú pháp "/" trong ô category sẵn có cho kết quả
+y hệt với 0 migration, 0 thay đổi API. Chỗ đọc gom hết trong `splitCategory` nên
+sau này tách cột riêng chỉ sửa 1 hàm. (Sếp không chọn phương án khi được hỏi.)

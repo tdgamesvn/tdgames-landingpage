@@ -217,7 +217,8 @@ export function ShowreelTab({ adminKey }: { adminKey: string }) {
                 value={it.category}
                 list="showreel-categories"
                 onChange={(e) => patch(i, { category: e.target.value })}
-                placeholder="Category — vd: UI, Concept, Cinematic"
+                placeholder='Category — "Spine Effect" hoặc "Spine Effect / Sky Fantasy"'
+                title='Gõ "Loại / Dự án" để trang showreel tự tách 2 tầng lọc'
                 className="w-full rounded border border-white/15 bg-white/5 px-2 py-1 text-xs"
               />
               <div className="flex items-center gap-2 text-xs">
