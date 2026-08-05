@@ -3132,9 +3132,64 @@ portfolio chuyên nghiệp tương tự.
 ### Result
 `tsc --noEmit` sạch, dev `/company-profile` → 200. Push → CI deploy.
 
-### Next Step
+### Next Step (đã xử lý ở session 3 bên dưới)
 ⚠️ Số liệu vẫn là **placeholder, chưa ai verify**: 2023 / 50+ projects / 12+
 clients / 1200+ assets. Tỉ lệ 2 donut (VN 45 / APAC 30 / US-EU 25 và genre
 40/25/20/15) là **bịa để có layout** — đây là chỗ khách soi đầu tiên. Danh sách
 `CLIENTS` có Funtap / Gamota / VNG cần sếp xác nhận là khách thật (ghi sai =
 rủi ro pháp lý, không chỉ sai chữ).
+
+---
+
+## 2026-08-05 (session 3 — Company Profile: research design + hồ sơ năng lực đầy đủ)
+
+### Task
+Sếp: "design xấu quá, tìm trên mạng portfolio studio outsource tương tự để học
+hỏi". Sau đó: "cần đầy đủ thông tin (không có thì fake để tôi điền sau) và design
+đẹp — đây là hồ sơ năng lực tôi sẽ gửi khách".
+
+### Research (subagent, 9 studio fetch thật)
+Room 8, Kevuru, Lemon Sky, Sperasoft, Glass Egg, Sparx*, Whimsy, Argentics,
+Juego. Kết quả bác bỏ gần hết bản deck ở session 2:
+- **KHÔNG studio nào dùng full-screen slide** — cả 9 đều continuous scroll.
+  Session 2 copy nhịp PDF của ITS vào web là sai thể loại. ITS bán dịch vụ
+  phần mềm (deck chữ-nhiều hợp lý); studio art bán chính artwork.
+- **Art bleed sát mép, không viền/bo góc/card.** Room 8 nói thẳng trong bài
+  rebranding: dùng art thật của project làm design element. Card bo góc chỉ
+  xuất hiện ở Whimsy/Juego — nhóm nhìn template rẻ tiền nhất mẫu.
+- **Accent color dùng cực ít.** Room 8 chỉ dùng xanh wasabi để "place accents".
+  Bản cũ rải amber lên mọi eyebrow + mọi viền card.
+- Không site nào đánh số section 01/02/03.
+- Stats dừng ở 3-4 số, gạch mảnh ngăn, không hộp. Logo khách lưới phẳng không khung.
+
+### Work Done
+`src/app/company-profile/page.tsx` viết lại lần 2 + `_reveal.tsx` (client
+component, framer-motion fade+rise dùng chung).
+
+Bỏ: 20 full-screen slide, mọi card có viền, số thứ tự section, 2 donut
+Geography/Genre (không studio nào dùng chart — mà số liệu đó em bịa, nên xoá
+được kép).
+
+Thêm 8 mục một hồ sơ năng lực cần mà bản cũ thiếu: thông tin pháp nhân
+(COMPANY), cơ cấu team + capacity/tháng, case study có metrics, testimonials,
+pricing models, QA & revision policy, security/NDA/IP, communication (kênh,
+giờ overlap, response time), FAQ.
+
+4 luật layout đã ghi thành comment đầu file — phá là trang tụt về hạng template.
+
+### Verify
+tsc sạch, dev 200. Chụp màn hình thật bằng Playwright: fullPage ra đen toàn bộ
+vì `whileInView` không kích hoạt ngoài viewport khi Playwright chụp — **không
+phải bug**. Scroll tới y=9000 rồi chụp viewport thì content hiện đúng.
+Bài học: fullPage screenshot vô dụng với trang có scroll-reveal, phải scroll
+rồi chụp viewport.
+
+### Result
+Push → CI deploy.
+
+### Next Step
+⚠️ **DỮ LIỆU BỊA — đã liệt kê đầy đủ trong comment đầu page.tsx.** Nguy hiểm nhất:
+`TESTIMONIALS` là 3 quote em tự viết kèm chức danh giả. Gửi khách khi chưa xin
+phép người thật = rủi ro pháp lý. Xin quote thật hoặc xoá section.
+Còn lại: TEAM (12 người), CAPACITY, CASE_STUDY.metrics, RATES ($X,XXX),
+COMPANY MST + phone, STATS, CLIENTS (Funtap/Gamota/VNG chưa xác nhận).
