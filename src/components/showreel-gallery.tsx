@@ -8,12 +8,10 @@ import { Changa_One, Nunito_Sans } from "next/font/google";
 import { useSlotUrl, BRAND_LOGO_FALLBACK } from "@/lib/use-slot-url";
 
 const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
-// "vietnamese" bắt buộc: thiếu subset này thì "Tất cả" rơi về font hệ thống,
-// chữ có dấu vỡ lệch so với chữ không dấu.
-const nunitoSans = Nunito_Sans({
-  weight: ["400", "600", "700"],
-  subsets: ["latin", "vietnamese"],
-});
+// ponytail: UI trang này toàn tiếng Anh nên latin là đủ — cần chữ có dấu ở đâu
+// thì thêm lại subset "vietnamese", KHÔNG dùng Changa One (font đó không có
+// glyph tiếng Việt, chữ dấu sẽ vỡ).
+const nunitoSans = Nunito_Sans({ weight: ["400", "600", "700"], subsets: ["latin"] });
 
 type Item = {
   id: string;
@@ -162,11 +160,11 @@ export default function ShowreelGallery() {
                   key={c}
                   onClick={() => setCat(c)}
                   aria-pressed={active}
-                  className={`relative pb-3 pt-1 text-sm font-bold tracking-[0.18em] uppercase transition-colors ${
+                  className={`${changaOne.className} relative pb-3 pt-1 text-base tracking-[0.18em] uppercase transition-colors ${
                     active ? "text-amber-400" : "text-white/40 hover:text-white/75"
                   }`}
                 >
-                  {c === "all" ? "Tất cả" : c}
+                  {c === "all" ? "ALL" : c}
                   <span className="ml-1.5 align-super text-[10px] tracking-normal text-white/25">
                     {n}
                   </span>
@@ -198,7 +196,7 @@ export default function ShowreelGallery() {
                       : "bg-white/[0.06] text-white/55 hover:bg-white/12 hover:text-white"
                   }`}
                 >
-                  {p === "all" ? "Tất cả dự án" : p}
+                  {p === "all" ? "All projects" : p}
                 </button>
               );
             })}
@@ -218,7 +216,7 @@ export default function ShowreelGallery() {
           </div>
         ) : visible.length === 0 ? (
           <p className="py-24 text-center text-white/40">
-            Chưa có item nào trong mục này.
+            Nothing here yet.
           </p>
         ) : (
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
@@ -304,7 +302,7 @@ function Lightbox({ item, onClose }: { item: Item; onClose: () => void }) {
     >
       <button
         onClick={onClose}
-        aria-label="Đóng"
+        aria-label="Close"
         className="absolute right-5 top-5 text-3xl leading-none text-white/60 hover:text-white"
       >
         ×

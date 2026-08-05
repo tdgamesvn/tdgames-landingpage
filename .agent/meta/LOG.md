@@ -3032,3 +3032,9 @@ Alpha đều ≤10% để không đánh nhau với thumbnail.
 - "TẤT CẢ" vỡ chữ: Changa One không có glyph tiếng Việt. Hàng filter bỏ
   `changaOne` → Nunito Sans bold uppercase, và thêm subset "vietnamese" cho
   Nunito. Changa One giữ nguyên cho tab ART/ANIMATION/VFX (chữ Anh).
+
+### UI showreel chuyển toàn tiếng Anh (cùng session)
+"Tất cả"→"ALL", "Tất cả dự án"→"All projects", "Chưa có item nào…"→"Nothing here
+yet.", aria-label "Đóng"→"Close". Nhờ vậy hàng filter dùng lại được Changa One
+(đồng bộ tab header) và Nunito bỏ subset "vietnamese". Lưu ý cho sau: chỗ nào
+cần chữ có dấu thì KHÔNG dùng Changa One — font đó thiếu glyph tiếng Việt.
