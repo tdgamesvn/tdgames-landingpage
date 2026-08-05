@@ -554,30 +554,37 @@ export default function CompanyProfilePage() {
           <Wrap>
             <Heading eyebrow="Selected work" title="Shipped, not mocked up" />
           </Wrap>
-          <div className="grid grid-cols-2 gap-px bg-white/10 lg:grid-cols-4">
-            {WORK.map((w) => (
-              <Link
-                key={w.slug}
-                href={`/portfolio/${w.slug}`}
-                className="group relative aspect-square bg-[#0a0a0a]"
-              >
-                <Image
-                  src={w.image}
-                  alt={w.title}
-                  fill
-                  sizes="(max-width: 1024px) 50vw, 25vw"
-                  className="object-cover transition duration-700 group-hover:scale-[1.05]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/95 via-transparent to-transparent opacity-80 transition group-hover:opacity-100" />
-                <div className="absolute inset-x-0 bottom-0 p-5">
-                  <div className="text-sm font-bold leading-snug text-white">{w.title}</div>
-                  <div className="mt-1 text-[11px] uppercase tracking-[0.2em] text-white/45">
-                    {w.client}
+          <Wrap>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {WORK.map((w) => (
+                <Link
+                  key={w.slug}
+                  href={`/portfolio/${w.slug}`}
+                  className="group overflow-hidden rounded-xl bg-white/5 shadow-xl transition-all duration-500 hover:-translate-y-1 hover:bg-white/[0.08]"
+                >
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/50">
+                    <Image
+                      src={w.image}
+                      alt={w.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  <div className="p-4">
+                    <span
+                      className="mb-2 inline-block rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ background: `${A}33`, color: A }}
+                    >
+                      {w.client}
+                    </span>
+                    <h3 className="text-base font-bold leading-snug text-white">{w.title}</h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </Wrap>
           <Wrap className="pt-12">
             <Link
               href="/portfolio"
