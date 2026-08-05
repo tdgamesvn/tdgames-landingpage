@@ -206,7 +206,7 @@ const KEY_PEOPLE = [
     photo:
       "https://cdn.tdgamestudio.com/projects/2026/05/f104ee79-426e-4b86-a39f-e3dec45deaaa-chatgpt-image-22_35_12-25-thg-5--2026.png",
     bullets: [
-      "9+ years as Artist, Animator and Animation Lead",
+      "10+ years as Artist, Animator and Animation Lead",
       "Worked at Gemmob Studio, Zitga Studio and Sky Mavis",
       "1st prize, Animation Contest by Sky Mavis",
       "Coaches animation skills across the company",
@@ -219,7 +219,7 @@ const KEY_PEOPLE = [
     photo:
       "https://cdn.tdgamestudio.com/projects/2026/05/fbf5740a-7f73-4ca1-b490-a0a04f68a321-chatgpt-image-22_35_29-25-thg-5--2026.png",
     bullets: [
-      "9+ years in the human resource industry",
+      "10+ years in the human resource industry",
       "Founder of a headhunting service for game & IT talent in Vietnam",
       "Supports clients and the development team in meeting our commitments",
     ],
