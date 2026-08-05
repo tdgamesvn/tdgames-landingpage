@@ -206,12 +206,9 @@ export default function ShowreelGallery() {
         )}
 
         {loading ? (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="mb-4 h-56 animate-pulse rounded-xl bg-white/5 break-inside-avoid"
-              />
+              <div key={i} className="aspect-video animate-pulse rounded-xl bg-white/5" />
             ))}
           </div>
         ) : visible.length === 0 ? (
@@ -219,7 +216,7 @@ export default function ShowreelGallery() {
             Nothing here yet.
           </p>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {visible.map((item) => (
               <Tile key={item.id} item={item} onOpen={() => setLightbox(item)} />
             ))}
@@ -247,7 +244,7 @@ function Tile({ item, onOpen }: { item: Item; onOpen: () => void }) {
           v.currentTime = 0;
         }
       }}
-      className="group relative mb-4 block w-full break-inside-avoid overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] text-left"
+      className="group relative block aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 text-left"
     >
       {isVideo ? (
         <video
@@ -258,7 +255,7 @@ function Tile({ item, onOpen }: { item: Item; onOpen: () => void }) {
           loop
           playsInline
           preload="metadata"
-          className="w-full transition-transform duration-500 group-hover:scale-[1.03]"
+          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
         />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
@@ -266,7 +263,7 @@ function Tile({ item, onOpen }: { item: Item; onOpen: () => void }) {
           src={item.url}
           alt={item.title || item.category}
           loading="lazy"
-          className="w-full transition-transform duration-500 group-hover:scale-[1.03]"
+          className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
         />
       )}
 

@@ -3038,3 +3038,11 @@ Alpha đều ≤10% để không đánh nhau với thumbnail.
 yet.", aria-label "Đóng"→"Close". Nhờ vậy hàng filter dùng lại được Changa One
 (đồng bộ tab header) và Nunito bỏ subset "vietnamese". Lưu ý cho sau: chỗ nào
 cần chữ có dấu thì KHÔNG dùng Changa One — font đó thiếu glyph tiếng Việt.
+
+### Layout lưới showreel (cùng session)
+Bỏ CSS multi-column masonry → `grid grid-cols-1/2/3`. Lý do: multi-column xếp
+theo CỘT nên sort_order đọc sai (1→2→3 chạy dọc cột 1), và video chưa load
+metadata thì cao 0 → layout giật khi từng video load. Tile giờ `aspect-video`
+cố định + `object-contain` trên nền `bg-black/40` (KHÔNG cover — showreel mà cắt
+mất tác phẩm là hỏng; ảnh dọc thành letterbox 2 bên, bấm vào xem đủ ở lightbox).
+Skeleton loading cũng đổi sang aspect-video cho khớp.
