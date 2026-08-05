@@ -751,10 +751,40 @@ export default function CompanyProfilePage() {
             <Heading
               no="07"
               eyebrow="How we work" title="From brief to handoff" />
+            {/* Sơ đồ ngang: đường ray + 4 mốc, thẳng cột với card bên dưới.
+                Ẩn dưới lg vì 1–2 cột thì mũi tên ngang thành vô nghĩa. */}
+            <Reveal className="relative mb-10 hidden lg:block">
+              <div className="absolute left-[12.5%] right-[12.5%] top-[22px] h-px bg-gradient-to-r from-[#ff8c3a]/15 via-[#ff8c3a]/60 to-[#ff8c3a]/15" />
+              <div className="relative grid grid-cols-4">
+                {PROCESS.map((p, i) => (
+                  <div key={p.title} className="flex flex-col items-center text-center">
+                    <span
+                      className="flex h-11 w-11 items-center justify-center rounded-full border text-sm font-black"
+                      style={{
+                        borderColor: `${A}80`,
+                        color: A,
+                        background: "#0b0c12",
+                        boxShadow: `0 0 22px ${A}33`,
+                      }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-[#ffcc8e]/80">
+                      {p.when}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {PROCESS.map((p, i) => (
-                <Reveal key={p.title} delay={i * 0.06} className={`${CARD} p-7`}>
-                  <div className="mb-5 flex items-center gap-4">
+                <Reveal
+                  key={p.title}
+                  delay={i * 0.06}
+                  className={`${CARD} relative p-7 lg:after:absolute lg:after:-right-4 lg:after:top-1/2 lg:after:h-px lg:after:w-4 lg:after:bg-[#ff8c3a]/35 lg:last:after:hidden`}
+                >
+                  <div className="mb-5 flex items-center gap-4 lg:hidden">
                     <StepNo n={i + 1} />
                     <span className="rounded-full border border-white/10 bg-black/40 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[#ffcc8e]/80">
                       {p.when}

@@ -3376,3 +3376,29 @@ Commit + push → CI deploy.
 - Hero + Contact vẫn dùng ảnh full-bleed (ổn). Có thể thêm sơ đồ pipeline ngang cho PROCESS
   nếu sếp muốn "sơ đồ" đúng nghĩa (hiện là 4 card đánh số).
 - DỮ LIỆU BỊA vẫn còn: TESTIMONIALS (rủi ro pháp lý), TEAM, CAPACITY, RATES, STATS, MST.
+
+---
+
+## 2026-08-05 (session — sơ đồ ngang cho section Process)
+
+### Task
+Sếp: làm nốt PROCESS thành sơ đồ đúng nghĩa (4 card đánh số → sơ đồ ngang có đường nối).
+
+### Work Done (`src/app/company-profile/page.tsx`)
+- Thêm hàng "ray" phía trên lưới card (chỉ hiện từ `lg`): đường gradient cam chạy từ
+  12.5%→87.5% (= tâm cột 1 đến tâm cột 4), 4 node tròn số 01–04 nền `#0b0c12` đè lên ray
+  + glow `0 0 22px`, nhãn `p.when` (24–48H / FIRST ASSET / …) nằm dưới node.
+- Card: thêm `lg:after:*` — đoạn kẻ ngang w-4 lấp đúng khe `gap-4` giữa các card,
+  `lg:last:after:hidden` để card cuối không thò đuôi.
+- Dưới `lg` (1–2 cột) ray bị ẩn, card quay lại dùng `StepNo` + badge như cũ
+  (`lg:hidden`) — mũi tên ngang ở 1 cột là vô nghĩa.
+
+### Verify
+tsc + eslint sạch, GET 200, chụp Playwright ở 1200px: node thẳng cột với card, ray liền mạch.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+DỮ LIỆU BỊA vẫn còn — TESTIMONIALS (3 quote em tự viết) là rủi ro pháp lý nếu gửi khách;
+TEAM/CAPACITY/RATES/STATS/MST cần số thật.
