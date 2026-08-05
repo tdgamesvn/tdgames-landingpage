@@ -29,6 +29,10 @@ const TABS = [
   { id: "vfx", label: "VFX" },
 ] as const;
 
+// ponytail: khoá tạm 2 tab chưa có nội dung — vẫn hiện để khách thấy studio làm
+// mảng đó, nhưng không bấm vào được. Có nội dung rồi thì xoá id khỏi Set này.
+const LOCKED_TABS = new Set<string>(["art", "animation"]);
+
 // ponytail: phân cấp nằm ngay trong ô Category của admin, dạng
 // "Spine Effect / Sky Fantasy" — không cần cột DB mới, không đụng API.
 // Cần quản lý dự án như thực thể (đổi tên hàng loạt, sắp thứ tự) thì tách cột
@@ -49,10 +53,14 @@ export default function ShowreelGallery() {
   const logoUrl = useSlotUrl("global", "brand-logo", BRAND_LOGO_FALLBACK);
 
   // Tab nằm trong URL (?tab=animation) → copy link gửi khách là mở đúng tab,
-  // back/forward của trình duyệt cũng chạy free. Giá trị lạ → về "art".
+  // back/forward của trình duyệt cũng chạy free. Giá trị lạ hoặc tab đang khoá
+  // → về "vfx" (tab duy nhất còn mở).
   const tabParam = useSearchParams().get("tab");
   const tab: Item["tab"] =
-    tabParam === "animation" || tabParam === "vfx" ? tabParam : "art";
+    (tabParam === "animation" || tabParam === "vfx" || tabParam === "art") &&
+    !LOCKED_TABS.has(tabParam)
+      ? tabParam
+      : "vfx";
 
   useEffect(() => {
     fetch("/api/showreel")
@@ -124,22 +132,37 @@ export default function ShowreelGallery() {
           <nav className="flex gap-1 sm:gap-4">
             {TABS.map((t) => {
               const active = tab === t.id;
-              return (
+              const locked = LOCKED_TABS.has(t.id);
+              const cls = `${changaOne.className} relative px-4 py-2 text-lg tracking-wider transition-colors sm:px-8 sm:text-2xl ${
+                locked
+                  ? "cursor-not-allowed text-white/20"
+                  : active
+                    ? "text-amber-400"
+                    : "text-white/45 hover:text-white/80"
+              }`;
+              const underline = (
+                <span
+                  className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 bg-amber-400 transition-all duration-300 ${
+                    active && !locked ? "w-full" : "w-0"
+                  }`}
+                />
+              );
+
+              return locked ? (
+                <span key={t.id} aria-disabled className={cls} title="Coming soon">
+                  {t.label}
+                  {underline}
+                </span>
+              ) : (
                 <Link
                   key={t.id}
                   href={`/showreel?tab=${t.id}`}
                   scroll={false}
                   aria-current={active ? "page" : undefined}
-                  className={`${changaOne.className} relative px-4 py-2 text-lg tracking-wider transition-colors sm:px-8 sm:text-2xl ${
-                    active ? "text-amber-400" : "text-white/45 hover:text-white/80"
-                  }`}
+                  className={cls}
                 >
                   {t.label}
-                  <span
-                    className={`absolute bottom-0 left-1/2 h-[3px] -translate-x-1/2 bg-amber-400 transition-all duration-300 ${
-                      active ? "w-full" : "w-0"
-                    }`}
-                  />
+                  {underline}
                 </Link>
               );
             })}

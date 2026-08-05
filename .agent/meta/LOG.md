@@ -3046,3 +3046,14 @@ metadata thì cao 0 → layout giật khi từng video load. Tile giờ `aspect-
 cố định + `object-contain` trên nền `bg-black/40` (KHÔNG cover — showreel mà cắt
 mất tác phẩm là hỏng; ảnh dọc thành letterbox 2 bên, bấm vào xem đủ ở lightbox).
 Skeleton loading cũng đổi sang aspect-video cho khớp.
+
+### Layout lưới + khoá tab (cùng session)
+- Masonry `columns-*` → `grid grid-cols-*`: multi-column xếp theo CỘT nên
+  sort_order đọc sai (1→2→3 chạy dọc cột 1). Grid đọc trái→phải đúng thứ tự.
+  Tile khung `aspect-video` cố định + `object-contain` trên nền `bg-black/40`:
+  không cắt tác phẩm (showreel mà crop là hỏng), và không nhảy layout khi video
+  load vì khung có sẵn kích thước. Skeleton cũng đổi sang aspect-video.
+- `LOCKED_TABS = {art, animation}`: tab khoá render `<span>` thay `<Link>` nên
+  không click/tab tới được, chữ mờ /20, title "Coming soon". Tab mặc định đổi
+  "art" → "vfx", và ?tab=art bị ép về vfx — nếu không, vào thẳng trang là màn
+  rỗng "Nothing here yet.". Có nội dung thì xoá id khỏi Set.
