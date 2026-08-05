@@ -440,7 +440,7 @@ function Heading({
 function Divider({ items }: { items: string[] }) {
   return (
     <Wrap>
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-white/10 py-7">
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-y border-white/10 py-7">
         <span className="h-px w-12 shrink-0" style={{ background: A }} />
         {items.map((s, i) => (
           <span key={s} className="flex items-center gap-6">
@@ -450,6 +450,8 @@ function Divider({ items }: { items: string[] }) {
             </span>
           </span>
         ))}
+        {/* gạch phải cho đối xứng với gạch trái */}
+        <span className="h-px w-12 shrink-0" style={{ background: A }} />
       </div>
     </Wrap>
   );
