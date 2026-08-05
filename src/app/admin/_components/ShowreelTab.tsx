@@ -30,7 +30,8 @@ export function ShowreelTab({ adminKey }: { adminKey: string }) {
   const [tab, setTab] = useState<Item["tab"]>("art");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  // đếm thay vì boolean: kéo 10 file → 10 upload song song, cờ boolean sẽ tắt sớm.
+  const [pending, setPending] = useState(0);
   const [msg, setMsg] = useState("");
 
   const load = useCallback(async () => {
@@ -55,8 +56,7 @@ export function ShowreelTab({ adminKey }: { adminKey: string }) {
   }, [load]);
 
   async function onPick(file: File) {
-    setUploading(true);
-    setMsg("");
+    setPending((p) => p + 1);
     try {
       const { url } = await uploadFile({ adminKey, file });
       const kind: Item["kind"] = file.type.startsWith("video/") ? "video" : "image";
@@ -75,9 +75,9 @@ export function ShowreelTab({ adminKey }: { adminKey: string }) {
       ]);
       setMsg("Upload xong — nhớ bấm Lưu.");
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Upload lỗi");
+      setMsg(`${file.name}: ${e instanceof Error ? e.message : "upload lỗi"}`);
     } finally {
-      setUploading(false);
+      setPending((p) => p - 1);
     }
   }
 
@@ -164,10 +164,14 @@ export function ShowreelTab({ adminKey }: { adminKey: string }) {
 
       <UploadZone
         onPick={onPick}
-        uploading={uploading}
+        multiple
+        uploading={pending > 0}
         height={140}
-        label={`Kéo & thả ảnh/video vào đây — sẽ thêm vào tab "${tab}"`}
+        label={`Kéo & thả nhiều ảnh/video vào đây — sẽ thêm vào tab "${tab}"`}
       />
+      {pending > 0 ? (
+        <p className="text-xs text-white/60">Đang upload {pending} file…</p>
+      ) : null}
 
       {msg ? <p className="text-xs text-white/60">{msg}</p> : null}
 

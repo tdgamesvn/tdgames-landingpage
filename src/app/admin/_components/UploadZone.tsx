@@ -12,6 +12,8 @@ type Props = {
   height?: number;
   selectedFile?: File | null;
   selectedPreviewUrl?: string;
+  /** opt-in: nhận nhiều file 1 lần, onPick được gọi cho từng file */
+  multiple?: boolean;
 };
 
 export function UploadZone({
@@ -22,16 +24,18 @@ export function UploadZone({
   height = 220,
   selectedFile,
   selectedPreviewUrl,
+  multiple = false,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  const handleFile = useCallback(
-    (file: File | undefined | null) => {
-      if (!file) return;
-      onPick(file);
+  const handleFiles = useCallback(
+    (files: FileList | null | undefined) => {
+      if (!files?.length) return;
+      // multiple=false → giữ nguyên hành vi cũ: chỉ lấy file đầu.
+      for (const file of multiple ? Array.from(files) : [files[0]]) onPick(file);
     },
-    [onPick],
+    [onPick, multiple],
   );
 
   const onDrop = useCallback(
@@ -39,10 +43,9 @@ export function UploadZone({
       e.preventDefault();
       e.stopPropagation();
       setDragOver(false);
-      const file = e.dataTransfer.files?.[0];
-      handleFile(file);
+      handleFiles(e.dataTransfer.files);
     },
-    [handleFile],
+    [handleFiles],
   );
 
   const previewKind = selectedPreviewUrl ? detectKindFromUrl(selectedPreviewUrl) : null;
@@ -69,8 +72,9 @@ export function UploadZone({
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         className="hidden"
-        onChange={(e) => handleFile(e.target.files?.[0])}
+        onChange={(e) => handleFiles(e.target.files)}
       />
       {selectedPreviewUrl && previewKind === "image" ? (
         // eslint-disable-next-line @next/next/no-img-element
