@@ -3577,3 +3577,26 @@ CHƯA commit — chờ sếp review.
 - Hero `/company-profile`: H1 "GAME ART / THAT SHIPS" → **"COMPANY / PROFILE"**
   (PROFILE màu cam). Eyebrow bỏ đuôi "— Company Profile" để không lặp, còn
   "TD Games Studio". File: `src/app/company-profile/page.tsx:517-527`.
+
+## 2026-08-05 (session — fix Admin "Unauthorized" ở mọi tab)
+### Task
+Sếp gửi ảnh /admin: badge AUTHENTICATED nhưng tab Page Slots báo "Unauthorized".
+
+### Root cause
+`verifyKey()` trong `src/app/admin/page.tsx` nhận key từ FormData (DOM) khi submit,
+set `keyVerified=true` + lưu localStorage nhưng **không** `setAdminKey(value)`.
+State `adminKey` chỉ update qua `onChange` của input — password manager autofill
+không kích onChange → adminKey rỗng → mọi tab fetch `x-admin-key: ""` → 401 toàn bộ,
+không riêng Page Slots.
+
+### Work Done
+- `src/app/admin/page.tsx` — thêm `setAdminKey(value)` trong nhánh `res.ok`. tsc sạch.
+- Xác minh prod OK khi gửi đúng key: `/api/admin/media` + `/api/admin/page-slots` → 200.
+
+### Ghi chú
+Admin key thật nằm ở DB `app_settings.admin_secret` (`requireAdmin` ưu tiên DB,
+`ADMIN_SECRET` env chỉ là fallback và đang KHÁC giá trị). Giá trị hiện tại yếu
+(`Tdgames@123`) — nên đổi.
+
+### Next Step
+Sếp cân nhắc đổi `app_settings.admin_secret` sang chuỗi mạnh.

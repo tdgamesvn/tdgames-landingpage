@@ -112,6 +112,10 @@ export default function AdminPage() {
         cache: "no-store",
       });
       if (res.ok) {
+        // Key verify được đến từ FormData (DOM), không phải từ state — autofill
+        // không kích onChange nên adminKey có thể rỗng. Không sync ở đây thì mọi
+        // tab fetch với x-admin-key rỗng → 401 dù badge hiện AUTHENTICATED.
+        setAdminKey(value);
         setKeyVerified(true);
         setVerifyMsg("Admin key OK");
         if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, value);
