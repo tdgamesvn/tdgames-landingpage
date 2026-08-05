@@ -3336,3 +3336,43 @@ Commit + push → CI deploy.
 - Chưa làm: sơ đồ pipeline ngang (Concept→Production→Integration→Delivery) dạng đồ hoạ,
   ảnh nền cho vài section giữa trang, icon SVG riêng cho WHY.
 - DỮ LIỆU BỊA vẫn còn (TESTIMONIALS, TEAM, CAPACITY, RATES, STATS, MST).
+
+---
+
+## 2026-08-05 (session — redesign visual toàn trang company-profile)
+
+### Task
+Sếp đóng vai khách: "design đơn giản quá, bố cục text lệch, chỉ toàn text không icon/sơ đồ,
+nền đen nhiều quá, chữ khó đọc, không hấp dẫn".
+
+### Quyết định
+Em hỏi 2 câu (hướng design / xử lý data bịa), sếp không chọn → mặc định:
+**đồng bộ ngôn ngữ trang chủ** + giữ nguyên số liệu hiện tại.
+
+### Work Done (`src/app/company-profile/page.tsx`)
+- Accent `A` đổi #f59e0b → **#ff8c3a** (= trang chủ). Thêm const `CARD` dùng lại toàn trang.
+- `Heading` — thêm prop `no`, render `// 01` cam glow + gạch gradient + eyebrow #ffcc8e,
+  h2 dùng font Rajdhani. 14 section được đánh số tự động.
+- `Facts` — bỏ bảng `<dl>` 2 cột (nguyên nhân "text lệch": nhãn trái hẹp, giá trị nhảy
+  sang giữa, thừa khoảng trắng phải) → **lưới card 2 cột**, nhãn có dot cam.
+  Áp cho 6 khối: COMPANY, CAPACITY, QA, RATES, SECURITY, COMMS.
+- Thêm `StepNo` (số 01–04 trong vòng tròn cam) cho WHY + PROCESS.
+- 15 section: nền đen phẳng → **gradient xen kẽ** (tint #14151f→#0a0a10 / plain
+  #0b0c12→#09090d) + radial glow cam mờ, không thêm DOM (2 lớp background-image).
+- Text trần → card: STATS, WHY, PROCESS, TESTIMONIALS, ENGAGEMENT, FAQ, CLIENTS.
+  STACK đổi list dọc → pill tags.
+- Chữ sáng lên toàn trang: white/50→70, /55→72, /60→75, /35→45, /40→50.
+- Cập nhật khối comment LAYOUT RULES đầu file (luật cũ "không card, không số section,
+  amber" đã bị thay — ghi rõ để session sau không revert nhầm).
+
+### Verify
+tsc + eslint sạch, GET /company-profile 200, chụp Playwright: bảng company facts giờ là
+lưới card 2 cột đều, có gradient nền + nhãn cam.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+- Hero + Contact vẫn dùng ảnh full-bleed (ổn). Có thể thêm sơ đồ pipeline ngang cho PROCESS
+  nếu sếp muốn "sơ đồ" đúng nghĩa (hiện là 4 card đánh số).
+- DỮ LIỆU BỊA vẫn còn: TESTIMONIALS (rủi ro pháp lý), TEAM, CAPACITY, RATES, STATS, MST.

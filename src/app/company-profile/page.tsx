@@ -18,12 +18,13 @@ export const metadata: Metadata = {
 /* ============================================================================
  * ponytail: trang tĩnh, không API/DB. Sếp sửa trực tiếp các hằng số dưới đây.
  *
- * LAYOUT RULES (rút từ Room 8, Lemon Sky, Sparx*, Glass Egg — studio game art
- * thật, không phải deck PDF). Phá 4 luật này là trang tụt về hạng template:
- *   1. Continuous scroll, KHÔNG full-screen slide.
- *   2. Artwork bleed sát mép — không viền, không bo góc, không card.
- *   3. Amber #f59e0b chỉ cho CTA + gạch nhấn nhỏ. Art tự cung cấp màu.
- *   4. Không đánh số section (01/02/03).
+ * LAYOUT RULES — 2026-08-05 sếp duyệt đổi hướng: bản tối giản kiểu Room 8 bị
+ * chê "đen quá, toàn chữ, không hấp dẫn". Luật hiện hành = đồng bộ trang chủ:
+ *   1. Continuous scroll, KHÔNG full-screen slide. (giữ nguyên)
+ *   2. Section nền gradient xen kẽ + glow cam mờ, KHÔNG để đen phẳng #0a0a0a.
+ *   3. Accent cam #ff8c3a (= trang chủ), heading Rajdhani + số // 01 // 02.
+ *   4. Nội dung dạng card (const CARD) — không để text trần trên nền đen.
+ *   5. Chữ body tối thiểu white/70; nhãn nhỏ dùng #ffcc8e.
  *
  * ⚠️⚠️ DỮ LIỆU BỊA — SẾP PHẢI SỬA TRƯỚC KHI GỬI KHÁCH ⚠️⚠️
  * Các khối dưới đây em điền số hợp lý để có layout, KHÔNG phải số thật:
