@@ -110,7 +110,9 @@ const SERVICES = [
   {
     title: "2D Art",
     href: "/services/2d-art",
-    image: IMG.artStudy,
+    // Media 3 card service sếp chỉ định riêng cho trang này (2026-08-05).
+    // SlotMedia tự nhận .mp4 → render <video> autoplay/loop, không cần đổi gì thêm.
+    image: "https://cdn.tdgamestudio.com/projects/2026/07/ee6f7e74-a2af-462f-ba57-c7fb3e63a656-image.png",
     lead: "Stylized visuals built for readability, consistency and game-ready production.",
     items: [
       "Character concept & design",
@@ -124,7 +126,7 @@ const SERVICES = [
   {
     title: "2D Animation",
     href: "/services/2d-animation",
-    image: IMG.summoner,
+    image: "https://cdn.tdgamestudio.com/projects/2026/07/eaef94f6-547a-4f73-8487-fb26bdf8c948-charanimation.mp4",
     lead: "Spine 2D skeletal and frame-by-frame motion, from combat sets to cinematic login screens.",
     items: [
       "Character animation & combat sets",
@@ -138,7 +140,7 @@ const SERVICES = [
   {
     title: "2D VFX",
     href: "/services/2d-vfx",
-    image: IMG.mytheria,
+    image: "https://cdn.tdgamestudio.com/projects/2026/07/69a8ee03-645f-4dd0-8dfb-ea5cf998857d-vfxcobat2.mp4",
     lead: "Dynamic skill effects and UI flourishes, delivered Spine-integrated or as sprite sheets.",
     items: [
       "Character & skill VFX",
