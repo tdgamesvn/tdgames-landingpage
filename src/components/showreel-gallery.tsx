@@ -103,7 +103,9 @@ export default function ShowreelGallery() {
   return (
     <main className={`${nunitoSans.className} pt-32 pb-24`}>
       {/* Header riêng của showreel: chỉ logo + 3 tab, không nav site */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/8 bg-[#0a0a0a]/85 backdrop-blur-xl">
+      {/* /70 thay vì /85: để gradient nền ánh nhẹ qua header, không thành dải
+          đen phẳng cắt ngang. */}
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/8 bg-[#08080b]/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] flex-col items-center gap-2 px-4 py-3 sm:flex-row sm:justify-between sm:px-8">
           <Link href="/" aria-label="TD Games home" className="shrink-0">
             <Image

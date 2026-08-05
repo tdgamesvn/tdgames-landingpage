@@ -3016,3 +3016,10 @@ khi bản tuần tự deploy lúc 02:48.
 Không thêm cột `project` vào DB: cú pháp "/" trong ô category sẵn có cho kết quả
 y hệt với 0 migration, 0 thay đổi API. Chỗ đọc gom hết trong `splitCategory` nên
 sau này tách cột riêng chỉ sửa 1 hàm. (Sếp không chọn phương án khi được hỏi.)
+
+### Nền showreel (cùng session)
+`showreel/page.tsx` — 2 lớp `fixed inset-0 -z-10 pointer-events-none`: lớp 1 gồm
+3 radial-gradient (amber 10% trên đỉnh nối màu header, indigo 7% góc dưới trái,
+amber 4% phải giữa), lớp 2 vignette ép mắt vào lưới. Base đổi #0a0a0a → #08080b.
+Header hạ opacity /85 → /70 để gradient ánh qua, không thành dải đen cắt ngang.
+Alpha đều ≤10% để không đánh nhau với thumbnail.
