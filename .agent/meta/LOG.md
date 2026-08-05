@@ -2995,3 +2995,11 @@ nginx 20M→100M (413 với file >20MB) và lỗi cộng dồn trong ShowreelTab
 
 ### Next Step
 Nếu cần upload nhanh hơn: presigned PUT thẳng lên R2, app không đụng bytes.
+
+### Verify (cùng session, sau khi deploy 986b667)
+Chạy thật 20 file × 8MB TUẦN TỰ từ VPS vào `http://127.0.0.1:3000/api/admin/upload`:
+**OK 20/20 trong 114s**, RAM app đỉnh 270MB, PM2 KHÔNG restart (restarts giữ 213).
+Đã xoá 20 object test khỏi R2. Log nginx của lần sếp gặp 502 (09:44:43 giờ VN =
+02:44 UTC) là `upstream prematurely closed connection` × 8 trên cùng 1 connection
+HTTP/2 — đúng dấu hiệu process bị giết giữa 8 request song song, và xảy ra TRƯỚC
+khi bản tuần tự deploy lúc 02:48.
