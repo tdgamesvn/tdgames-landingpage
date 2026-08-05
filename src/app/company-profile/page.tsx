@@ -577,7 +577,7 @@ export default async function CompanyProfilePage() {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {STATS.map((s) => (
                   <div key={s.label} className={`${CARD} px-5 py-6 md:px-6 md:py-7`}>
-                    <div className="text-[clamp(1.75rem,8vw,3.25rem)] font-black leading-none text-white">
+                    <div className="text-[clamp(1.75rem,8vw,3rem)] font-black leading-none text-white">
                       {s.value}
                     </div>
                     <div className="mt-2.5 text-[11px] uppercase leading-[1.5] tracking-[0.12em] text-white/50 md:mt-3 md:text-xs md:tracking-[0.2em]">
