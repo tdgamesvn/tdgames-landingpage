@@ -18,3 +18,9 @@ create table if not exists showreel_items (
 
 create index if not exists showreel_items_tab_sort_idx
   on showreel_items (tab, sort_order);
+
+-- RLS: chỉ cho anon/authenticated đọc item active; ghi đi qua service role key (bỏ qua RLS).
+alter table showreel_items enable row level security;
+drop policy if exists showreel_public_read on showreel_items;
+create policy showreel_public_read on showreel_items
+  for select to anon, authenticated using (active);
