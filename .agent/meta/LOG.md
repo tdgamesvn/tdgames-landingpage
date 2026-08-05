@@ -3219,3 +3219,33 @@ Commit + push → CI deploy.
 ### Next Step
 Cảnh báo cũ vẫn còn: DỮ LIỆU BỊA trong page.tsx (TESTIMONIALS giả nguy hiểm nhất,
 TEAM/CAPACITY/RATES/STATS/CLIENTS/MST). Phải thay số thật trước khi gửi khách.
+
+---
+
+## 2026-08-05 (session — card "Shipped, not mocked up" theo layout Selected Works)
+
+### Task
+Sếp: card ở section "Shipped, not mocked up" (company-profile) xấu, hover zoom bị lỗi.
+Muốn layout giống card "Selected Works" bên /portfolio.
+
+### Nguyên nhân zoom lỗi
+Thẻ `<Link>` ô lưới KHÔNG có `overflow-hidden`, mà `<Image>` bên trong lại
+`group-hover:scale-[1.05]` → ảnh phóng tràn ra ngoài ô, đè lên tile kế bên
+(lưới `gap-px` nên tràn thấy rõ).
+
+### Work Done
+- `src/app/company-profile/page.tsx` — grid work: bỏ `gap-px`/`aspect-square`/overlay
+  đè chữ; dùng layout của `PortfolioGridApi`: card `rounded-xl bg-white/5`, khung ảnh
+  `aspect-[4/3] overflow-hidden` (ảnh scale-110 bị cắt trong khung), text dưới ảnh —
+  pill client màu amber + title. Hover: card nhấc `-translate-y-1`. Bọc trong `<Wrap>`
+  cho thẳng lề với các section khác.
+
+### Verify
+`tsc --noEmit` sạch (pre-push hook cũng chạy).
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+Cảnh báo cũ vẫn còn: DỮ LIỆU BỊA trong page.tsx (TESTIMONIALS giả nguy hiểm nhất,
+TEAM/CAPACITY/RATES/STATS/CLIENTS/MST). Phải thay số thật trước khi gửi khách.
