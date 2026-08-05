@@ -2971,3 +2971,27 @@ Client giấu lỗi: `setMsg` ghi đè → chỉ thấy lỗi của file cuối.
 ### Next Step
 File >100MB: nén qua bot compressor, hoặc presigned PUT thẳng lên R2 nếu cần
 upload nặng thường xuyên (route hiện buffer cả file vào RAM).
+
+## 2026-08-05 (session — 20 video upload song song giết PM2 → 502)
+### Task
+Sếp kéo 20 video (<10MB/cái) vào tab Showreel → "Đã lưu 0 item" + body HTML
+502 Bad gateway của Cloudflare.
+
+### Nguyên nhân (root cause thật, khác 2 giả thuyết trước)
+`UploadZone.handleFiles` bắn TẤT CẢ file cùng lúc (`for … onPick(file)` không
+await) → 20 request song song, mỗi request Next buffer `formData()` +
+`arrayBuffer()` + `Buffer.from()` ≈ 3× kích thước file trong RAM. Vượt
+`max_memory_restart: 512M` → PM2 giết process giữa chừng (uptime reset
+02:44:41, sếp thấy 502 lúc 02:45:27). Không có OOM kernel, không có log lỗi —
+đó là lý do 2 lần điều tra trước trượt.
+
+### Work Done
+- `UploadZone.tsx` — upload TUẦN TỰ (`await onPick(file)`), `onPick` nhận
+  `void | Promise<void>`; thêm tiến độ "Đang upload 3/20…".
+- `ecosystem.config.js` + PM2 runtime trên VPS: `max_memory_restart` 512M → 1G.
+
+### Ghi chú 2 fix trước (vẫn đúng, chỉ không phải nguyên nhân ca này)
+nginx 20M→100M (413 với file >20MB) và lỗi cộng dồn trong ShowreelTab.
+
+### Next Step
+Nếu cần upload nhanh hơn: presigned PUT thẳng lên R2, app không đụng bytes.

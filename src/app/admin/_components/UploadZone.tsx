@@ -5,7 +5,7 @@ import { detectKindFromUrl } from "../_lib/api";
 import { formatBytes } from "../_lib/sizes";
 
 type Props = {
-  onPick: (file: File) => void;
+  onPick: (file: File) => void | Promise<void>;
   uploading?: boolean;
   accept?: string;
   label?: string;
@@ -29,11 +29,23 @@ export function UploadZone({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  const [queue, setQueue] = useState({ done: 0, total: 0 });
+
   const handleFiles = useCallback(
-    (files: FileList | null | undefined) => {
+    async (files: FileList | null | undefined) => {
       if (!files?.length) return;
       // multiple=false → giữ nguyên hành vi cũ: chỉ lấy file đầu.
-      for (const file of multiple ? Array.from(files) : [files[0]]) onPick(file);
+      const list = multiple ? Array.from(files) : [files[0]];
+      // TUẦN TỰ, không Promise.all: 20 file × 10MB upload song song làm Node
+      // buffer cả đống vào RAM, vượt `max_memory_restart` 512MB của PM2 →
+      // process bị giết giữa chừng, client ăn 502. Upstream vẫn là nút cổ chai
+      // nên tuần tự gần như không chậm hơn.
+      setQueue({ done: 0, total: list.length });
+      for (const [i, file] of list.entries()) {
+        await onPick(file);
+        setQueue({ done: i + 1, total: list.length });
+      }
+      setQueue({ done: 0, total: 0 });
     },
     [onPick, multiple],
   );
@@ -94,7 +106,11 @@ export function UploadZone({
         />
       ) : null}
       <div className="relative z-10 px-4 py-2 rounded-md bg-black/60 text-xs text-white/80 backdrop-blur">
-        {uploading ? (
+        {queue.total > 1 ? (
+          <span>
+            Đang upload {queue.done + 1}/{queue.total}…
+          </span>
+        ) : uploading ? (
           <span>Đang upload…</span>
         ) : selectedFile ? (
           <span>

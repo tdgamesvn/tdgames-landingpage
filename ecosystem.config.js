@@ -8,7 +8,9 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
+      // 512M là quá sát: upload 1 file 100MB buffer vào RAM ~3× + baseline
+      // ~180MB đã chạm trần → PM2 giết process giữa request, client ăn 502.
+      max_memory_restart: "1G",
       env: {
         NODE_ENV: "production",
         // Process đang chạy trên VPS dùng 3000 và nginx proxy về 3000.
