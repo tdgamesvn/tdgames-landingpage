@@ -8,6 +8,10 @@ import {
   type StudioServiceCard,
 } from "@/components/studio-service-cards";
 import siteContent from "@/content/site.json";
+import { Changa_One } from "next/font/google";
+
+// Cùng font title với hero trang chủ.
+const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Company Profile",
@@ -64,6 +68,11 @@ const IMG = {
   artStudy: `${CDN}/behance/2e9463653cd72994.jpg`,
   kayn: encodeURI(`${CDN}/images/Screenshot 2026-05-13 232709.png`),
 };
+
+// Video nền hero — lấy media đầu tiên trong site.json (đúng nguồn trang chủ dùng),
+// sếp đổi trong /admin là trang này ăn theo. Fallback về ảnh nếu list rỗng.
+const HERO_VIDEO =
+  siteContent.hero.media.find((m) => m.isBgVideo)?.path ?? IMG.summoner;
 
 const COMPANY = [
   ["Legal name", "TD Games Company Limited"],
@@ -459,20 +468,51 @@ export default function CompanyProfilePage() {
   return (
     <main className="bg-[#0a0a0a]">
       {/* Hero */}
-        <section className="relative flex min-h-[100svh] items-end overflow-hidden">
-          <Image src={IMG.summoner} alt="" fill sizes="100vw" priority className="object-cover" aria-hidden />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-[#0a0a0a]/30" />
+        <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-[#0a0a0a]">
+          {/* ponytail: <video> thuần, không cần "use client" — autoplay/loop là thuộc tính
+              HTML. Không bê HomeHero sang vì hero đó kéo theo cả dàn card + admin state. */}
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            src={HERO_VIDEO}
+            poster={IMG.summoner}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-hidden
+          />
+          {/* Vignette chéo giống trang chủ: tối bên trái nơi có chữ, tan dần sang phải */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(100deg, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.55) 30%, rgba(10,10,10,0.18) 58%, transparent 80%)",
+            }}
+          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
           <ProfileHeader />
           <Wrap className="relative w-full pb-20 pt-40">
             <p className="mb-6 text-[11px] uppercase tracking-[0.4em] text-white/70">
               TD Games Studio — Company Profile
             </p>
-            <h1 className="max-w-5xl text-[clamp(2.75rem,9vw,7rem)] font-black uppercase leading-[0.88] tracking-tight text-white">
-              Game art
+            <h1
+              className={`max-w-4xl leading-[1] ${changaOne.className}`}
+              style={{ fontSize: "min(100px, 9vw)" }}
+            >
+              GAME ART
               <br />
-              that ships
+              THAT <span style={{ color: A }}>SHIPS</span>
             </h1>
-            <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/65">
+            <div className="mt-6 flex items-center gap-4">
+              <div className="h-[2px] w-12 shrink-0" style={{ background: A }} />
+              <h2
+                className="text-[min(16px,3.4vw)] font-bold uppercase tracking-[0.16em]"
+                style={{ color: A }}
+              >
+                2D Art, Animation &amp; VFX outsourcing studio — Hanoi, Vietnam
+              </h2>
+            </div>
+            <p className="mt-4 max-w-[547px] text-[18px] leading-[1.5] text-[#e5e7eb]">
               2D art, animation and VFX for games — built in Hanoi, delivered engine-ready for
               Unity, Cocos and Spine pipelines.
             </p>

@@ -3402,3 +3402,35 @@ Commit + push → CI deploy.
 ### Next Step
 DỮ LIỆU BỊA vẫn còn — TESTIMONIALS (3 quote em tự viết) là rủi ro pháp lý nếu gửi khách;
 TEAM/CAPACITY/RATES/STATS/MST cần số thật.
+
+---
+
+## 2026-08-05 (session — hero company-profile theo hero trang chủ)
+
+### Task
+Sếp: hero company-profile làm giống trang chủ (text + background, có video chạy),
+nhưng KHÔNG có dàn card thumbnail.
+
+### Work Done (`src/app/company-profile/page.tsx`)
+- Ảnh tĩnh `<Image src={IMG.summoner}>` → `<video autoPlay muted loop playsInline>`,
+  `poster` giữ ảnh cũ cho lúc video chưa tải.
+- `HERO_VIDEO` = media `isBgVideo` đầu tiên trong `site.json` (đúng nguồn trang chủ
+  dùng → sếp đổi video trong /admin là trang này ăn theo).
+- Vignette chéo copy từ HomeHero (`linear-gradient(100deg, ...)`) — tối bên trái nơi
+  có chữ, tan dần sang phải + fade đen ở đáy để nối vào section Stats.
+- Title đổi sang font **Changa One** (= trang chủ) `min(100px, 9vw)`, chữ SHIPS màu cam;
+  thêm gạch 12px + subtitle uppercase cam; body 18px `#e5e7eb`.
+- Section đổi `items-end` → `items-center` cho giống bố cục hero trang chủ.
+- KHÔNG bê `HomeHero` sang: component đó kéo theo cả dàn card thumbnail + hero-layout-state
+  (admin listener), trong khi sếp muốn "không có card". `<video>` thuần chạy được trong
+  server component vì autoplay/loop là thuộc tính HTML.
+
+### Verify
+tsc + eslint sạch, GET 200, chụp Playwright: video chạy, title Changa One + SHIPS cam,
+gạch + subtitle cam, không có card.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+DỮ LIỆU BỊA vẫn còn (TESTIMONIALS rủi ro pháp lý nhất, TEAM/CAPACITY/RATES/STATS/MST).
