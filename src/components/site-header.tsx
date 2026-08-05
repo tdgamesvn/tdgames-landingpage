@@ -49,7 +49,9 @@ const navLinks = [
     ],
   },
   { label: "PORTFOLIO", href: "/portfolio" },
-  { label: "SHOWREEL", href: "/showreel" },
+  // Ẩn khỏi nav cho tới khi showreel xong — trang /showreel VẪN chạy để gửi
+  // link riêng cho khách, chỉ là không quảng cáo trên menu. Xong thì bỏ comment.
+  // { label: "SHOWREEL", href: "/showreel" },
   { label: "ABOUT", href: "/about" },
   { label: "BLOG", href: "/blog" },
   { label: "CAREERS", href: "/careers" },

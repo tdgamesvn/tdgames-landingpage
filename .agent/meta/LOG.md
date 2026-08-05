@@ -3057,3 +3057,8 @@ Skeleton loading cũng đổi sang aspect-video cho khớp.
   không click/tab tới được, chữ mờ /20, title "Coming soon". Tab mặc định đổi
   "art" → "vfx", và ?tab=art bị ép về vfx — nếu không, vào thẳng trang là màn
   rỗng "Nothing here yet.". Có nội dung thì xoá id khỏi Set.
+
+### Ẩn SHOWREEL khỏi nav (cùng session)
+`site-header.tsx` — comment dòng `{ label: "SHOWREEL", href: "/showreel" }`.
+Trang `/showreel` vẫn chạy bình thường để gửi link riêng cho khách, chỉ không
+hiện trên menu. Xong nội dung thì bỏ comment (1 dòng).
