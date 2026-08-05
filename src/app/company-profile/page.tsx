@@ -386,8 +386,8 @@ function Heading({
   lead?: string;
 }) {
   return (
-    <Reveal className="mb-14 max-w-3xl">
-      <div className="mb-5 flex items-center gap-4">
+    <Reveal className="mb-14 text-center">
+      <div className="mb-5 flex items-center justify-center gap-4">
         {no ? (
           <span className="text-sm font-black italic tracking-tighter text-[#ffb04a] drop-shadow-[0_0_12px_rgba(255,176,74,0.35)]">
             {`// ${no}`}
@@ -404,7 +404,9 @@ function Heading({
       >
         {title}
       </h2>
-      {lead ? <p className="mt-6 text-lg leading-relaxed text-white/70">{lead}</p> : null}
+      {lead ? (
+        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/70">{lead}</p>
+      ) : null}
     </Reveal>
   );
 }
@@ -555,11 +557,10 @@ export default function CompanyProfilePage() {
         {/* Who we are */}
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
-            <div className="grid gap-16 lg:grid-cols-[1fr_1.1fr]">
-              <Heading
+            <Heading
               no="01"
               eyebrow="Who we are" title="A boutique game art studio in Hanoi" />
-              <Reveal className="space-y-6 text-lg leading-relaxed text-white/75 lg:pt-24">
+            <Reveal className="grid gap-8 text-lg leading-relaxed text-white/75 md:grid-cols-2">
                 <p>
                   TD Games Company Limited is a 2D art, animation and VFX studio founded in 2023.
                   We work as an extension of your art team — you send a style guide, we return
@@ -570,8 +571,7 @@ export default function CompanyProfilePage() {
                   sheet to rigged, VFX-lit, engine-ready asset without a hand-off between vendors
                   and without style drift along the way.
                 </p>
-              </Reveal>
-            </div>
+            </Reveal>
             <Reveal className="mt-16">
               <Facts rows={COMPANY} />
             </Reveal>

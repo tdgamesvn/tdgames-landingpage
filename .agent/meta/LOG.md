@@ -3434,3 +3434,27 @@ Commit + push → CI deploy.
 
 ### Next Step
 DỮ LIỆU BỊA vẫn còn (TESTIMONIALS rủi ro pháp lý nhất, TEAM/CAPACITY/RATES/STATS/MST).
+
+---
+
+## 2026-08-05 (session — căn giữa tiêu đề section company-profile)
+
+### Task
+Sếp: các tiêu đề section căn giữa giống trang chủ (hiện đang căn trái).
+
+### Work Done (`src/app/company-profile/page.tsx`)
+- `Heading`: `mb-14 max-w-3xl` → `mb-14 text-center`, hàng eyebrow thêm `justify-center`,
+  lead thành `mx-auto max-w-2xl` → 14 section ăn theo một lần sửa.
+- Section "Who we are" trước đó là grid 2 cột (Heading trái | 2 đoạn text phải) — heading
+  căn giữa trong cột hẹp sẽ lệch, nên bỏ grid: Heading nằm giữa full-width, 2 đoạn text
+  xuống dưới thành `md:grid-cols-2`.
+
+### Verify
+tsc + eslint sạch, GET 200, chụp Playwright: tiêu đề + eyebrow + số // 01 căn giữa,
+2 cột text cân, lưới card company facts giữ nguyên.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+DỮ LIỆU BỊA vẫn còn (TESTIMONIALS rủi ro pháp lý nhất, TEAM/CAPACITY/RATES/STATS/MST).
