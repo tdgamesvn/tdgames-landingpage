@@ -38,7 +38,13 @@ export const metadata: Metadata = {
  *   CLIENTS                          — Funtap/Gamota/VNG cần xác nhận là khách thật
  * ========================================================================== */
 
-const A = "#f59e0b";
+// Accent đồng bộ với trang chủ (#ff8c3a) thay vì amber #f59e0b — cùng một
+// ngôn ngữ màu với tdgamestudio.com để khách không thấy 2 thương hiệu.
+const A = "#ff8c3a";
+
+// Card dùng lại khắp trang: nền hơi sáng hơn nền section + viền mảnh, hover lên cam.
+const CARD =
+  "rounded-2xl border border-white/10 bg-white/[0.035] transition duration-300 hover:border-[#ff8c3a]/45 hover:bg-white/[0.06]";
 
 // ponytail: hardcode thay vì useSlotUrl() — slot hook là client-side, kéo cả
 // trang thành client component chỉ để đổi 1 cái logo. Sếp đổi logo qua /admin
@@ -359,21 +365,36 @@ function Wrap({ children, className = "" }: { children: React.ReactNode; classNa
 }
 
 function Heading({
+  no,
   eyebrow,
   title,
   lead,
 }: {
+  no?: string;
   eyebrow: string;
   title: React.ReactNode;
   lead?: string;
 }) {
   return (
     <Reveal className="mb-14 max-w-3xl">
-      <p className="mb-5 text-[11px] uppercase tracking-[0.35em] text-white/35">{eyebrow}</p>
-      <h2 className="text-[clamp(2.25rem,5.5vw,4rem)] font-black uppercase leading-[0.98] tracking-tight text-white">
+      <div className="mb-5 flex items-center gap-4">
+        {no ? (
+          <span className="text-sm font-black italic tracking-tighter text-[#ffb04a] drop-shadow-[0_0_12px_rgba(255,176,74,0.35)]">
+            {`// ${no}`}
+          </span>
+        ) : null}
+        <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#ff8c3a]/60 to-white/10" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
+          {eyebrow}
+        </span>
+      </div>
+      <h2
+        className="text-[clamp(2.25rem,5.5vw,3.75rem)] font-black uppercase leading-[1.02] tracking-tight text-white"
+        style={{ fontFamily: "var(--font-rajdhani)" }}
+      >
         {title}
       </h2>
-      {lead ? <p className="mt-6 text-lg leading-relaxed text-white/55">{lead}</p> : null}
+      {lead ? <p className="mt-6 text-lg leading-relaxed text-white/70">{lead}</p> : null}
     </Reveal>
   );
 }
@@ -388,7 +409,7 @@ function Divider({ items }: { items: string[] }) {
         {items.map((s, i) => (
           <span key={s} className="flex items-center gap-6">
             {i > 0 && <span className="text-white/15">/</span>}
-            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/45">
+            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/55">
               {s}
             </span>
           </span>
@@ -398,17 +419,36 @@ function Divider({ items }: { items: string[] }) {
   );
 }
 
-/** Bảng 2 cột nhãn/giá trị — dùng cho company facts, capacity, comms, security. */
+/** Lưới card nhãn/giá trị — dùng cho company facts, capacity, QA, rates, security,
+ *  comms. Bản cũ là bảng <dl> 2 cột: nhãn trái hẹp, giá trị nhảy sang giữa trang
+ *  → nhìn lệch và thừa khoảng trắng bên phải. */
 function Facts({ rows }: { rows: (readonly [string, string])[] | string[][] }) {
   return (
-    <dl className="divide-y divide-white/10 border-y border-white/10">
+    <div className="grid gap-3 sm:grid-cols-2">
       {rows.map(([k, v]) => (
-        <div key={k} className="grid gap-2 py-5 sm:grid-cols-[minmax(0,14rem)_1fr] sm:gap-8">
-          <dt className="text-xs uppercase tracking-[0.2em] text-white/35">{k}</dt>
-          <dd className="text-white/75">{v}</dd>
+        <div key={k} className={`${CARD} p-5`}>
+          <div className="mb-2.5 flex items-center gap-2.5">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: A }} />
+            <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#ffcc8e]/80">
+              {k}
+            </span>
+          </div>
+          <p className="text-[15px] leading-relaxed text-white/80">{v}</p>
         </div>
       ))}
-    </dl>
+    </div>
+  );
+}
+
+/** Số thứ tự trong vòng tròn — dùng cho sơ đồ quy trình và list "why us". */
+function StepNo({ n }: { n: number }) {
+  return (
+    <span
+      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-sm font-black"
+      style={{ borderColor: `${A}59`, color: A, background: `${A}14` }}
+    >
+      {String(n).padStart(2, "0")}
+    </span>
   );
 }
 
@@ -423,7 +463,7 @@ export default function CompanyProfilePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-[#0a0a0a]/30" />
           <ProfileHeader />
           <Wrap className="relative w-full pb-20 pt-40">
-            <p className="mb-6 text-[11px] uppercase tracking-[0.4em] text-white/50">
+            <p className="mb-6 text-[11px] uppercase tracking-[0.4em] text-white/70">
               TD Games Studio — Company Profile
             </p>
             <h1 className="max-w-5xl text-[clamp(2.75rem,9vw,7rem)] font-black uppercase leading-[0.88] tracking-tight text-white">
@@ -454,16 +494,16 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Stats */}
-        <section className="py-20">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
           <Wrap>
             <Reveal>
-              <div className="grid grid-cols-2 gap-y-12 md:grid-cols-4">
-                {STATS.map((s, i) => (
-                  <div key={s.label} className={i > 0 ? "md:border-l md:border-white/10 md:pl-8" : ""}>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {STATS.map((s) => (
+                  <div key={s.label} className={`${CARD} px-6 py-7`}>
                     <div className="text-[clamp(2.5rem,5vw,3.75rem)] font-black leading-none text-white">
                       {s.value}
                     </div>
-                    <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/40">{s.label}</div>
+                    <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/50">{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -472,11 +512,13 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Who we are */}
-        <section className="py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
             <div className="grid gap-16 lg:grid-cols-[1fr_1.1fr]">
-              <Heading eyebrow="Who we are" title="A boutique game art studio in Hanoi" />
-              <Reveal className="space-y-6 text-lg leading-relaxed text-white/60 lg:pt-24">
+              <Heading
+              no="01"
+              eyebrow="Who we are" title="A boutique game art studio in Hanoi" />
+              <Reveal className="space-y-6 text-lg leading-relaxed text-white/75 lg:pt-24">
                 <p>
                   TD Games Company Limited is a 2D art, animation and VFX studio founded in 2023.
                   We work as an extension of your art team — you send a style guide, we return
@@ -498,9 +540,10 @@ export default function CompanyProfilePage() {
         <Divider items={["2D Art", "2D Animation", "2D VFX", "Spine", "Unity", "Cocos"]} />
 
         {/* Services */}
-        <section className="py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
           <Wrap>
             <Heading
+              no="02"
               eyebrow="What we offer"
               title="Three services, one pipeline"
               lead="Take one, or take the whole chain from concept to engine-ready delivery."
@@ -517,7 +560,7 @@ export default function CompanyProfilePage() {
                   <h4 className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-white">
                     {s.title}
                   </h4>
-                  <ul className="space-y-2.5 text-white/55">
+                  <ul className="space-y-2.5 text-white/72">
                     {s.items.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
@@ -529,9 +572,10 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Team & capacity */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
             <Heading
+              no="03"
               eyebrow="Team & capacity"
               title="Who does the work, and how much"
               lead="A small senior team rather than a body shop — every artist here has shipped live titles."
@@ -542,7 +586,7 @@ export default function CompanyProfilePage() {
                   <span className="text-[clamp(3rem,6vw,4.5rem)] font-black leading-none" style={{ color: A }}>
                     12
                   </span>
-                  <span className="text-sm uppercase tracking-[0.2em] text-white/40">
+                  <span className="text-sm uppercase tracking-[0.2em] text-white/50">
                     full-time specialists
                   </span>
                 </div>
@@ -550,13 +594,13 @@ export default function CompanyProfilePage() {
                   {TEAM.map((t) => (
                     <li key={t.role} className="flex items-center justify-between py-4">
                       <span className="text-white/75">{t.role}</span>
-                      <span className="font-mono text-white/40">{t.count}</span>
+                      <span className="font-mono text-white/50">{t.count}</span>
                     </li>
                   ))}
                 </ul>
               </Reveal>
               <Reveal delay={0.1}>
-                <p className="mb-8 text-xs uppercase tracking-[0.25em] text-white/35">
+                <p className="mb-8 text-xs uppercase tracking-[0.25em] text-white/55">
                   Monthly throughput
                 </p>
                 <Facts rows={CAPACITY} />
@@ -566,9 +610,11 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Selected work */}
-        <section className="py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="Selected work" title="Shipped, not mocked up" />
+            <Heading
+              no="04"
+              eyebrow="Selected work" title="Shipped, not mocked up" />
           </Wrap>
           <Wrap>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -625,13 +671,13 @@ export default function CompanyProfilePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/90 to-[#0a0a0a]/60" />
           <Wrap className="relative">
             <Reveal className="max-w-2xl">
-              <p className="mb-5 text-[11px] uppercase tracking-[0.35em] text-white/35">
+              <p className="mb-5 text-[11px] uppercase tracking-[0.35em] text-white/55">
                 Case study — {CASE_STUDY.client}
               </p>
               <h2 className="text-[clamp(2rem,4.5vw,3.25rem)] font-black uppercase leading-[1.02] tracking-tight text-white">
                 {CASE_STUDY.title}
               </h2>
-              <p className="mt-6 text-lg leading-relaxed text-white/60">{CASE_STUDY.body}</p>
+              <p className="mt-6 text-lg leading-relaxed text-white/75">{CASE_STUDY.body}</p>
             </Reveal>
             <Reveal delay={0.1} className="mt-14">
               <div className="grid grid-cols-2 gap-y-10 md:grid-cols-4">
@@ -640,7 +686,7 @@ export default function CompanyProfilePage() {
                     <div className="text-[clamp(2rem,4vw,3rem)] font-black leading-none text-white">
                       {v}
                     </div>
-                    <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/40">{l}</div>
+                    <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/50">{l}</div>
                   </div>
                 ))}
               </div>
@@ -656,18 +702,20 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Testimonials */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="What clients say" title="In their words" />
-            <div className="grid gap-14 md:grid-cols-3">
+            <Heading
+              no="05"
+              eyebrow="What clients say" title="In their words" />
+            <div className="grid gap-4 md:grid-cols-3">
               {TESTIMONIALS.map((t, i) => (
-                <Reveal key={t.quote} delay={i * 0.08}>
-                  <div className="mb-6 text-5xl font-black leading-none" style={{ color: A }}>
+                <Reveal key={t.quote} delay={i * 0.08} className={`${CARD} p-8`}>
+                  <div className="mb-4 text-5xl font-black leading-none" style={{ color: A }}>
                     &ldquo;
                   </div>
                   <blockquote className="text-lg leading-relaxed text-white/75">{t.quote}</blockquote>
                   <div className="mt-6 text-sm font-bold text-white">{t.name}</div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/35">{t.company}</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/55">{t.company}</div>
                 </Reveal>
               ))}
             </div>
@@ -677,14 +725,19 @@ export default function CompanyProfilePage() {
         <Divider items={["Concept", "Production", "Integration", "Delivery"]} />
 
         {/* Why us */}
-        <section className="py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="Why choose us" title="What you actually get" />
-            <div className="grid gap-x-16 gap-y-14 md:grid-cols-2">
+            <Heading
+              no="06"
+              eyebrow="Why choose us" title="What you actually get" />
+            <div className="grid gap-4 md:grid-cols-2">
               {WHY.map((w, i) => (
-                <Reveal key={w.title} delay={i * 0.06}>
-                  <h3 className="mb-4 text-xl font-bold text-white">{w.title}</h3>
-                  <p className="leading-relaxed text-white/55">{w.body}</p>
+                <Reveal key={w.title} delay={i * 0.06} className={`${CARD} p-7`}>
+                  <div className="mb-5 flex items-center gap-4">
+                    <StepNo n={i + 1} />
+                    <h3 className="text-xl font-bold text-white">{w.title}</h3>
+                  </div>
+                  <p className="leading-relaxed text-white/72">{w.body}</p>
                 </Reveal>
               ))}
             </div>
@@ -692,17 +745,22 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Process */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="How we work" title="From brief to handoff" />
-            <div className="grid gap-x-12 gap-y-14 md:grid-cols-2 lg:grid-cols-4">
+            <Heading
+              no="07"
+              eyebrow="How we work" title="From brief to handoff" />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {PROCESS.map((p, i) => (
-                <Reveal key={p.title} delay={i * 0.06}>
-                  <div className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-white/35">
-                    {p.when}
+                <Reveal key={p.title} delay={i * 0.06} className={`${CARD} p-7`}>
+                  <div className="mb-5 flex items-center gap-4">
+                    <StepNo n={i + 1} />
+                    <span className="rounded-full border border-white/10 bg-black/40 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[#ffcc8e]/80">
+                      {p.when}
+                    </span>
                   </div>
                   <h3 className="mb-3 text-lg font-bold text-white">{p.title}</h3>
-                  <p className="text-sm leading-relaxed text-white/50">{p.body}</p>
+                  <p className="text-sm leading-relaxed text-white/70">{p.body}</p>
                 </Reveal>
               ))}
             </div>
@@ -710,14 +768,16 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Engagement + rates */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="Engagement" title="Two ways to work with us" />
-            <div className="grid gap-16 md:grid-cols-2">
+            <Heading
+              no="08"
+              eyebrow="Engagement" title="Two ways to work with us" />
+            <div className="grid gap-4 md:grid-cols-2">
               {ENGAGEMENT.map((e, i) => (
-                <Reveal key={e.title} delay={i * 0.08}>
+                <Reveal key={e.title} delay={i * 0.08} className={`${CARD} p-8`}>
                   <h3 className="text-2xl font-bold text-white">{e.title}</h3>
-                  <p className="mt-1 text-xs uppercase tracking-[0.2em] text-white/40">{e.sub}</p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.2em] text-white/50">{e.sub}</p>
                   <ol className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-white/70">
                     {e.steps.map((step, j) => (
                       <li key={step} className="flex items-center gap-3">
@@ -726,21 +786,22 @@ export default function CompanyProfilePage() {
                       </li>
                     ))}
                   </ol>
-                  <p className="mt-8 leading-relaxed text-white/50">{e.fit}</p>
+                  <p className="mt-8 leading-relaxed text-white/70">{e.fit}</p>
                 </Reveal>
               ))}
             </div>
             <Reveal className="mt-16">
-              <p className="mb-8 text-xs uppercase tracking-[0.25em] text-white/35">Pricing models</p>
+              <p className="mb-8 text-xs uppercase tracking-[0.25em] text-white/55">Pricing models</p>
               <Facts rows={RATES} />
             </Reveal>
           </Wrap>
         </section>
 
         {/* Quality assurance */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
             <Heading
+              no="09"
               eyebrow="Quality assurance"
               title="How we keep it consistent"
               lead="The controls that keep batch fifty looking like batch one."
@@ -752,9 +813,11 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Security & IP */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="Security & IP" title="Your work stays yours" />
+            <Heading
+              no="10"
+              eyebrow="Security & IP" title="Your work stays yours" />
             <Reveal>
               <Facts rows={SECURITY} />
             </Reveal>
@@ -762,9 +825,11 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Communication */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="Working together" title="How we stay in sync" />
+            <Heading
+              no="11"
+              eyebrow="Working together" title="How we stay in sync" />
             <Reveal>
               <Facts rows={COMMS} />
             </Reveal>
@@ -772,20 +837,30 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Tools */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="Tools & deliverables" title="What lands in your repo" />
-            <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+            <Heading
+              no="12"
+              eyebrow="Tools & deliverables" title="What lands in your repo" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {STACK.map((g, i) => (
-                <Reveal key={g.group} delay={i * 0.06}>
-                  <div className="mb-5 text-xs uppercase tracking-[0.25em] text-white/35">
-                    {g.group}
+                <Reveal key={g.group} delay={i * 0.06} className={`${CARD} p-6`}>
+                  <div className="mb-5 flex items-center gap-2.5">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: A }} />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#ffcc8e]/80">
+                      {g.group}
+                    </span>
                   </div>
-                  <ul className="space-y-2.5 text-white/70">
+                  <div className="flex flex-wrap gap-2">
                     {g.tools.map((t) => (
-                      <li key={t}>{t}</li>
+                      <span
+                        key={t}
+                        className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-[13px] text-white/80"
+                      >
+                        {t}
+                      </span>
                     ))}
-                  </ul>
+                  </div>
                 </Reveal>
               ))}
             </div>
@@ -793,13 +868,15 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* Clients */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="Clients" title="Studios we've worked with" />
+            <Heading
+              no="13"
+              eyebrow="Clients" title="Studios we've worked with" />
             <Reveal>
-              <div className="grid grid-cols-2 gap-y-10 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {CLIENTS.map((c) => (
-                  <div key={c} className="text-lg font-bold text-white/50">
+                  <div key={c} className={`${CARD} px-5 py-6 text-center text-lg font-bold text-white/85`}>
                     {c}
                   </div>
                 ))}
@@ -809,14 +886,16 @@ export default function CompanyProfilePage() {
         </section>
 
         {/* FAQ */}
-        <section className="border-t border-white/10 py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
           <Wrap>
-            <Heading eyebrow="FAQ" title="Before you ask" />
-            <div className="grid gap-x-16 gap-y-12 md:grid-cols-2">
+            <Heading
+              no="14"
+              eyebrow="FAQ" title="Before you ask" />
+            <div className="grid gap-4 md:grid-cols-2">
               {FAQ.map(([q, a], i) => (
-                <Reveal key={q} delay={i * 0.05}>
+                <Reveal key={q} delay={i * 0.05} className={`${CARD} p-7`}>
                   <h3 className="mb-3 text-lg font-bold text-white">{q}</h3>
-                  <p className="leading-relaxed text-white/55">{a}</p>
+                  <p className="leading-relaxed text-white/72">{a}</p>
                 </Reveal>
               ))}
             </div>
@@ -840,7 +919,7 @@ export default function CompanyProfilePage() {
               </p>
               <dl className="mt-14 grid gap-10 sm:grid-cols-3">
                 <div>
-                  <dt className="text-[11px] uppercase tracking-[0.25em] text-white/35">Studio</dt>
+                  <dt className="text-[11px] uppercase tracking-[0.25em] text-white/55">Studio</dt>
                   <dd className="mt-3 text-white/75">
                     Floor 4, Hoa Binh Green City
                     <br />
@@ -848,11 +927,11 @@ export default function CompanyProfilePage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] uppercase tracking-[0.25em] text-white/35">Email</dt>
+                  <dt className="text-[11px] uppercase tracking-[0.25em] text-white/55">Email</dt>
                   <dd className="mt-3 text-white/75">info@tdgamestudio.com</dd>
                 </div>
                 <div>
-                  <dt className="text-[11px] uppercase tracking-[0.25em] text-white/35">Web</dt>
+                  <dt className="text-[11px] uppercase tracking-[0.25em] text-white/55">Web</dt>
                   <dd className="mt-3 text-white/75">tdgamestudio.com</dd>
                 </div>
               </dl>

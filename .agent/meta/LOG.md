@@ -3307,3 +3307,32 @@ Commit + push → CI deploy.
 
 ### Next Step
 DỮ LIỆU BỊA vẫn còn (TESTIMONIALS, TEAM, CAPACITY, RATES, STATS, MST) — sửa trước khi gửi khách.
+
+---
+
+## 2026-08-05 (session — visual pass company-profile: bớt đen, thêm card/gradient/số)
+
+### Task
+Sếp đóng vai khách: trang nhìn quá đơn giản, text lệch, không icon/sơ đồ, nền đen phẳng,
+chữ mờ khó đọc.
+
+### Work Done (src/app/company-profile/page.tsx)
+- Accent đổi amber #f59e0b → **#ff8c3a** (đồng bộ trang chủ). Thêm const `CARD` dùng lại.
+- `Heading`: thêm số section `// 01`..`// 14`, gạch gradient, eyebrow cam, font Rajdhani.
+- `Facts`: bảng `<dl>` 2 cột (lệch, thừa khoảng trắng phải) → **lưới card 2 cột**, nhãn cam
+  có dot. Lan sang 6 section: company, capacity, QA, rates, security, comms.
+- 15 section nền phẳng `#0a0a0a` → **gradient xen kẽ** + radial glow cam.
+- Chữ sáng hơn toàn trang: white/50→70, /55→72, /60→75, /35→45, /40→50.
+- Khối text trần → card: STATS, WHY (+`StepNo` số tròn), PROCESS (số + badge thời gian),
+  STACK (pill tags), CLIENTS, FAQ, TESTIMONIALS, ENGAGEMENT.
+
+### Verify
+tsc + eslint sạch, GET 200, chụp Playwright: card đều 2 cột, hết lệch.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+- Chưa làm: sơ đồ pipeline ngang (Concept→Production→Integration→Delivery) dạng đồ hoạ,
+  ảnh nền cho vài section giữa trang, icon SVG riêng cho WHY.
+- DỮ LIỆU BỊA vẫn còn (TESTIMONIALS, TEAM, CAPACITY, RATES, STATS, MST).
