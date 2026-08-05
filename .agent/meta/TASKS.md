@@ -6,6 +6,10 @@ _(empty)_
 
 ## To do
 
+- [ ] Verify số liệu hardcode trong `/company-profile`: 2023, 50+ projects,
+      12+ clients, 1200+ assets, team 7. Sai là khách bắt được ngay.
+
+
 - [x] ~~Smoke test "Dựng bài" ở /admin tab Blog~~ (2026-08-02): đã dựng 2 bài thật
       qua luồng `/interview` → `/topics`, ~110s, cover + 2-3 ảnh inline,
       `imageErrors: []`, 4 chất liệu khác nhau. Luật nền tối verify riêng:

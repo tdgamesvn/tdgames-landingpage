@@ -3068,3 +3068,29 @@ hiện trên menu. Xong nội dung thì bỏ comment (1 dòng).
 NAV_ITEMS (mobile menu dùng chung mảng này nên ẩn cả 2 nơi). Trang `/showreel`
 vẫn chạy bình thường để sếp gửi link riêng cho khách, chỉ là không lên menu.
 Xong showreel thì bỏ comment 1 dòng. Footer không có link showreel.
+
+---
+
+## 2026-08-05 (session — trang Company Profile tĩnh)
+
+### Task
+Hoàn tất trang company profile dựng dở từ session trước (12:45), đổi route sang
+kebab-case rồi push.
+
+### Work Done
+- `src/app/company_portfolio/` → `src/app/company-profile/` (chỉ đổi tên thư mục;
+  underscore lệch với toàn bộ route còn lại, và gửi link cho khách rồi mới đổi
+  thì tốn redirect). Function `CompanyPortfolioPage` → `CompanyProfilePage`.
+- Trang 576 dòng, tĩnh hoàn toàn: Stats / Services / Why / Process / Stack /
+  Work / Highlights / Clients / Engagement models.
+- Không grep thấy reference nào tới route cũ ⇒ đổi tên là diff sạch.
+- KHÔNG thêm vào `sitemap.ts` và KHÔNG link từ header/footer — cùng cách làm với
+  `/showreel`: trang gửi link riêng cho khách, không lên menu, không lên sitemap.
+
+### Result
+`tsc --noEmit` sạch. Dev server: `/company-profile` → 200, `/company_portfolio`
+→ 404 (đúng, route cũ đã chết). Push → CI deploy.
+
+### Next Step
+Số liệu đang **hardcode** trong page.tsx: thành lập 2023, 50+ projects, 12+
+clients, 1200+ assets, team 7. Sếp verify lại trước khi gửi khách.
