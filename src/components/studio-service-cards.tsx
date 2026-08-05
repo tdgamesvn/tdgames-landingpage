@@ -88,18 +88,27 @@ export function StudioServiceIcon({
 
 export function StudioServiceCardsGrid({
   items = studioServiceCards,
+  large = false,
 }: {
   items?: StudioServiceCard[];
+  /** Card to hơn — dùng ở /company-profile */
+  large?: boolean;
 }) {
   const accent = STUDIO_SERVICE_ACCENT;
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="mx-auto mt-6 grid max-w-5xl items-center gap-5 md:mt-8 md:grid-cols-3 lg:gap-6">
+    <div
+      className={`mx-auto mt-6 grid items-center gap-5 md:mt-8 md:grid-cols-3 lg:gap-6 ${
+        large ? "max-w-6xl" : "max-w-5xl"
+      }`}
+    >
       {items.map((service, index) => (
         <motion.div
           key={service.title}
-          className="relative h-[460px] w-full overflow-visible hover:z-10"
+          className={`relative w-full overflow-visible hover:z-10 ${
+            large ? "h-[540px]" : "h-[460px]"
+          }`}
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{
@@ -125,7 +134,11 @@ export function StudioServiceCardsGrid({
               aria-label={`Open ${service.title}`}
               className="absolute inset-0 z-10"
             />
-            <div className="relative h-[250px] w-full shrink-0 overflow-hidden">
+            <div
+              className={`relative w-full shrink-0 overflow-hidden ${
+                large ? "h-[300px]" : "h-[250px]"
+              }`}
+            >
               <SlotMedia
                 src={service.image}
                 className="object-cover transition-transform duration-[620ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.03]"
@@ -133,9 +146,13 @@ export function StudioServiceCardsGrid({
               <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#0b0b0f] via-transparent to-transparent opacity-75" />
             </div>
 
-            <div className="flex flex-col px-6 py-5">
+            <div className={`flex flex-col ${large ? "px-7 py-6" : "px-6 py-5"}`}>
               <div className="flex items-center justify-between gap-4">
-                <h3 className="text-[24px] font-bold leading-tight tracking-tight text-white">
+                <h3
+                  className={`font-bold leading-tight tracking-tight text-white ${
+                    large ? "text-[28px]" : "text-[24px]"
+                  }`}
+                >
                   {service.title}
                 </h3>
                 <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-amber-300/30 bg-black/60 shadow-[0_6px_16px_rgba(0,0,0,0.28)]">

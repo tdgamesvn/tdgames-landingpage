@@ -3,6 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import ProfileHeader from "./_header";
 import Reveal from "./_reveal";
+import {
+  StudioServiceCardsGrid,
+  type StudioServiceCard,
+} from "@/components/studio-service-cards";
+import siteContent from "@/content/site.json";
 
 export const metadata: Metadata = {
   title: "Company Profile",
@@ -117,6 +122,23 @@ const SERVICES = [
     ],
   },
 ];
+
+// Card service dùng chung component với trang chủ (OUR SERVICES), bản `large`.
+// ponytail: statValue/statLabel lấy từ site.json qua title để khỏi khai 2 chỗ.
+// Import thẳng site.json, KHÔNG import `studioServiceCards` từ module "use client"
+// — qua ranh giới server/client nó thành proxy, .find() nổ 500.
+const SERVICE_CARDS: StudioServiceCard[] = SERVICES.map((s, i) => {
+  const c = siteContent.services.cards.find((x) => x.title === s.title);
+  return {
+    title: s.title,
+    icon: (c?.icon as StudioServiceCard["icon"]) ?? (["art", "animation", "vfx"] as const)[i],
+    href: s.href,
+    statValue: c?.statValue ?? "",
+    statLabel: c?.statLabel ?? "",
+    description: s.lead,
+    image: s.image,
+  };
+});
 
 // ⚠️ BỊA — sếp sửa theo cơ cấu thật
 const TEAM = [
@@ -475,24 +497,9 @@ export default function CompanyProfilePage() {
               lead="Take one, or take the whole chain from concept to engine-ready delivery."
             />
           </Wrap>
-          <div className="grid gap-px bg-white/10 md:grid-cols-3">
-            {SERVICES.map((s) => (
-              <Link key={s.title} href={s.href} className="group relative aspect-square bg-[#0a0a0a]">
-                <Image
-                  src={s.image}
-                  alt={s.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover transition duration-700 group-hover:scale-[1.04]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/25 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-8">
-                  <h3 className="text-3xl font-black uppercase leading-none text-white">{s.title}</h3>
-                  <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/60">{s.lead}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <Wrap>
+            <StudioServiceCardsGrid items={SERVICE_CARDS} large />
+          </Wrap>
           <Wrap className="pt-16">
             <div className="grid gap-12 md:grid-cols-3">
               {SERVICES.map((s, i) => (

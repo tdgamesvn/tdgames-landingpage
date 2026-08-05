@@ -3249,3 +3249,35 @@ Commit + push → CI deploy.
 ### Next Step
 Cảnh báo cũ vẫn còn: DỮ LIỆU BỊA trong page.tsx (TESTIMONIALS giả nguy hiểm nhất,
 TEAM/CAPACITY/RATES/STATS/CLIENTS/MST). Phải thay số thật trước khi gửi khách.
+
+---
+
+## 2026-08-05 (session — card services company-profile theo OUR SERVICES)
+
+### Task
+Sếp: section "Three services, one pipeline" (/company-profile) dùng lại layout card
+"OUR SERVICES" của trang chủ, nhưng card to hơn chút.
+
+### Work Done
+- `src/components/studio-service-cards.tsx` — thêm prop `large?: boolean` (default
+  false, 2 caller cũ không đổi): wrapper max-w-5xl→6xl, card h-460→540, ảnh h-250→300,
+  title 24→28px, padding px-6 py-5→px-7 py-6.
+- `src/app/company-profile/page.tsx` — bỏ lưới `gap-px` ảnh vuông, dùng
+  `<StudioServiceCardsGrid items={SERVICE_CARDS} large />`. `SERVICE_CARDS` map từ
+  `SERVICES` (ảnh + lead riêng của trang profile), lấy `statValue/statLabel` từ
+  site.json theo title.
+
+### Bẫy gặp phải (500)
+Import `studioServiceCards` (data export từ module `"use client"`) vào server component
+→ qua ranh giới nó thành client-reference proxy, `.find()` không phải function → page 500.
+Fix: import thẳng `@/content/site.json`. Đã ghi comment cảnh báo tại chỗ.
+
+### Verify
+tsc + eslint sạch; dev server GET /company-profile 200, HTML có `h-[540px]`.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+Cảnh báo cũ vẫn còn: DỮ LIỆU BỊA trong page.tsx (TESTIMONIALS giả nguy hiểm nhất,
+TEAM/CAPACITY/RATES/STATS/CLIENTS/MST). Phải thay số thật trước khi gửi khách.
