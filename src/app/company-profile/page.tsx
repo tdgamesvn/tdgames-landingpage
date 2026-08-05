@@ -523,22 +523,24 @@ export default async function CompanyProfilePage() {
           />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
           <ProfileHeader />
-          <Wrap className="relative w-full pb-20 pt-40">
+          <Wrap className="relative w-full pb-16 pt-28 md:pb-20 md:pt-40">
             <p className="mb-6 text-[11px] uppercase tracking-[0.4em] text-white/70">
               TD Games Studio
             </p>
             <h1
               className={`max-w-4xl leading-[1] ${changaOne.className}`}
-              style={{ fontSize: "min(100px, 9vw)" }}
+              style={{ fontSize: "min(100px, 12vw)" }}
             >
               COMPANY
               <br />
               <span style={{ color: A }}>PROFILE</span>
             </h1>
-            <div className="mt-6 flex items-center gap-4">
+            {/* Mobile: h2 wrap 3 dòng nên gạch canh giữa khối trông lơ lửng ở dòng 2
+                → xếp dọc, gạch nằm trên. Desktop giữ nguyên gạch–chữ cùng hàng. */}
+            <div className="mt-6 flex flex-col items-start gap-3 md:flex-row md:items-center md:gap-4">
               <div className="h-[2px] w-12 shrink-0" style={{ background: A }} />
               <h2
-                className="text-[min(16px,3.4vw)] font-bold uppercase tracking-[0.16em]"
+                className="text-[13px] font-bold uppercase leading-[1.5] tracking-[0.12em] md:text-[16px] md:leading-normal md:tracking-[0.16em]"
                 style={{ color: A }}
               >
                 2D Art, Animation &amp; VFX outsourcing studio — Hanoi, Vietnam
