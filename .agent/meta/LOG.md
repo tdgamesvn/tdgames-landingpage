@@ -2899,3 +2899,28 @@ Sếp gửi ảnh 2 card blog: cover cũ tối mù, chủ thể là cảnh vật
 
 ### Next Step
 Commit + push (CI tự deploy). Ảnh đã live ngay vì cover đọc thẳng từ DB.
+
+---
+
+## 2026-08-05 (session — showreel: header riêng + tab vào URL)
+### Task
+Sếp: trang /showreel chỉ giữ logo + 3 tab Art/Animation/VFX; ấn tab phải đổi URL
+để copy link gửi khách.
+
+### Work Done
+- `src/components/showreel-gallery.tsx` — bỏ `SiteHeader`, tự dựng header fixed
+  (logo trái qua `useSlotUrl("global","brand-logo")` + 3 tab). Tab đổi từ
+  `useState` sang `useSearchParams().get("tab")`, mỗi tab là `<Link href="/showreel?tab=x" scroll={false}>`
+  → back/forward + copy link chạy free. Bỏ block title SHOWREEL. Reset category
+  khi đổi tab bằng `useEffect`.
+- `src/app/showreel/page.tsx` — bỏ `SiteHeader`, wrap gallery trong `<Suspense>`
+  (bắt buộc vì dùng `useSearchParams`).
+
+### Result
+`tsc --noEmit` sạch. Verify bằng Playwright: `/showreel?tab=animation` mở đúng
+tab Animation, chỉ hiện logo + 3 tab. Tab animation/vfx hiện "chưa có item" vì
+DB chưa có data cho 2 tab đó — không phải bug.
+
+### Next Step
+Commit + push (CI auto deploy). Cân nhắc `generateMetadata` theo `?tab=` nếu cần
+title/OG riêng khi share link.

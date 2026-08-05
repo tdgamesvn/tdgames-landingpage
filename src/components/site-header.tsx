@@ -49,6 +49,7 @@ const navLinks = [
     ],
   },
   { label: "PORTFOLIO", href: "/portfolio" },
+  { label: "SHOWREEL", href: "/showreel" },
   { label: "ABOUT", href: "/about" },
   { label: "BLOG", href: "/blog" },
   { label: "CAREERS", href: "/careers" },

@@ -13,6 +13,7 @@ import { FooterTab } from "./_components/FooterTab";
 import { SpineTab } from "./_components/SpineTab";
 import { PageSlotsTab } from "./_components/PageSlotsTab";
 import { SettingsTab } from "./_components/SettingsTab";
+import { ShowreelTab } from "./_components/ShowreelTab";
 import type { AdminTab } from "./_lib/types";
 
 const TABS: { id: AdminTab; label: string; description: string }[] = [
@@ -70,6 +71,11 @@ const TABS: { id: AdminTab; label: string; description: string }[] = [
     id: "page-slots",
     label: "11. Page Slots",
     description: "Quản lý media slots cho từng trang — swap URL ngay, không rebuild",
+  },
+  {
+    id: "showreel",
+    label: "12. Showreel",
+    description: "Upload ảnh/video cho trang /showreel — tab Art/Animation/VFX + category",
   },
   {
     id: "settings",
@@ -233,6 +239,7 @@ export default function AdminPage() {
         {tab === "footer" ? <FooterTab adminKey={adminKey} /> : null}
         {tab === "spine" ? <SpineTab adminKey={adminKey} /> : null}
         {tab === "page-slots" ? <PageSlotsTab adminKey={adminKey} /> : null}
+        {tab === "showreel" ? <ShowreelTab adminKey={adminKey} /> : null}
         {tab === "settings" ? (
           <SettingsTab
             adminKey={adminKey}
