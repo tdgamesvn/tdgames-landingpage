@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
-export const revalidate = 60;
+// ponytail: force-dynamic thay vì revalidate=60 — admin lưu xong phải thấy ngay,
+// 1 query nhẹ/request. Bật lại ISR nếu trang showreel thành hot path.
+export const dynamic = "force-dynamic";
 
 // GET /api/showreel — public: chỉ item active, sắp theo tab + sort_order
 export async function GET() {
