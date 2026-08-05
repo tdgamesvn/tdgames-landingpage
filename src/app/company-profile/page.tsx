@@ -572,13 +572,17 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Reveal>
+              {/* Mobile: card chỉ rộng ~138px, "1000+" ở 40px chạm sát mép và label
+                  tracking 0.2em wrap lởm chởm → giảm padding + cỡ chữ + tracking. */}
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {STATS.map((s) => (
-                  <div key={s.label} className={`${CARD} px-6 py-7`}>
-                    <div className="text-[clamp(2.5rem,5vw,3.75rem)] font-black leading-none text-white">
+                  <div key={s.label} className={`${CARD} px-5 py-6 md:px-6 md:py-7`}>
+                    <div className="text-[clamp(1.75rem,8vw,3.25rem)] font-black leading-none text-white">
                       {s.value}
                     </div>
-                    <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/50">{s.label}</div>
+                    <div className="mt-2.5 text-[11px] uppercase leading-[1.5] tracking-[0.12em] text-white/50 md:mt-3 md:text-xs md:tracking-[0.2em]">
+                      {s.label}
+                    </div>
                   </div>
                 ))}
               </div>
