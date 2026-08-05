@@ -3281,3 +3281,29 @@ Commit + push → CI deploy.
 ### Next Step
 Cảnh báo cũ vẫn còn: DỮ LIỆU BỊA trong page.tsx (TESTIMONIALS giả nguy hiểm nhất,
 TEAM/CAPACITY/RATES/STATS/CLIENTS/MST). Phải thay số thật trước khi gửi khách.
+
+---
+
+## 2026-08-05 (session — bỏ dải ảnh bleed giữa section ở company-profile)
+
+### Task
+Sếp gửi ảnh: dải ảnh Axie chen giữa bảng company facts và section Services trông xấu
+(crop mất đầu/chân, đọc như banner quảng cáo). Yêu cầu thay bằng thanh ngang / design khác.
+
+### Work Done
+- `src/app/company-profile/page.tsx` — xoá `<ArtBreak>` (dải ảnh full-bleed 55vh), thay
+  bằng `<Divider items={[...]}>`: gạch amber 12px + chuỗi keyword uppercase
+  tracking-[0.3em] ngăn bằng `/`, nằm giữa 2 đường `border-y border-white/10`.
+  Vị trí 1 (sau company facts): 2D Art / 2D Animation / 2D VFX / Spine / Unity / Cocos.
+  Vị trí 2 (sau testimonials): Concept / Production / Integration / Delivery.
+- LƯU Ý: điều này phá "LAYOUT RULE #2" ghi ở đầu file (artwork bleed sát mép) — sếp
+  duyệt rồi. Ảnh art vẫn còn ở hero, case study spotlight, grid work.
+
+### Verify
+tsc + eslint sạch; GET /company-profile 200, HTML không còn `55vh`, có chuỗi keyword.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+DỮ LIỆU BỊA vẫn còn (TESTIMONIALS, TEAM, CAPACITY, RATES, STATS, MST) — sửa trước khi gửi khách.

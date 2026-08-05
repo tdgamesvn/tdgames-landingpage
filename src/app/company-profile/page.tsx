@@ -378,14 +378,23 @@ function Heading({
   );
 }
 
-/** Ảnh bleed sát mép — art tự nó là phần design, không cần khung. */
-function ArtBreak({ src }: { src: string }) {
+/** Thanh ngang phân cách — thay cho dải ảnh bleed 55vh (ảnh crop xấu, đọc như
+ *  quảng cáo chen giữa nội dung). Giữ nhịp trang bằng typography, không bằng art. */
+function Divider({ items }: { items: string[] }) {
   return (
-    <div className="relative h-[55vh] min-h-[340px] w-full">
-      <Image src={src} alt="" fill sizes="100vw" className="object-cover" aria-hidden />
-      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0a0a0a] to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
-    </div>
+    <Wrap>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-white/10 py-7">
+        <span className="h-px w-12 shrink-0" style={{ background: A }} />
+        {items.map((s, i) => (
+          <span key={s} className="flex items-center gap-6">
+            {i > 0 && <span className="text-white/15">/</span>}
+            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-white/45">
+              {s}
+            </span>
+          </span>
+        ))}
+      </div>
+    </Wrap>
   );
 }
 
@@ -486,7 +495,7 @@ export default function CompanyProfilePage() {
           </Wrap>
         </section>
 
-        <ArtBreak src={IMG.axie} />
+        <Divider items={["2D Art", "2D Animation", "2D VFX", "Spine", "Unity", "Cocos"]} />
 
         {/* Services */}
         <section className="py-24">
@@ -665,7 +674,7 @@ export default function CompanyProfilePage() {
           </Wrap>
         </section>
 
-        <ArtBreak src={IMG.horse} />
+        <Divider items={["Concept", "Production", "Integration", "Delivery"]} />
 
         {/* Why us */}
         <section className="py-24">
