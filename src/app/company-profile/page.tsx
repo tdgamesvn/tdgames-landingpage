@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import ProfileHeader from "./_header";
 import Reveal from "./_reveal";
 
 export const metadata: Metadata = {
@@ -389,20 +390,8 @@ export default function CompanyProfilePage() {
         <section className="relative flex min-h-[100svh] items-end overflow-hidden">
           <Image src={IMG.summoner} alt="" fill sizes="100vw" priority className="object-cover" aria-hidden />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-[#0a0a0a]/30" />
-          {/* ponytail: không dùng SiteHeader — trang này là tài liệu độc lập gửi
-              khách, không phải trang trong site. Logo tĩnh thay cho nav. */}
-          <div className="absolute left-0 right-0 top-0 z-10">
-            <Wrap className="py-8">
-              <Image
-                src={BRAND_LOGO}
-                alt="TD Games Studio"
-                width={160}
-                height={44}
-                className="h-10 w-auto"
-              />
-            </Wrap>
-          </div>
-          <Wrap className="relative w-full pb-20 pt-32">
+          <ProfileHeader />
+          <Wrap className="relative w-full pb-20 pt-40">
             <p className="mb-6 text-[11px] uppercase tracking-[0.4em] text-white/50">
               TD Games Studio — Company Profile
             </p>

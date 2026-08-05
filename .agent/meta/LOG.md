@@ -3193,3 +3193,29 @@ Push → CI deploy.
 phép người thật = rủi ro pháp lý. Xin quote thật hoặc xoá section.
 Còn lại: TEAM (12 người), CAPACITY, CASE_STUDY.metrics, RATES ($X,XXX),
 COMPANY MST + phone, STATS, CLIENTS (Funtap/Gamota/VNG chưa xác nhận).
+
+---
+
+## 2026-08-05 (session — company-profile: trả lại thanh header + logo)
+### Task
+Sếp: phần trên /company-profile vẫn giữ thanh header + logo giống website,
+chỉ bỏ tab điều hướng.
+
+### Work Done
+- `src/app/company-profile/_header.tsx` (mới) — copy phần thanh của SiteHeader:
+  fixed top, trong suốt lúc đầu → `bg-[#07080f]/85 + backdrop-blur-xl + border-b`
+  khi scrollY > 40, logo glow amber, cao 76/80px. Bỏ nav/dropdown/quote/mobile menu.
+  Logo lấy qua `useSlotUrl("global","brand-logo")` như site (thay hardcode BRAND_LOGO
+  dựng ở commit b31f8a5) → sếp đổi logo trong /admin là trang này ăn theo.
+- `page.tsx` — thay khối logo tĩnh bằng `<ProfileHeader />`, hero `pt-32` → `pt-40`
+  cho khỏi đè chữ.
+
+### Verify
+tsc sạch, dev 200, chụp Playwright viewport hero: thanh header + logo đúng, không tab.
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+Cảnh báo cũ vẫn còn: DỮ LIỆU BỊA trong page.tsx (TESTIMONIALS giả nguy hiểm nhất,
+TEAM/CAPACITY/RATES/STATS/CLIENTS/MST). Phải thay số thật trước khi gửi khách.

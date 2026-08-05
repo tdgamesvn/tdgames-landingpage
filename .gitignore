@@ -63,3 +63,6 @@ public/video/
 # manifest rollback cua backfill-compress (local, khong commit)
 scripts/.backfill-manifest.jsonl
 scripts/.orphan-manifest.jsonl
+
+# ảnh sếp thả vào cho Claude đọc — không commit
+.tmp-screenshots/
