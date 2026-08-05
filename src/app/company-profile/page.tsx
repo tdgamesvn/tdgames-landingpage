@@ -82,6 +82,10 @@ const IMG = {
 const HERO_VIDEO =
   "https://cdn.tdgamestudio.com/projects/2026/05/eb574720-923c-4ad0-abe3-c45320b9359a-final_loop_7s.mp4";
 
+// Nền section Conclusion cuối trang (trước là ảnh tĩnh IMG.kayn).
+const CONTACT_VIDEO =
+  "https://cdn.tdgamestudio.com/projects/2026/08/957962de-4cc5-4931-bef0-cecf29a0482d-mid_autumn-.mp4";
+
 const COMPANY = [
   ["Legal name", "TD Games Company Limited"],
   ["Founded", "2023"],
@@ -1055,7 +1059,19 @@ export default async function CompanyProfilePage() {
 
         {/* Contact */}
         <section className="relative flex min-h-[70svh] items-center overflow-hidden">
-          <Image src={IMG.kayn} alt="" fill sizes="100vw" className="object-cover" aria-hidden />
+          {/* ponytail: <video> thuần như hero. preload="none" + poster ảnh cũ —
+              video này nằm cuối trang, đừng bắt khách tải khi chưa cuộn tới. */}
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            src={CONTACT_VIDEO}
+            poster={IMG.kayn}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="none"
+            aria-hidden
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/85 to-[#0a0a0a]/40" />
           <Wrap className="relative w-full py-14 md:py-24">
             <Reveal>
