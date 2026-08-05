@@ -8,6 +8,7 @@ import {
   type StudioServiceCard,
 } from "@/components/studio-service-cards";
 import siteContent from "@/content/site.json";
+import { resolveSlots } from "@/lib/page-slots";
 import { Changa_One } from "next/font/google";
 
 // Cùng font title với hero trang chủ.
@@ -38,11 +39,14 @@ export const metadata: Metadata = {
  *   TEAM / CAPACITY (cơ cấu 12 người, throughput) · RATES (khoảng giá)
  *   TESTIMONIALS (3 quote + tên người bịa 100%) — thay bằng section Key people thật.
  *
- * ⚠️ CÒN CẦN SẾP BỔ SUNG / VERIFY:
- *   COMPANY "Business registration" — chưa ai cho MST
- *   CASE_STUDY.metrics             — số asset/timeline chưa verify
- *   STATS, CLIENTS                 — các trang tương ứng trong PDF là ảnh, không
- *                                    trích được text ⇒ vẫn là số/tên từ trang cũ
+ * 2026-08-05 (lần 2) — sếp trả lời hết phần còn treo, số liệu dưới đây là THẬT:
+ *   MST 0111386856 · STATS 50+ project / 15+ studio / 1000+ asset
+ *   CASE_STUDY = ORCA (50+ hero, art + animation, 4 tháng)
+ *   3 vòng revision · bảo hành trọn đời · báo giá 24–48h · full IP khi thanh toán
+ *   ClickUp là board chính · thêm hình thức thuê nhân sự theo giờ
+ *   CLIENTS lấy logo thật từ page_slots (home/client-logos) — cùng nguồn với
+ *   marquee "TRUST OUR CLIENTS" ở trang chủ ⇒ trang này phải force-dynamic.
+ *   Ảnh Key people lấy từ team_members (section "Passionate Artists" ở /about).
  * ========================================================================== */
 
 // Accent đồng bộ với trang chủ (#ff8c3a) thay vì amber #f59e0b — cùng một
@@ -79,7 +83,7 @@ const HERO_VIDEO =
 const COMPANY = [
   ["Legal name", "TD Games Company Limited"],
   ["Founded", "2023"],
-  ["Business registration", "0110xxxxxx — sếp điền MST"],
+  ["Business registration", "0111386856"],
   ["Head office", "4th Floor, H1 Tower — Hoa Binh Green City, 505 Minh Khai, Hai Ba Trung District, Hanoi, Vietnam"],
   ["Time zone", "GMT+7 (ICT)"],
   ["Working languages", "English, Vietnamese"],
@@ -92,8 +96,8 @@ const COMPANY = [
 const STATS = [
   { value: "2023", label: "Founded" },
   { value: "50+", label: "Projects delivered" },
-  { value: "12+", label: "Studios served" },
-  { value: "1200+", label: "Assets shipped" },
+  { value: "15+", label: "Studios served" },
+  { value: "1000+", label: "Assets shipped" },
 ];
 
 const SERVICES = [
@@ -189,11 +193,16 @@ const PRODUCTION = [
   ["QA & Optimization", "Bug fixing, performance optimization, and device compatibility testing for a stable, launch-ready product."],
 ];
 
-// Key people — PDF trang 16–17 (chưa có ảnh chân dung trên CDN nên để text).
+// Key people — PDF trang 16–17. Ảnh chân dung lấy từ team_members (đúng ảnh đang
+// dùng ở section "Passionate Artists" trên /about).
+// ponytail: hardcode 2 URL thay vì query DB — cả file này đã là hằng số tĩnh, thêm
+// 1 query chỉ để lấy 2 ảnh không đáng. Sếp đổi ảnh trong /admin thì sửa 2 dòng này.
 const KEY_PEOPLE = [
   {
     name: "Toan Dang",
     role: "CEO & Creative Director",
+    photo:
+      "https://cdn.tdgamestudio.com/projects/2026/05/f104ee79-426e-4b86-a39f-e3dec45deaaa-chatgpt-image-22_35_12-25-thg-5--2026.png",
     bullets: [
       "9+ years as Artist, Animator and Animation Lead",
       "Worked at Gemmob Studio, Zitga Studio and Sky Mavis",
@@ -205,6 +214,8 @@ const KEY_PEOPLE = [
   {
     name: "Dung Nguyen",
     role: "CHRO",
+    photo:
+      "https://cdn.tdgamestudio.com/projects/2026/05/fbf5740a-7f73-4ca1-b490-a0a04f68a321-chatgpt-image-22_35_29-25-thg-5--2026.png",
     bullets: [
       "9+ years in the human resource industry",
       "Founder of a headhunting service for game & IT talent in Vietnam",
@@ -213,18 +224,18 @@ const KEY_PEOPLE = [
   },
 ];
 
-// ⚠️ BỊA metrics — nội dung dựa trên project thật nhưng số liệu chưa verify
+// Số liệu sếp xác nhận 2026-08-05. Chưa có trang case study riêng cho ORCA nên
+// nút dưới trỏ về /portfolio.
 const CASE_STUDY = {
-  slug: "summoner-era",
-  client: "Zitga Studio",
-  title: "Summoner Era — Heroes Light / Dark",
+  href: "/portfolio",
+  client: "ORCA",
+  title: "ORCA — Hero roster, art and animation",
   image: IMG.summoner,
-  body: "A full hero line rebuilt for a live gacha RPG: concept pass, Spine rigging, four-skill combat sets and matching VFX, delivered in fortnightly batches straight into the client's Unity build.",
+  body: "Over fifty high-quality heroes built end to end in four months: concept and final art, then Spine rigging and combat animation — one team handling both disciplines, so the art never had to be redrawn to animate.",
   metrics: [
-    ["42", "Heroes delivered"],
-    ["168", "Skill animations"],
-    ["9 mo", "Continuous production"],
-    ["0", "Re-export requests"],
+    ["50+", "Heroes delivered"],
+    ["4 mo", "Total production time"],
+    ["Art + Anim", "Both handled in-house"],
   ],
 };
 
@@ -274,9 +285,9 @@ const QA = [
   ["Style lock before volume", "One reference asset approved by you before the batch starts."],
   ["Two-stage internal review", "Artist self-check, then Art Director sign-off against your guide."],
   ["Technical check", "Bone naming, atlas packing, pivot points and file structure verified per your spec."],
-  ["Revision policy", "Two rounds included per asset; further rounds quoted upfront, never silently billed."],
+  ["Revision policy", "Three rounds included per asset; further rounds quoted upfront, never silently billed."],
   ["Source files always included", "Layered PSD and Spine project files ship with every delivery."],
-  ["Fix window", "30 days after delivery for defects traceable to our work — no charge."],
+  ["Lifetime warranty", "Defects traceable to our work are fixed free of charge, with no time limit."],
 ];
 
 const SECURITY = [
@@ -288,7 +299,7 @@ const SECURITY = [
 
 const COMMS = [
   ["Channels", "Slack, Discord, Email — we join your workspace"],
-  ["Project tracking", "Trello, Jira, Notion or your board of choice"],
+  ["Project tracking", "ClickUp — shared board, or your tool if you prefer"],
   ["File delivery", "Google Drive, Dropbox, or direct to your repo"],
   ["Overlap hours", "GMT+7 — 4–6h overlap with EU, full overlap with APAC"],
   ["Reporting", "Weekly progress summary with WIP previews"],
@@ -316,16 +327,8 @@ const WORK = [
   { slug: "animation-contest-sky-mavis", title: "Animation Contest", client: "Sky Mavis", image: IMG.skyMavis },
 ];
 
-const CLIENTS = [
-  "Sky Mavis",
-  "Zitga Studio",
-  "Mytheria",
-  "INVINCIBLE GG",
-  "AnimVFX Clan",
-  "Funtap",
-  "Gamota",
-  "VNG",
-];
+// CLIENTS: logo thật đọc từ page_slots (home/client-logos) — cùng nguồn với marquee
+// "TRUST OUR CLIENTS" ở trang chủ, sếp thêm/bớt trong /admin là trang này ăn theo.
 
 const ENGAGEMENT = [
   {
@@ -340,12 +343,18 @@ const ENGAGEMENT = [
     steps: ["Brief", "Pick artists", "Trial batch", "Weekly sprints", "Scale"],
     fit: "Best when you need steady monthly output from a team that knows your game's style.",
   },
+  {
+    title: "Hourly hire",
+    sub: "Pay for the hours you use",
+    steps: ["Brief", "Pick artists", "Track hours", "Weekly report", "Invoice"],
+    fit: "Best for overflow, fixes and unpredictable workloads — rent an artist by the hour instead of scoping a batch.",
+  },
 ];
 
 const FAQ = [
   [
     "How do we start?",
-    "Send a brief with references and asset count. You get scope, quote and schedule within 48 hours — no charge, no commitment.",
+    "Send a brief with references and asset count. You get scope, quote and schedule within 24–48 hours — no charge, no commitment.",
   ],
   [
     "Can we test you first?",
@@ -365,7 +374,7 @@ const FAQ = [
   ],
   [
     "How do you handle revisions?",
-    "Two rounds per asset are included. Anything beyond is quoted before we start, never billed silently.",
+    "Three rounds per asset are included, and delivered work carries a lifetime fix warranty. Anything beyond the included rounds is quoted before we start, never billed silently.",
   ],
 ];
 
@@ -473,7 +482,11 @@ function StepNo({ n }: { n: number }) {
 
 /* --------------------------------------------------------------------- page */
 
-export default function CompanyProfilePage() {
+// Logo khách đọc từ DB → không prerender được nội dung stale.
+export const dynamic = "force-dynamic";
+
+export default async function CompanyProfilePage() {
+  const clientLogos = await resolveSlots("home", "client-logos");
   return (
     <main className="bg-[#0a0a0a]">
       {/* Hero */}
@@ -502,15 +515,15 @@ export default function CompanyProfilePage() {
           <ProfileHeader />
           <Wrap className="relative w-full pb-20 pt-40">
             <p className="mb-6 text-[11px] uppercase tracking-[0.4em] text-white/70">
-              TD Games Studio — Company Profile
+              TD Games Studio
             </p>
             <h1
               className={`max-w-4xl leading-[1] ${changaOne.className}`}
               style={{ fontSize: "min(100px, 9vw)" }}
             >
-              GAME ART
+              COMPANY
               <br />
-              THAT <span style={{ color: A }}>SHIPS</span>
+              <span style={{ color: A }}>PROFILE</span>
             </h1>
             <div className="mt-6 flex items-center gap-4">
               <div className="h-[2px] w-12 shrink-0" style={{ background: A }} />
@@ -722,10 +735,10 @@ export default function CompanyProfilePage() {
               <p className="mt-6 text-lg leading-relaxed text-white/75">{CASE_STUDY.body}</p>
             </Reveal>
             <Reveal delay={0.1} className="mt-14">
-              <div className="grid grid-cols-2 gap-y-10 md:grid-cols-4">
+              <div className="grid grid-cols-1 gap-y-10 sm:grid-cols-3">
                 {CASE_STUDY.metrics.map(([v, l], i) => (
-                  <div key={l} className={i > 0 ? "md:border-l md:border-white/10 md:pl-8" : ""}>
-                    <div className="text-[clamp(2rem,4vw,3rem)] font-black leading-none text-white">
+                  <div key={l} className={i > 0 ? "sm:border-l sm:border-white/10 sm:pl-8" : ""}>
+                    <div className="text-[clamp(1.75rem,3.4vw,2.75rem)] font-black leading-none text-white">
                       {v}
                     </div>
                     <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/50">{l}</div>
@@ -733,11 +746,11 @@ export default function CompanyProfilePage() {
                 ))}
               </div>
               <Link
-                href={`/portfolio/${CASE_STUDY.slug}`}
+                href={CASE_STUDY.href}
                 className="mt-12 inline-flex border-b pb-1 text-sm font-bold uppercase tracking-[0.2em] text-white transition hover:opacity-60"
                 style={{ borderColor: A }}
               >
-                Read the case study
+                See more work
               </Link>
             </Reveal>
           </Wrap>
@@ -752,10 +765,21 @@ export default function CompanyProfilePage() {
             <div className="grid gap-4 md:grid-cols-2">
               {KEY_PEOPLE.map((p, i) => (
                 <Reveal key={p.name} delay={i * 0.08} className={`${CARD} p-8`}>
-                  <h3 className="text-2xl font-bold text-white">{p.name}</h3>
-                  <p className="mt-1 text-xs uppercase tracking-[0.2em]" style={{ color: A }}>
-                    {p.role}
-                  </p>
+                  <div className="flex items-center gap-5">
+                    <Image
+                      src={p.photo}
+                      alt={p.name}
+                      width={96}
+                      height={96}
+                      className="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-[#ff8c3a]/40"
+                    />
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">{p.name}</h3>
+                      <p className="mt-1 text-xs uppercase tracking-[0.2em]" style={{ color: A }}>
+                        {p.role}
+                      </p>
+                    </div>
+                  </div>
                   <ul className="mt-8 space-y-3 text-white/72">
                     {p.bullets.map((b) => (
                       <li key={b} className="flex gap-3">
@@ -789,6 +813,38 @@ export default function CompanyProfilePage() {
                 </Reveal>
               ))}
             </div>
+            {/* Quote CEO — nguyên văn PDF trang 13. */}
+            <Reveal delay={0.24} className={`${CARD} mt-4 p-8 sm:p-10`}>
+              <span
+                aria-hidden
+                className="block text-5xl leading-none"
+                style={{ color: A }}
+              >
+                “
+              </span>
+              <blockquote className="mt-3 text-lg italic leading-relaxed text-white/85 sm:text-xl">
+                We don&apos;t see ourselves as just an outsourcing vendor — we see
+                ourselves as a production partner. Every asset we create, every
+                milestone we deliver, and every conversation we have is driven by one
+                goal:{" "}
+                <strong className="font-semibold not-italic" style={{ color: A }}>
+                  helping our clients build better games, faster and with confidence.
+                </strong>
+              </blockquote>
+              <div className="mt-6 flex items-center gap-4">
+                <Image
+                  src={KEY_PEOPLE[0].photo}
+                  alt={KEY_PEOPLE[0].name}
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded-full object-cover ring-1 ring-white/15"
+                />
+                <div className="text-sm">
+                  <div className="font-semibold text-white">Toan Dang (Đặng Thế Toàn)</div>
+                  <div className="text-white/55">CEO &amp; Creative Director</div>
+                </div>
+              </div>
+            </Reveal>
           </Wrap>
         </section>
 
@@ -850,8 +906,8 @@ export default function CompanyProfilePage() {
           <Wrap>
             <Heading
               no="08"
-              eyebrow="Engagement" title="Two ways to work with us" />
-            <div className="grid gap-4 md:grid-cols-2">
+              eyebrow="Engagement" title="Three ways to work with us" />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {ENGAGEMENT.map((e, i) => (
                 <Reveal key={e.title} delay={i * 0.08} className={`${CARD} p-8`}>
                   <h3 className="text-2xl font-bold text-white">{e.title}</h3>
@@ -948,10 +1004,19 @@ export default function CompanyProfilePage() {
               no="13"
               eyebrow="Clients" title="Studios we've worked with" />
             <Reveal>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                {CLIENTS.map((c) => (
-                  <div key={c} className={`${CARD} px-5 py-6 text-center text-lg font-bold text-white/85`}>
-                    {c}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                {clientLogos.map((logo) => (
+                  <div
+                    key={logo.id}
+                    className={`${CARD} flex h-24 items-center justify-center px-5`}
+                  >
+                    <Image
+                      src={logo.url}
+                      alt={logo.display_name ?? ""}
+                      width={200}
+                      height={64}
+                      className="h-12 w-auto max-w-full object-contain opacity-80"
+                    />
                   </div>
                 ))}
               </div>
@@ -983,14 +1048,30 @@ export default function CompanyProfilePage() {
           <Wrap className="relative w-full py-24">
             <Reveal>
               <h2 className="max-w-3xl text-[clamp(2.5rem,7vw,5.5rem)] font-black uppercase leading-[0.92] tracking-tight text-white">
-                Let&apos;s build
-                <br />
-                something good
+                Conclusion
               </h2>
-              <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/65">
-                Send a brief and get scope, quote and schedule back within 48 hours — no charge, no
-                commitment.
-              </p>
+              {/* Nguyên văn trang kết PDF. */}
+              <div className="mt-8 max-w-3xl space-y-5 text-lg italic leading-relaxed text-white/70">
+                <p>
+                  As the game industry continues to evolve at an unprecedented pace, choosing the
+                  right production partner is essential to delivering high-quality games on time and
+                  within budget.
+                </p>
+                <p>
+                  At TD Games, we combine creative talent, technical expertise, and efficient
+                  production pipelines to provide reliable 2D Game Art, Animation, VFX, and Game
+                  Production services. More than just an outsourcing studio, we strive to become a
+                  trusted extension of your team — working with transparency, flexibility, and a
+                  shared commitment to creating outstanding gaming experiences.
+                </p>
+                <p className="font-semibold not-italic" style={{ color: A }}>
+                  Ready to bring your next game to life?
+                </p>
+                <p>
+                  Let TD Games help you accelerate production, optimize resources, and transform your
+                  ideas into production-ready results.
+                </p>
+              </div>
               <dl className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <dt className="text-[11px] uppercase tracking-[0.25em] text-white/55">Studio</dt>

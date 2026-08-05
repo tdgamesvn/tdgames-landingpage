@@ -3522,3 +3522,58 @@ Commit + push → CI deploy.
 Dữ liệu chưa verify còn lại: MST (COMPANY "Business registration"),
 CASE_STUDY.metrics, STATS + CLIENTS (trang PDF tương ứng là ảnh, không trích được
 text). Có thể bổ sung 2 ảnh chân dung Key people lên CDN.
+
+---
+
+## 2026-08-05 (session — company-profile: điền dữ liệu thật sếp xác nhận)
+
+### Task
+Sếp trả lời 11 câu hỏi về các số liệu còn treo trên /company-profile.
+
+### Work Done (`src/app/company-profile/page.tsx`)
+- MST: `0110xxxxxx — sếp điền` → **0111386856**.
+- STATS: 12+ studio → **15+**, 1200+ asset → **1000+** (50+ project giữ nguyên).
+- CASE_STUDY: Summoner Era (số bịa) → **ORCA** — 50+ hero, 4 tháng, art + animation
+  in-house. 4 metric → 3 (`sm:grid-cols-3`). Chưa có trang case study ORCA nên nút
+  đổi `/portfolio/<slug>` → `/portfolio`, chữ "See more work".
+- CLIENTS: 8 tên gõ tay (có tên bịa: Funtap, Gamota, VNG) → **15 logo thật** đọc từ
+  `resolveSlots("home","client-logos")` — cùng nguồn marquee TRUST OUR CLIENTS ở
+  trang chủ. Page thành `async` + `export const dynamic = "force-dynamic"`.
+- KEY PEOPLE: thêm ảnh chân dung tròn (URL từ `team_members`, đúng ảnh section
+  "Passionate Artists" ở /about). Hardcode 2 URL — ponytail, tránh thêm 1 query.
+- QA: 2 vòng revision → **3 vòng**; "Fix window 30 days" → **Lifetime warranty**.
+- COMMS: Trello/Jira/Notion → **ClickUp**. (Channels Slack/Discord/Email + 12h đã đúng.)
+- ENGAGEMENT: thêm hình thức thứ 3 **Hourly hire** (thuê nhân sự theo giờ);
+  heading "Two ways" → "Three ways", grid `lg:grid-cols-3`.
+- FAQ: "within 48 hours" → **24–48 hours**; revision 2 → 3 vòng + nhắc bảo hành trọn đời.
+- Comment ⚠️ đầu file thay bằng ghi chú "số liệu đã verify 2026-08-05".
+
+### Verify
+`tsc --noEmit` + eslint sạch. GET localhost:3000/company-profile = 200, HTML có
+0111386856 / ORCA / 1000+ / ClickUp / Hourly hire / Lifetime warranty / Three rounds /
+logo_client_* / ảnh chân dung CEO.
+
+### Result
+CHƯA commit — chờ sếp review.
+
+### Next Step
+- Câu 7 sếp trả lời "đúng r" và câu 10 "tạm bỏ qua" → không đổi gì.
+- Nếu muốn ORCA có trang case study riêng thì phải dựng `src/app/portfolio/orca/`.
+
+### Bổ sung (cùng ngày — round 2)
+- Sếp confirm STATS: **15+ studio / 1000+ asset** (PDF ghi 12+ / 1,200+ → PDF cũ hơn,
+  web đúng). Không đổi code.
+- Thêm **quote CEO** (PDF trang 13, nguyên văn) vào cuối section 06 "Why choose us":
+  blockquote + ảnh chân dung `KEY_PEOPLE[0].photo` + "Toan Dang (Đặng Thế Toàn) —
+  CEO & Creative Director". `tsc` + eslint sạch.
+- Why + Workflow: giữ nguyên text web (cụ thể hơn PDF: trial batch, style lock,
+  24–48h, export engine-ready). Không mâu thuẫn PDF, 4 bước map gần 1:1. Đã hỏi sếp
+  3 lựa chọn (giữ / đổi nhãn cho khớp PDF / chép nguyên văn) — chưa trả lời, mặc định giữ.
+- Section cuối: "Let's build something good" → **CONCLUSION** (nguyên văn trang kết PDF,
+  4 đoạn italic, dòng "Ready to bring your next game to life?" highlight cam). Giữ
+  nguyên khối `dl` Studio/Email/Hotline/Web + nút "Request a quote" — đã khớp PDF.
+
+### Bổ sung (cùng ngày — round 3)
+- Hero `/company-profile`: H1 "GAME ART / THAT SHIPS" → **"COMPANY / PROFILE"**
+  (PROFILE màu cam). Eyebrow bỏ đuôi "— Company Profile" để không lặp, còn
+  "TD Games Studio". File: `src/app/company-profile/page.tsx:517-527`.
