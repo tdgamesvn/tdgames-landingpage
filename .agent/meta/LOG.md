@@ -2949,3 +2949,25 @@ careers, about) — cố ý giữ, đó là HTML page, trễ ≤60s chấp nhậ
 ### Next Step
 Không có. Nếu /showreel thành hot path thì quay lại ISR + `revalidatePath`
 trong admin PUT thay vì force-dynamic.
+
+## 2026-08-05 (session — kéo nhiều video chỉ lên 1: nginx 413)
+### Task
+Sếp kéo nhiều video vào /admin tab Showreel, chỉ 1 cái lên.
+
+### Nguyên nhân
+`client_max_body_size 20M` trong `/etc/nginx/sites-enabled/tdgamestudio.com`
+(file thật, KHÔNG phải symlink sang sites-available) → mọi file >20MB bị nginx
+trả **413 trước khi vào Next**, nên PM2 log sạch trơn. File duy nhất lên được
+chỉ 185KB. Verify bằng POST 30MB lên prod: 413; 5MB: 401 (tới được app).
+Client giấu lỗi: `setMsg` ghi đè → chỉ thấy lỗi của file cuối.
+
+### Work Done
+- VPS: nginx 20M → 100M (`sites-enabled/tdgamestudio.com` +
+  `sites-available/www.tdgamestudio.com`), `nginx -t` ok, reload.
+- `src/app/api/admin/upload/route.ts` — `MAX_FILE_SIZE` 20MB → 100MB.
+- `ShowreelTab.tsx` — lỗi cộng dồn (`addErr`) thay vì ghi đè + chặn client-side
+  file >100MB kèm số MB thật.
+
+### Next Step
+File >100MB: nén qua bot compressor, hoặc presigned PUT thẳng lên R2 nếu cần
+upload nặng thường xuyên (route hiện buffer cả file vào RAM).

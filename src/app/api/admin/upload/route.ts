@@ -4,7 +4,11 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { uploadToR2 } from "@/lib/r2";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
+// Phải khớp `client_max_body_size` của nginx (100M) — nginx thấp hơn thì trả 413
+// trước khi request vào Next, app không log được gì.
+// ponytail: buffer cả file vào RAM, đủ cho video showreel; file to hơn thì nén
+// bằng bot compressor hoặc chuyển sang presigned PUT thẳng lên R2.
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 function getAdminKey(req: Request) {
   return req.headers.get("x-admin-key");

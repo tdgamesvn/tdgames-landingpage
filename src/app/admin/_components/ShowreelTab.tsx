@@ -18,6 +18,9 @@ type Item = {
 
 const TABS = ["art", "animation", "vfx"] as const;
 
+// Khớp MAX_FILE_SIZE ở /api/admin/upload và client_max_body_size của nginx.
+const MAX_UPLOAD = 100 * 1024 * 1024;
+
 // Gợi ý cho datalist — không ràng buộc, sếp gõ category mới thoải mái.
 const CATEGORY_HINTS: Record<string, string[]> = {
   art: ["UI", "Concept", "Environment", "Character", "Prop", "Illustration"],
@@ -55,7 +58,15 @@ export function ShowreelTab({ adminKey }: { adminKey: string }) {
     void load();
   }, [load]);
 
+  // Lỗi phải CỘNG DỒN: kéo 10 file mà ghi đè thì chỉ thấy lỗi của file cuối,
+  // 9 file chết im — đúng cái đã làm sếp tưởng "upload chỉ được 1 cái".
+  const addErr = (line: string) => setMsg((m) => (m ? `${m}\n${line}` : line));
+
   async function onPick(file: File) {
+    if (file.size > MAX_UPLOAD) {
+      addErr(`${file.name}: ${(file.size / 1048576).toFixed(1)}MB — quá 100MB, nén trước đã.`);
+      return;
+    }
     setPending((p) => p + 1);
     try {
       const { url } = await uploadFile({ adminKey, file });
@@ -73,9 +84,8 @@ export function ShowreelTab({ adminKey }: { adminKey: string }) {
           active: true,
         },
       ]);
-      setMsg("Upload xong — nhớ bấm Lưu.");
     } catch (e) {
-      setMsg(`${file.name}: ${e instanceof Error ? e.message : "upload lỗi"}`);
+      addErr(`${file.name}: ${e instanceof Error ? e.message : "upload lỗi"}`);
     } finally {
       setPending((p) => p - 1);
     }
@@ -173,7 +183,7 @@ export function ShowreelTab({ adminKey }: { adminKey: string }) {
         <p className="text-xs text-white/60">Đang upload {pending} file…</p>
       ) : null}
 
-      {msg ? <p className="text-xs text-white/60">{msg}</p> : null}
+      {msg ? <p className="whitespace-pre-line text-xs text-amber-300/80">{msg}</p> : null}
 
       <datalist id="showreel-categories">
         {CATEGORY_HINTS[tab].map((c) => (
