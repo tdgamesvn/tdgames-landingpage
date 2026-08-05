@@ -30,17 +30,19 @@ export const metadata: Metadata = {
  *   4. Nội dung dạng card (const CARD) — không để text trần trên nền đen.
  *   5. Chữ body tối thiểu white/70; nhãn nhỏ dùng #ffcc8e.
  *
- * ⚠️⚠️ DỮ LIỆU BỊA — SẾP PHẢI SỬA TRƯỚC KHI GỬI KHÁCH ⚠️⚠️
- * Các khối dưới đây em điền số hợp lý để có layout, KHÔNG phải số thật:
- *   COMPANY.taxId, COMPANY.phone     — chưa ai cho em MST và số điện thoại
- *   STATS                            — 2023/50+/12+/1200+ copy từ trang cũ, chưa verify
- *   TEAM                             — cơ cấu 12 người là bịa hoàn toàn
- *   CAPACITY                         — throughput/tháng là bịa hoàn toàn
- *   CASE_STUDY.metrics               — số asset/timeline là bịa
- *   TESTIMONIALS                     — 3 quote + tên người là BỊA 100%.
- *                                      Gửi khách mà chưa xin phép = rủi ro pháp lý.
- *   RATES                            — khoảng giá là bịa, sếp tự đặt
- *   CLIENTS                          — Funtap/Gamota/VNG cần xác nhận là khách thật
+ * NGUỒN NỘI DUNG — 2026-08-05: đồng bộ với "TD Games Company Portfolio.pdf"
+ * (bản chính thức sếp gửi). VISION_MISSION, CORE_VALUES, PRODUCTION, KEY_PEOPLE,
+ * COMPANY (địa chỉ + hotline) và section Contact lấy nguyên văn từ PDF.
+ *
+ * Đã XOÁ vì là dữ liệu bịa, PDF không có:
+ *   TEAM / CAPACITY (cơ cấu 12 người, throughput) · RATES (khoảng giá)
+ *   TESTIMONIALS (3 quote + tên người bịa 100%) — thay bằng section Key people thật.
+ *
+ * ⚠️ CÒN CẦN SẾP BỔ SUNG / VERIFY:
+ *   COMPANY "Business registration" — chưa ai cho MST
+ *   CASE_STUDY.metrics             — số asset/timeline chưa verify
+ *   STATS, CLIENTS                 — các trang tương ứng trong PDF là ảnh, không
+ *                                    trích được text ⇒ vẫn là số/tên từ trang cũ
  * ========================================================================== */
 
 // Accent đồng bộ với trang chủ (#ff8c3a) thay vì amber #f59e0b — cùng một
@@ -78,11 +80,11 @@ const COMPANY = [
   ["Legal name", "TD Games Company Limited"],
   ["Founded", "2023"],
   ["Business registration", "0110xxxxxx — sếp điền MST"],
-  ["Head office", "Floor 4, Hoa Binh Green City, 505 Minh Khai, Vinh Tuy Ward, Hanoi, Vietnam"],
+  ["Head office", "4th Floor, H1 Tower — Hoa Binh Green City, 505 Minh Khai, Hai Ba Trung District, Hanoi, Vietnam"],
   ["Time zone", "GMT+7 (ICT)"],
   ["Working languages", "English, Vietnamese"],
   ["Email", "info@tdgamestudio.com"],
-  ["Phone", "+84 xxx xxx xxx — sếp điền"],
+  ["Hotline", "(+84) 36 260 8491"],
   ["Website", "tdgamestudio.com"],
   ["Payment", "Bank transfer (USD/VND), Wise, Payoneer"],
 ];
@@ -156,24 +158,59 @@ const SERVICE_CARDS: StudioServiceCard[] = SERVICES.map((s, i) => {
   };
 });
 
-// ⚠️ BỊA — sếp sửa theo cơ cấu thật
-const TEAM = [
-  { role: "Art Director", count: 1 },
-  { role: "Concept & Splash Artists", count: 3 },
-  { role: "Spine Animators", count: 4 },
-  { role: "VFX Artists", count: 2 },
-  { role: "UI Artists", count: 1 },
-  { role: "Producer / QA", count: 1 },
+// Vision & Mission — nguyên văn PDF trang 4
+const VISION_MISSION = [
+  [
+    "Our Vision",
+    "To become Vietnam's leading 2D game outsourcing studio, recognized globally for exceptional quality, creative excellence, and reliable partnerships. We aspire to empower game developers worldwide by delivering world-class art and development solutions while contributing to the growth of Vietnam's game industry on the international stage.",
+  ],
+  [
+    "Our Mission",
+    "To empower game studios and publishers worldwide by delivering high-quality Game Art, Animation, VFX, and Game Development services that transform ideas into engaging gaming experiences — through creativity, technical excellence, transparent collaboration, and an unwavering commitment to quality.",
+  ],
 ];
 
-// ⚠️ BỊA — sếp sửa theo năng lực thật
-const CAPACITY = [
-  ["Character animation", "8–12 rigged characters / month"],
-  ["Skill VFX", "40–60 effects / month"],
-  ["Splash & key art", "6–10 illustrations / month"],
-  ["UI asset packs", "2–3 full screens / month"],
-  ["Ramp-up time", "5–7 working days to add an artist"],
-  ["Max concurrent projects", "4 without quality trade-off"],
+// Core values — PDF trang 5
+const CORE_VALUES = [
+  ["Commitment", "We pay attention to every detail to deliver polished, production-ready, game-ready results."],
+  ["Professionalism", "We ensure clear communication, efficient workflows, and on-time delivery."],
+  ["Quality", "We prioritize product excellence and client satisfaction in every project."],
+  ["Creativity", "We continuously innovate to create unique and impactful game experiences."],
+  ["Partnership", "We build long-term relationships through transparency, trust, and collaboration."],
+];
+
+// 2D Game Production — dịch vụ thứ 4 trong PDF (trang 12)
+const PRODUCTION = [
+  ["Game Design", "Gameplay mechanics, level design, game economy, balancing, and feature planning."],
+  ["Unity Development", "Clean, optimized, and scalable game development for mobile and cross-platform projects."],
+  ["Rapid Prototyping", "Fast prototype development to validate gameplay concepts, user experience, and publisher pitches."],
+  ["Casual Game Development", "End-to-end production for Puzzle, Hybrid Casual, and Hyper-Casual games."],
+  ["Game Integration", "Seamless integration of art, animation, VFX, UI, audio, and gameplay into production-ready builds."],
+  ["QA & Optimization", "Bug fixing, performance optimization, and device compatibility testing for a stable, launch-ready product."],
+];
+
+// Key people — PDF trang 16–17 (chưa có ảnh chân dung trên CDN nên để text).
+const KEY_PEOPLE = [
+  {
+    name: "Toan Dang",
+    role: "CEO & Creative Director",
+    bullets: [
+      "9+ years as Artist, Animator and Animation Lead",
+      "Worked at Gemmob Studio, Zitga Studio and Sky Mavis",
+      "1st prize, Animation Contest by Sky Mavis",
+      "Coaches animation skills across the company",
+      "Led the animation team on “Summoners Arena”",
+    ],
+  },
+  {
+    name: "Dung Nguyen",
+    role: "CHRO",
+    bullets: [
+      "9+ years in the human resource industry",
+      "Founder of a headhunting service for game & IT talent in Vietnam",
+      "Supports clients and the development team in meeting our commitments",
+    ],
+  },
 ];
 
 // ⚠️ BỊA metrics — nội dung dựa trên project thật nhưng số liệu chưa verify
@@ -190,29 +227,6 @@ const CASE_STUDY = {
     ["0", "Re-export requests"],
   ],
 };
-
-// ⚠️ BỊA 100% — tên người và lời khen đều là em viết ra.
-// Xin quote thật từ khách rồi thay, hoặc xoá hẳn section này.
-const TESTIMONIALS = [
-  {
-    quote:
-      "They picked up our style guide in one pass. By the second batch we stopped doing art review entirely and just merged what they sent.",
-    name: "Producer",
-    company: "Live gacha RPG, Southeast Asia",
-  },
-  {
-    quote:
-      "The Spine files came in clean — correct bone naming, atlas packed the way we asked. That alone saved our engineers a week.",
-    name: "Technical Artist",
-    company: "Mobile game studio, Vietnam",
-  },
-  {
-    quote:
-      "We started with a ten-asset trial because we'd been burned before. Three months later they were handling the whole VFX pipeline.",
-    name: "Art Lead",
-    company: "Web3 game, Singapore",
-  },
-];
 
 const WHY = [
   {
@@ -263,13 +277,6 @@ const QA = [
   ["Revision policy", "Two rounds included per asset; further rounds quoted upfront, never silently billed."],
   ["Source files always included", "Layered PSD and Spine project files ship with every delivery."],
   ["Fix window", "30 days after delivery for defects traceable to our work — no charge."],
-];
-
-// ⚠️ BỊA khoảng giá — sếp tự đặt
-const RATES = [
-  ["Per-asset", "Fixed price per character / effect / illustration. Best for clear, bounded scopes."],
-  ["Monthly dedicated artist", "From $X,XXX / artist / month — sếp điền. Best for continuous output."],
-  ["Milestone-based", "Payment split across agreed milestones for larger productions."],
 ];
 
 const SECURITY = [
@@ -586,8 +593,8 @@ export default function CompanyProfilePage() {
             <Heading
               no="02"
               eyebrow="What we offer"
-              title="Three services, one pipeline"
-              lead="Take one, or take the whole chain from concept to engine-ready delivery."
+              title="Four services, one pipeline"
+              lead="Take one, or take the whole chain from concept to a production-ready build."
             />
           </Wrap>
           <Wrap>
@@ -612,6 +619,18 @@ export default function CompanyProfilePage() {
               ))}
             </div>
           </Wrap>
+          <Wrap className="pt-16">
+            <Reveal>
+              <p className="mb-3 text-xs uppercase tracking-[0.25em] text-white/55">
+                2D Game Production
+              </p>
+              <p className="mb-8 max-w-2xl leading-relaxed text-white/72">
+                From concept validation to a production-ready build — end-to-end production for
+                Puzzle, Hybrid Casual and Hyper-Casual games, without expanding your in-house team.
+              </p>
+              <Facts rows={PRODUCTION} />
+            </Reveal>
+          </Wrap>
         </section>
 
         {/* Team & capacity */}
@@ -619,36 +638,16 @@ export default function CompanyProfilePage() {
           <Wrap>
             <Heading
               no="03"
-              eyebrow="Team & capacity"
-              title="Who does the work, and how much"
-              lead="A small senior team rather than a body shop — every artist here has shipped live titles."
+              eyebrow="Vision & mission"
+              title="Where we're headed"
             />
-            <div className="grid gap-16 lg:grid-cols-2">
-              <Reveal>
-                <div className="mb-8 flex items-baseline gap-4">
-                  <span className="text-[clamp(3rem,6vw,4.5rem)] font-black leading-none" style={{ color: A }}>
-                    12
-                  </span>
-                  <span className="text-sm uppercase tracking-[0.2em] text-white/50">
-                    full-time specialists
-                  </span>
-                </div>
-                <ul className="divide-y divide-white/10 border-y border-white/10">
-                  {TEAM.map((t) => (
-                    <li key={t.role} className="flex items-center justify-between py-4">
-                      <span className="text-white/75">{t.role}</span>
-                      <span className="font-mono text-white/50">{t.count}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-              <Reveal delay={0.1}>
-                <p className="mb-8 text-xs uppercase tracking-[0.25em] text-white/55">
-                  Monthly throughput
-                </p>
-                <Facts rows={CAPACITY} />
-              </Reveal>
-            </div>
+            <Reveal>
+              <Facts rows={VISION_MISSION} />
+            </Reveal>
+            <Reveal className="mt-16">
+              <p className="mb-8 text-xs uppercase tracking-[0.25em] text-white/55">Core values</p>
+              <Facts rows={CORE_VALUES} />
+            </Reveal>
           </Wrap>
         </section>
 
@@ -744,21 +743,27 @@ export default function CompanyProfilePage() {
           </Wrap>
         </section>
 
-        {/* Testimonials */}
+        {/* Key people */}
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
           <Wrap>
             <Heading
               no="05"
-              eyebrow="What clients say" title="In their words" />
-            <div className="grid gap-4 md:grid-cols-3">
-              {TESTIMONIALS.map((t, i) => (
-                <Reveal key={t.quote} delay={i * 0.08} className={`${CARD} p-8`}>
-                  <div className="mb-4 text-5xl font-black leading-none" style={{ color: A }}>
-                    &ldquo;
-                  </div>
-                  <blockquote className="text-lg leading-relaxed text-white/75">{t.quote}</blockquote>
-                  <div className="mt-6 text-sm font-bold text-white">{t.name}</div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/55">{t.company}</div>
+              eyebrow="Key people" title="Who leads the work" />
+            <div className="grid gap-4 md:grid-cols-2">
+              {KEY_PEOPLE.map((p, i) => (
+                <Reveal key={p.name} delay={i * 0.08} className={`${CARD} p-8`}>
+                  <h3 className="text-2xl font-bold text-white">{p.name}</h3>
+                  <p className="mt-1 text-xs uppercase tracking-[0.2em]" style={{ color: A }}>
+                    {p.role}
+                  </p>
+                  <ul className="mt-8 space-y-3 text-white/72">
+                    {p.bullets.map((b) => (
+                      <li key={b} className="flex gap-3">
+                        <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full" style={{ background: A }} />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
                 </Reveal>
               ))}
             </div>
@@ -863,10 +868,6 @@ export default function CompanyProfilePage() {
                 </Reveal>
               ))}
             </div>
-            <Reveal className="mt-16">
-              <p className="mb-8 text-xs uppercase tracking-[0.25em] text-white/55">Pricing models</p>
-              <Facts rows={RATES} />
-            </Reveal>
           </Wrap>
         </section>
 
@@ -990,18 +991,22 @@ export default function CompanyProfilePage() {
                 Send a brief and get scope, quote and schedule back within 48 hours — no charge, no
                 commitment.
               </p>
-              <dl className="mt-14 grid gap-10 sm:grid-cols-3">
+              <dl className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <dt className="text-[11px] uppercase tracking-[0.25em] text-white/55">Studio</dt>
                   <dd className="mt-3 text-white/75">
-                    Floor 4, Hoa Binh Green City
+                    4th Floor, H1 Tower — Hoa Binh Green City
                     <br />
-                    505 Minh Khai, Hanoi (GMT+7)
+                    505 Minh Khai, Hai Ba Trung, Hanoi (GMT+7)
                   </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] uppercase tracking-[0.25em] text-white/55">Email</dt>
                   <dd className="mt-3 text-white/75">info@tdgamestudio.com</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] uppercase tracking-[0.25em] text-white/55">Hotline</dt>
+                  <dd className="mt-3 text-white/75">(+84) 36 260 8491</dd>
                 </div>
                 <div>
                   <dt className="text-[11px] uppercase tracking-[0.25em] text-white/55">Web</dt>

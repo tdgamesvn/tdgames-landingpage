@@ -3485,3 +3485,40 @@ Commit + push → CI deploy.
 
 ### Next Step
 DỮ LIỆU BỊA vẫn còn (TESTIMONIALS rủi ro pháp lý nhất, TEAM/CAPACITY/RATES/STATS/MST).
+
+---
+
+## 2026-08-05 (session — đồng bộ /company-profile với PDF portfolio chính thức)
+
+### Task
+Tiếp tục việc dở của phiên trước: comment đầu file đã khai "đồng bộ PDF" nhưng code
+mới nửa vời — `PRODUCTION` / `KEY_PEOPLE` khai báo mà không render, `TESTIMONIALS`
+và `RATES` (dữ liệu bịa) vẫn còn hiển thị.
+
+### Work Done (`src/app/company-profile/page.tsx`)
+- Trích text PDF bằng `pdftotext -layout ~/Downloads/"TD Games Company Portfolio.pdf"`
+  (poppler có sẵn) — nhanh và rẻ hơn đọc PDF dạng ảnh.
+- XOÁ `TESTIMONIALS` (3 quote + tên người bịa 100% → rủi ro pháp lý) và `RATES`
+  (khoảng giá bịa) cùng 2 khối JSX render chúng.
+- Section 05 "What clients say" → **"Key people"**: Toan Dang (CEO & Creative
+  Director) + Dung Nguyen (CHRO), nội dung nguyên văn PDF trang 16–17.
+- Section 02 services: "Three services" → **"Four services"**, thêm khối
+  "2D Game Production" (6 mục: Game Design, Unity Dev, Rapid Prototyping,
+  Casual Game Dev, Game Integration, QA & Optimization) từ PDF trang 12.
+- Contact: địa chỉ đúng theo PDF ("4th Floor, H1 Tower — Hoa Binh Green City,
+  505 Minh Khai, Hai Ba Trung, Hanoi"), thêm cột **Hotline (+84) 36 260 8491**,
+  dl từ 3 → 4 cột.
+- Comment đầu file viết lại cho khớp code thật.
+
+### Verify
+`tsc --noEmit` + eslint sạch. GET /company-profile = 200. Grep HTML: có Toan Dang,
+Dung Nguyen, Rapid Prototyping, H1 Tower, hotline, "Four services"; KHÔNG còn
+"In their words" / "Pricing models".
+
+### Result
+Commit + push → CI deploy.
+
+### Next Step
+Dữ liệu chưa verify còn lại: MST (COMPANY "Business registration"),
+CASE_STUDY.metrics, STATS + CLIENTS (trang PDF tương ứng là ảnh, không trích được
+text). Có thể bổ sung 2 ảnh chân dung Key people lên CDN.

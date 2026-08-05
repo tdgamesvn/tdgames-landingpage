@@ -6,6 +6,11 @@ _(empty)_
 
 ## To do
 
+- [x] ~~Xoá dữ liệu bịa trong `/company-profile`~~ (2026-08-05): TESTIMONIALS +
+      RATES đã xoá, TEAM/CAPACITY thay bằng Vision/Mission + Core values,
+      thêm Key people + 2D Game Production, địa chỉ/hotline theo PDF chính thức.
+- [ ] `/company-profile` còn chưa verify: MST, CASE_STUDY.metrics, STATS, CLIENTS
+      (trang PDF tương ứng là ảnh nên không trích được text).
 - [ ] Verify số liệu hardcode trong `/company-profile`: 2023, 50+ projects,
       12+ clients, 1200+ assets, team 7. Sai là khách bắt được ngay.
 
