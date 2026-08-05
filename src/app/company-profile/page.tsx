@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import ProfileHeader from "./_header";
 import Reveal from "./_reveal";
+import MobileFold from "./_fold";
+import ClientLogo from "@/components/client-logo";
 import {
   StudioServiceCardsGrid,
   type StudioServiceCard,
@@ -75,10 +77,10 @@ const IMG = {
   kayn: encodeURI(`${CDN}/images/Screenshot 2026-05-13 232709.png`),
 };
 
-// Video nền hero — lấy media đầu tiên trong site.json (đúng nguồn trang chủ dùng),
-// sếp đổi trong /admin là trang này ăn theo. Fallback về ảnh nếu list rỗng.
+// Video nền hero — sếp chỉ định riêng cho trang này (2026-08-05), không ăn theo
+// site.json nữa. Đổi video = sửa dòng này.
 const HERO_VIDEO =
-  siteContent.hero.media.find((m) => m.isBgVideo)?.path ?? IMG.summoner;
+  "https://cdn.tdgamestudio.com/projects/2026/05/eb574720-923c-4ad0-abe3-c45320b9359a-final_loop_7s.mp4";
 
 const COMPANY = [
   ["Legal name", "TD Games Company Limited"],
@@ -402,7 +404,7 @@ function Heading({
   lead?: string;
 }) {
   return (
-    <Reveal className="mb-14 text-center">
+    <Reveal className="mb-9 text-center md:mb-14">
       <div className="mb-5 flex items-center justify-center gap-4">
         {no ? (
           <span className="text-sm font-black italic tracking-tighter text-[#ffb04a] drop-shadow-[0_0_12px_rgba(255,176,74,0.35)]">
@@ -410,7 +412,7 @@ function Heading({
           </span>
         ) : null}
         <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#ff8c3a]/60 to-white/10" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
+        <span className="text-[11px] font-bold uppercase md:text-[10px] tracking-[0.4em] text-[#ffcc8e]/80">
           {eyebrow}
         </span>
       </div>
@@ -508,7 +510,7 @@ export default async function CompanyProfilePage() {
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                "linear-gradient(100deg, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.55) 30%, rgba(10,10,10,0.18) 58%, transparent 80%)",
+                "linear-gradient(100deg, rgba(10,10,10,0.92) 0%, rgba(10,10,10,0.72) 30%, rgba(10,10,10,0.42) 58%, rgba(10,10,10,0.2) 80%)",
             }}
           />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
@@ -548,7 +550,7 @@ export default async function CompanyProfilePage() {
               </Link>
               <Link
                 href="/portfolio"
-                className="text-sm font-bold uppercase tracking-wider text-white/70 transition hover:text-white"
+                className="inline-flex min-h-11 items-center text-sm font-bold uppercase tracking-wider text-white/70 transition hover:text-white"
               >
                 See the work
               </Link>
@@ -557,7 +559,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Stats */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Reveal>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -575,7 +577,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Who we are */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="01"
@@ -601,7 +603,7 @@ export default async function CompanyProfilePage() {
         <Divider items={["2D Art", "2D Animation", "2D VFX", "Spine", "Unity", "Cocos"]} />
 
         {/* Services */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="02"
@@ -647,7 +649,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Team & capacity */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="03"
@@ -665,7 +667,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Selected work */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="04"
@@ -691,7 +693,7 @@ export default async function CompanyProfilePage() {
                   </div>
                   <div className="p-4">
                     <span
-                      className="mb-2 inline-block rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider"
+                      className="mb-2 inline-block rounded-full px-3 py-1 text-[11px] font-semibold uppercase md:text-[10px] tracking-wider"
                       style={{ background: `${A}33`, color: A }}
                     >
                       {w.client}
@@ -705,7 +707,7 @@ export default async function CompanyProfilePage() {
           <Wrap className="pt-12">
             <Link
               href="/portfolio"
-              className="inline-flex border-b pb-1 text-sm font-bold uppercase tracking-[0.2em] text-white transition hover:opacity-60"
+              className="inline-flex min-h-11 items-end border-b pb-1 text-sm font-bold uppercase tracking-[0.2em] text-white transition hover:opacity-60"
               style={{ borderColor: A }}
             >
               View full portfolio
@@ -714,7 +716,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Case study spotlight */}
-        <section className="relative overflow-hidden py-24">
+        <section className="relative overflow-hidden py-14 md:py-24">
           <Image
             src={CASE_STUDY.image}
             alt=""
@@ -747,7 +749,7 @@ export default async function CompanyProfilePage() {
               </div>
               <Link
                 href={CASE_STUDY.href}
-                className="mt-12 inline-flex border-b pb-1 text-sm font-bold uppercase tracking-[0.2em] text-white transition hover:opacity-60"
+                className="mt-12 inline-flex min-h-11 items-end border-b pb-1 text-sm font-bold uppercase tracking-[0.2em] text-white transition hover:opacity-60"
                 style={{ borderColor: A }}
               >
                 See more work
@@ -757,7 +759,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Key people */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="05"
@@ -797,7 +799,7 @@ export default async function CompanyProfilePage() {
         <Divider items={["Concept", "Production", "Integration", "Delivery"]} />
 
         {/* Why us */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="06"
@@ -849,7 +851,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Process */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="07"
@@ -872,7 +874,7 @@ export default async function CompanyProfilePage() {
                     >
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <span className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-[#ffcc8e]/80">
+                    <span className="mt-4 font-mono text-[11px] uppercase md:text-[10px] tracking-[0.2em] text-[#ffcc8e]/80">
                       {p.when}
                     </span>
                   </div>
@@ -889,7 +891,7 @@ export default async function CompanyProfilePage() {
                 >
                   <div className="mb-5 flex items-center gap-4 lg:hidden">
                     <StepNo n={i + 1} />
-                    <span className="rounded-full border border-white/10 bg-black/40 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[#ffcc8e]/80">
+                    <span className="rounded-full border border-white/10 bg-black/40 px-3 py-1 font-mono text-[11px] uppercase md:text-[10px] tracking-[0.2em] text-[#ffcc8e]/80">
                       {p.when}
                     </span>
                   </div>
@@ -902,7 +904,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Engagement + rates */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="08"
@@ -928,7 +930,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Quality assurance */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="09"
@@ -936,42 +938,49 @@ export default async function CompanyProfilePage() {
               title="How we keep it consistent"
               lead="The controls that keep batch fifty looking like batch one."
             />
-            <Reveal>
-              <Facts rows={QA} />
-            </Reveal>
+            <MobileFold label="The controls">
+              <Reveal>
+                <Facts rows={QA} />
+              </Reveal>
+            </MobileFold>
           </Wrap>
         </section>
 
         {/* Security & IP */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="10"
               eyebrow="Security & IP" title="Your work stays yours" />
-            <Reveal>
-              <Facts rows={SECURITY} />
-            </Reveal>
+            <MobileFold label="What we commit to">
+              <Reveal>
+                <Facts rows={SECURITY} />
+              </Reveal>
+            </MobileFold>
           </Wrap>
         </section>
 
         {/* Communication */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="11"
               eyebrow="Working together" title="How we stay in sync" />
-            <Reveal>
-              <Facts rows={COMMS} />
-            </Reveal>
+            <MobileFold label="How it works">
+              <Reveal>
+                <Facts rows={COMMS} />
+              </Reveal>
+            </MobileFold>
           </Wrap>
         </section>
 
         {/* Tools */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="12"
               eyebrow="Tools & deliverables" title="What lands in your repo" />
+            <MobileFold label="See the stack">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {STACK.map((g, i) => (
                 <Reveal key={g.group} delay={i * 0.06} className={`${CARD} p-6`}>
@@ -994,11 +1003,12 @@ export default async function CompanyProfilePage() {
                 </Reveal>
               ))}
             </div>
+            </MobileFold>
           </Wrap>
         </section>
 
         {/* Clients */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="13"
@@ -1010,12 +1020,12 @@ export default async function CompanyProfilePage() {
                     key={logo.id}
                     className={`${CARD} flex h-24 items-center justify-center px-5`}
                   >
-                    <Image
+                    <ClientLogo
                       src={logo.url}
                       alt={logo.display_name ?? ""}
-                      width={200}
-                      height={64}
-                      className="h-12 w-auto max-w-full object-contain opacity-80"
+                      base={48}
+                      maxH={60}
+                      className="opacity-80"
                     />
                   </div>
                 ))}
@@ -1025,19 +1035,21 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* FAQ */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-24">
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="14"
               eyebrow="FAQ" title="Before you ask" />
-            <div className="grid gap-4 md:grid-cols-2">
-              {FAQ.map(([q, a], i) => (
-                <Reveal key={q} delay={i * 0.05} className={`${CARD} p-7`}>
-                  <h3 className="mb-3 text-lg font-bold text-white">{q}</h3>
-                  <p className="leading-relaxed text-white/72">{a}</p>
-                </Reveal>
-              ))}
-            </div>
+            <MobileFold label="Read the answers">
+              <div className="grid gap-4 md:grid-cols-2">
+                {FAQ.map(([q, a], i) => (
+                  <Reveal key={q} delay={i * 0.05} className={`${CARD} p-7`}>
+                    <h3 className="mb-3 text-lg font-bold text-white">{q}</h3>
+                    <p className="leading-relaxed text-white/72">{a}</p>
+                  </Reveal>
+                ))}
+              </div>
+            </MobileFold>
           </Wrap>
         </section>
 
@@ -1045,7 +1057,7 @@ export default async function CompanyProfilePage() {
         <section className="relative flex min-h-[70svh] items-center overflow-hidden">
           <Image src={IMG.kayn} alt="" fill sizes="100vw" className="object-cover" aria-hidden />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/85 to-[#0a0a0a]/40" />
-          <Wrap className="relative w-full py-24">
+          <Wrap className="relative w-full py-14 md:py-24">
             <Reveal>
               <h2 className="max-w-3xl text-[clamp(2.5rem,7vw,5.5rem)] font-black uppercase leading-[0.92] tracking-tight text-white">
                 Conclusion

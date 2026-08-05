@@ -3600,3 +3600,39 @@ Admin key thật nằm ở DB `app_settings.admin_secret` (`requireAdmin` ưu ti
 
 ### Next Step
 Sếp cân nhắc đổi `app_settings.admin_secret` sang chuỗi mạnh.
+
+## 2026-08-05 (session — mobile /company-profile ngắn lại + cân logo client)
+
+### Task
+Sếp: (1) trang `/company-profile` trên mobile dài lê thê, eyebrow 10px khó đọc;
+(2) logo client to nhỏ không đều — logo dài trông to hơn logo vuông.
+
+### Work Done — 1. Mobile /company-profile
+- `src/app/company-profile/_fold.tsx` (mới): `<details>` thuần, mobile gập,
+  desktop ≥1024px tự mở + ẩn nút (matchMedia). Render kèm `open` nên SSR /
+  không-JS vẫn thấy đủ nội dung.
+- Gập 5 khối phụ: Quality assurance, Security & IP, Working together,
+  Tools & deliverables, FAQ.
+- Nén nhịp mobile: 17 section `py-24` → `py-14 md:py-24`; heading `mb-14` → `mb-9 md:mb-14`.
+- Eyebrow `text-[10px]` → `text-[11px] md:text-[10px]` (4 chỗ).
+- Kết quả đo (390px): **29.105px → 23.479px (−19%)**, không phần tử nào tràn ngang,
+  5 fold đóng; ở 1196px cả 5 mở.
+
+### Work Done — 2. Cân bằng quang học logo client
+- Root cause: khung cố định `h-14 w-[220px]` (3.9:1) + `object-contain` → wordmark
+  dài ăn hết 220px, logo vuông chỉ 56×56 ⇒ chênh ~4 lần diện tích.
+- `src/components/client-logo.tsx` (mới): chuẩn hoá theo DIỆN TÍCH thay vì chiều cao,
+  `height = base / sqrt(naturalW/naturalH)`. Đo lúc ảnh load (onLoad + useEffect
+  bắt case ảnh cache xong trước hydrate — ref callback lúc mount `complete` còn false).
+- Áp cho marquee trang chủ (`home-page-lower.tsx`, base 56) và grid Clients ở
+  `/company-profile` (base 48).
+- Verify browser: 7 logo tỉ lệ 1:1 → 2.21:1 đều ra **area 3100px²** (56×56 / 82×38).
+
+### Ghi chú
+- eslint `home-page-lower.tsx` có sẵn 3 error từ trước (set-state-in-effect ×2,
+  jsx-no-comment-textnodes) — không phải do session này, chưa đụng.
+- Logo nào vẫn trông nhỏ hơn = file PNG có viền trong suốt thừa → crop lại file ảnh,
+  đừng thêm bảng scale thủ công.
+
+### Next Step
+Chưa commit/deploy. Sếp duyệt mắt thường trên mobile rồi `git push origin main`.

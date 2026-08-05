@@ -6,6 +6,11 @@ _(empty)_
 
 ## To do
 
+- [x] ~~/company-profile mobile quá dài + logo client lệch size~~ (2026-08-05):
+      5 khối phụ gập trên mobile (<details>, desktop tự mở), nén py/mb, eyebrow 11px
+      → 29.1k px còn 23.5k px (−19%). Logo client chuẩn hoá theo diện tích
+      (src/components/client-logo.tsx) — mọi logo cùng ~3100px² bất kể tỉ lệ.
+
 - [x] ~~Xoá dữ liệu bịa trong `/company-profile`~~ (2026-08-05): TESTIMONIALS +
       RATES đã xoá, TEAM/CAPACITY thay bằng Vision/Mission + Core values,
       thêm Key people + 2D Game Production, địa chỉ/hotline theo PDF chính thức.

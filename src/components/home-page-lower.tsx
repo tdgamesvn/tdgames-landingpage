@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { AccentHighlight } from "./accent-highlight";
+import ClientLogo from "./client-logo";
 import CharacterMarquee from "./character-marquee";
 import type { CharacterMarqueeProps } from "./character-marquee";
 import dynamic from "next/dynamic";
@@ -1077,14 +1078,13 @@ export default function HomePageLower() {
                 {[...clientLogos, ...clientLogos].map((src, idx) => (
                   <div
                     key={`${src}-${idx}`}
-                    className="relative h-14 w-[220px] shrink-0 md:h-16 md:w-[260px]"
+                    className="flex h-16 w-[170px] shrink-0 items-center justify-center md:h-20 md:w-[200px]"
                   >
-                    <Image
+                    <ClientLogo
                       src={src}
-                      alt="Client logo"
-                      fill
-                      className="object-contain opacity-80 brightness-[1.15] contrast-[1.05] transition-opacity hover:opacity-100"
-                      sizes="260px"
+                      base={56}
+                      maxH={64}
+                      className="opacity-80 brightness-[1.15] contrast-[1.05] transition-opacity hover:opacity-100"
                     />
                   </div>
                 ))}
