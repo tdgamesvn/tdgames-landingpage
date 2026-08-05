@@ -8,7 +8,12 @@ import { Changa_One, Nunito_Sans } from "next/font/google";
 import { useSlotUrl, BRAND_LOGO_FALLBACK } from "@/lib/use-slot-url";
 
 const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
-const nunitoSans = Nunito_Sans({ weight: ["400", "600", "700"], subsets: ["latin"] });
+// "vietnamese" bắt buộc: thiếu subset này thì "Tất cả" rơi về font hệ thống,
+// chữ có dấu vỡ lệch so với chữ không dấu.
+const nunitoSans = Nunito_Sans({
+  weight: ["400", "600", "700"],
+  subsets: ["latin", "vietnamese"],
+});
 
 type Item = {
   id: string;
@@ -157,7 +162,7 @@ export default function ShowreelGallery() {
                   key={c}
                   onClick={() => setCat(c)}
                   aria-pressed={active}
-                  className={`${changaOne.className} relative pb-3 pt-1 text-sm tracking-[0.18em] uppercase transition-colors ${
+                  className={`relative pb-3 pt-1 text-sm font-bold tracking-[0.18em] uppercase transition-colors ${
                     active ? "text-amber-400" : "text-white/40 hover:text-white/75"
                   }`}
                 >

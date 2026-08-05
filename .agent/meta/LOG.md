@@ -3023,3 +3023,12 @@ sau này tách cột riêng chỉ sửa 1 hàm. (Sếp không chọn phương á
 amber 4% phải giữa), lớp 2 vignette ép mắt vào lưới. Base đổi #0a0a0a → #08080b.
 Header hạ opacity /85 → /70 để gradient ánh qua, không thành dải đen cắt ngang.
 Alpha đều ≤10% để không đánh nhau với thumbnail.
+
+### Fix nền + font (cùng session)
+- Nền vẫn đen vì div gradient dùng `-z-10` NẰM TRONG cha có `bg-[#08080b]` →
+  z âm bị chính background của cha che. Sửa: vẽ gradient thẳng lên thẻ cha bằng
+  `backgroundImage` + `backgroundAttachment: fixed`, bỏ 2 div phủ. Nâng alpha
+  0.10/0.07/0.04 → 0.20/0.16/0.09 (mức cũ quá nhạt, gần như vô hình).
+- "TẤT CẢ" vỡ chữ: Changa One không có glyph tiếng Việt. Hàng filter bỏ
+  `changaOne` → Nunito Sans bold uppercase, và thêm subset "vietnamese" cho
+  Nunito. Changa One giữ nguyên cho tab ART/ANIMATION/VFX (chữ Anh).

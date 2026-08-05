@@ -10,31 +10,23 @@ export const metadata: Metadata = {
 
 export default function ShowreelPage() {
   return (
-    <div className="relative min-h-screen bg-[#08080b] text-white">
-      {/* Nền: fixed nên không trôi theo scroll, pointer-events-none để không
-          nuốt click của lưới. Amber rất nhạt ở trên (nối màu brand từ header),
-          indigo lạnh dưới đáy cho có chiều sâu — cả hai đều dưới 8% alpha,
-          đủ để hết bệt mà không đánh nhau với thumbnail. */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
-        style={{
-          backgroundImage: [
-            "radial-gradient(120% 70% at 50% -10%, rgba(245,158,11,0.10), transparent 60%)",
-            "radial-gradient(90% 60% at 15% 110%, rgba(99,102,241,0.07), transparent 65%)",
-            "radial-gradient(70% 50% at 95% 40%, rgba(245,158,11,0.04), transparent 70%)",
-          ].join(","),
-        }}
-      />
-      {/* Vignette nhẹ ép mắt vào giữa lưới */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
-        style={{
-          backgroundImage:
-            "radial-gradient(100% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.55))",
-        }}
-      />
+    // Gradient vẽ THẲNG trên thẻ này, không dùng div con `-z-10`: con z âm nằm
+    // sau background của cha nên bị `bg-[#08080b]` che sạch — đó là lý do lần
+    // trước nhìn vẫn đen. `background-attachment: fixed` cho hiệu ứng đứng yên
+    // khi cuộn mà không cần lớp phủ nào.
+    <div
+      className="relative min-h-screen text-white"
+      style={{
+        backgroundColor: "#08080b",
+        backgroundImage: [
+          "radial-gradient(100% 100% at 50% 50%, transparent 45%, rgba(0,0,0,0.55))",
+          "radial-gradient(120% 70% at 50% -5%, rgba(245,158,11,0.20), transparent 60%)",
+          "radial-gradient(90% 60% at 10% 105%, rgba(99,102,241,0.16), transparent 65%)",
+          "radial-gradient(70% 55% at 100% 35%, rgba(245,158,11,0.09), transparent 70%)",
+        ].join(","),
+        backgroundAttachment: "fixed",
+      }}
+    >
       {/* Suspense: ShowreelGallery dùng useSearchParams (?tab=) */}
       <Suspense>
         <ShowreelGallery />
