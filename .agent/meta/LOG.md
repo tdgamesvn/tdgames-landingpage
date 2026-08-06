@@ -3786,3 +3786,19 @@ mà cả 6 URL sếp gửi đều đã nằm sẵn trong slot đó (14 ảnh) �
 Lưu ý: slot dùng chung với marquee "Life at TD Games" ở `/careers` → thứ tự bên đó cũng
 đổi theo (không mất ảnh nào). Muốn 2 trang độc lập thì phải tách slot riêng
 `company-profile/team-photos` — chưa làm, chờ sếp yêu cầu.
+
+### Bổ sung 7 — Radar blog chết 5 ngày, đã sống lại (+ root cause thật)
+Sếp nghi ngờ đúng: `blog_topics` newest = **2026-08-01**, đứng im 5 ngày, panel admin
+vẫn 8 topic `status='new'` cũ.
+
+Nguyên nhân KHÔNG phải cron mất — crontab vẫn còn entry 8:00. Là `git clean -fd` trong
+`.github/workflows/deploy.yml` (dòng 35) xoá thư mục `logs/` (untracked) sau MỖI lần
+deploy → redirect `>> logs/blog-radar.log` fail → cron chết im. Đúng lỗi đã "sửa" ngày
+2026-08-01 bằng `mkdir -p logs`: fix đó chỉ sống tới lần deploy kế tiếp.
+
+Fix thật: chuyển log ra ngoài repo, `/var/log/tdgames-*.log` — git clean không với tới.
+Sửa cả 2 cron dính (blog-radar 8:00 hằng ngày, clean-orphan-ai-images 4:00 CN).
+Chạy tay verify: quét 32 tin → 11 tin liên quan → lưu 5 chủ đề → ping Discord ✓.
+`blog_topics` giờ 21 dòng, 13 `new`, newest 2026-08-06.
+
+Bài học: đừng để thứ cron cần nằm trong thư mục untracked của repo có `git clean -fd`.
