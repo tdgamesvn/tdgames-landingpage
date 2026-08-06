@@ -3740,3 +3740,13 @@ Trong WebView video sẽ đứng yên — chấp nhận, miễn có hình. Video
 
 Bài học: đừng gọi `play()` từ gesture handler cho video nền — WebView không cho inline sẽ
 fullscreen. Muốn chắc ăn thì poster/frame đầu, không phải ép phát.
+
+### Bổ sung 3 — card OUR SERVICES: ảnh tĩnh backup khi WebView chặn video
+Sếp yêu cầu 3 card 2D Art / 2D Animation / 2D VFX mở trong Zalo/Mess phải có ảnh backup.
+Không detect UA — dùng thẳng thuộc tính `poster` của `<video>`: WebView không play thì
+poster đứng nguyên, browser thường play video đè lên poster như cũ. Một prop, không JS.
+
+- `SlotMedia` thêm prop `poster` → chuyển xuống `AutoLoopMedia` qua `videoProps`.
+- `studio-service-cards.tsx` truyền poster = `siteContent.services.cards[].image` tra
+  theo title (slot admin có thể ghi đè image thành video, ảnh gốc site.json vẫn còn).
+- Áp dụng cho cả 3 nơi dùng `StudioServiceCardsGrid`: home, company-profile, service pages.

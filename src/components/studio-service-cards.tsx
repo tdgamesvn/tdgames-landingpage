@@ -141,6 +141,13 @@ export function StudioServiceCardsGrid({
             >
               <SlotMedia
                 src={service.image}
+                // ponytail: poster = ảnh tĩnh OUR SERVICES trong site.json. Slot admin
+                // có thể ghi đè image thành video; WebView Zalo/Messenger chặn autoplay
+                // nên khách sẽ thấy đúng ảnh này thay vì ô đen. Browser thường vẫn chạy
+                // video đè lên poster như cũ — khỏi cần detect UA.
+                poster={
+                  studioServiceCards.find((c) => c.title === service.title)?.image
+                }
                 className="object-cover transition-transform duration-[620ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.03]"
               />
               <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#0b0b0f] via-transparent to-transparent opacity-75" />

@@ -12,10 +12,13 @@ const VIDEO_EXT = /\.(mp4|webm|mov|m4v)(\?.*)?$/i;
  */
 export default function SlotMedia({
   src,
+  poster,
   className = "",
   sizes = "(max-width:768px) 100vw, 380px",
 }: {
   src: string;
+  /** Ảnh đứng thay video khi WebView trong app (Zalo/Messenger) chặn autoplay. */
+  poster?: string;
   className?: string;
   sizes?: string;
 }) {
@@ -25,6 +28,7 @@ export default function SlotMedia({
         src={src}
         alt=""
         className={`absolute inset-0 h-full w-full object-cover ${className}`}
+        videoProps={poster ? { poster } : undefined}
       />
     );
   }
