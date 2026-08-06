@@ -3636,3 +3636,38 @@ Sếp: (1) trang `/company-profile` trên mobile dài lê thê, eyebrow 10px kh�
 
 ### Next Step
 Chưa commit/deploy. Sếp duyệt mắt thường trên mobile rồi `git push origin main`.
+
+## 2026-08-05 (session — loạt sửa /company-profile theo feedback sếp)
+
+### Work Done (theo thứ tự sếp yêu cầu, mỗi mục 1 commit + deploy)
+- `bbada10` — Key people: "9+ years" → "10+ years" cả Toan Dang và Dung Nguyen.
+- `cd2dfe3` — nền section Conclusion: ảnh tĩnh `IMG.kayn` → video mid-autumn
+  (`<video>` như hero, `poster` giữ ảnh cũ, `preload="none"` vì nằm cuối trang).
+- `2da262f` — media 3 card service đổi theo link sếp gửi: 2D Art ảnh mới,
+  2D Animation + 2D VFX video mp4. KHÔNG sửa component — `SlotMedia` vốn tự nhận
+  `.mp4` → render `<video>` autoplay/loop lazy. Chỉ đổi `SERVICES[].image` của
+  riêng trang này, `IMG.*` giữ nguyên (còn dùng cho hero poster/case study/portfolio).
+- `e50fac5` — component `Divider`: `justify-center` + thêm gạch phải cho đối xứng.
+  Sửa 1 chỗ áp cho cả 2 dải. Đo: lề trái = lề phải (47/47 và 113/113).
+- `299b5d4` — hero mobile: gạch cam trước subtitle bản cũ nằm cùng hàng +
+  `items-center` nên khi h2 wrap 3 dòng gạch trôi ra giữa dòng 2 → mobile xếp dọc.
+  Subtitle 13px/tracking 0.12em/leading 1.5. H1 `min(100px,9vw)` → `12vw`
+  (35→47px ở 390px). Padding `pt-40 pb-20` → `pt-28 pb-16` trên mobile.
+- `c7ebadc` + `bb29e60` — stats card: "1000+" ở 60px tràn 25px khỏi vùng content
+  (chạm viền ở CẢ desktop 1196px lẫn mobile, không riêng mobile). Số
+  `clamp(2.5rem,5vw,3.75rem)` → `clamp(1.75rem,8vw,3rem)`, card `px-5 py-6
+  md:px-6 md:py-7`, label 11px/tracking 0.12em trên mobile. Đo lại: mọi card dư ≥13px.
+
+### Bẫy gặp phải (ghi để lần sau khỏi dẫm lại)
+- Đặt `{/* comment */}` làm phần tử anh em với `<div>` trong `.map()` → "Adjacent
+  JSX elements", trang 500. Đổi sang `// comment` cũng SAI: trong JSX children nó
+  thành text node, in thẳng ra màn hình (đúng rule eslint jsx-no-comment-textnodes).
+  Cách đúng: đặt comment NGOÀI `.map()`.
+- `npm run build` fail với "Failed to fetch Google Fonts" là do sandbox chặn
+  network, không phải lỗi code → chạy lại với `dangerouslyDisableSandbox: true`.
+- `gh run list --commit <sha>` có lúc trả null; verify bằng `gh run list --limit N`
+  hoặc curl thẳng production.
+
+### Next Step
+Chưa có task treo. Còn 3 dòng logo client tỉ lệ >7:1 hiển thị cao ~17px (đúng luật
+cân diện tích nhưng chữ nhỏ) — chờ sếp xem thực tế có cần sàn chiều cao không.
