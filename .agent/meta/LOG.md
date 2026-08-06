@@ -3726,3 +3726,17 @@ phá đúng tối ưu đó. rAF throttle vì case study có 30+ video.
 Ghi nhớ: `autoPlay` trong SSR HTML của React 19 in ra nguyên camelCase (`autoPlay=""`).
 Grep `'autoplay'` trên HTML production trả 0 → tưởng mất thuộc tính. Thực ra HTML parser
 lowercase tên attribute nên DOM/`querySelectorAll` vẫn khớp. Grep phải `-i`.
+
+### Bổ sung 2 — revert gesture-kick, đổi sang hiện frame đầu
+Sếp báo: sau fix trên, lướt qua video trên mobile là nó **bung fullscreen**. Nguyên nhân:
+WebView Zalo/Messenger không bật `allowsInlineMediaPlayback` → mọi `play()` phát sinh từ
+user gesture đều bị đẩy sang fullscreen player, `playsinline` không cứu được. Chính cú
+`play()` trong scroll/touch handler của mình gây ra.
+
+Sửa: xoá hẳn `AutoplayOnGesture` + import trong `layout.tsx` (deletion over addition).
+Trong WebView video sẽ đứng yên — chấp nhận, miễn có hình. Video autoplay (hero/SlotMedia)
+đã có `poster` nên hiện sẵn ảnh; `AutoLoopMedia` không có poster → gán src kèm `#t=0.001`
+để browser seek + decode frame đầu, khỏi ô đen.
+
+Bài học: đừng gọi `play()` từ gesture handler cho video nền — WebView không cho inline sẽ
+fullscreen. Muốn chắc ăn thì poster/frame đầu, không phải ép phát.

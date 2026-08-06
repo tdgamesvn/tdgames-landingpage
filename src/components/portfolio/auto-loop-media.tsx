@@ -54,7 +54,10 @@ export function AutoLoopMedia({
           if (entry.isIntersecting) {
             if (!loaded) {
               loaded = true;
-              if (!el.src) el.src = src;
+              // ponytail: #t=0.001 buộc browser seek + decode frame đầu, nên khi
+              // WebView trong app (Zalo/Messenger) chặn play() thì khách vẫn thấy
+              // hình thay vì ô đen. Video này không có poster.
+              if (!el.src) el.src = src.includes("#") ? src : `${src}#t=0.001`;
               try {
                 el.load();
               } catch {
