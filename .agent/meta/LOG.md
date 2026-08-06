@@ -3711,3 +3711,18 @@ sau khi CI deploy xong.
 Sếp mở lại link trong Zalo, chạm/cuộn 1 cái xem video có chạy không. Nếu vẫn đứng
 hình → bước tiếp là nút play thủ công hoặc tắt hẳn video nền cho in-app browser
 (detect UA `Zalo`/`FBAN`/`FBAV` → render ảnh poster tĩnh).
+
+### Bổ sung (cùng session) — selector `video[autoplay]` bắt hụt nửa số video
+Verify production sau deploy mới lòi ra: chỉ 4 `<video>` trên `/company-profile` có
+`autoPlay`, còn video của `AutoLoopMedia`/`SlotMedia` KHÔNG có thuộc tính đó — chúng
+gọi `.play()` từ IntersectionObserver, và call đó cũng bị WebView chặn y hệt.
+Fix vòng 1 vì thế bỏ sót đúng nhóm video card/marquee.
+
+Sửa: quét `video:not([controls])` + check `v.paused && v.muted` bằng property (client
+render không phải lúc nào cũng có attribute `muted`). Chỉ kick video đang lọt viewport
+— `AutoLoopMedia` cố ý `pause()` video ngoài màn hình để nhả decoder, ép chạy hết là
+phá đúng tối ưu đó. rAF throttle vì case study có 30+ video.
+
+Ghi nhớ: `autoPlay` trong SSR HTML của React 19 in ra nguyên camelCase (`autoPlay=""`).
+Grep `'autoplay'` trên HTML production trả 0 → tưởng mất thuộc tính. Thực ra HTML parser
+lowercase tên attribute nên DOM/`querySelectorAll` vẫn khớp. Grep phải `-i`.
