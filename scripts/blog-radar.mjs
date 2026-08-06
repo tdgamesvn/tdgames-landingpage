@@ -122,10 +122,18 @@ Với mỗi chủ đề trả về:
 
 Chỉ trả về JSON: {"topics":[{"topic":"","keyword":"","intent":"","why":"","ask":"","score":0,"source":""}]}`;
 
-async function pickTopics(items) {
+async function pickTopics(items, seenTitles = []) {
   const list = items
     .map((i, n) => `${n + 1}. [${i.source}] ${i.title} — ${i.link}`)
     .join("\n");
+
+  // Không đưa danh sách cũ vào prompt thì AI đẻ lại đúng 5 ý hiển nhiên mỗi ngày
+  // (chọn studio / báo giá / in-house vs outsource / brief / Việt Nam), chỉ khác
+  // cách diễn đạt — dedupe so chuỗi phía sau không bắt được. Để AI tự tránh trùng
+  // Ý, thứ mà so tiêu đề không làm nổi.
+  const avoid = seenTitles.length
+    ? `\n\nĐÃ GỢI Ý TRONG 30 NGÀY QUA — TUYỆT ĐỐI KHÔNG lặp lại Ý những bài này, dù đổi cách diễn đạt hay đổi góc nhìn. Nếu 5 ý hay nhất đều đã có rồi thì đào sâu hơn: nhắm phân khúc hẹp hơn, giai đoạn dự án khác, loại khách khác, hoặc chọn chủ đề bám tin trong tuần.\n${seenTitles.map((t) => `- ${t}`).join("\n")}`
+    : "";
 
   const res = await fetch(`${process.env.AI_BASE_URL}/chat/completions`, {
     method: "POST",
@@ -137,7 +145,7 @@ async function pickTopics(items) {
       model: process.env.AI_MODEL,
       messages: [
         { role: "system", content: PROMPT },
-        { role: "user", content: list },
+        { role: "user", content: list + avoid },
       ],
       temperature: 0.7,
     }),
@@ -208,11 +216,14 @@ async function recentTopics() {
     `${process.env.SUPABASE_URL}/rest/v1/blog_topics?select=topic,source&created_at=gte.${since}`,
     { headers: SUPA() },
   );
-  if (!res.ok) return { sources: new Set(), titles: new Set() }; // DB hỏng thì trùng còn hơn mất tin
+  // DB hỏng thì trùng còn hơn mất tin
+  if (!res.ok) return { sources: new Set(), titles: new Set(), rawTitles: new Set() };
   const rows = await res.json();
   return {
     sources: new Set(rows.map((r) => r.source).filter(Boolean)),
     titles: new Set(rows.map((r) => norm(r.topic))),
+    // rawTitles: nguyên văn để nhét vào prompt — AI cần đọc được, không phải chuỗi đã bằm.
+    rawTitles: new Set(rows.map((r) => r.topic).filter(Boolean)),
   };
 }
 
@@ -274,13 +285,15 @@ if (!relevant.length) {
   process.exit(0);
 }
 
-const picked = await pickTopics(relevant);
+// Lấy danh sách cũ TRƯỚC khi gọi AI: vừa để nhét vào prompt, vừa để lọc phía sau.
+const seen = await recentTopics();
+
+const picked = await pickTopics(relevant, [...seen.rawTitles]);
 if (!picked.length) {
   console.error("[radar] AI không chọn được chủ đề nào — thoát");
   process.exit(1);
 }
 
-const seen = await recentTopics();
 const fresh = picked.filter(
   (t) => !(t.source && seen.sources.has(t.source)) && !seen.titles.has(norm(t.topic)),
 );

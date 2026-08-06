@@ -3820,3 +3820,16 @@ Chạy thật qua Actions: success — quét 32 tin, lưu 5 chủ đề, ping Di
 
 Ghi nhớ: script nào gọi cliproxyapi (`AI_BASE_URL`) đều PHẢI chạy trên VPS, không chạy
 được trên runner GitHub.
+
+### Bổ sung 9 — Radar đẻ topic trùng ý: AI không biết nó đã gợi ý gì
+Sếp phát hiện 10 topic hôm nay trùng ý nhau và trùng cả 5 topic drafted 01/08
+("Outsource hay in-house", "Báo giá outsource"...). Dedupe cũ so `source` (URL tin gốc)
++ tiêu đề chuẩn hoá EXACT — mà topic evergreen có `source` rỗng và AI diễn đạt khác chữ
+mỗi lần ("Báo giá outsource game art..." vs "Báo Giá Outsource Art Game...") nên lọt hết.
+
+Root cause: AI KHÔNG hề được cho biết đã gợi ý gì trước đó, dedupe chỉ chạy SAU khi AI
+trả về. Mỗi sáng nó lại đẻ đúng 5 ý hiển nhiên nhất.
+
+Fix: `recentTopics()` trả thêm `rawTitles` (nguyên văn), gọi TRƯỚC `pickTopics()` và nhét
+danh sách 30 ngày vào prompt kèm lệnh cấm lặp ý. Dedupe chuỗi cũ vẫn giữ làm lưới thứ hai.
+CHƯA verify bằng lần chạy thật — hết ngân sách phiên.
