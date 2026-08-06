@@ -3802,3 +3802,21 @@ Chạy tay verify: quét 32 tin → 11 tin liên quan → lưu 5 chủ đề →
 `blog_topics` giờ 21 dòng, 13 `new`, newest 2026-08-06.
 
 Bài học: đừng để thứ cron cần nằm trong thư mục untracked của repo có `git clean -fd`.
+
+### Bổ sung 8 — Radar chuyển sang GitHub Actions (`.github/workflows/blog-radar.yml`)
+Sếp duyệt. Chạy 01:00 UTC (8:00 VN) hằng ngày + `workflow_dispatch`. Fail thì GitHub
+gửi mail và hiện đỏ tab Actions — hết cảnh chết im.
+
+Lượt đầu làm sai: chạy `node scripts/blog-radar.mjs` thẳng trên runner với 6 secret bê
+từ `.env.local` lên. Fail `ConnectTimeoutError 100.126.162.96:8317` — `AI_BASE_URL` là
+địa chỉ **Tailscale nội bộ** (cliproxyapi), runner GitHub không ở trong tailnet. Đây là
+ràng buộc kiến trúc, không phải bug: AI proxy chỉ gọi được từ trong tailnet.
+
+Sửa: workflow ssh vào VPS (`appleboy/ssh-action`, dùng lại VPS_* secrets của deploy.yml)
+rồi chạy script tại chỗ với `.env.local` sẵn có. Đã **xoá 6 secret** vừa đưa lên GitHub
+(AI_API_KEY, SUPABASE_ACCESS_TOKEN… không cần nằm trên GitHub nữa).
+Chạy thật qua Actions: success — quét 32 tin, lưu 5 chủ đề, ping Discord ✓.
+Đã gỡ entry crontab VPS của radar để không chạy 2 lần/ngày.
+
+Ghi nhớ: script nào gọi cliproxyapi (`AI_BASE_URL`) đều PHẢI chạy trên VPS, không chạy
+được trên runner GitHub.
