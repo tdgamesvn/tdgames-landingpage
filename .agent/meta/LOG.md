@@ -3776,3 +3776,13 @@ Hai lớp phòng thủ:
 
 Check: `node --test src/lib/in-app-webview.test.ts` (Node 26 chạy .ts thẳng). Test bắt
 được bug thật ngay lượt đầu: `Line/` khớp nhầm `Streamline/2.0` → phải thêm `\b`.
+
+### Bổ sung 6 — "The people behind the work" (company-profile): 6 ảnh sếp chọn
+Không sửa code. Section này lấy `resolveSlots("careers","gallery")` rồi `.slice(0,6)`,
+mà cả 6 URL sếp gửi đều đã nằm sẵn trong slot đó (14 ảnh) — chỉ sai thứ tự. Chỉ cần
+`update page_slots set sort_order` cho id 103,104,105,106,110,112 = 0..5, phần còn lại
+đẩy xuống 100+. Trang `force-dynamic` nên hiện ngay, khỏi deploy.
+
+Lưu ý: slot dùng chung với marquee "Life at TD Games" ở `/careers` → thứ tự bên đó cũng
+đổi theo (không mất ảnh nào). Muốn 2 trang độc lập thì phải tách slot riêng
+`company-profile/team-photos` — chưa làm, chờ sếp yêu cầu.
