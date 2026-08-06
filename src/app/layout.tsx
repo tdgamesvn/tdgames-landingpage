@@ -4,6 +4,7 @@ import "./globals.css";
 import ClickSpark from "@/components/ClickSpark";
 import HashScrollOnNav from "@/components/hash-scroll-on-nav";
 import { HeroRootStyles } from "@/components/hero-layout-state";
+import AutoplayOnGesture from "@/components/autoplay-on-gesture";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -86,6 +87,7 @@ export default function RootLayout({
         <HeroRootStyles />
         <HashScrollOnNav />
         <ClickSpark />
+        <AutoplayOnGesture />
         {children}
       </body>
     </html>

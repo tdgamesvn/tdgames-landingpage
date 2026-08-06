@@ -3671,3 +3671,43 @@ Chưa commit/deploy. Sếp duyệt mắt thường trên mobile rồi `git push 
 ### Next Step
 Chưa có task treo. Còn 3 dòng logo client tỉ lệ >7:1 hiển thị cao ~17px (đúng luật
 cân diện tích nhưng chữ nhỏ) — chờ sếp xem thực tế có cần sàn chiều cao không.
+
+---
+
+## 2026-08-06 (session — video nền không chạy trong in-app browser Zalo)
+
+### Task
+Sếp mở https://tdgamestudio.com/company-profile trực tiếp trong Zalo: ảnh hiện
+bình thường, video nền đứng im.
+
+### Chẩn đoán (loại trừ 3 lớp trước khi sửa)
+- Markup: `<video>` đã có đủ `muted` + `playsInline` + `poster` → không phải lỗi
+  thiếu thuộc tính autoplay policy thường gặp.
+- CDN: `content-type: video/mp4`, `accept-ranges: bytes`, range request trả 206 → OK.
+- Codec (`ffprobe` thẳng URL): H.264 High / yuv420p + AAC LC → chuẩn phổ thông, OK.
+
+→ Nguyên nhân thật: WebView nhúng trong app (Zalo/Messenger/Facebook) bật
+`mediaPlaybackRequiresUserGesture = true` mặc định. Mọi `<video autoplay>` bị chặn
+kể cả đã `muted`; trang web KHÔNG tắt được cờ này. Video nền lại `aria-hidden` nằm
+dưới gradient nên khách không có gì để chạm → đứng ở khung `poster` vĩnh viễn.
+Ảnh không dính luật này nên vẫn hiện → đúng triệu chứng sếp thấy.
+
+### Work Done
+- `src/components/autoplay-on-gesture.tsx` (mới, ~25 dòng) — nghe `touchstart` /
+  `pointerdown` / `scroll` (passive), mỗi gesture quét `video[autoplay]` đang
+  `paused` → gọi `.play().catch(() => {})`. Cú chạm đầu tiên là user gesture hợp
+  lệ nên WebView cho chạy. KHÔNG remove listener sau lần đầu: video cuối trang
+  `preload="none"` mount muộn, cần gesture sau đó kick tiếp.
+- `src/app/layout.tsx` — mount `<AutoplayOnGesture />` cạnh `<ClickSpark />`.
+
+Đặt ở root layout chứ không riêng `/company-profile`: cùng lỗi đó dính MỌI trang
+có video nền (`/`, `/about`, `/careers`, `/portfolio`, services). Một file chữa hết.
+
+### Result
+`npx tsc --noEmit` sạch. Chưa verify được trên Zalo thật — cần sếp mở lại link
+sau khi CI deploy xong.
+
+### Next Step
+Sếp mở lại link trong Zalo, chạm/cuộn 1 cái xem video có chạy không. Nếu vẫn đứng
+hình → bước tiếp là nút play thủ công hoặc tắt hẳn video nền cho in-app browser
+(detect UA `Zalo`/`FBAN`/`FBAV` → render ảnh poster tĩnh).
