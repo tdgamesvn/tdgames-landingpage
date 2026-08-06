@@ -205,6 +205,21 @@ const PRODUCTION = [
 // dùng ở section "Passionate Artists" trên /about).
 // ponytail: hardcode 2 URL thay vì query DB — cả file này đã là hằng số tĩnh, thêm
 // 1 query chỉ để lấy 2 ảnh không đáng. Sếp đổi ảnh trong /admin thì sửa 2 dòng này.
+// Quy mô đội ngũ — 2026-08-06 sếp cung cấp, KHÔNG bịa thêm cơ cấu/throughput
+// như bản TEAM/CAPACITY cũ đã bị xoá.
+const TEAM_SIZE = [
+  {
+    value: "10+",
+    label: "Full-time specialists",
+    body: "A permanent core in Hanoi — artists, animators and VFX artists who carry the style guide across every batch, plus an art lead and a producer on each project.",
+  },
+  {
+    value: "100+",
+    label: "Freelance collaborators",
+    body: "A vetted bench we scale into when a project needs more hands or a specific style. Same review pipeline and the same art lead sign-off as the core team.",
+  },
+];
+
 const KEY_PEOPLE = [
   {
     name: "Toan Dang",
@@ -495,8 +510,30 @@ function StepNo({ n }: { n: number }) {
 // Logo khách đọc từ DB → không prerender được nội dung stale.
 export const dynamic = "force-dynamic";
 
+// Ảnh đội ngũ dùng chung nguồn với section "Passionate Artists" ở /about
+// (bảng team_members) — sếp sửa 1 chỗ qua /admin là cả 2 trang đổi theo.
+// ponytail: copy 10 dòng từ about/page.tsx thay vì tách helper — cùng query,
+// nhưng gom vào lib nghĩa là thêm file + import cho đúng 2 chỗ gọi.
+type TeamMember = { id: string; name: string; title: string; photo: string };
+
+async function getTeam(): Promise<TeamMember[]> {
+  try {
+    const { getSupabaseAdmin } = await import("@/lib/supabase-admin");
+    const { data, error } = await getSupabaseAdmin()
+      .from("team_members")
+      .select("id, name, title, photo")
+      .eq("active", true)
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  } catch {
+    return []; // DB hỏng thì section vẫn render 2 card số liệu, chỉ mất lưới ảnh
+  }
+}
+
 export default async function CompanyProfilePage() {
   const clientLogos = await resolveSlots("home", "client-logos");
+  const team = await getTeam();
   return (
     <main className="bg-[#0a0a0a]">
       {/* Hero */}
@@ -810,13 +847,56 @@ export default async function CompanyProfilePage() {
           </Wrap>
         </section>
 
+        {/* Team — 2026-08-06 sếp cung cấp: 10+ fulltime, 100+ freelancer.
+            Ảnh lấy từ team_members (cùng nguồn section "Passionate Artists" ở /about). */}
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
+          <Wrap>
+            <Heading
+              no="06"
+              eyebrow="Our team"
+              title="The people behind the work"
+              lead="A full-time core in Hanoi, extended by a vetted freelance bench when a project needs to scale."
+            />
+            <div className="grid gap-4 md:grid-cols-2">
+              {TEAM_SIZE.map((t, i) => (
+                <Reveal key={t.value} delay={i * 0.08} className={`${CARD} px-5 py-6 md:px-7 md:py-7`}>
+                  <div className="text-[clamp(1.75rem,8vw,3rem)] font-black leading-none text-white">
+                    {t.value}
+                  </div>
+                  <div className="mt-3 text-[11px] uppercase tracking-[0.16em] text-[#ffcc8e]/80 md:text-xs md:tracking-[0.2em]">
+                    {t.label}
+                  </div>
+                  <p className="mt-4 leading-relaxed text-white/70">{t.body}</p>
+                </Reveal>
+              ))}
+            </div>
+            {team.length > 0 && (
+              <Reveal className="mt-4">
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                  {team.slice(0, 6).map((m) => (
+                    <div key={m.id} className={`${CARD} overflow-hidden`}>
+                      <div className="relative aspect-square">
+                        <Image src={m.photo} alt={m.name} fill sizes="200px" className="object-cover" />
+                      </div>
+                      <div className="px-3 py-3">
+                        <p className="truncate text-sm font-bold text-white">{m.name}</p>
+                        <p className="truncate text-[11px] text-white/50">{m.title}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Reveal>
+            )}
+          </Wrap>
+        </section>
+
         <Divider items={["Concept", "Production", "Integration", "Delivery"]} />
 
         {/* Why us */}
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="06"
+              no="07"
               eyebrow="Why choose us" title="What you actually get" />
             <div className="grid gap-4 md:grid-cols-2">
               {WHY.map((w, i) => (
@@ -868,7 +948,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="07"
+              no="08"
               eyebrow="How we work" title="From brief to handoff" />
             {/* Sơ đồ ngang: đường ray + 4 mốc, thẳng cột với card bên dưới.
                 Ẩn dưới lg vì 1–2 cột thì mũi tên ngang thành vô nghĩa. */}
@@ -921,7 +1001,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="08"
+              no="09"
               eyebrow="Engagement" title="Three ways to work with us" />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {ENGAGEMENT.map((e, i) => (
@@ -947,7 +1027,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="09"
+              no="10"
               eyebrow="Quality assurance"
               title="How we keep it consistent"
               lead="The controls that keep batch fifty looking like batch one."
@@ -964,7 +1044,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="10"
+              no="11"
               eyebrow="Security & IP" title="Your work stays yours" />
             <MobileFold label="What we commit to">
               <Reveal>
@@ -978,7 +1058,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="11"
+              no="12"
               eyebrow="Working together" title="How we stay in sync" />
             <MobileFold label="How it works">
               <Reveal>
@@ -992,7 +1072,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="12"
+              no="13"
               eyebrow="Tools & deliverables" title="What lands in your repo" />
             <MobileFold label="See the stack">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1025,7 +1105,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="13"
+              no="14"
               eyebrow="Clients" title="Studios we've worked with" />
             <Reveal>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -1052,7 +1132,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="14"
+              no="15"
               eyebrow="FAQ" title="Before you ask" />
             <MobileFold label="Read the answers">
               <div className="grid gap-4 md:grid-cols-2">
