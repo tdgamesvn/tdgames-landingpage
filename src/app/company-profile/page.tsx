@@ -5,6 +5,7 @@ import ProfileHeader from "./_header";
 import Reveal from "./_reveal";
 import MobileFold from "./_fold";
 import ClientLogo from "@/components/client-logo";
+import SlotMedia from "@/components/slot-media";
 import {
   StudioServiceCardsGrid,
   type StudioServiceCard,
@@ -510,30 +511,13 @@ function StepNo({ n }: { n: number }) {
 // Logo khách đọc từ DB → không prerender được nội dung stale.
 export const dynamic = "force-dynamic";
 
-// Ảnh đội ngũ dùng chung nguồn với section "Passionate Artists" ở /about
-// (bảng team_members) — sếp sửa 1 chỗ qua /admin là cả 2 trang đổi theo.
-// ponytail: copy 10 dòng từ about/page.tsx thay vì tách helper — cùng query,
-// nhưng gom vào lib nghĩa là thêm file + import cho đúng 2 chỗ gọi.
-type TeamMember = { id: string; name: string; title: string; photo: string };
-
-async function getTeam(): Promise<TeamMember[]> {
-  try {
-    const { getSupabaseAdmin } = await import("@/lib/supabase-admin");
-    const { data, error } = await getSupabaseAdmin()
-      .from("team_members")
-      .select("id, name, title, photo")
-      .eq("active", true)
-      .order("sort_order", { ascending: true });
-    if (error) throw error;
-    return data ?? [];
-  } catch {
-    return []; // DB hỏng thì section vẫn render 2 card số liệu, chỉ mất lưới ảnh
-  }
-}
-
 export default async function CompanyProfilePage() {
   const clientLogos = await resolveSlots("home", "client-logos");
-  const team = await getTeam();
+  // Ảnh văn phòng + đội ngũ: cùng slot với marquee "Life at TD Games" ở /careers
+  // (2026-08-06 sếp chỉ). Sếp thay ảnh qua /admin là cả 2 trang đổi theo.
+  // Slot rỗng → mảng rỗng → section chỉ còn 2 card số liệu, KHÔNG rơi về ảnh
+  // Unsplash như /careers (hồ sơ gửi khách không được dùng ảnh stock).
+  const lifePhotos = await resolveSlots("careers", "gallery");
   return (
     <main className="bg-[#0a0a0a]">
       {/* Hero */}
@@ -870,18 +854,15 @@ export default async function CompanyProfilePage() {
                 </Reveal>
               ))}
             </div>
-            {team.length > 0 && (
+            {lifePhotos.length > 0 && (
               <Reveal className="mt-4">
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-                  {team.slice(0, 6).map((m) => (
-                    <div key={m.id} className={`${CARD} overflow-hidden`}>
-                      <div className="relative aspect-square">
-                        <Image src={m.photo} alt={m.name} fill sizes="200px" className="object-cover" />
-                      </div>
-                      <div className="px-3 py-3">
-                        <p className="truncate text-sm font-bold text-white">{m.name}</p>
-                        <p className="truncate text-[11px] text-white/50">{m.title}</p>
-                      </div>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                  {lifePhotos.slice(0, 6).map((p) => (
+                    <div
+                      key={p.id}
+                      className={`${CARD} relative aspect-[4/3] overflow-hidden`}
+                    >
+                      <SlotMedia src={p.url} sizes="(max-width:768px) 50vw, 360px" />
                     </div>
                   ))}
                 </div>
