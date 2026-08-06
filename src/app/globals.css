@@ -522,3 +522,11 @@ html {
 .animate-fade-in-up {
   animation: fadeInUp 0.6s ease-out forwards;
 }
+
+/* Video nền (không có controls) không nhận chạm: trong WebView app chat
+   (Zalo/Messenger) một cú chạm vào video là bung fullscreen player, khách tưởng
+   web lỗi. Click xuyên xuống element cha nên link phủ trên card vẫn bấm được.
+   Video showreel có [controls] không dính rule này. */
+video:not([controls]) {
+  pointer-events: none;
+}

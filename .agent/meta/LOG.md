@@ -3760,3 +3760,19 @@ Sửa: `StudioServiceCardsGrid` gọi `usePageSlots("home","service-card")` (hoo
 in-memory dùng chung, không tốn request thứ 2) → `slotUrl(slots, label, site.json image)`.
 Trang chủ slot đang là PNG nên vốn đã hiện ảnh; chỗ thật sự cần poster là
 `/company-profile` + trang service (image ở đó là video).
+
+### Bổ sung 5 — WebView app chat: bỏ hẳn video, chỉ ảnh tĩnh
+Sếp báo chạm vào ảnh card là video vẫn chạy (bung fullscreen), thao tác như bị lỗi.
+Hai lớp phòng thủ:
+
+1. `src/lib/in-app-webview.ts` — `isInAppWebView(ua)` nhận diện Zalo / FBAN|FBAV|FB_IAB|
+   FBIOS / Instagram / BytedanceWebview|musical_ly / `\bLine\/`. `SlotMedia` thành client
+   component, `useEffect` set state → trong app chat render `<Image poster>` thay vì
+   `<video>`, mp4 không tải luôn. Không đọc navigator lúc render (SSR mismatch).
+2. `globals.css`: `video:not([controls]) { pointer-events: none }` — chặn cú chạm mở
+   fullscreen cho MỌI video nền toàn site (hero, marquee, case study, company-profile),
+   không phải sửa 10 file. Showreel có `controls` nên không dính. Click xuyên xuống cha
+   nên link phủ trên card vẫn bấm được.
+
+Check: `node --test src/lib/in-app-webview.test.ts` (Node 26 chạy .ts thẳng). Test bắt
+được bug thật ngay lượt đầu: `Line/` khớp nhầm `Streamline/2.0` → phải thêm `\b`.
