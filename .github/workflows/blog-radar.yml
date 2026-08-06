@@ -3,6 +3,11 @@ name: 📡 Blog Radar
 # Trước đây chạy bằng crontab trên VPS, chết im 5 ngày (2026-08-01 → 08-06) vì
 # `git clean -fd` lúc deploy xoá thư mục logs/ → redirect fail, không ai biết.
 # Ở đây fail là GitHub gửi mail + hiện đỏ trong tab Actions.
+#
+# ponytail: ssh vào VPS chạy script chứ không chạy thẳng trên runner —
+# AI_BASE_URL là địa chỉ Tailscale nội bộ (cliproxyapi), runner GitHub không vào
+# được tailnet (đã thử: ConnectTimeoutError 100.126.162.96:8317). Chạy trên VPS
+# thì dùng luôn .env.local sẵn có, khỏi bê AI_API_KEY/SUPABASE token lên GitHub.
 
 on:
   schedule:
@@ -15,17 +20,15 @@ jobs:
     name: Quét tin ngành → chấm điểm → lưu blog_topics → ping Discord
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: 📡 Chạy radar trên VPS
+        uses: appleboy/ssh-action@v1
         with:
-          node-version: "22"
-
-      - name: 📡 Chạy radar
-        env:
-          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          AI_MODEL: ${{ secrets.AI_MODEL }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: node scripts/blog-radar.mjs
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 10m
+          script: |
+            set -e
+            cd /opt/tdgames-landingpage
+            /usr/bin/node --env-file=.env.local scripts/blog-radar.mjs
