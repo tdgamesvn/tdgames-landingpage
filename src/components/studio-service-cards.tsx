@@ -3,6 +3,14 @@
 import { motion, useReducedMotion } from "framer-motion";
 import SlotMedia from "@/components/slot-media";
 import siteContent from "@/content/site.json";
+import { usePageSlots, slotUrl } from "@/hooks/use-page-slots";
+
+/** title → display_label của slot `home/service-card` (3 ảnh key art OUR SERVICES). */
+const SERVICE_SLOT_LABEL: Record<string, string> = {
+  "2D Animation": "service-animation",
+  "2D Art": "service-art",
+  "2D VFX": "service-vfx",
+};
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 const EASE_SOFT = [0.33, 1, 0.68, 1] as const;
@@ -96,6 +104,9 @@ export function StudioServiceCardsGrid({
 }) {
   const accent = STUDIO_SERVICE_ACCENT;
   const reduceMotion = useReducedMotion();
+  // ponytail: hook có in-memory cache dùng chung nên gọi thêm ở đây không tốn
+  // request thứ 2 — home-services-section đã fetch đúng key này.
+  const slots = usePageSlots("home", "service-card");
 
   return (
     <div
@@ -141,13 +152,15 @@ export function StudioServiceCardsGrid({
             >
               <SlotMedia
                 src={service.image}
-                // ponytail: poster = ảnh tĩnh OUR SERVICES trong site.json. Slot admin
-                // có thể ghi đè image thành video; WebView Zalo/Messenger chặn autoplay
-                // nên khách sẽ thấy đúng ảnh này thay vì ô đen. Browser thường vẫn chạy
-                // video đè lên poster như cũ — khỏi cần detect UA.
-                poster={
-                  studioServiceCards.find((c) => c.title === service.title)?.image
-                }
+                // poster = đúng 3 ảnh key art đang hiện ở OUR SERVICES trang chủ
+                // (slot home/service-card), fallback ảnh site.json nếu slot trống.
+                // WebView Zalo/Messenger chặn autoplay → khách thấy ảnh này thay vì
+                // ô đen; browser thường vẫn play video đè lên, khỏi cần detect UA.
+                poster={slotUrl(
+                  slots,
+                  SERVICE_SLOT_LABEL[service.title] ?? "",
+                  studioServiceCards.find((c) => c.title === service.title)?.image ?? "",
+                )}
                 className="object-cover transition-transform duration-[620ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.03]"
               />
               <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#0b0b0f] via-transparent to-transparent opacity-75" />

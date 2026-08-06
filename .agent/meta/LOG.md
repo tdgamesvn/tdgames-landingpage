@@ -3750,3 +3750,13 @@ poster đứng nguyên, browser thường play video đè lên poster như cũ. 
 - `studio-service-cards.tsx` truyền poster = `siteContent.services.cards[].image` tra
   theo title (slot admin có thể ghi đè image thành video, ảnh gốc site.json vẫn còn).
 - Áp dụng cho cả 3 nơi dùng `StudioServiceCardsGrid`: home, company-profile, service pages.
+
+### Bổ sung 4 — poster lấy đúng 3 key art OUR SERVICES (slot), không phải site.json
+Sếp gửi ảnh: 3 ảnh thật ở OUR SERVICES trang chủ là key art ANIMATION / 2D ART / 2D VFX
+nằm trong `page_slots` (`home` / `service-card`, labels service-animation|art|vfx), còn
+`site.json` `services.cards[].image` là ảnh cũ khác hẳn → poster vòng trước sai ảnh.
+
+Sửa: `StudioServiceCardsGrid` gọi `usePageSlots("home","service-card")` (hook có cache
+in-memory dùng chung, không tốn request thứ 2) → `slotUrl(slots, label, site.json image)`.
+Trang chủ slot đang là PNG nên vốn đã hiện ảnh; chỗ thật sự cần poster là
+`/company-profile` + trang service (image ở đó là video).
