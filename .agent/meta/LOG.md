@@ -3833,3 +3833,37 @@ trả về. Mỗi sáng nó lại đẻ đúng 5 ý hiển nhiên nhất.
 Fix: `recentTopics()` trả thêm `rawTitles` (nguyên văn), gọi TRƯỚC `pickTopics()` và nhét
 danh sách 30 ngày vào prompt kèm lệnh cấm lặp ý. Dedupe chuỗi cũ vẫn giữ làm lưới thứ hai.
 CHƯA verify bằng lần chạy thật — hết ngân sách phiên.
+
+---
+
+## 2026-08-07 (session — prompt ảnh AI blog: kéo về style cartoon)
+### Task
+Sếp gửi ảnh grid /blog: 8/8 cover cùng một gu — dark fantasy semi-real, ám amber,
+nhân vật đứng trong sương. Sếp muốn thiên cartoon cho giống sản phẩm studio đã làm
+(Summoner Era, Axie Origins, Puzzle Wonderland), vẫn cho phép vài bài real/khác style.
+
+### Nguyên nhân
+`src/lib/blog-ai.ts` — 3 luật ép ra đúng gu đó:
+- Rule "decide a render style ONCE": ví dụ chỉ có `hand-painted 2D mobile game art` /
+  `cinematic photograph` → AI chọn cái nghe kêu nhất, bài nào cũng vậy.
+- Rule palette: "dark, low-key, restrained (charcoal with amber warmth)" → mọi ảnh nâu-đen.
+- COVER_RULES: "living hero subject" + dramatic light + haze/embers → epic warrior mọi bài.
+
+### Work Done
+Sửa 5 chỗ trong `src/lib/blog-ai.ts` (dùng chung cho cả `/api/admin/blog/topics` lẫn
+`/api/admin/blog/reimage` — sửa 1 chỗ, 2 luồng cùng ăn):
+- Thêm **HOUSE STYLE — lean CARTOON**, nêu đích danh 3 project studio làm chuẩn, cấm
+  mặc định fallback về grim photoreal.
+- Style list 6 dòng cho AI chọn + BẮT BUỘC đổi giữa các bài. Photoreal chỉ khi bài nói
+  về đời thực (studio, phỏng vấn) và hiếm.
+- Palette: nền vẫn tối (hợp trang near-black) nhưng chủ thể phải saturated; đổi màu
+  accent giữa các bài thay vì amber mãi.
+- Cover: hero subject = nhân vật cartoon có biểu cảm, "app icon / splash art energy".
+- Viết lại 4 example prompt theo hướng cartoon.
+
+### Result
+Chỉ đổi nội dung string const, không đổi type/API → rủi ro LOW. Bài cũ KHÔNG tự đổi ảnh.
+
+### Next Step
+Vào /admin tab Blog bấm reimage **1 bài** trước để sếp duyệt gu mới, ưng rồi mới
+reimage loạt còn lại.
