@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -25,6 +26,19 @@ export const maxDuration = 300;
  * ponytail: nghiêng về 2-3 vì bài 700-1100 chữ nhét 4 ảnh là loãng. Không bao giờ
  * bốc 0 — bài trắng ảnh giữa loạt bài có ảnh trông như bị lỗi.
  */
+/**
+ * Đánh dấu "đang dựng bài" cho deploy script đọc.
+ *
+ * 2026-08-07: deploy chạy đúng lúc AI đang viết → `pm2 restart` giết request,
+ * bài mất trắng, client chờ 4 phút rồi báo fail. `.github/workflows/deploy.yml`
+ * chờ lock này trước khi đụng vào app.
+ *
+ * ponytail: lock tự hết hạn theo mtime (deploy bỏ qua nếu cũ hơn maxDuration),
+ * KHÔNG unlink — khỏi phải bọc try/finally quanh cả handler chỉ để xoá một file.
+ * Giá phải trả: deploy có thể chờ thừa vài phút sau khi bài đã dựng xong.
+ */
+const DRAFT_LOCK = "/tmp/tdgames-blog-draft.lock";
+
 const IMAGE_COUNT_POOL = [1, 2, 2, 2, 3, 3, 3, 4];
 const pickImageCount = () => IMAGE_COUNT_POOL[Math.floor(Math.random() * IMAGE_COUNT_POOL.length)];
 
@@ -170,6 +184,11 @@ export async function POST(req: Request) {
 
   const wantImages = pickImageCount();
   console.log(`[blog draft] bốc ${wantImages} ảnh cho "${topic.topic}"`);
+  try {
+    writeFileSync(DRAFT_LOCK, new Date().toISOString());
+  } catch {
+    /* không ghi được lock thì vẫn dựng bài — deploy chỉ mất lớp chắn */
+  }
 
   const userPrompt = JSON.stringify({
     topic: topic.topic,

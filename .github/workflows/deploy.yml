@@ -27,6 +27,20 @@ jobs:
             set -e
             cd /opt/tdgames-landingpage
 
+            # AI dựng bài blog chạy tới 5 phút. Deploy giữa chừng = pm2 restart
+            # giết request, bài mất trắng (sự cố 2026-08-07). Lock do
+            # /api/admin/blog/topics ghi ra, tự hết hạn theo mtime nên không
+            # bao giờ kẹt deploy vĩnh viễn.
+            LOCK=/tmp/tdgames-blog-draft.lock
+            for i in $(seq 1 40); do
+              [ -f "$LOCK" ] || break
+              age=$(( $(date +%s) - $(stat -c %Y "$LOCK") ))
+              # cũ hơn maxDuration 300s -> bài đã xong hoặc request đã chết
+              if [ "$age" -gt 360 ]; then break; fi
+              echo "⏳ AI đang dựng bài (${age}s) — hoãn deploy 10s..."
+              sleep 10
+            done
+
             echo "💾 Backing up .env..."
             cp .env /tmp/.env.landingpage.bak 2>/dev/null || true
 

@@ -3867,3 +3867,37 @@ Chỉ đổi nội dung string const, không đổi type/API → rủi ro LOW. B
 ### Next Step
 Vào /admin tab Blog bấm reimage **1 bài** trước để sếp duyệt gu mới, ưng rồi mới
 reimage loạt còn lại.
+
+---
+
+## 2026-08-07 (session — deploy giết bài blog đang dựng)
+
+### Task
+Sếp báo bài AI vừa dựng "bị fail". UI hiện banner "Kết nối bị ngắt (Cloudflare 100s)"
+rồi sau 4 phút báo không thấy bài.
+
+### Nguyên nhân (không phải Cloudflare, không phải lỗi code)
+Deploy chạy đúng lúc AI đang viết → `pm2 restart` giết request giữa chừng.
+Bằng chứng khớp giờ: log VPS `[blog draft] bốc 2 ảnh cho "Báo giá outsource game
+art…"` → ngay sau đó `▲ Next.js ✓ Ready in 301ms` (process mới); GH Actions
+🚀 Deploy 03:49:25Z→03:51:07Z (commit 80cecc4). `blog_topics` id f23a348b vẫn
+`status:new, post_id:null`; `blog_posts` không có row nào ngày 07/08. Không OOM
+(dmesg sạch, RAM free 6GB), không có log `AI backend unreachable`.
+Logic poll-DB-4-phút ở BlogTab chạy ĐÚNG — server chết thật nên nó không tìm thấy gì.
+
+### Work Done
+- `src/app/api/admin/blog/topics/route.ts` — POST ghi `/tmp/tdgames-blog-draft.lock`
+  ngay sau khi lấy topic. KHÔNG unlink: lock hết hạn theo mtime, khỏi phải bọc
+  try/finally quanh cả handler (5 nhánh return) chỉ để xoá 1 file.
+- `.github/workflows/deploy.yml` — chờ lock trước khi đụng vào app: tối đa 40×10s,
+  bỏ qua nếu lock cũ hơn 360s (> maxDuration 300s) → không bao giờ kẹt deploy.
+- Test 3 nhánh (không lock / lock mới / lock stale) chạy thật trên VPS: đúng cả 3,
+  `set -e` không giết script (dùng `if` chứ không `[ ] && break`).
+
+### Result
+tsc sạch; lint file sửa sạch (94 lỗi lint còn lại là nợ có sẵn).
+`detect_changes`: 0 symbol đổi, risk LOW.
+
+### Next Step
+Sếp vào /admin tab Blog dựng lại topic "Báo giá outsource game art: chi phí theo
+asset, style và độ khó" (id f23a348b) — chất liệu cũ không lưu được nên phải nhập lại.
