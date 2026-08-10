@@ -142,6 +142,8 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
   /* list view --------------------------------------------------- */
   return (
     <div className="space-y-4">
+      <AutoBlog adminKey={adminKey} />
+
       <RadarTopics
         adminKey={adminKey}
         onDrafted={(post) => {
@@ -245,6 +247,81 @@ export function BlogTab({ adminKey }: { adminKey: string }) {
 function Spinner() {
   return (
     <span className="inline-block h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+  );
+}
+
+/* ─── Auto-blog (cron sáng: radar → dựng bài → tự đăng) ──────── */
+/**
+ * Chỉ là 2 dòng app_settings mà `scripts/blog-auto.mjs` đọc lúc 8h sáng:
+ * blog_auto_enabled ("1"/"0") và blog_auto_count ("1".."3").
+ * ponytail: không có endpoint riêng — dùng thẳng /api/admin/settings có sẵn.
+ */
+function AutoBlog({ adminKey }: { adminKey: string }) {
+  const [on, setOn] = useState(false);
+  const [count, setCount] = useState(1);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/admin/settings", { headers: { "x-admin-key": adminKey }, cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { settings?: { key: string; value: string }[] }) => {
+        const s = Object.fromEntries((d.settings ?? []).map((x) => [x.key, x.value]));
+        setOn(s.blog_auto_enabled === "1");
+        setCount(Math.min(3, Math.max(1, Number(s.blog_auto_count) || 1)));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function save(key: string, value: string) {
+    await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "x-admin-key": adminKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ key, value }),
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm">
+      <label className="flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          checked={on}
+          onChange={(e) => {
+            setOn(e.target.checked);
+            void save("blog_auto_enabled", e.target.checked ? "1" : "0");
+          }}
+          className="h-4 w-4 accent-amber-500"
+        />
+        <span className="font-medium">🤖 Tự viết &amp; đăng blog mỗi sáng</span>
+      </label>
+
+      <label className="flex items-center gap-2 text-white/70">
+        Số bài/ngày
+        <select
+          value={count}
+          onChange={(e) => {
+            setCount(Number(e.target.value));
+            void save("blog_auto_count", e.target.value);
+          }}
+          className="rounded-md border border-white/15 bg-black/40 px-2 py-1"
+        >
+          {[1, 2, 3].map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <span className="text-xs text-white/40">
+        8:00 sáng: chọn chủ đề radar tốt nhất (ưu tiên chủ đề sếp đã kể chuyện thật) → AI dựng bài →
+        đăng luôn + báo Discord.
+      </span>
+      {saved && <span className="text-xs text-emerald-400">đã lưu</span>}
+    </div>
   );
 }
 

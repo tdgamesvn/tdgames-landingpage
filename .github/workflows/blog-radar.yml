@@ -27,8 +27,11 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
-          command_timeout: 10m
+          command_timeout: 30m
           script: |
             set -e
             cd /opt/tdgames-landingpage
             /usr/bin/node --env-file=.env.local scripts/blog-radar.mjs
+            # Auto-blog: tự tắt ngay nếu blog_auto_enabled != 1, nên chạy vô điều
+            # kiện ở đây là an toàn. 30m vì mỗi bài mất tới 5 phút (AI + ảnh).
+            /usr/bin/node --env-file=.env.local scripts/blog-auto.mjs
