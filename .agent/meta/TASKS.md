@@ -8,8 +8,11 @@ _(empty)_
 
 - [x] ~~Auto-blog: cron sáng tự viết + đăng bài~~ (2026-08-10): `scripts/blog-auto.mjs`
       chạy sau radar, bật/tắt + số bài/ngày ở /admin tab Blog. Mặc định TẮT.
-- [ ] Sau khi sếp bật auto-blog: theo dõi 2-3 sáng đầu xem chất lượng bài AI tự viết
-      (không có chất liệu thật) có đăng được không, hay phải chốt chặn duyệt tay.
+- [x] ~~Bật auto-blog~~ (2026-08-10): `blog_auto_enabled='1'`, count=1. Cron 8:00 sáng mai
+      chạy thật lần đầu.
+- [ ] Sáng 11/08 kiểm bài đầu tiên. ⚠ Chủ đề đầu hàng đợi "Báo Giá Outsource Art Game"
+      [10/10] có **0 ký tự chất liệu** ⇒ AI viết chay. Đọc xong mà nhạt thì chuyển sang
+      chốt chặn duyệt tay (đăng `published:false`) thay vì tự publish.
 
 - [x] ~~/company-profile mobile quá dài + logo client lệch size~~ (2026-08-05):
       5 khối phụ gập trên mobile (<details>, desktop tự mở), nén py/mb, eyebrow 11px
@@ -19,10 +22,12 @@ _(empty)_
 - [x] ~~Xoá dữ liệu bịa trong `/company-profile`~~ (2026-08-05): TESTIMONIALS +
       RATES đã xoá, TEAM/CAPACITY thay bằng Vision/Mission + Core values,
       thêm Key people + 2D Game Production, địa chỉ/hotline theo PDF chính thức.
-- [ ] `/company-profile` còn chưa verify: MST, CASE_STUDY.metrics, STATS, CLIENTS
-      (trang PDF tương ứng là ảnh nên không trích được text).
-- [ ] Verify số liệu hardcode trong `/company-profile`: 2023, 50+ projects,
-      12+ clients, 1200+ assets, team 7. Sai là khách bắt được ngay.
+- [x] ~~Verify số liệu `/company-profile`~~ (2026-08-10): 2 mục này ĐÃ STALE — sếp chốt
+      số thật ngay trong session 08-05/08-06, code đã sửa theo, chỉ TASKS.md quên đóng.
+      Thực tế trong `page.tsx`: MST 0111386856 · Founded 2023 · 50+ project · 15+ studio ·
+      1000+ asset · ORCA 50+ hero/4 tháng · team 10+ năm KN, 100+ dự án.
+      Các số bịa cũ (12+ clients, 1200+ assets, team 7) KHÔNG còn trong code.
+      CLIENTS không phải hardcode — đọc logo thật từ `page_slots` (home/client-logos).
 
 
 - [x] ~~Smoke test "Dựng bài" ở /admin tab Blog~~ (2026-08-02): đã dựng 2 bài thật
@@ -45,8 +50,11 @@ _(empty)_
 - [x] ~~274 file mồ côi~~ (2026-08-01): sếp duyệt dọn → chuyển sang `trash/2026-08-01/`
       (KHÔNG xoá thẳng — "mồ côi" là kết luận heuristic). Manifest
       `scripts/.orphan-manifest.jsonl`. Row `media_assets` vẫn còn.
-- [ ] Sau vài ngày: xoá hẳn `trash/2026-08-01/` (1.56 GB) nếu web không thiếu ảnh nào.
-- [ ] Sau vài ngày web chạy ổn: xoá `backup/pre-compress/` trên R2 (~2 GB).
+- [x] ~~Xoá `trash/2026-08-01/` + `backup/pre-compress/`~~ (2026-08-10): cả 2 nằm trên
+      **R2** (không phải filesystem VPS — VPS không hề có thư mục `trash/`).
+      Trước khi xoá: 0 ref trong `src/`, 0 row `media_assets` trỏ vào 2 prefix đó,
+      271 object khớp đúng 271 dòng `.orphan-manifest.jsonl`. Đã purge:
+      1.507 GiB + 645 MiB = **2.15 GB**. Cả 2 prefix giờ = 0 object.
 - [x] ~~GIF lossless bên bot~~ — sếp chốt KHÔNG cần `-lossy`, giữ chất lượng.
 
 

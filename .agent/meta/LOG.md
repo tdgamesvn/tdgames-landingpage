@@ -3934,3 +3934,40 @@ session 08-07 vẫn ăn vì luồng auto dùng chung route đó.
 ### Next Step
 Sếp vào /admin tab Blog tích "🤖 Tự viết & đăng blog mỗi sáng" nếu muốn bật.
 Đang TẮT mặc định — không bật thì cron sáng chỉ chạy radar như cũ.
+
+---
+
+## 2026-08-10 (session 2 — dọn nốt 3 việc chờ)
+
+### Task
+Sếp bảo triển khai nốt 3 việc treo trong TASKS.md: bật auto-blog, dọn rác R2,
+verify số liệu `/company-profile`.
+
+### Work Done
+1. **Bật auto-blog** — `UPDATE app_settings SET value='1' WHERE key='blog_auto_enabled'`
+   (count vẫn 1 bài/ngày). Verify key name khớp `scripts/blog-auto.mjs:49`.
+   Dry-run chọn đúng chủ đề "Báo Giá Outsource Art Game" [10/10].
+2. **Dọn rác R2** — hoá ra `trash/2026-08-01/` KHÔNG nằm trên VPS (VPS không có thư
+   mục đó, `df` 46% used) mà là **prefix trên R2** — manifest chứa key kiểu
+   `landing/behance/*.gif`. Xoá bằng `rclone purge` cấu hình qua env
+   `RCLONE_CONFIG_R2_*` (không tạo script mới, không đụng rclone.conf).
+   Trước khi xoá đã check: 0 ref trong `src/`, 0 row `media_assets`, 271 object ==
+   271 dòng manifest. Kết quả: `trash/2026-08-01` 1.507 GiB + `backup/pre-compress`
+   645 MiB = **2.15 GB** giải phóng, cả 2 prefix về 0 object.
+   (Log `GetBucketVersioning 403` là cảnh báo vô hại — token R2 không có quyền đọc
+   versioning, rclone tự coi bucket là unversioned rồi xoá bình thường.)
+3. **Verify `/company-profile`** — KHÔNG có gì phải sửa. 2 dòng task này đã stale từ
+   05/08: sếp chốt số thật ngay trong session đó, code sửa theo, chỉ TASKS.md quên
+   đóng. Số hiện tại trong `page.tsx`: MST 0111386856 · Founded 2023 · 50+ project ·
+   15+ studio · 1000+ asset · ORCA 50+ hero/4 tháng · Key people 10+ năm KN / 100+ dự án.
+   Các số bịa cũ ghi trong TASKS (12+ clients, 1200+ assets, team 7) không còn tồn tại
+   trong code. CLIENTS không hardcode — đọc `page_slots` (home/client-logos).
+
+### Result
+Không đổi 1 dòng code nào — chỉ DB (1 row), R2 (xoá 505 object), memory files.
+Không cần deploy.
+
+### Next Step
+Sáng 11/08 kiểm bài blog đầu tiên tự đăng. ⚠ Chủ đề đầu hàng đợi có **0 ký tự chất
+liệu** ⇒ AI viết chay hoàn toàn. Bài nhạt thì đổi sang chốt chặn duyệt tay
+(`published:false`) thay vì tự publish.
