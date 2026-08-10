@@ -6,6 +6,11 @@ _(empty)_
 
 ## To do
 
+- [x] ~~Auto-blog: cron sáng tự viết + đăng bài~~ (2026-08-10): `scripts/blog-auto.mjs`
+      chạy sau radar, bật/tắt + số bài/ngày ở /admin tab Blog. Mặc định TẮT.
+- [ ] Sau khi sếp bật auto-blog: theo dõi 2-3 sáng đầu xem chất lượng bài AI tự viết
+      (không có chất liệu thật) có đăng được không, hay phải chốt chặn duyệt tay.
+
 - [x] ~~/company-profile mobile quá dài + logo client lệch size~~ (2026-08-05):
       5 khối phụ gập trên mobile (<details>, desktop tự mở), nén py/mb, eyebrow 11px
       → 29.1k px còn 23.5k px (−19%). Logo client chuẩn hoá theo diện tích

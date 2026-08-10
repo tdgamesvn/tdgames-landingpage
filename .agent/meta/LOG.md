@@ -3901,3 +3901,36 @@ tsc sạch; lint file sửa sạch (94 lỗi lint còn lại là nợ có sẵn)
 ### Next Step
 Sếp vào /admin tab Blog dựng lại topic "Báo giá outsource game art: chi phí theo
 asset, style và độ khó" (id f23a348b) — chất liệu cũ không lưu được nên phải nhập lại.
+
+---
+
+## 2026-08-10 (session — auto-blog: cron sáng tự viết + đăng)
+
+### Task
+Hoàn thiện phần dở dang trong working tree: cho blog tự chạy mỗi sáng thay vì
+sếp phải vào /admin bấm "Dựng bài" từng chủ đề.
+
+### Work Done
+- `scripts/blog-auto.mjs` (mới, 148 dòng) — chạy ngay sau `blog-radar.mjs`:
+  đọc `app_settings`, tắt thì thoát ngay; lấy `blog_topics` còn `post_id is null`,
+  xếp chủ đề CÓ chất liệu thật (interview/ceo_note ≥ 40 ký tự) lên trước rồi mới
+  tới `score`; gọi lại `POST /api/admin/blog/topics` với `auto:true` (không thêm
+  route mới) → PATCH `published:true` → ping Discord. Trần cứng 3 bài/ngày.
+  `--dry-run` xem trước được cả khi đang TẮT (nó không viết gì).
+- `BlogTab.tsx` — thêm component `AutoBlog`: checkbox bật/tắt + select 1-3 bài/ngày,
+  ghi thẳng qua `/api/admin/settings` có sẵn (GET trả `{settings:[{key,value}]}`,
+  PATCH nhận `{key,value}` — đã verify contract).
+- `.github/workflows/blog-radar.yml` — chạy tiếp blog-auto sau radar,
+  `command_timeout` 10m → 30m (mỗi bài tới 5 phút AI + ảnh).
+- Migration `20260810000000_blog_auto_settings.sql` — seed `blog_auto_enabled='0'`
+  (MẶC ĐỊNH TẮT), `blog_auto_count='1'`. Đã apply lên Supabase.
+
+### Result
+tsc sạch, `detect_changes` risk MEDIUM (chỉ do line-shift trong BlogTab, thay đổi
+thuần additive). Deploy CI xanh 1m19s. Dry-run thật: chọn đúng chủ đề
+"Báo Giá Outsource Art Game" [10/10]. Lock file chống deploy-giết-request từ
+session 08-07 vẫn ăn vì luồng auto dùng chung route đó.
+
+### Next Step
+Sếp vào /admin tab Blog tích "🤖 Tự viết & đăng blog mỗi sáng" nếu muốn bật.
+Đang TẮT mặc định — không bật thì cron sáng chỉ chạy radar như cũ.
