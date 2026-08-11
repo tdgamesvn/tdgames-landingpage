@@ -3991,3 +3991,29 @@ Sếp yêu cầu thêm cột/status PHONE SCREENING cho `/hr` pipeline.
 
 ### Next Step
 Kiểm bài blog auto đầu tiên đăng sáng 11/08.
+
+## 2026-08-11 (session — blog SEO: JSON-LD + canonical + related posts)
+### Task
+Sếp hỏi làm sao blog tiếp cận nhiều reader hơn. Soi hiện trạng: sitemap đã có blog,
+robots OK, metadata root OK → thiếu structured data, canonical, và internal linking.
+
+### Work Done
+`src/app/blog/[slug]/page.tsx` (1 file duy nhất):
+- `generateMetadata`: thêm `alternates.canonical`, `openGraph.type=article` +
+  url/publishedTime/modifiedTime/authors, block `twitter` (summary_large_image).
+- JSON-LD `BlogPosting` (headline/image/datePublished/dateModified/author/publisher/
+  mainEntityOfPage). Bỏ qua khi draftMode. Escape `<` → `<` chống thoát thẻ script.
+- `getRelated()`: 1 query lấy 9 bài published mới nhất (trừ bài hiện tại), sort ưu tiên
+  cùng tag, lấy 3 → section "Keep reading" cuối bài.
+
+### Result
+`npx tsc --noEmit` sạch. Verify trên dev server bài thật: có `application/ld+json`,
+`"@type":"BlogPosting"`, `rel=canonical`, `og:type=article`, `og:image`,
+`article:published_time`, `twitter:*`, section "Keep reading" render.
+CHƯA push.
+
+### Next Step
+- Push + submit lại sitemap trên Google Search Console, test rich result.
+- Phần lớn traffic blog đến từ PHÂN PHỐI chứ không phải SEO: LinkedIn công ty,
+  ArtStation blog, r/gamedev. Bài breakdown quy trình > bài "xu hướng".
+- Chưa làm: RSS `/feed.xml`, link chéo blog ↔ case study portfolio.

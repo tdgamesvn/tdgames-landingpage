@@ -44,16 +44,53 @@ async function getPost(slug: string) {
   }
 }
 
+const BASE_URL = "https://tdgamestudio.com";
+
+// Bài liên quan: 1 query, ưu tiên cùng tag rồi mới tới bài mới nhất.
+async function getRelated(slug: string, tag: string) {
+  try {
+    const { data } = await getSupabaseAdmin()
+      .from("blog_posts")
+      .select("slug, title, tag, cover_image, created_at")
+      .eq("published", true)
+      .neq("slug", slug)
+      .order("created_at", { ascending: false })
+      .limit(9);
+    return (data ?? [])
+      .sort((a, b) => Number(b.tag === tag) - Number(a.tag === tag))
+      .slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
   if (!post) return { title: "Not found" };
+  const url = `${BASE_URL}/blog/${slug}`;
+  const description = post.excerpt || "Read this article on the TD Games blog.";
+  const images = post.cover_image ? [{ url: post.cover_image }] : undefined;
   return {
     title: `${post.title} — TD Games Blog`,
-    description: post.excerpt || "Read this article on the TD Games blog.",
-    openGraph: post.cover_image
-      ? { images: [{ url: post.cover_image }] }
-      : undefined,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      url,
+      title: post.title,
+      description,
+      publishedTime: post.created_at,
+      modifiedTime: post.updated_at ?? post.created_at,
+      authors: [post.author],
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description,
+      images: post.cover_image ? [post.cover_image] : undefined,
+    },
   };
 }
 
@@ -71,9 +108,39 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const htmlContent = post.content_md ? (marked(post.content_md) as string) : "";
+  const related = await getRelated(slug, post.tag);
+
+  // JSON-LD cho Google rich result. Bản nháp thì thôi, khỏi rác.
+  const jsonLd = post.isPreview
+    ? null
+    : {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        headline: post.title,
+        description: post.excerpt || undefined,
+        image: post.cover_image || undefined,
+        datePublished: post.created_at,
+        dateModified: post.updated_at ?? post.created_at,
+        author: { "@type": "Organization", name: post.author },
+        publisher: {
+          "@type": "Organization",
+          name: "TD Games",
+          logo: { "@type": "ImageObject", url: `${BASE_URL}/icon.png` },
+        },
+        mainEntityOfPage: `${BASE_URL}/blog/${slug}`,
+      };
 
   return (
     <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          // escape `<` để title chứa "</script>" không thoát ra khỏi thẻ.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
       {/* Không để sếp nhầm bản nháp với bài đã đăng thật. */}
       {post.isPreview && (
         <div className="sticky top-0 z-50 bg-[#f59e0b] px-4 py-2 text-center text-sm font-bold text-black">
@@ -224,6 +291,47 @@ export default async function BlogPostPage({ params }: Props) {
               />
             </>
           ) : null}
+
+          {/* Bài liên quan — giữ reader ở lại thay vì bounce sau 1 bài */}
+          {related.length > 0 && (
+            <section className="mt-16 border-t border-white/10 pt-10">
+              <h2
+                className="text-lg font-black uppercase tracking-tight text-white"
+                style={{ fontFamily: "var(--font-rajdhani)" }}
+              >
+                Keep reading
+              </h2>
+              <div className="mt-6 grid gap-5 sm:grid-cols-3">
+                {related.map((r) => (
+                  <Link
+                    key={r.slug}
+                    href={`/blog/${r.slug}`}
+                    className="group block overflow-hidden rounded-lg border border-white/10 transition hover:border-[#f59e0b]/60"
+                  >
+                    <div className="relative h-28 w-full bg-white/5">
+                      {r.cover_image && (
+                        <Image
+                          src={r.cover_image}
+                          alt={r.title}
+                          fill
+                          className="object-cover transition group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, 240px"
+                        />
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#ff9f1a]">
+                        {r.tag}
+                      </p>
+                      <p className="mt-1.5 line-clamp-2 text-sm font-semibold leading-snug text-white/85">
+                        {r.title}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Back link */}
           <Link

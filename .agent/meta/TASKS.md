@@ -6,6 +6,11 @@ _(empty)_
 
 ## To do
 
+- [x] ~~Blog SEO cơ bản~~ (2026-08-11): JSON-LD BlogPosting + canonical + og:type=article
+      + twitter card + related posts "Keep reading" trong `src/app/blog/[slug]/page.tsx`.
+- [ ] Blog reach — còn lại: RSS `/feed.xml`, link chéo blog ↔ case study portfolio,
+      và quan trọng nhất là phân phối tay (LinkedIn / ArtStation / r/gamedev mỗi bài).
+
 - [x] ~~Auto-blog: cron sáng tự viết + đăng bài~~ (2026-08-10): `scripts/blog-auto.mjs`
       chạy sau radar, bật/tắt + số bài/ngày ở /admin tab Blog. Mặc định TẮT.
 - [x] ~~Bật auto-blog~~ (2026-08-10): `blog_auto_enabled='1'`, count=1. Cron 8:00 sáng mai
