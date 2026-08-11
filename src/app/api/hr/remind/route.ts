@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("applications")
     .select("id, full_name, status, created_at, referred_by, jobs(title)")
-    .in("status", ["new", "reviewing", "interview"])
+    .in("status", ["new", "reviewing", "phone_screening", "interview"])
     .order("created_at", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -42,7 +42,10 @@ export async function GET(request: Request) {
     (a) => a.status === "new" && daysAgo(a.created_at) >= THRESHOLDS.new
   );
   const stuckReview = apps.filter(
-    (a) => a.status === "reviewing" && daysAgo(a.created_at) >= THRESHOLDS.reviewing
+    // ponytail: phone_screening dùng chung ngưỡng với reviewing
+    (a) =>
+      (a.status === "reviewing" || a.status === "phone_screening") &&
+      daysAgo(a.created_at) >= THRESHOLDS.reviewing
   );
   const postInterview = apps.filter(
     (a) => a.status === "interview" && daysAgo(a.created_at) >= THRESHOLDS.interview

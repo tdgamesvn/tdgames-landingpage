@@ -8,6 +8,7 @@ import type { Application, ApplicationComment, ApplicationStatus, Job, JobType }
 const STATUSES: ApplicationStatus[] = [
   "new",
   "reviewing",
+  "phone_screening",
   "test",
   "interview",
   "offer",
@@ -17,6 +18,7 @@ const STATUSES: ApplicationStatus[] = [
 const STATUS_LABEL: Record<ApplicationStatus, string> = {
   new: "New",
   reviewing: "Reviewing",
+  phone_screening: "Phone Screening",
   test: "Test",
   interview: "Interview",
   offer: "Offer",
@@ -26,6 +28,7 @@ const STATUS_LABEL: Record<ApplicationStatus, string> = {
 const STATUS_COLOR: Record<ApplicationStatus, string> = {
   new: "border-blue-500/40 bg-blue-500/10 text-blue-300",
   reviewing: "border-yellow-500/40 bg-yellow-500/10 text-yellow-300",
+  phone_screening: "border-orange-500/40 bg-orange-500/10 text-orange-300",
   test: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
   interview: "border-purple-500/40 bg-purple-500/10 text-purple-300",
   offer: "border-green-500/40 bg-green-500/10 text-green-300",
@@ -34,7 +37,8 @@ const STATUS_COLOR: Record<ApplicationStatus, string> = {
 
 const STATUS_NEXT: Partial<Record<ApplicationStatus, ApplicationStatus>> = {
   new: "reviewing",
-  reviewing: "test",
+  reviewing: "phone_screening",
+  phone_screening: "test",
   test: "interview",
   interview: "offer",
 };
@@ -914,7 +918,7 @@ function KPIView({ apps }: { apps: Application[] }) {
     for (const app of apps) {
       const key = app.referred_by ?? "(direct)";
       if (!map.has(key)) {
-        map.set(key, { total: 0, new: 0, reviewing: 0, test: 0, interview: 0, offer: 0, rejected: 0 });
+        map.set(key, { total: 0, new: 0, reviewing: 0, phone_screening: 0, test: 0, interview: 0, offer: 0, rejected: 0 });
       }
       const row = map.get(key)!;
       row.total += 1;
@@ -922,7 +926,7 @@ function KPIView({ apps }: { apps: Application[] }) {
     }
 
     return [...map.entries()]
-      .map(([name, counts]) => ({ name, total: 0, new: 0, reviewing: 0, test: 0, interview: 0, offer: 0, rejected: 0, ...counts }))
+      .map(([name, counts]) => ({ name, total: 0, new: 0, reviewing: 0, phone_screening: 0, test: 0, interview: 0, offer: 0, rejected: 0, ...counts }))
       .sort((a, b) => b.total - a.total);
   }, [apps]);
 
@@ -940,6 +944,7 @@ function KPIView({ apps }: { apps: Application[] }) {
             <th className="px-3 py-3 text-center">Total</th>
             <th className="px-3 py-3 text-center">New</th>
             <th className="px-3 py-3 text-center">Reviewing</th>
+            <th className="px-3 py-3 text-center">Phone</th>
             <th className="px-3 py-3 text-center">Test</th>
             <th className="px-3 py-3 text-center">Interview</th>
             <th className="px-3 py-3 text-center">Offer</th>
@@ -970,6 +975,7 @@ function KPIView({ apps }: { apps: Application[] }) {
                 <td className="px-3 py-3 text-center font-bold text-white">{row.total}</td>
                 <td className="px-3 py-3 text-center text-blue-300">{row.new || "—"}</td>
                 <td className="px-3 py-3 text-center text-yellow-300">{row.reviewing || "—"}</td>
+                <td className="px-3 py-3 text-center text-orange-300">{row.phone_screening || "—"}</td>
                 <td className="px-3 py-3 text-center text-cyan-300">{row.test || "—"}</td>
                 <td className="px-3 py-3 text-center text-purple-300">{row.interview || "—"}</td>
                 <td className="px-3 py-3 text-center text-green-300">{row.offer || "—"}</td>

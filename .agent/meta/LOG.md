@@ -3971,3 +3971,23 @@ Không cần deploy.
 Sáng 11/08 kiểm bài blog đầu tiên tự đăng. ⚠ Chủ đề đầu hàng đợi có **0 ký tự chất
 liệu** ⇒ AI viết chay hoàn toàn. Bài nhạt thì đổi sang chốt chặn duyệt tay
 (`published:false`) thay vì tự publish.
+
+## 2026-08-11 (session — thêm status "Phone Screening" vào HR pipeline)
+### Task
+Sếp yêu cầu thêm cột/status PHONE SCREENING cho `/hr` pipeline.
+
+### Work Done
+- `src/app/admin/_lib/types.ts` — `ApplicationStatus` thêm `"phone_screening"`.
+- `src/app/hr/_components/HRDashboard.tsx` — STATUSES / STATUS_LABEL ("Phone
+  Screening") / STATUS_COLOR (orange) / STATUS_NEXT (reviewing → phone_screening
+  → test) + cột "Phone" trong bảng KPI referral.
+- `src/app/admin/_components/CareersTab.tsx` — thêm vào dropdown + màu badge.
+- `src/app/api/hr/remind/route.ts` — phone_screening dùng chung ngưỡng 7d với reviewing.
+- **Không cần migration**: bảng `applications` không còn CHECK constraint trên
+  `status` (đã verify qua pg_constraint) → status là text tự do.
+
+### Result
+`npx tsc --noEmit` sạch. Chưa deploy.
+
+### Next Step
+`git push origin main` để CI deploy nếu sếp duyệt.
