@@ -860,7 +860,8 @@ function PipelineView({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    // 7 status → 7 cột, không phải 6, kẻo Rejected rớt xuống hàng dưới.
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
       {STATUSES.map((status) => {
         const col = apps.filter((a) => a.status === status);
         return (

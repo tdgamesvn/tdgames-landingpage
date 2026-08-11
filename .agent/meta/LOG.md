@@ -4017,3 +4017,22 @@ CHƯA push.
 - Phần lớn traffic blog đến từ PHÂN PHỐI chứ không phải SEO: LinkedIn công ty,
   ArtStation blog, r/gamedev. Bài breakdown quy trình > bài "xu hướng".
 - Chưa làm: RSS `/feed.xml`, link chéo blog ↔ case study portfolio.
+
+## 2026-08-11 (session — fix /hr pipeline: cột Rejected bị đẩy xuống hàng)
+### Task
+Sếp gửi ảnh `/hr`: cột REJECTED nằm dưới hàng dưới thay vì cùng hàng với 6 cột kia.
+
+### Nguyên nhân
+`PipelineView` grid `xl:grid-cols-6` nhưng `STATUSES` có **7** phần tử (thêm
+`phone_screening` hôm 2026-08-10) → cột thứ 7 wrap xuống hàng 2.
+
+### Work Done
+`src/app/hr/_components/HRDashboard.tsx` — 1 dòng: `lg:grid-cols-3 xl:grid-cols-6`
+→ `lg:grid-cols-4 xl:grid-cols-7` + comment nhắc số cột phải khớp STATUSES.
+
+### Result
+`npx tsc --noEmit` sạch. gitnexus impact: LOW risk (chỉ HRDashboard).
+
+### Next Step
+Thêm status mới lần sau nhớ sửa luôn grid-cols. (Fail CI "⏰ Daily HR Reminder"
+lúc 03:41 hôm nay chưa soi.)
