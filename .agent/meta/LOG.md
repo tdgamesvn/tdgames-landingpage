@@ -3987,7 +3987,7 @@ Sếp yêu cầu thêm cột/status PHONE SCREENING cho `/hr` pipeline.
   `status` (đã verify qua pg_constraint) → status là text tự do.
 
 ### Result
-`npx tsc --noEmit` sạch. Chưa deploy.
+`npx tsc --noEmit` sạch. Đã push `a5ddc07`, CI deploy VPS OK (1m18s, run 31454094650).
 
 ### Next Step
-`git push origin main` để CI deploy nếu sếp duyệt.
+Kiểm bài blog auto đầu tiên đăng sáng 11/08.
