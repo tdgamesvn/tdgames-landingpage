@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { extractJson, findMarkdownImages, IMAGE_RULES, COVER_RULES } from "@/lib/blog-ai";
+import { extractJson, findMarkdownImages, IMAGE_RULES, coverRules } from "@/lib/blog-ai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +36,7 @@ A blog post already exists. Your job is to write BETTER image prompts for it. Re
 
 ${IMAGE_RULES}
 
-${COVER_RULES}
+${coverRules()}
 
 The post currently has ${existing.length} in-post image slot(s), listed below in order with their current alt text and the markdown around them. Write one fresh prompt per slot, in the SAME order. Also write a new alt text (max 8 words, plain description of what the image shows).
 

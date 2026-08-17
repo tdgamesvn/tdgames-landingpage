@@ -29,13 +29,57 @@ export const IMAGE_RULES = `IMAGE PROMPT rules — you have full creative freedo
 - Example: clean schematic diagram of five connected production stages flowing left to right as simple geometric blocks and arrows, thin amber lines on near-black`;
 
 /**
+ * Sếp 2026-08-17: 8/8 cover trên /blog là CÙNG một ảnh — một anh cartoon râu-kính
+ * đứng giữa, cầm vật phát sáng, icon lơ lửng quanh, nền xanh-đen. Không phải AI
+ * lười: luật cũ ép đúng cái đó ("prefer a living hero subject, large and centred"
+ * + "one dramatic light source" + "one clear focal subject"). Lời khuyên mềm
+ * "VARY IT BETWEEN POSTS" vô hiệu vì mỗi bài dựng trong một call độc lập, AI
+ * không thấy cover bài trước.
+ *
+ * Nên ép đa dạng bằng CODE: bốc ngẫu nhiên một archetype + một accent palette rồi
+ * nhét vào prompt như yêu cầu bắt buộc.
+ *
+ * ponytail: random không nhớ lịch sử → vẫn có thể trùng archetype hai bài liên
+ * tiếp (~1/7). Chấp nhận, hơn hẳn 8/8 như cũ. Muốn triệt để thì query
+ * `cover_prompt` của N bài gần nhất từ blog_posts rồi loại archetype đã dùng.
+ */
+const COVER_ARCHETYPES = [
+  "HERO CHARACTER — one appealing cartoon character or creature, large and centred, readable expression, splash-art energy. Only if the post really is about people/roles.",
+  "ESTABLISHING ENVIRONMENT — a place, no character or only a tiny one for scale: a studio floor, a game level seen side-on, a landscape in three depth layers. Wide cinematic shot.",
+  "PROP / ASSET STILL LIFE — the objects of the craft, no character at all: stacked tilesets, a rig skeleton, brushes and tablets, an icon sheet, a shelf of finished assets. Close and tactile.",
+  "PROCESS STRIP — the same subject repeated across stages left to right: sketch → line → flats → render, or four frames of an animation, or three revision passes. Repetition IS the composition.",
+  "ISOMETRIC DIORAMA — a small world on a floating platform, seen from a high 3/4 angle, like a board-game piece or a mobile-game level select. No front-facing portrait.",
+  "SPLIT COMPOSITION — one frame cut into two contrasting halves (good vs bad, before vs after, cheap vs expensive), each half readable on its own.",
+  "MACRO CLOSE-UP — one detail blown up huge and cropped tight: a hand mid-brushstroke, a single VFX spark sheet, one eye of a character, the seam where two tiles meet. Extreme scale, not a full figure.",
+];
+
+const COVER_PALETTES = [
+  "teal and hot coral on deep navy",
+  "magenta and violet on near-black plum",
+  "lime and cyan on deep forest green",
+  "ice blue and white on midnight indigo",
+  "warm amber and crimson on charcoal",
+  "peach and turquoise on deep aubergine",
+];
+
+const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+
+/**
  * Luật riêng cho ảnh cover. Cover render 1536x1024 nhưng hiển thị 3 chỗ với 3 tỉ
  * lệ khác nhau, tất cả đều `object-cover` (tức là CẮT, không co):
  *   - card danh sách /blog + trang chủ: ~210x180, gần vuông → cắt mất 2 bên
  *   - hero trang bài: full width, h-96 → cắt mất trên/dưới
  * Nên chủ thể phải nằm gọn trong ô vuông giữa ảnh, và bé như avatar vẫn đọc ra.
+ *
+ * Gọi hàm (không phải hằng) vì mỗi bài phải bốc archetype/palette khác nhau.
  */
-export const COVER_RULES = `COVER IMAGE — extra rules on top of the above, because the cover is reused at three different crops:
+export const coverRules = () => `COVER IMAGE — extra rules on top of the above, because the cover is reused at three different crops:
+
+MANDATORY FOR THIS POST — the cover MUST use this archetype, not any other:
+  ${pick(COVER_ARCHETYPES)}
+MANDATORY accent palette for this cover: ${pick(COVER_PALETTES)}.
+These two are assigned, not suggestions. Do not substitute a centred character portrait if the archetype above is not the character one — every recent cover on this blog is a centred character and readers have noticed. Build the composition the archetype describes, then make it work at thumbnail size using the rules below.
+
 - It is displayed full-width at the top of the article, AND as a small near-square thumbnail (about 200x180) in the blog list and on the homepage. The browser crops, never shrinks: the square version keeps only the MIDDLE of the image and throws both sides away.
 - So the whole idea must live in the CENTRE SQUARE of the frame. Treat the left and right thirds as decoration that will be cut off. Never put the main subject off to one side, and never build the image around a wide row of small items — a row of six props becomes two props in the thumbnail.
 - One clear focal subject, large in frame, on a simple uncluttered background. Busy scenes with many small elements turn to mush at 200px.
@@ -46,7 +90,8 @@ export const COVER_RULES = `COVER IMAGE — extra rules on top of the above, bec
   - One dramatic light source doing real work — warm amber rim light, glow spilling from a window or a fire, light raking across a surface. Flat even lighting reads as a stock asset.
   - A hero angle: low and looking up for scale, or a wide cinematic establishing shot. Not a flat catalogue view.
   - Atmosphere sells it: haze, drifting dust, mist, rain, embers, light shafts. One such effect, not all of them.
-  - Prefer a living hero subject — an APPEALING CARTOON character or creature with a readable expression, large and centred — over a townscape, a prop shelf or a diagram. Think mobile-game splash art / app icon energy: charming and inviting, not a grim realistic warrior. At 200px a face and a silhouette still read; a wide scene of small buildings or floating objects turns to grey mush and gets scrolled past.
+  - Whatever the assigned archetype is, it needs ONE dominant shape that survives at 200px — a big silhouette, a bold colour block, a strong diagonal. What kills a thumbnail is many small scattered elements, not the absence of a character. An environment, a prop or a process strip works fine as long as one element is clearly the largest thing in the centre square.
+  - Do NOT decorate the subject with a ring of small floating icons, sparks or symbols orbiting it. That is the laziest depth cue the generator knows and it has made every cover on this blog look identical. Get depth from staging — something near, something far, something occluding something else.
   - The page behind the card is near-black. An image that is ALSO near-black everywhere reads as an empty rectangle in the list. Keep the BACKGROUND deep, but the hero subject must be bright and saturated against it — a glow, a fire, a rim light, a punchy colour block carrying the eye to it.
   - Give it a mood that matches the post's argument — a calm confident scene for a "how we work" piece, tension and contrast for a "this goes wrong" piece.
 - Still relevant, never decorative. Arresting does not mean generic epic fantasy: the scene must be something a reader of THIS post would recognise as belonging to it. If the post compares two options, show two, in one composition.

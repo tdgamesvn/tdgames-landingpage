@@ -9,7 +9,7 @@ import {
   findAiImages,
   applyAiImages,
   IMAGE_RULES,
-  COVER_RULES,
+  coverRules,
 } from "@/lib/blog-ai";
 import { generateAiImage } from "@/lib/ai-image";
 
@@ -68,7 +68,7 @@ Formatting (the site renders full Markdown — use it, a wall of grey paragraphs
 
 ${IMAGE_RULES}
 
-${COVER_RULES}
+${coverRules()}
 
 Reply with ONLY a JSON object, no markdown fence, no prose:
 {"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "cover image prompt — same style as the in-post images, a subject none of them use, one centred focal subject that still reads when cropped to a square thumbnail", "content_md": "the markdown, containing exactly ${imageCount} ![alt](ai:prompt) image(s)"}`;

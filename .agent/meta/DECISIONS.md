@@ -1,5 +1,29 @@
 # DECISIONS
 
+## 2026-08-17 — Đa dạng cover blog ép bằng CODE, không nhờ AI tự nhớ
+Decision:
+- `COVER_RULES` (const) → `coverRules()` (function) trong `src/lib/blog-ai.ts`.
+  Mỗi lần gọi bốc ngẫu nhiên 1/7 archetype bố cục + 1/6 accent palette, đưa vào
+  prompt dưới dạng "MANDATORY FOR THIS POST", không phải gợi ý.
+- Gỡ luật "prefer a living hero subject, large and centred" — chính nó ép ra
+  chân dung nhân vật cho mọi bài.
+
+Reason:
+- 8/8 cover trên /blog giống hệt nhau. Luật cũ mô tả một bố cục cụ thể (nhân vật
+  cartoon giữa khung + rim light amber + nền tối) rồi bảo AI "hãy đa dạng" —
+  mâu thuẫn, và AI luôn nghe cái cụ thể.
+- Không có state giữa các bài: mỗi bài là một AI call độc lập, không thấy cover
+  bài trước → mọi lời khuyên "vary between posts" là vô nghĩa. Ràng buộc đa dạng
+  phải nằm ở tầng code, nơi duy nhất có thể tạo khác biệt.
+
+Impact:
+- Không đảo ngược quyết định 2026-08-03 (AI vẫn tự do chọn NỘI DUNG ảnh); chỉ
+  ép trục BỐ CỤC + MÀU, là hai trục đang bị kẹt.
+- Random không nhớ lịch sử → ~1/7 khả năng trùng archetype hai bài liên tiếp.
+  Muốn triệt để: query `cover_prompt` N bài gần nhất từ `blog_posts` rồi loại
+  archetype đã dùng (`ponytail:` comment đã ghi đường nâng cấp tại chỗ).
+- Ảnh trong bài (`IMAGE_RULES`) không đổi.
+
 ## 2026-07-06 — Pre-push type-check hook (chặn build fail lên prod)
 Decision:
 - Thêm `npm run typecheck` (`tsc --noEmit`) + git hook `.githooks/pre-push`, bật qua

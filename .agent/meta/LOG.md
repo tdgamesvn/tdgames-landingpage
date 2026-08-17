@@ -1,5 +1,42 @@
 # LOG
 
+## 2026-08-17 (session — phá thế "cover blog nào cũng giống nhau")
+### Task
+Sếp gửi screenshot /blog: 8/8 cover là cùng một ảnh — một anh cartoon râu-kính
+đứng chính giữa, cầm vật phát sáng, một vòng icon lơ lửng quanh, nền xanh-đen.
+
+### Nguyên nhân
+Không phải AI lười — `COVER_RULES` (`src/lib/blog-ai.ts`) ép đúng cái đó:
+"Prefer a living hero subject… large and centred" + "One clear focal subject…
+simple uncluttered background" + "One dramatic light source — warm amber rim
+light". Generator giải yêu cầu "depth" bằng cách rắc icon quanh nhân vật.
+Dòng khuyên mềm "VARY IT BETWEEN POSTS" vô hiệu vì mỗi bài dựng trong một AI
+call độc lập — AI không hề thấy cover của bài trước để mà tránh.
+
+### Work Done
+- `src/lib/blog-ai.ts` — `COVER_RULES` (const) → `coverRules()` (function).
+  Mỗi lần gọi bốc ngẫu nhiên 1 trong 7 **archetype** (hero character /
+  establishing environment / prop still life / process strip / isometric
+  diorama / split composition / macro close-up) + 1 trong 6 **accent palette**,
+  nhét vào prompt như yêu cầu BẮT BUỘC, không phải gợi ý.
+- Thay dòng "prefer a living hero subject" bằng luật trung tính: cần MỘT hình
+  khối trội đọc được ở 200px, không nhất thiết phải là nhân vật.
+- Thêm lệnh cấm rõ ràng: không rắc vòng icon/tia sáng lơ lửng quanh chủ thể —
+  đòi depth bằng staging (gần/xa/che nhau).
+- 2 call site đổi `${COVER_RULES}` → `${coverRules()}`:
+  `api/admin/blog/topics/route.ts`, `api/admin/blog/reimage/route.ts`.
+
+### Result
+`npx tsc --noEmit` sạch. Chạy `coverRules()` 15 lần → trúng 6 archetype khác
+nhau, palette đổi theo. Impact LOW (const string, chỉ 2 nơi import).
+
+### Next Step
+Chờ sếp chốt: có re-image 8 bài cũ qua `/api/admin/blog/reimage` không.
+Nếu vẫn thấy trùng: bơm `cover_prompt` của N bài gần nhất vào prompt để loại
+archetype đã dùng (random hiện chưa nhớ lịch sử, ~1/7 trùng liên tiếp).
+
+---
+
 ## 2026-08-03 (session — fix hero title tràn khung trên mobile)
 ### Task
 Sếp gửi ảnh mobile: title "2D ART & ANIMATION OUTSOURCING STUDIO" bị cắt chữ
