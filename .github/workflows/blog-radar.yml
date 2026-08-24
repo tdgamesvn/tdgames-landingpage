@@ -31,6 +31,20 @@ jobs:
           script: |
             set -e
             cd /opt/tdgames-landingpage
+
+            HOOK=$(grep -m1 '^DISCORD_WEBHOOK_URL=' .env.local | cut -d= -f2- | tr -d '"')
+            AI=$(grep -m1 '^AI_BASE_URL=' .env.local | cut -d= -f2- | tr -d '"')
+            ding() { curl -sS -m 10 -H 'Content-Type: application/json' -d "{\"content\":\"$1\"}" "$HOOK" >/dev/null || true; }
+
+            # cliproxyapi chạy trên Mac của sếp qua tailnet — Mac ngủ/tắt là cả radar
+            # lẫn auto-blog mù. Mọi HTTP response (kể cả 404/401) = server sống, chỉ
+            # curl exit != 0 mới là không kết nối được. ponytail: không /v1/models,
+            # không auth — chỉ cần biết có ai nhấc máy không.
+            if ! curl -s -m 10 -o /dev/null "$AI"; then
+              ding "🔴 **Blog tự động dừng** — không gọi được cliproxyapi trên Mac ($AI). Mac tắt/ngủ hoặc cliproxyapi chưa chạy. Hôm nay không quét tin, không đăng bài. Bật Mac lên rồi chạy lại workflow 📡 Blog Radar."
+              exit 1
+            fi
+
             # Radar hỏng KHÔNG được kéo auto-blog chết theo: hai việc độc lập, blog-auto
             # ăn tồn kho blog_topics chứ không cần radar sáng nay chạy được. 2026-08-24
             # một cú AI timeout trong pickTopics + `set -e` = mất bài cả ngày.
@@ -38,5 +52,8 @@ jobs:
             /usr/bin/node --env-file=.env.local scripts/blog-radar.mjs || rc=$?
             # Auto-blog: tự tắt ngay nếu blog_auto_enabled != 1, nên chạy vô điều
             # kiện ở đây là an toàn. 30m vì mỗi bài mất tới 5 phút (AI + ảnh).
-            /usr/bin/node --env-file=.env.local scripts/blog-auto.mjs
+            /usr/bin/node --env-file=.env.local scripts/blog-auto.mjs || rc=$?
+            # Mac có thể chết SAU preflight — script hỏng thì cũng phải có người biết,
+            # mail GitHub Actions sếp không đọc.
+            [ $rc -eq 0 ] || ding "⚠️ **Blog Radar hỏng** (exit $rc) — xem log: https://github.com/tdgamesvn/tdgames-landingpage/actions/workflows/blog-radar.yml"
             exit $rc   # vẫn báo đỏ nếu radar hỏng, chỉ là không mất bài nữa

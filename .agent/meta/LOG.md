@@ -4120,3 +4120,26 @@ thủ phạm cũ. gitnexus detect_changes: 0 symbol, LOW.
   Nếu mất bài lặp lại → chuyển AI backend lên VPS hoặc dùng API trực tiếp.
 - Chưa thêm retry cho `pickTopics` — để dành, tồn kho topic đủ đệm 1 ngày lag.
 - `scripts/recover-blog-covers.mjs` có 9 dòng sửa dở CHƯA COMMIT từ session trước.
+
+## 2026-08-24b (session — cliproxyapi chết thì báo Discord)
+### Task
+Sếp: "không gọi được cliproxyapi trên Mac thì thông báo về Discord cho tôi là được"
+— tức chấp nhận single point of failure, chỉ cần biết khi nó xảy ra.
+
+### Work Done
+`.github/workflows/blog-radar.yml`:
+- Preflight `curl -s -m 10 "$AI_BASE_URL"` trước khi chạy script. Mọi HTTP response
+  (404/401 đều được) = server sống; chỉ curl exit != 0 mới là không kết nối được →
+  ding Discord + exit 1, không chạy script nữa.
+- `ding()` = 1 dòng curl vào `DISCORD_WEBHOOK_URL` đọc thẳng từ `.env.local` trên VPS.
+- Thêm ding khi radar/auto-blog exit != 0 (Mac chết SAU preflight) — mail Actions sếp
+  không đọc.
+Không sửa file JS nào. Không thêm dependency, không thêm secret GitHub.
+
+### Result
+Test thật trên VPS với địa chỉ AI chết (:9999) → Discord trả `http=204`, tin thử đã
+vào kênh. Đường sống (Mac đang bật) preflight cho 404 → pass.
+
+### Next Step
+Vẫn CHƯA chuyển AI backend lên VPS — sếp chọn sống chung, chỉ cần cảnh báo.
+Nếu Discord kêu nhiều quá thì lúc đó mới tính.
