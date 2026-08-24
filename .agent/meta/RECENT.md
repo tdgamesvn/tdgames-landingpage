@@ -34,10 +34,28 @@ call độc lập — AI không hề thấy cover của bài trước để mà 
 `npx tsc --noEmit` sạch. Chạy `coverRules()` 15 lần → trúng 6 archetype khác
 nhau, palette đổi theo. Impact LOW (const string, chỉ 2 nơi import).
 
+### Deploy + render lại cover cũ (cùng session)
+- Commit `c20f699` → push main → CI deploy VPS OK (1m18s).
+- Thêm `scripts/recover-blog-covers.mjs` — chỉ render lại COVER, không đụng ảnh
+  in-post (nút "Render lại ảnh" trong /admin làm cả bài, ~3 ảnh, thừa và tốn).
+  Dry-run mặc định; `--apply` mới ghi; `--slug=<slug>` để thử một bài.
+- Blog thực tế có **26 bài** (screenshot chỉ là trang đầu), không phải 8.
+- Verify 1 bài trước khi chạy hàng loạt (`the-quote-is-not-the-final-art-budget`):
+  ra isometric diorama đảo nổi, palette lime/cyan trên forest green, KHÔNG có
+  nhân vật đứng giữa khung. Dry-run 26 bài cho thấy prompt trải đều các
+  archetype: split, process strip, diorama, environment, macro close-up.
+- Sau đó chạy `--apply` cho toàn bộ 26 bài.
+
+### Lưu ý vận hành (mất thời gian mới ra)
+`ADMIN_SECRET` trong `.env.local` KHÔNG phải secret đang chạy prod.
+`requireAdmin` (`src/lib/admin-auth.ts`) ưu tiên row `admin_secret` trong bảng
+`app_settings` rồi mới đến env. Muốn gọi admin API của prod thì lấy từ DB, không
+phải từ `.env.local` hay `.env.local` trên VPS.
+
 ### Next Step
-Chờ sếp chốt: có re-image 8 bài cũ qua `/api/admin/blog/reimage` không.
-Nếu vẫn thấy trùng: bơm `cover_prompt` của N bài gần nhất vào prompt để loại
-archetype đã dùng (random hiện chưa nhớ lịch sử, ~1/7 trùng liên tiếp).
+Sếp xem lại /blog. Nếu vẫn thấy trùng: bơm `cover_prompt` của N bài gần nhất vào
+prompt để loại archetype đã dùng (random hiện chưa nhớ lịch sử, ~1/7 trùng
+liên tiếp).
 
 ---
 

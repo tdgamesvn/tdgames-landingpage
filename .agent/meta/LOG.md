@@ -4091,3 +4091,32 @@ Sếp gửi ảnh `/hr`: cột REJECTED nằm dưới hàng dưới thay vì cù
 ### Next Step
 Thêm status mới lần sau nhớ sửa luôn grid-cols. (Fail CI "⏰ Daily HR Reminder"
 lúc 03:41 hôm nay chưa soi.)
+
+## 2026-08-24 (session — auto-blog mất bài vì radar timeout kéo theo `set -e`)
+### Task
+Sếp hỏi "luồng Auto Blog hôm nay bị lỗi à". Run 📡 Blog Radar 02:22 UTC fail
+(32682832603), production không có bài 24/08 (bài mới nhất 23/08).
+
+### Nguyên nhân
+KHÔNG phải auto-blog hỏng. `pickTopics()` (`scripts/blog-radar.mjs:138`) gọi AI
+timeout 120s → radar exit 1 → `set -e` trong workflow dừng shell → `blog-auto.mjs`
+không bao giờ chạy. Hai script vốn ĐỘC LẬP: blog-auto ăn tồn kho `blog_topics`
+(status new/picked, post_id null), không cần radar sáng nay chạy được.
+Gốc rễ của timeout: `AI_BASE_URL` là cliproxyapi chạy trên Mac qua tailnet — Mac
+tắt/ngủ là cả radar lẫn auto-blog mù.
+
+### Work Done
+- `.github/workflows/blog-radar.yml` — `rc=0` / `radar || rc=$?` / auto-blog /
+  `exit $rc`. Radar hỏng vẫn báo đỏ nhưng không giết auto-blog nữa.
+- Chạy tay `blog-auto.mjs` trên VPS cứu bài hôm nay.
+
+### Result
+Bài `hourly-or-sprint-choosing-the-right-pricing-model-for-2d-game-art` live (200).
+Bài thứ 2 hỏng giữa chừng: `draft 502 AI backend unreachable (Mac tắt)` — đúng
+thủ phạm cũ. gitnexus detect_changes: 0 symbol, LOW.
+
+### Next Step
+- cliproxyapi trên Mac là single point of failure của cả blog lẫn HR AI eval.
+  Nếu mất bài lặp lại → chuyển AI backend lên VPS hoặc dùng API trực tiếp.
+- Chưa thêm retry cho `pickTopics` — để dành, tồn kho topic đủ đệm 1 ngày lag.
+- `scripts/recover-blog-covers.mjs` có 9 dòng sửa dở CHƯA COMMIT từ session trước.
