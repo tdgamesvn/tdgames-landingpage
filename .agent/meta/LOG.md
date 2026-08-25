@@ -4161,7 +4161,8 @@ log `[radar] gọi AI hỏng (lần n/2)`. Không thêm dependency, không backo
 gitnexus không index scripts/ → impact thủ công: chỉ 1 caller (dòng 291 cùng file).
 
 ### Result
-`node --check` sạch. CHƯA deploy, CHƯA chạy lại (xem Next Step).
+`node --check` sạch. Commit `b33a2ef` → push main → CI deploy VPS OK (1m22s).
+CHƯA chạy lại workflow bằng tay (xem Next Step).
 
 ### Next Step
 - Chạy lại nguyên workflow 📡 Blog Radar hôm nay sẽ đăng THÊM 2 bài: `blog-auto.mjs`
