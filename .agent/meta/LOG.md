@@ -4143,3 +4143,28 @@ vào kênh. Đường sống (Mac đang bật) preflight cho 404 → pass.
 ### Next Step
 Vẫn CHƯA chuyển AI backend lên VPS — sếp chọn sống chung, chỉ cần cảnh báo.
 Nếu Discord kêu nhiều quá thì lúc đó mới tính.
+
+## 2026-08-25 (session — radar timeout lần 2, nâng 300s + retry)
+### Task
+Sếp: "Blog radar bị hỏng". Run 32800854807 (02:17 UTC) fail.
+
+### Nguyên nhân
+Y hệt 08-24: `pickTopics()` (`scripts/blog-radar.mjs:138`) chết đúng mốc 120s
+(02:17:49 → 02:19:49). KHÔNG phải Mac tắt — preflight qua, và auto-blog chạy sau
+đó đăng được 2 bài. Prompt phình theo danh sách "30 ngày qua" + cliproxyapi đi
+qua tailnet → 120s không còn đủ. `blog-auto.mjs` gọi cùng backend với 300s thì
+chưa timeout lần nào.
+
+### Work Done
+`scripts/blog-radar.mjs` — pickTopics: 120s → 300s, bọc trong vòng lặp 2 lần thử,
+log `[radar] gọi AI hỏng (lần n/2)`. Không thêm dependency, không backoff.
+gitnexus không index scripts/ → impact thủ công: chỉ 1 caller (dòng 291 cùng file).
+
+### Result
+`node --check` sạch. CHƯA deploy, CHƯA chạy lại (xem Next Step).
+
+### Next Step
+- Chạy lại nguyên workflow 📡 Blog Radar hôm nay sẽ đăng THÊM 2 bài: `blog-auto.mjs`
+  không có chốt "mỗi ngày 1 lần", chỉ ăn tồn kho `blog_topics`. Muốn refill topic mà
+  không thêm bài → ssh VPS chạy riêng `node --env-file=.env.local scripts/blog-radar.mjs`.
+- Nếu vẫn timeout ở 300s → thủ phạm là prompt phình, lúc đó cắt bớt danh sách 30 ngày.

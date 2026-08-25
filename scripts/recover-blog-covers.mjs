@@ -10,6 +10,7 @@
 //   node --env-file=.env.local scripts/recover-blog-covers.mjs            # dry-run
 //   node --env-file=.env.local scripts/recover-blog-covers.mjs --apply
 //   ... --apply --slug=<slug>    # chỉ một bài, để soi thử trước
+//   ... --apply --limit=10       # 10 bài mới nhất
 //
 // ponytail: tuần tự, không song song. 8 bài × ~60s là ~8 phút — chấp nhận được,
 // và mỗi bài một request thì không đụng maxDuration/Cloudflare 100s.
@@ -18,6 +19,11 @@ const BASE = process.env.SITE_URL ?? "https://tdgamestudio.com";
 const KEY = process.env.ADMIN_SECRET;
 const APPLY = process.argv.includes("--apply");
 const ONLY = process.argv.find((a) => a.startsWith("--slug="))?.slice(7);
+// /api/admin/blog trả về created_at desc → slice(0, N) là N bài mới nhất.
+const LIMIT = Number(process.argv.find((a) => a.startsWith("--limit="))?.slice(8)) || 0;
+// ponytail: offset để chia nhỏ mẻ chạy — chạy nền hay bị giết khi session restart,
+// nên chạy foreground từng mẻ ~5 bài cho lọt timeout của tool.
+const OFFSET = Number(process.argv.find((a) => a.startsWith("--offset="))?.slice(9)) || 0;
 
 if (!KEY) {
   console.error("Thiếu ADMIN_SECRET (chạy với: node --env-file=.env.local ...)");
@@ -40,7 +46,9 @@ async function api(path, init) {
 }
 
 const { posts } = await api("/api/admin/blog");
-const targets = ONLY ? posts.filter((p) => p.slug === ONLY) : posts;
+const targets = ONLY
+  ? posts.filter((p) => p.slug === ONLY)
+  : posts.slice(OFFSET, LIMIT ? OFFSET + LIMIT : undefined);
 
 if (!targets.length) {
   console.error(ONLY ? `Không thấy bài slug="${ONLY}"` : "Không có bài nào.");

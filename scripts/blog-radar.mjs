@@ -135,28 +135,42 @@ async function pickTopics(items, seenTitles = []) {
     ? `\n\nĐÃ GỢI Ý TRONG 30 NGÀY QUA — TUYỆT ĐỐI KHÔNG lặp lại Ý những bài này, dù đổi cách diễn đạt hay đổi góc nhìn. Nếu 5 ý hay nhất đều đã có rồi thì đào sâu hơn: nhắm phân khúc hẹp hơn, giai đoạn dự án khác, loại khách khác, hoặc chọn chủ đề bám tin trong tuần.\n${seenTitles.map((t) => `- ${t}`).join("\n")}`
     : "";
 
-  const res = await fetch(`${process.env.AI_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${process.env.AI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: process.env.AI_MODEL,
-      messages: [
-        { role: "system", content: PROMPT },
-        { role: "user", content: list + avoid },
-      ],
-      temperature: 0.7,
-    }),
-    signal: AbortSignal.timeout(120000),
-  });
+  // 120s không đủ: prompt phình theo danh sách 30 ngày, cliproxyapi lại đi qua
+  // tailnet. Chết 2 ngày liền (08-24, 08-25) đúng mốc 120s. blog-auto.mjs gọi
+  // cùng backend với 300s thì chưa timeout lần nào → dùng chung con số, thêm 1
+  // lần thử lại cho lần stall lẻ. Worst case 10 phút, vẫn trong command_timeout 30m.
+  // ponytail: không backoff, không thư viện retry — 2 lần thử là đủ.
+  let lastErr;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(`${process.env.AI_BASE_URL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${process.env.AI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: process.env.AI_MODEL,
+          messages: [
+            { role: "system", content: PROMPT },
+            { role: "user", content: list + avoid },
+          ],
+          temperature: 0.7,
+        }),
+        signal: AbortSignal.timeout(300_000),
+      });
 
-  if (!res.ok) throw new Error(`AI ${res.status}: ${await res.text()}`);
-  const raw = (await res.json()).choices?.[0]?.message?.content ?? "";
-  const json = raw.match(/\{[\s\S]*\}/)?.[0];
-  if (!json) throw new Error(`AI không trả JSON: ${raw.slice(0, 200)}`);
-  return JSON.parse(json).topics ?? [];
+      if (!res.ok) throw new Error(`AI ${res.status}: ${await res.text()}`);
+      const raw = (await res.json()).choices?.[0]?.message?.content ?? "";
+      const json = raw.match(/\{[\s\S]*\}/)?.[0];
+      if (!json) throw new Error(`AI không trả JSON: ${raw.slice(0, 200)}`);
+      return JSON.parse(json).topics ?? [];
+    } catch (e) {
+      lastErr = e;
+      console.error(`[radar] gọi AI hỏng (lần ${attempt}/2): ${e.message}`);
+    }
+  }
+  throw lastErr;
 }
 
 async function sendDiscord(topics, scanned) {
