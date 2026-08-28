@@ -7,6 +7,26 @@ export type LegalSection = {
   bullets?: string[];
 };
 
+// ponytail: split keeps the capture group, so odd indices are the emails —
+// no global-regex lastIndex state to reset between calls
+const EMAIL = /([\w.+-]+@[\w-]+\.[\w.-]+[\w])/;
+
+function linkifyEmails(text: string) {
+  return text.split(EMAIL).map((part, i) =>
+    i % 2 === 1 ? (
+      <a
+        key={i}
+        href={`mailto:${part}`}
+        className="text-amber-400 underline decoration-amber-400/40 underline-offset-4 transition-colors hover:text-amber-300 hover:decoration-amber-300"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
 // ponytail: plain JSX render of a section array — no markdown/MDX pipeline for two static pages
 export default function LegalPage({
   title,
@@ -39,7 +59,7 @@ export default function LegalPage({
 
           <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-white/65">
             {intro.map((p) => (
-              <p key={p}>{p}</p>
+              <p key={p}>{linkifyEmails(p)}</p>
             ))}
           </div>
 
@@ -53,14 +73,14 @@ export default function LegalPage({
               </h2>
               <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-white/65">
                 {s.paragraphs?.map((p) => (
-                  <p key={p}>{p}</p>
+                  <p key={p}>{linkifyEmails(p)}</p>
                 ))}
                 {s.bullets && (
                   <ul className="space-y-2">
                     {s.bullets.map((b) => (
                       <li key={b} className="flex gap-3">
                         <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-amber-400" />
-                        <span>{b}</span>
+                        <span>{linkifyEmails(b)}</span>
                       </li>
                     ))}
                   </ul>
