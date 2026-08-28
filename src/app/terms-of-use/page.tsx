@@ -140,7 +140,7 @@ const SECTIONS: LegalSection[] = [
   {
     title: "Contact Us",
     paragraphs: [
-      "If you have any questions about these Terms, please contact us at tdgames.vn@gmail.com.",
+      "If you have any questions about these Terms, please contact us at privacy@tdgamestudio.com.",
       "TD GAMES COMPANY LIMITED — Xom Ngoai, Dong Anh Commune, Hanoi City, Vietnam.",
     ],
   },
