@@ -195,3 +195,22 @@ Lý do chấp nhận rủi ro thương hiệu ở 07-31 ("bán artist vẽ tay m
 character AI = tự nói máy thay được artist"): sếp cân nhắc và chọn đổi. Chốt chặn
 còn lại là con người — route luôn insert `published: false`, mọi bài phải qua tay
 sếp duyệt ở /admin trước khi lên production.
+
+## 2026-08-29 — Một URL policy chung cho tất cả game, không tách per-game
+
+**Quyết định:** `/privacy-policy` + `/terms-of-use` phục vụ cả website lẫn mọi
+game/app TD Games publish. KHÔNG tạo `/games/<slug>/privacy-policy`.
+
+**Lý do:** Google Play và App Store chỉ yêu cầu một URL policy công khai mô tả
+đúng dữ liệu app thu thập — không yêu cầu mỗi app một trang riêng. Tách route
+theo game là speculative: mỗi game mới đẻ 2 file, trong khi các game cùng bộ
+SDK có nội dung policy giống hệt nhau.
+
+**Khi nào phải xét lại:** một game lệch data profile so với phần còn lại —
+(a) game nhắm trẻ dưới 13 → COPPA + Google Play Families Policy, luật khác hẳn,
+ads bắt buộc non-personalized; (b) game có đăng nhập tài khoản / thu dữ liệu
+mà game khác không có. Lúc đó tách riêng CHỈ game đó, phần còn lại giữ URL chung.
+
+**Ràng buộc kèm theo:** nội dung policy phải khớp Data Safety form (Play) và
+Privacy Nutrition Label (App Store). Thêm/bớt SDK trong game → sửa policy ngay,
+khai lệch là lý do bị từ chối phổ biến nhất.

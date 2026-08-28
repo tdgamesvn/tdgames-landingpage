@@ -4,6 +4,54 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-08-29 (session — Privacy Policy + Terms of Use mở rộng cho game mobile)
+### Task
+Sếp cần 2 trang policy để publish game lên Google Play + App Store. Bản viết
+trước đó (28/08) chỉ bao website studio — store đòi policy mô tả đúng dữ liệu
+app thu thập.
+
+### Quyết định kiến trúc
+KHÔNG tách `/games/<slug>/privacy-policy`. Một URL chung cho cả studio là hợp
+lệ với cả 2 store — họ chỉ đòi policy công khai mô tả đúng thực tế thu thập,
+không đòi mỗi app một trang. Giữ nguyên `/privacy-policy` + `/terms-of-use`,
+viết theo hướng "website AND all our games". Ra game mới → không đẻ route.
+Chỉ tách khi một game lệch data profile (game trẻ <13 → COPPA/Families, hoặc
+game có đăng nhập tài khoản).
+
+### Giả định đã dùng (sếp chốt "mặc định")
+ads + IAP + Firebase Analytics/Crashlytics, KHÔNG có tài khoản đăng nhập,
+13+, publish cả Google Play lẫn App Store.
+
+### Work Done
+- `src/app/privacy-policy/page.tsx` — thêm section: Information Our Apps
+  Collect, Analytics in Our Apps (Firebase), Advertising (opt-out Android Ads
+  ID + iOS ATT), In-App Purchases. Mở rộng Definitions (Apps, Device
+  Identifiers), Use of Data, Service Providers, Data Retention (14 tháng
+  analytics), Your Rights (cách xoá data khi không có account).
+  **Children's Privacy: 18 → 13** (game 13+, không phải site 18+).
+- `src/app/terms-of-use/page.tsx` — thêm section: Eligibility (13+), Licence
+  to Play Our Games (cấm cheat/mod/reverse-engineer, cho phép làm video
+  gameplay), In-App Purchases and Virtual Items (virtual currency không có giá
+  trị thật, refund qua store), Advertising in Free Games, App Store Terms
+  (Apple là third-party beneficiary — điều khoản Apple bắt buộc),
+  Updates/Discontinuation, Termination. Mở rộng IP sang asset trong game.
+- Cả 2 file: bump `updated` → 29 August 2026.
+- Không đụng `src/components/legal-page.tsx` — component sẵn có đủ dùng.
+
+### Result
+`tsc --noEmit` + `eslint` sạch. `detect_changes` → risk LOW, 0 execution flow
+bị ảnh hưởng (chỉ sửa const array trong 2 page leaf).
+
+### Next Step
+- CHƯA commit/deploy — chờ sếp xác nhận giả định SDK.
+- Khi khai Data Safety (Play) / Privacy Nutrition Label (App Store) phải khớp
+  đúng danh sách này: Device/Advertising ID, gameplay usage, crash logs,
+  purchase confirmation, approximate location (IP-level). Khai lệch = lý do
+  bị từ chối phổ biến nhất.
+- Nếu game thật KHÔNG có ads hoặc KHÔNG có IAP → phải cắt section tương ứng,
+  đừng để policy khai thừa.
+
+
 ## 2026-08-17 (session — phá thế "cover blog nào cũng giống nhau")
 ### Task
 Sếp gửi screenshot /blog: 8/8 cover là cùng một ảnh — một anh cartoon râu-kính

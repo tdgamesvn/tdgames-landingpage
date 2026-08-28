@@ -1,5 +1,53 @@
 # LOG
 
+## 2026-08-29 (session — Privacy Policy + Terms of Use mở rộng cho game mobile)
+### Task
+Sếp cần 2 trang policy để publish game lên Google Play + App Store. Bản viết
+trước đó (28/08) chỉ bao website studio — store đòi policy mô tả đúng dữ liệu
+app thu thập.
+
+### Quyết định kiến trúc
+KHÔNG tách `/games/<slug>/privacy-policy`. Một URL chung cho cả studio là hợp
+lệ với cả 2 store — họ chỉ đòi policy công khai mô tả đúng thực tế thu thập,
+không đòi mỗi app một trang. Giữ nguyên `/privacy-policy` + `/terms-of-use`,
+viết theo hướng "website AND all our games". Ra game mới → không đẻ route.
+Chỉ tách khi một game lệch data profile (game trẻ <13 → COPPA/Families, hoặc
+game có đăng nhập tài khoản).
+
+### Giả định đã dùng (sếp chốt "mặc định")
+ads + IAP + Firebase Analytics/Crashlytics, KHÔNG có tài khoản đăng nhập,
+13+, publish cả Google Play lẫn App Store.
+
+### Work Done
+- `src/app/privacy-policy/page.tsx` — thêm section: Information Our Apps
+  Collect, Analytics in Our Apps (Firebase), Advertising (opt-out Android Ads
+  ID + iOS ATT), In-App Purchases. Mở rộng Definitions (Apps, Device
+  Identifiers), Use of Data, Service Providers, Data Retention (14 tháng
+  analytics), Your Rights (cách xoá data khi không có account).
+  **Children's Privacy: 18 → 13** (game 13+, không phải site 18+).
+- `src/app/terms-of-use/page.tsx` — thêm section: Eligibility (13+), Licence
+  to Play Our Games (cấm cheat/mod/reverse-engineer, cho phép làm video
+  gameplay), In-App Purchases and Virtual Items (virtual currency không có giá
+  trị thật, refund qua store), Advertising in Free Games, App Store Terms
+  (Apple là third-party beneficiary — điều khoản Apple bắt buộc),
+  Updates/Discontinuation, Termination. Mở rộng IP sang asset trong game.
+- Cả 2 file: bump `updated` → 29 August 2026.
+- Không đụng `src/components/legal-page.tsx` — component sẵn có đủ dùng.
+
+### Result
+`tsc --noEmit` + `eslint` sạch. `detect_changes` → risk LOW, 0 execution flow
+bị ảnh hưởng (chỉ sửa const array trong 2 page leaf).
+
+### Next Step
+- CHƯA commit/deploy — chờ sếp xác nhận giả định SDK.
+- Khi khai Data Safety (Play) / Privacy Nutrition Label (App Store) phải khớp
+  đúng danh sách này: Device/Advertising ID, gameplay usage, crash logs,
+  purchase confirmation, approximate location (IP-level). Khai lệch = lý do
+  bị từ chối phổ biến nhất.
+- Nếu game thật KHÔNG có ads hoặc KHÔNG có IAP → phải cắt section tương ứng,
+  đừng để policy khai thừa.
+
+
 ## 2026-08-17 (session — phá thế "cover blog nào cũng giống nhau")
 ### Task
 Sếp gửi screenshot /blog: 8/8 cover là cùng một ảnh — một anh cartoon râu-kính
@@ -4169,3 +4217,40 @@ CHƯA chạy lại workflow bằng tay (xem Next Step).
   không có chốt "mỗi ngày 1 lần", chỉ ăn tồn kho `blog_topics`. Muốn refill topic mà
   không thêm bài → ssh VPS chạy riêng `node --env-file=.env.local scripts/blog-radar.mjs`.
 - Nếu vẫn timeout ở 300s → thủ phạm là prompt phình, lúc đó cắt bớt danh sách 30 ngày.
+
+## 2026-08-28 (session — 2 trang pháp lý: Privacy Policy + Terms of Use)
+### Task
+Sếp gửi screenshot footer cột INFO: "Privacy policy" / "Terms of use" là `href="#"`
+— link chết từ đầu. Yêu cầu dựng nội dung thật, tham khảo med-notes.com nhưng
+chỉnh cho TD Games.
+
+### Work Done
+- `src/components/legal-page.tsx` (mới) — khung chung: SiteHeader + tiêu đề Orbitron
+  + "Last updated" amber + render mảng `{title, paragraphs, bullets}` + SiteFooter.
+  Không dựng pipeline MDX cho 2 trang tĩnh.
+- `src/app/privacy-policy/page.tsx`, `src/app/terms-of-use/page.tsx` (mới) — nội dung
+  tiếng Anh, pháp nhân TD GAMES COMPANY LIMITED + tdgames.vn@gmail.com.
+- `src/components/site-footer.tsx:367` — mảng string → mảng `{label, href}`, nối
+  2 link thật. FAQ/Glossary vẫn `#` (chưa có trang).
+
+### Nội dung — khác med-notes chỗ nào
+Med-notes là app mobile bán subscription + chạy ads, phần lớn không áp dụng.
+BỎ: Purchases, Subscriptions, Free Trial, Fee Changes, Refunds, toàn bộ mạng quảng
+cáo (AdMob/AdColony/AppLovin/Vungle/Unity Ads), Firebase/Unity Analytics.
+GIỮ: Definitions, Use of Data, Security, Children's Privacy (18+), Links to Other
+Websites, Limitation of Liability, Disclaimer, Contact.
+THÊM cho TD Games: Recruitment Data (CV/portfolio qua /careers, giữ 24 tháng),
+Service Providers (Supabase / R2 / VPS / Discord notify), Data Retention, Your Rights,
+Intellectual Property (artwork portfolio thuộc TD Games + khách hàng, cấm dùng để
+train model), Client Work (site không phải chào giá ràng buộc; SOW ký riêng đè lên
+Terms), Governing Law = Việt Nam.
+
+### Result
+`npx tsc --noEmit` sạch. Dev server: /privacy-policy + /terms-of-use đều 200,
+screenshot khớp tone site (nền #050508, amber accent). Sửa metadata title bỏ
+"| TD Games Studio" vì layout đã có template `%s | TD Games` → tránh lặp.
+gitnexus impact SiteFooter: LOW (0 direct dependent).
+
+### Next Step
+Chưa commit/push. FAQ + Glossary trong footer vẫn là link chết — hỏi sếp có làm không.
+Nội dung pháp lý chưa qua luật sư rà; nếu ký hợp đồng lớn nên cho rà lại.

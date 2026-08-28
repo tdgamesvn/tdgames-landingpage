@@ -364,17 +364,20 @@ export default function SiteFooter() {
                 Info
               </div>
               <div className="mt-4 space-y-3 text-sm text-white/55">
-                {["Privacy policy", "Terms of use", "FAQ", "Glossary"].map(
-                  (t) => (
-                    <a
-                      key={t}
-                      href="#"
-                      className="block transition-colors hover:text-white"
-                    >
-                      {t}
-                    </a>
-                  ),
-                )}
+                {[
+                  { label: "Privacy policy", href: "/privacy-policy" },
+                  { label: "Terms of use", href: "/terms-of-use" },
+                  { label: "FAQ", href: "#" },
+                  { label: "Glossary", href: "#" },
+                ].map(({ label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    className="block transition-colors hover:text-white"
+                  >
+                    {label}
+                  </a>
+                ))}
               </div>
             </div>
           </div>

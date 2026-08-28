@@ -6,6 +6,11 @@ _(empty)_
 
 ## To do
 
+- [x] ~~Privacy Policy + Terms of Use~~ (2026-08-28): 2 trang mới + `legal-page.tsx`
+      dùng chung, footer INFO nối link thật. Nội dung phỏng med-notes.com nhưng bỏ hết
+      phần subscription/ads, thêm Recruitment Data + IP + Governing Law VN.
+- [ ] Footer INFO còn "FAQ" và "Glossary" là `href="#"` — hoặc dựng trang, hoặc gỡ khỏi footer.
+
 - [x] ~~Blog SEO cơ bản~~ (2026-08-11): JSON-LD BlogPosting + canonical + og:type=article
       + twitter card + related posts "Keep reading" trong `src/app/blog/[slug]/page.tsx`.
 - [ ] Blog reach — còn lại: RSS `/feed.xml`, link chéo blog ↔ case study portfolio,
