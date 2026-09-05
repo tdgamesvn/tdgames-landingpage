@@ -91,18 +91,29 @@ const done = [];
 for (const t of queue) {
   try {
     console.error(`[auto-blog] dựng bài: ${t.topic}`);
-    const res = await fetch(`${APP}/api/admin/blog/topics`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-admin-key": adminKey },
-      // auto:true = bỏ qua chốt "cần 40 ký tự"; route vẫn dùng note nếu có.
-      body: JSON.stringify(
-        t.mat.answers
-          ? { id: t.id, auto: true, answers: t.mat.answers }
-          : { id: t.id, auto: true, ceo_note: t.mat.ceo_note },
-      ),
-      signal: AbortSignal.timeout(300_000),
-    });
-    if (!res.ok) throw new Error(`draft ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    // 2026-09-05: cliproxyapi chớp một nhịp → route trả 502 "AI backend
+    // unreachable" → mất bài cả ngày, dù chạy lại 10 phút sau là xong. 502 =
+    // chưa tạo post nào nên thử lại là an toàn (không đẻ bài trùng).
+    // ponytail: 2 lần thử, không backoff — y như pickTopics trong blog-radar.
+    let res, lastErr;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      res = await fetch(`${APP}/api/admin/blog/topics`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-admin-key": adminKey },
+        // auto:true = bỏ qua chốt "cần 40 ký tự"; route vẫn dùng note nếu có.
+        body: JSON.stringify(
+          t.mat.answers
+            ? { id: t.id, auto: true, answers: t.mat.answers }
+            : { id: t.id, auto: true, ceo_note: t.mat.ceo_note },
+        ),
+        signal: AbortSignal.timeout(300_000),
+      });
+      if (res.ok) break;
+      lastErr = new Error(`draft ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      console.error(`[auto-blog] ${lastErr.message} (lần ${attempt}/2)`);
+      if (res.status !== 502) break; // 400/401/404 có thử lại cũng thế
+    }
+    if (!res.ok) throw lastErr;
     const { post } = await res.json();
 
     // Route hardcode published:false (sếp là chốt chặn khi bấm tay). Luồng auto

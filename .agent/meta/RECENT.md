@@ -52,6 +52,21 @@ bị ảnh hưởng (chỉ sửa const array trong 2 page leaf).
   đừng để policy khai thừa.
 
 
+### Bổ sung (cùng ngày)
+- Email liên hệ 2 trang legal: `tdgames.vn@gmail.com` → `privacy@tdgamestudio.com`
+  (alias Google Workspace trên tài khoản toan.dang@, đã bật "Send mail as" +
+  "Reply from the same address"). Contact section marketing giữ gmail cũ.
+- `src/components/legal-page.tsx` — thêm `linkifyEmails()`: split string theo
+  capture group của regex email, index lẻ = email → render `<a href="mailto:">`
+  màu amber-400. Không đổi kiểu `LegalSection`, data vẫn là string thuần.
+- Pháp nhân đã chốt: Developer account mở bằng **TD GAMES COMPANY LIMITED**
+  → policy giữ nguyên tên + địa chỉ. TD Consulting chỉ là reseller bán
+  Workspace, không liên quan store.
+- Gotcha: Cloudflare Email Obfuscation viết lại `href` thành
+  `/cdn-cgi/l/email-protection#...` trong HTML thô → `curl | grep mailto` ra
+  rỗng, tưởng hỏng. Verify bằng Playwright: DOM thật có `mailto:` + màu đúng.
+  Muốn tắt: Cloudflare → Scrape Shield → Email Address Obfuscation.
+
 ## 2026-08-17 (session — phá thế "cover blog nào cũng giống nhau")
 ### Task
 Sếp gửi screenshot /blog: 8/8 cover là cùng một ảnh — một anh cartoon râu-kính

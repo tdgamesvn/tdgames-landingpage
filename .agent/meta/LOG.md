@@ -4269,3 +4269,32 @@ gitnexus impact SiteFooter: LOW (0 direct dependent).
 ### Next Step
 Chưa commit/push. FAQ + Glossary trong footer vẫn là link chết — hỏi sếp có làm không.
 Nội dung pháp lý chưa qua luật sư rà; nếu ký hợp đồng lớn nên cho rà lại.
+
+---
+
+## 2026-09-05 (session — "Blog radar hỏng": thật ra là auto-blog, AI blip)
+
+### Chẩn đoán
+Run 33946807272 (05:17 UTC) đỏ. Đọc log: **radar chạy đúng** — quét 32 tin → 12 tin
+art → lưu 5 chủ đề → gửi Discord xong lúc 05:19. Cái hỏng là `blog-auto.mjs` ngay
+sau đó: cả 2 bài đều `draft 502: AI backend unreachable`, tức `fetch()` trong
+`POST /api/admin/blog/topics` (route.ts:216) *ném lỗi* chứ không phải AI trả lỗi.
+
+Kiểm chứng: từ VPS curl thẳng `AI_BASE_URL/chat/completions` → 200 trong 1.5s;
+cliproxyapi trên Mac vẫn chạy (pid 697). ⇒ blip tạm thời lúc 05:20, không phải
+Mac tắt. Preflight `curl` trong workflow qua được vì nó chạy lúc 05:17.
+
+### Việc đã làm
+- Chạy lại `node --env-file=.env.local scripts/blog-auto.mjs` trên VPS → đăng đủ
+  2 bài của hôm nay (`why-a-2d-quote-changes-with-source-files-and-ownership`,
+  `what-an-outsource-art-contract-should-cover-source-files-ai-and-post-handoff`).
+- `scripts/blog-auto.mjs` — thêm 1 lần thử lại khi route trả **502** (chỉ 502:
+  chưa tạo post nào nên retry không đẻ bài trùng; 400/401/404 thì thử lại vô ích).
+  Cùng kiểu với `pickTopics()` trong blog-radar: 2 lần, không backoff, không lib.
+
+### Ghi chú
+Đây là lần thứ 3 một nhịp chớp của AI backend làm mất output cả ngày (08-24,
+08-25 ở radar; 09-05 ở auto-blog). Cả 2 chỗ gọi AI giờ đều có retry.
+
+### Next
+Không có. Theo dõi run sáng mai.
