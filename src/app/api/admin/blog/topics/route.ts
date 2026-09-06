@@ -148,7 +148,7 @@ export async function POST(req: Request) {
 
   const baseUrl = process.env.AI_BASE_URL;
   const apiKey = process.env.AI_API_KEY;
-  const model = process.env.AI_MODEL ?? "gpt-5.4-mini";
+  const model = process.env.AI_MODEL ?? "gpt-5.5";
   if (!baseUrl || !apiKey) {
     return NextResponse.json({ error: "AI_BASE_URL / AI_API_KEY not configured" }, { status: 500 });
   }

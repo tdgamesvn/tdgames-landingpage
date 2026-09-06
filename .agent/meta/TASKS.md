@@ -6,6 +6,19 @@ _(empty)_
 
 ## To do
 
+- [x] ~~AI gợi ý email trả lời ở /crm~~ (2026-09-06): `/api/crm/leads/[id]/reply` +
+      `ReplyDraft` trong panel. Copy / mở mail prefill. Draft không lưu DB.
+- [x] ~~Sửa `AI_MODEL` chết~~ (2026-09-06): gpt-5.4-mini → **gpt-5.5** ở .env.local
+      local + VPS (pm2 restart) + 5 fallback hardcode trong src. /hr eval production
+      trước đó đang 502 âm thầm vì lỗi này.
+
+- [x] ~~Redesign /crm cho dễ quét~~ (2026-09-06): card full-message → list 1 dòng/lead
+      + panel chi tiết slide phải. Thêm tiêu đề cột sort được, nhãn tiếng Việt, vạch
+      màu trạng thái, filter dịch vụ, badge "chưa xử lý" bấm được, search, xoá lọc.
+      Chỉ 1 file `CRMBoard.tsx`, không đụng API/DB. Verify Playwright + data thật.
+      **Chưa commit — chờ sếp duyệt.**
+- [ ] Khi lead >50/tháng mới tính: kanban kéo-thả, bulk action, phân trang. Chưa cần.
+
 - [x] ~~Trang /tools — hub + khung~~ (2026-09-06): `src/app/tools/{tools.ts,page.tsx}`,
       nav + sitemap. 4 tool đều `coming-soon`, chưa có tool thật nào.
 - [x] ~~Waitlist email trên card coming-soon~~ (2026-09-06): `/api/tools/waitlist` +

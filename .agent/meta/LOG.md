@@ -1,5 +1,74 @@
 # LOG
 
+## 2026-09-06 (session — AI gợi ý email trả lời lead ở /crm)
+
+### Work Done
+- `src/app/api/crm/leads/[id]/reply/route.ts` (mới) — POST, `requireCRM`, đọc lead từ
+  DB, gọi cliproxyapi `/chat/completions` y hệt route evaluate bên /hr (cùng env
+  `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL`), trả `{subject, body}`. Prompt: trả lời đúng
+  ngôn ngữ khách viết, 120-180 chữ, cấm bịa giá/deadline, tối đa 2 câu hỏi chốt scope.
+- `CRMBoard.tsx` — component `ReplyDraft` trong panel chi tiết: nút "✨ Soạn bằng AI"
+  → subject + body sửa được → "Copy nội dung" / "Mở mail đã điền sẵn" (mailto prefill).
+  `key={selected.id}` để đổi lead là draft tự reset (không cần effect).
+- ponytail: draft KHÔNG lưu DB → 0 migration. Muốn lịch sử draft thì thêm cột sau.
+
+### Result
+tsc sạch; lint chỉ còn lỗi `set-state-in-effect` có sẵn. Test thật qua Playwright trên
+lead Ryan Fillingame: 10s ra email tiếng Anh đúng bối cảnh (pilot trước, hỏi sample +
+volume), subject "Re: Wrestling Masters 2D Card Illustration Project".
+
+### Env: gpt-5.4-mini → gpt-5.5 (ĐÃ SỬA)
+`AI_MODEL=gpt-5.4-mini` chết trên cliproxyapi (502 "unknown provider") — cả local
+LẪN VPS đều đang trỏ model này ⇒ AI eval bên /hr trên production cũng đang hỏng
+âm thầm. Đã đổi `AI_MODEL=gpt-5.5` ở `.env.local` local + `/opt/tdgames-landingpage/
+.env.local` trên VPS (`pm2 restart --update-env`), và đổi 5 chỗ fallback hardcode
+trong src (reply, hr/evaluate, blog/reimage, blog/topics, blog/topics/interview).
+Model proxy đang phục vụ: gpt-5.5, gpt-5.6-sol/luna/terra, gpt-6-astra, gpt-image-*.
+
+---
+
+## 2026-09-06 (session — Redesign /crm: list + panel chi tiết)
+
+### Task
+Sếp: "/crm khó nhìn và theo dõi quá, design lại" → sau đó "dễ nhìn, dễ hiểu,
+dễ filter hơn".
+
+### Vấn đề gốc
+Không phải màu sắc — là mật độ thông tin. Mỗi lead là 1 card in **full message**,
+5 lead = 3 màn hình cuộn, mắt không có mốc để quét. Status là `<select>` nên phải
+đọc chữ mới biết lead đang ở đâu.
+
+### Work Done — chỉ `src/app/crm/_components/CRMBoard.tsx`, 0 đụng API/DB
+- **List row thay card**: 1 lead = 1 dòng (avatar chữ cái · tên · email · dịch vụ ·
+  ngân sách · preview message 1 dòng · pill trạng thái · "7 ngày"). 5 lead gọn
+  trong ~250px thay vì 3 màn hình.
+- **Panel chi tiết** (slide phải, Esc/click nền đóng): full message cuộn riêng,
+  5 nút đổi trạng thái thay dropdown, textarea ghi chú, nút "Trả lời" mailto.
+- **Dễ hiểu**: hàng tiêu đề cột; nhãn tiếng Việt (Mới / Đã liên hệ / Đã báo giá /
+  Chốt / Trượt) thay `new/contacted/...`.
+- **Dễ nhìn**: vạch dọc màu theo trạng thái đầu mỗi dòng + avatar cùng tông màu →
+  quét trạng thái bằng màu, không phải bằng chữ. Lead `new` chưa có notes thì tên
+  đậm; đã ghi chú thì cột preview đổi thành `✎ <ghi chú>` (biết ngay xử lý tới đâu).
+- **Dễ filter**: click tiêu đề cột để sort (tên / trạng thái / thời gian, toggle
+  chiều); select "Mọi dịch vụ" (options derive từ data, không hardcode nên waitlist
+  tool cũng lọc được); badge "N chưa xử lý" bấm được thành filter; ô tìm kiếm
+  (tên/email/nội dung/notes); nút "Xoá lọc (N)".
+- `COL` object giữ width cột — header và row dùng chung nên luôn thẳng hàng.
+- `sortHead()` là hàm trả JSX, KHÔNG phải component trong render (lint
+  `set-state-in-effect`/component-in-render bắt được lần đầu, đã sửa).
+
+### Result
+`tsc --noEmit` sạch. Lint chỉ còn 1 lỗi `set-state-in-effect` ở effect auto-login
+CÓ TỪ TRƯỚC (cả repo đang 64 lỗi cùng loại) — không đụng.
+Verify bằng Playwright trên dev server với data production thật: list render đúng,
+panel mở đúng lead, sort A→Z + filter "2D Art" ra đúng 2 lead, "Xoá lọc (2)" hiện đúng.
+
+### Next Step
+Chưa commit — chờ sếp duyệt. Chưa làm (chờ khi lead nhiều lên): kanban kéo-thả,
+bulk action, phân trang. Ngưỡng gợi ý: >50 lead/tháng.
+
+---
+
 ## 2026-09-06 (session — Waitlist email trên card /tools coming-soon)
 
 ### Task
