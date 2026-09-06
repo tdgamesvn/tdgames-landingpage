@@ -14,6 +14,8 @@ _Auto-generated từ LOG.md. Không sửa tay._
 - `CRMBoard.tsx` — component `ReplyDraft` trong panel chi tiết: nút "✨ Soạn bằng AI"
   → subject + body sửa được → "Copy nội dung" / "Mở mail đã điền sẵn" (mailto prefill).
   `key={selected.id}` để đổi lead là draft tự reset (không cần effect).
+- Prompt KHÔNG được ký tên / "Best regards" cuối mail (sếp bắt lỗi bản đầu tự ký
+  "Tuan — TD Games Studio") — mail client đã có chữ ký sẵn.
 - ponytail: draft KHÔNG lưu DB → 0 migration. Muốn lịch sử draft thì thêm cột sau.
 
 ### Result

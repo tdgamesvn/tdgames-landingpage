@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Nunito_Sans } from "next/font/google";
 
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
+import { AccentHighlight } from "@/components/accent-highlight";
 
 import { TOOLS, type Tool } from "./tools";
 import WaitlistForm from "./waitlist-form";
+
+// Tiếng Việt có dấu → cần subset vietnamese, khác /blog (chỉ latin).
+const nunitoSans = Nunito_Sans({
+  weight: ["400", "600", "700"],
+  subsets: ["latin", "vietnamese"],
+});
 
 export const metadata: Metadata = {
   title: "Free Tools for Game Artists",
@@ -25,53 +33,47 @@ export const metadata: Metadata = {
 // thì Google mới đọc được. Widget tương tác của từng tool sẽ là client component
 // riêng bên trong src/app/tools/<slug>/, không kéo cả trang này thành client.
 
+/** Layout width dùng chung với /blog để cột thẳng hàng với header + footer. */
+const CONTAINER = { width: "min(var(--layout-width,85%),1280px)" } as const;
+
 function ToolCard({ tool }: { tool: Tool }) {
   const inner = (
     <>
       <div className="flex items-center justify-between gap-3">
-        <span
-          className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400"
-          style={{ fontFamily: "var(--font-rajdhani)" }}
-        >
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#f59e0b]/80">
           {tool.tag}
         </span>
         {tool.status === "coming-soon" && (
-          <span
-            className="rounded-full border border-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"
-            style={{ fontFamily: "var(--font-rajdhani)" }}
-          >
+          <span className="rounded-full border border-white/15 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/40">
             Coming soon
           </span>
         )}
       </div>
 
       <h2
-        className="mt-5 text-lg font-black uppercase tracking-[0.06em] text-white md:text-xl"
-        style={{ fontFamily: "var(--font-orbitron)" }}
+        className="mt-1.5 text-base font-bold leading-snug text-white md:text-lg"
+        style={{ fontFamily: "var(--font-rajdhani)" }}
       >
         {tool.name}
       </h2>
 
-      <p className="mt-3 text-[15px] leading-relaxed text-white/60">{tool.blurb}</p>
+      <p className="mt-2 text-sm leading-relaxed text-white/50">{tool.blurb}</p>
 
-      <div
-        className="mt-6 text-[11px] font-bold uppercase tracking-[0.16em] text-white/35"
-        style={{ fontFamily: "var(--font-rajdhani)" }}
-      >
+      <div className="mt-4 text-xs text-white/40">
         {tool.runsOn === "browser" ? "Runs in your browser" : "Runs on our servers"}
       </div>
     </>
   );
 
   const base =
-    "flex h-full flex-col rounded-2xl border p-6 transition-colors md:p-7";
+    "flex h-full min-h-[180px] flex-col rounded-xl border border-white/10 bg-white/[0.03] p-5 transition-all md:p-6";
 
   // Card chưa mở thì không click được — đổi khoảng chết đó thành ô thu email.
   if (tool.status === "coming-soon") {
     return (
-      <div className={`${base} border-white/10 bg-white/[0.02]`}>
+      <div className={base}>
         {inner}
-        <div className="mt-auto">
+        <div className="mt-auto pt-4">
           <WaitlistForm tool={tool.slug} />
         </div>
       </div>
@@ -81,7 +83,7 @@ function ToolCard({ tool }: { tool: Tool }) {
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className={`${base} border-white/10 bg-white/[0.03] hover:border-amber-400/50 hover:bg-white/[0.06]`}
+      className={`${base} group hover:border-[#f59e0b]/30 hover:bg-white/[0.05]`}
     >
       {inner}
     </Link>
@@ -92,56 +94,91 @@ export default function ToolsPage() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-[#050508] pt-[76px] md:pt-[84px]">
-        <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-          <h1
-            className="text-3xl font-black uppercase tracking-[0.06em] text-white md:text-5xl"
-            style={{ fontFamily: "var(--font-orbitron)" }}
-          >
-            Tools
-          </h1>
+      <main className={`min-h-screen bg-[#0a0a0a] text-white ${nunitoSans.className}`}>
+
+        {/* ── Hero — cùng khuôn với /blog ── */}
+        <section className="relative overflow-hidden pb-12 pt-28 md:pt-36 lg:pt-40">
           <div
-            className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-amber-400"
-            style={{ fontFamily: "var(--font-rajdhani)" }}
+            className="pointer-events-none absolute inset-0 flex select-none items-center justify-center overflow-hidden"
+            aria-hidden
           >
-            Free for game artists
+            <span
+              className="block font-black uppercase leading-none tracking-tighter text-white/[0.04]"
+              style={{ fontFamily: "var(--font-rajdhani)", fontSize: "clamp(100px, 20vw, 280px)" }}
+            >
+              TOOLS
+            </span>
           </div>
 
-          <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-white/65">
-            Chúng tôi làm 2D art, animation và VFX cho game mỗi ngày, và tự viết công cụ
-            để bớt những việc lặp đi lặp lại. Đây là những công cụ đó — miễn phí, dùng
-            thẳng trên trình duyệt, không cần cài đặt.
-          </p>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/65">
-            Các tool bên dưới đang được hoàn thiện. Chúng tôi sẽ mở dần từng cái.
-          </p>
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20 blur-[120px]"
+            style={{ background: "radial-gradient(ellipse, rgba(245,158,11,0.15) 0%, transparent 70%)" }}
+            aria-hidden
+          />
 
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {TOOLS.map((tool) => (
-              <ToolCard key={tool.slug} tool={tool} />
-            ))}
-          </div>
+          <div className="relative z-10 mx-auto px-4" style={CONTAINER}>
+            <div className="mb-5 flex items-center gap-4">
+              <span className="text-sm font-black italic tracking-tighter text-[#ffb04a] drop-shadow-[0_0_12px_rgba(255,176,74,0.4)]">
+                {"// Toolbox"}
+</span>
+              <div className="h-px w-16 shrink-0 bg-gradient-to-r from-[#ff8c3a]/60 to-transparent" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/70">
+                {TOOLS.length} Tools
+              </span>
+            </div>
 
-          <div className="mt-16 rounded-2xl border border-white/10 bg-white/[0.02] p-8 md:p-10">
-            <h2
-              className="text-lg font-black uppercase tracking-[0.12em] text-white md:text-xl"
+            <h1
+              className="text-4xl font-black uppercase leading-[1.05] tracking-tight md:text-5xl lg:text-[64px]"
               style={{ fontFamily: "var(--font-rajdhani)" }}
             >
-              Cần nhiều hơn một công cụ?
-            </h2>
-            <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/65">
-              Tool giải quyết việc nhỏ. Còn cả một pipeline art cho game thì cần một đội.
-              TD Games nhận outsourcing 2D art, animation và VFX cho studio game.
+              TD Games <AccentHighlight>Tools</AccentHighlight>
+            </h1>
+
+            <p className="mt-5 max-w-lg text-sm leading-relaxed text-white/60 md:text-[15px]">
+              Chúng tôi làm 2D art, animation và VFX cho game mỗi ngày, và tự viết công cụ
+              để bớt những việc lặp đi lặp lại. Đây là những công cụ đó — miễn phí, dùng
+              thẳng trên trình duyệt, không cần cài đặt.
             </p>
-            <Link
-              href="/contact"
-              className="mt-6 inline-block rounded-full bg-amber-400 px-7 py-3 text-xs font-bold uppercase tracking-[0.16em] text-black transition-colors hover:bg-amber-300"
-              style={{ fontFamily: "var(--font-rajdhani)" }}
-            >
-              Liên hệ với chúng tôi
-            </Link>
           </div>
-        </div>
+
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f59e0b]/40 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#f59e0b]/20 to-transparent blur-sm" />
+        </section>
+
+        {/* ── Grid ── */}
+        <section className="py-12 md:py-16">
+          <div className="mx-auto px-4" style={CONTAINER}>
+            <p className="mb-3 text-sm text-white/55">
+              Các tool bên dưới đang được hoàn thiện. Chúng tôi sẽ mở dần từng cái.
+            </p>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {TOOLS.map((tool) => (
+                <ToolCard key={tool.slug} tool={tool} />
+              ))}
+            </div>
+
+            <div className="mt-10 rounded-xl border border-white/10 bg-white/[0.03] p-6 md:p-8">
+              <h2
+                className="text-lg font-bold uppercase tracking-wide text-white md:text-xl"
+                style={{ fontFamily: "var(--font-rajdhani)" }}
+              >
+                Cần nhiều hơn một công cụ?
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/50">
+                Tool giải quyết việc nhỏ. Còn cả một pipeline art cho game thì cần một đội.
+                TD Games nhận outsourcing 2D art, animation và VFX cho studio game.
+              </p>
+              <Link
+                href="/contact"
+                className="mt-5 inline-block rounded-full border border-[#f59e0b] bg-[#f59e0b] px-6 py-2 text-xs font-bold uppercase tracking-wider text-black transition-all hover:bg-[#f59e0b]/85"
+              >
+                Liên hệ với chúng tôi
+              </Link>
+            </div>
+          </div>
+        </section>
+
         <SiteFooter />
       </main>
     </>
