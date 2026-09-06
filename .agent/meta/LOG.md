@@ -14,6 +14,14 @@ watermark "TOOLS" + glow amber + eyebrow `// Toolbox` + count + `<AccentHighligh
 `#f59e0b`. Nunito Sans thêm subset `vietnamese` (blog chỉ latin, /tools có dấu).
 Vẫn là server component — SEO không đổi.
 
+**Ngôn ngữ site = TIẾNG ANH** (sếp chốt). Đã dịch toàn bộ text hiển thị của /tools
+(page + tools.ts blurb + waitlist form) sang tiếng Anh, bỏ subset `vietnamese` khỏi
+Nunito Sans. Comment trong code vẫn tiếng Việt (team đọc, không hiển thị).
+Quét cả src: chỉ còn 2 chỗ public sai → đã sửa: meta description `/showreel` (viết
+tiếng Việt) và mũi tên "Back to Portfolio" ở 2 case study bị mojibake `â†` → `&larr;`.
+Chuỗi tiếng Việt còn lại đều nằm trong /admin, /crm, /hr, banner preview draft —
+nội bộ, giữ nguyên.
+
 ## 2026-09-06 (session — AI gợi ý email trả lời lead ở /crm)
 
 ### Work Done

@@ -20,7 +20,7 @@ export const TOOLS: Tool[] = [
     slug: "image-compressor",
     name: "Image Compressor",
     blurb:
-      "Nén PNG/JPG/WebP xuống dung lượng nhỏ nhất mà mắt không thấy khác biệt. Ảnh không rời khỏi máy bạn.",
+      "Squeeze PNG/JPG/WebP down to the smallest size your eye can't tell apart. Images never leave your machine.",
     tag: "Image",
     status: "coming-soon",
     runsOn: "browser",
@@ -29,7 +29,7 @@ export const TOOLS: Tool[] = [
     slug: "image-upscaler",
     name: "AI Image Upscaler",
     blurb:
-      "Phóng to concept art, sprite, texture lên 2x–4x bằng AI mà vẫn giữ nét, không bị bệt.",
+      "Upscale concept art, sprites and textures 2x–4x with AI — sharp edges, no mushy blur.",
     tag: "Image",
     status: "coming-soon",
     runsOn: "server",
@@ -38,7 +38,7 @@ export const TOOLS: Tool[] = [
     slug: "spine-auto-rig",
     name: "Spine Auto Rig & Mesh",
     blurb:
-      "Tự động dựng bone và mesh cho nhân vật 2D, cắt bớt phần setup tay tốn thời gian nhất của khâu rig.",
+      "Auto-generate bones and meshes for 2D characters, cutting the slowest manual setup out of rigging.",
     tag: "Spine",
     status: "coming-soon",
     runsOn: "server",
@@ -47,7 +47,7 @@ export const TOOLS: Tool[] = [
     slug: "vfx-exporter",
     name: "VFX Sprite Sheet Exporter",
     blurb:
-      "Đóng gói hiệu ứng thành sprite sheet chuẩn engine, kèm file atlas, sẵn sàng thả vào Unity hoặc Unreal.",
+      "Pack effects into engine-ready sprite sheets with an atlas file, ready to drop into Unity or Unreal.",
     tag: "VFX",
     status: "coming-soon",
     runsOn: "server",

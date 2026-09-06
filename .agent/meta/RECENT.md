@@ -4,6 +4,20 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-09-06 (session — /tools đồng bộ style với /blog)
+
+Sếp: "/tools không đồng bộ với các tab khác, tham khảo tab Blog".
+Khác biệt thật: bg `#050508` (blog `#0a0a0a`), container `max-w-6xl px-6` thay vì
+`min(var(--layout-width,85%),1280px)` → lệch hàng với header/footer, font heading
+Orbitron thay vì Rajdhani, không có font body Nunito Sans, hero trơ trụi (không
+watermark / glow / eyebrow / divider), grid 3 cột card nhỏ.
+
+Sửa `src/app/tools/page.tsx` + `waitlist-form.tsx` theo đúng khuôn /blog: hero có
+watermark "TOOLS" + glow amber + eyebrow `// Toolbox` + count + `<AccentHighlight>`
++ divider gradient đáy; grid 2 cột card `rounded-xl bg-white/[0.03]`; màu chốt lại
+`#f59e0b`. Nunito Sans thêm subset `vietnamese` (blog chỉ latin, /tools có dấu).
+Vẫn là server component — SEO không đổi.
+
 ## 2026-09-06 (session — AI gợi ý email trả lời lead ở /crm)
 
 ### Work Done

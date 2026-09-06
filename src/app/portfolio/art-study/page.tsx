@@ -299,7 +299,7 @@ export default function ArtStudyDetailPage() {
                 href="/portfolio"
                 className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-white/55 transition-colors hover:text-white"
               >
-                <span aria-hidden>â†</span>
+                <span aria-hidden>&larr;</span>
                 Back to Portfolio
               </Link>
               <div 

@@ -9,11 +9,7 @@ import { AccentHighlight } from "@/components/accent-highlight";
 import { TOOLS, type Tool } from "./tools";
 import WaitlistForm from "./waitlist-form";
 
-// Tiếng Việt có dấu → cần subset vietnamese, khác /blog (chỉ latin).
-const nunitoSans = Nunito_Sans({
-  weight: ["400", "600", "700"],
-  subsets: ["latin", "vietnamese"],
-});
+const nunitoSans = Nunito_Sans({ weight: ["400", "600", "700"], subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Free Tools for Game Artists",
@@ -135,9 +131,9 @@ export default function ToolsPage() {
             </h1>
 
             <p className="mt-5 max-w-lg text-sm leading-relaxed text-white/60 md:text-[15px]">
-              Chúng tôi làm 2D art, animation và VFX cho game mỗi ngày, và tự viết công cụ
-              để bớt những việc lặp đi lặp lại. Đây là những công cụ đó — miễn phí, dùng
-              thẳng trên trình duyệt, không cần cài đặt.
+              We make 2D art, animation and VFX for games every day, and build our own
+              tools to cut the repetitive parts. These are those tools — free, running
+              straight in your browser, nothing to install.
             </p>
           </div>
 
@@ -149,7 +145,7 @@ export default function ToolsPage() {
         <section className="py-12 md:py-16">
           <div className="mx-auto px-4" style={CONTAINER}>
             <p className="mb-3 text-sm text-white/55">
-              Các tool bên dưới đang được hoàn thiện. Chúng tôi sẽ mở dần từng cái.
+              The tools below are still in the works. We&apos;re opening them up one by one.
             </p>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -163,17 +159,17 @@ export default function ToolsPage() {
                 className="text-lg font-bold uppercase tracking-wide text-white md:text-xl"
                 style={{ fontFamily: "var(--font-rajdhani)" }}
               >
-                Cần nhiều hơn một công cụ?
+                Need more than a tool?
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/50">
-                Tool giải quyết việc nhỏ. Còn cả một pipeline art cho game thì cần một đội.
-                TD Games nhận outsourcing 2D art, animation và VFX cho studio game.
+                Tools solve the small stuff. A full art pipeline for a game needs a team.
+                TD Games takes on 2D art, animation and VFX outsourcing for game studios.
               </p>
               <Link
                 href="/contact"
                 className="mt-5 inline-block rounded-full border border-[#f59e0b] bg-[#f59e0b] px-6 py-2 text-xs font-bold uppercase tracking-wider text-black transition-all hover:bg-[#f59e0b]/85"
               >
-                Liên hệ với chúng tôi
+                Get in touch
               </Link>
             </div>
           </div>
