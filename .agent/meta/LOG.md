@@ -1,5 +1,81 @@
 # LOG
 
+## 2026-09-06 (session — Waitlist email trên card /tools coming-soon)
+
+### Task
+Card coming-soon ở /tools không click được → đổi khoảng chết đó thành ô nhập email
+"báo tôi khi mở" để thu lead ngay giai đoạn này.
+
+### Quyết định: lưu vào `leads` sẵn có, KHÔNG dựng bảng riêng
+Đã định làm `tool_waitlist` riêng, rồi bỏ khi thấy chỗ hiển thị bắt buộc là `/crm`
+(không phải /admin — quản lý nội dung, không phải /hr — ứng viên). Bảng riêng nghĩa
+là CRMBoard phải fetch 2 nguồn + merge 2 kiểu dữ liệu cho thứ chỉ có mỗi cột email.
+→ Dùng `leads` với `source = "tool-waitlist"` (hằng `WAITLIST_SOURCE` ở lib/leads.ts),
+`service = <tên tool>`, `name = phần trước @`. 0 migration.
+
+### Work Done
+- `src/lib/leads.ts` — thêm `WAITLIST_SOURCE`, dùng chung route + CRMBoard.
+- `src/app/api/tools/waitlist/route.ts` (mới) — POST {email, tool}; validate email,
+  slug phải có trong `TOOLS`; select trước insert để bấm 2 lần không đẻ row rác;
+  Discord notify kênh sales fire-and-forget. Không đụng `/api/leads` (giữ nguyên
+  trust boundary của form contact).
+- `src/app/tools/waitlist-form.tsx` (mới) — client component duy nhất của trang,
+  phần còn lại vẫn server-render cho SEO.
+- `src/app/tools/page.tsx` — nhánh coming-soon render form, `mt-auto` cho form
+  thẳng hàng đáy card.
+- `src/app/crm/_components/CRMBoard.tsx` — tách `waitlist` / `pipeline` theo `source`;
+  chip "all" + các chip status chỉ đếm pipeline → cột "new" không bị waitlist làm
+  loãng; thêm chip `waitlist`; badge `source` trên card.
+
+### Result
+`npx tsc --noEmit` sạch. Dev server: /tools 200, screenshot 3 card có ô email
+thẳng hàng. Endpoint: valid → 201, gửi lại → 200 cùng id (dedupe), email xấu → 400,
+tool bịa → 400. Row trong DB đúng format (`service="Image Compressor"`), đã xoá row test.
+
+### Next Step
+Chưa commit/push. Chưa xem `/crm` bằng mắt (CRM_SECRET nằm trong `app_settings`,
+không có ở .env.local) — logic filter chỉ mới verify qua tsc, nên mở /crm xem chip
+`waitlist` một lần khi có key. Chưa có mail xác nhận cho người đăng ký; hiện chỉ
+Discord báo nội bộ.
+
+---
+
+## 2026-09-06 (session — Trang /tools: hub + khung, tất cả Coming soon)
+### Task
+Sếp muốn một trang Tools để sau này đổ các tool cho user dùng. Tool cụ thể chưa
+có, sếp sẽ gửi sau (ví dụ: nén ảnh, AI upscale, Spine auto rig+mesh, export VFX).
+Mục tiêu: SEO/lead + tiện ích thật cho artist + nội bộ dùng. Public trước, login
+sau vì nhiều tool sẽ phải giới hạn lượt dùng/user.
+
+### Phát hiện quan trọng khi brainstorm
+4 tool ví dụ của sếp thuộc 2 lớp khác hẳn nhau:
+- **browser** (nén ảnh, crop, convert): chạy trên máy user → 0đ, và **không đếm
+  được lượt dùng**. Cứ để free vô hạn, đúng mục tiêu SEO.
+- **server** (AI upscale, Spine auto rig, export VFX): tốn CPU/GPU → **bắt buộc**
+  login + quota.
+⇒ Quota chỉ áp được cho lớp server. Chi tiết ở DECISIONS.md.
+
+### Work Done
+- `src/app/tools/tools.ts` — mảng literal 4 tool, mỗi tool có `status`
+  (live|coming-soon) và `runsOn` (browser|server). Đây là toàn bộ "registry".
+- `src/app/tools/page.tsx` — hub, **server component** (bắt buộc, nếu "use client"
+  cả trang thì Google không đọc được → mất mục tiêu SEO). Grid card + CTA
+  `/contact`. Card coming-soon là `<div>` không click được.
+- `site-header.tsx` — thêm `{ label: "TOOLS", href: "/tools" }` (1 dòng).
+- `sitemap.ts` — thêm `/tools`. **Chưa** thêm URL từng tool vì chưa có trang thật.
+
+### Result
+`npx tsc --noEmit` sạch. Lint: 94 vấn đề nhưng **không cái nào** ở file vừa sửa
+(toàn bộ là nợ cũ). `npm run build` pass, `/tools` là `○ (Static)` — prerender,
+tốt cho SEO. Screenshot localhost xác nhận layout đúng theme amber/#0a0a0a.
+⚠ Build/dev cần `dangerouslyDisableSandbox: true` — sandbox chặn Google Fonts.
+
+### Next Step
+Chờ sếp gửi tool đầu tiên. Thêm tool = 1 thư mục `src/app/tools/<slug>/` +
+1 object vào mảng. Tool loại server phải gọi qua `/api/tools/<slug>` (chỗ nối để
+sau gắn auth+quota một lần cho tất cả) — route này **chưa tạo**, tạo khi có tool
+server thật đầu tiên.
+
 ## 2026-08-29 (session — Privacy Policy + Terms of Use mở rộng cho game mobile)
 ### Task
 Sếp cần 2 trang policy để publish game lên Google Play + App Store. Bản viết

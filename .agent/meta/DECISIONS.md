@@ -1,5 +1,37 @@
 # DECISIONS
 
+## 2026-09-06 — Kiến trúc trang /tools: chia tool theo nơi chạy, không theo chức năng
+Decision:
+- Mỗi tool khai báo `runsOn: "browser" | "server"` trong `src/app/tools/tools.ts`.
+  Đây là trục phân loại quan trọng nhất, không phải tag Image/Spine/VFX.
+  - `browser` → chạy trên máy user, 0đ, **không thể** đếm lượt dùng ⇒ free vô hạn.
+  - `server` → tốn CPU/GPU ⇒ **bắt buộc** qua `/api/tools/<slug>`, và chỉ lớp này
+    mới cần login + quota.
+- **Mọi trang tool là server component.** Widget tương tác tách thành client
+  component con. Không được `"use client"` cả trang.
+- Registry = một mảng literal. Không plugin loader, không DB, không config-driven.
+
+Why:
+- Quota/login là yêu cầu của sếp, nhưng nó **vật lý không áp được** lên tool chạy
+  client-side. Nếu không phân loại từ đầu thì sẽ hứa quota cho tool không đếm được.
+- Trang tool tồn tại để hút SEO. `"use client"` toàn trang = Google đọc trang rỗng
+  = mất luôn lý do làm trang này.
+- Gom mọi tool server vào một prefix `/api/tools/` ⇒ sau này gắn auth + rate limit
+  sửa đúng một chỗ, không đụng tool nào.
+
+Alternatives rejected:
+- **Bảng `tools` trong Supabase + admin tab**: thêm CRUD + migration cho thứ mỗi
+  vài tháng đổi một lần. Sửa 1 dòng trong mảng nhanh hơn. Cân nhắc lại khi >5 tool live.
+- **Làm login/quota ngay từ giờ**: chưa có tool server nào tồn tại. Xây quota cho
+  0 tool là đoán mò yêu cầu.
+- **Component `<ToolLayout>` dùng chung**: chưa có tool nào để biết chúng giống nhau
+  ở đâu. Trừu tượng hoá khi có tool thứ 3, không phải tool thứ 0.
+
+Note: login sau này dùng **Supabase Auth + Google provider** (repo đã có Supabase,
+không thêm dependency; hiện `/admin` + `/hr` chỉ dùng header `ADMIN_SECRET`, chưa
+có auth user nào). Compute nặng dự kiến chạy trên Mac mini riêng 24/7, **không**
+đặt trên VPS 6core — VPS đang chạy 11 app, tool nặng sẽ kéo sập cả tdgamestudio.com.
+
 ## 2026-08-17 — Đa dạng cover blog ép bằng CODE, không nhờ AI tự nhớ
 Decision:
 - `COVER_RULES` (const) → `coverRules()` (function) trong `src/lib/blog-ai.ts`.

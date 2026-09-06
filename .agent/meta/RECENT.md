@@ -4,6 +4,42 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-09-06 (session — Trang /tools: hub + khung, tất cả Coming soon)
+### Task
+Sếp muốn một trang Tools để sau này đổ các tool cho user dùng. Tool cụ thể chưa
+có, sếp sẽ gửi sau (ví dụ: nén ảnh, AI upscale, Spine auto rig+mesh, export VFX).
+Mục tiêu: SEO/lead + tiện ích thật cho artist + nội bộ dùng. Public trước, login
+sau vì nhiều tool sẽ phải giới hạn lượt dùng/user.
+
+### Phát hiện quan trọng khi brainstorm
+4 tool ví dụ của sếp thuộc 2 lớp khác hẳn nhau:
+- **browser** (nén ảnh, crop, convert): chạy trên máy user → 0đ, và **không đếm
+  được lượt dùng**. Cứ để free vô hạn, đúng mục tiêu SEO.
+- **server** (AI upscale, Spine auto rig, export VFX): tốn CPU/GPU → **bắt buộc**
+  login + quota.
+⇒ Quota chỉ áp được cho lớp server. Chi tiết ở DECISIONS.md.
+
+### Work Done
+- `src/app/tools/tools.ts` — mảng literal 4 tool, mỗi tool có `status`
+  (live|coming-soon) và `runsOn` (browser|server). Đây là toàn bộ "registry".
+- `src/app/tools/page.tsx` — hub, **server component** (bắt buộc, nếu "use client"
+  cả trang thì Google không đọc được → mất mục tiêu SEO). Grid card + CTA
+  `/contact`. Card coming-soon là `<div>` không click được.
+- `site-header.tsx` — thêm `{ label: "TOOLS", href: "/tools" }` (1 dòng).
+- `sitemap.ts` — thêm `/tools`. **Chưa** thêm URL từng tool vì chưa có trang thật.
+
+### Result
+`npx tsc --noEmit` sạch. Lint: 94 vấn đề nhưng **không cái nào** ở file vừa sửa
+(toàn bộ là nợ cũ). `npm run build` pass, `/tools` là `○ (Static)` — prerender,
+tốt cho SEO. Screenshot localhost xác nhận layout đúng theme amber/#0a0a0a.
+⚠ Build/dev cần `dangerouslyDisableSandbox: true` — sandbox chặn Google Fonts.
+
+### Next Step
+Chờ sếp gửi tool đầu tiên. Thêm tool = 1 thư mục `src/app/tools/<slug>/` +
+1 object vào mảng. Tool loại server phải gọi qua `/api/tools/<slug>` (chỗ nối để
+sau gắn auth+quota một lần cho tất cả) — route này **chưa tạo**, tạo khi có tool
+server thật đầu tiên.
+
 ## 2026-08-29 (session — Privacy Policy + Terms of Use mở rộng cho game mobile)
 ### Task
 Sếp cần 2 trang policy để publish game lên Google Play + App Store. Bản viết

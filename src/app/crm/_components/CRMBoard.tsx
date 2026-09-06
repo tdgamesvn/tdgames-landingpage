@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { LEAD_STATUSES, type Lead, type LeadStatus } from "@/lib/leads";
+import {
+  LEAD_STATUSES,
+  WAITLIST_SOURCE,
+  type Lead,
+  type LeadStatus,
+} from "@/lib/leads";
 
 const KEY_STORE = "tdg.crm.key";
 
@@ -17,7 +22,7 @@ export default function CRMBoard() {
   const [crmKey, setCrmKey] = useState("");
   const [keyInput, setKeyInput] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [filter, setFilter] = useState<LeadStatus | "all">("all");
+  const [filter, setFilter] = useState<LeadStatus | "all" | "waitlist">("all");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -116,13 +121,24 @@ export default function CRMBoard() {
     );
   }
 
-  const shown = filter === "all" ? leads : leads.filter((l) => l.status === filter);
+  // Waitlist là email chờ tool mở, chưa phải khách hỏi báo giá → không trộn vào
+  // pipeline. Chip "all" và các chip status chỉ đếm lead thật.
+  const waitlist = leads.filter((l) => l.source === WAITLIST_SOURCE);
+  const pipeline = leads.filter((l) => l.source !== WAITLIST_SOURCE);
+  const shown =
+    filter === "waitlist"
+      ? waitlist
+      : filter === "all"
+        ? pipeline
+        : pipeline.filter((l) => l.status === filter);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] px-5 py-8 text-white md:px-10">
       <header className="mb-6 flex flex-wrap items-center gap-4">
         <h1 className="text-xl font-black uppercase tracking-wide">CRM — Leads</h1>
-        <span className="text-sm text-white/40">{leads.length} total</span>
+        <span className="text-sm text-white/40">
+          {pipeline.length} leads · {waitlist.length} waitlist
+        </span>
         <button
           onClick={refresh}
           className="rounded-md border border-white/15 px-3 py-1.5 text-xs uppercase text-white/70 hover:border-amber-500/40 hover:text-white"
@@ -143,7 +159,7 @@ export default function CRMBoard() {
       </header>
 
       <div className="mb-5 flex flex-wrap gap-2">
-        {(["all", ...LEAD_STATUSES] as const).map((s) => (
+        {(["all", ...LEAD_STATUSES, "waitlist"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setFilter(s)}
@@ -154,7 +170,11 @@ export default function CRMBoard() {
             }`}
           >
             {s}
-            {s !== "all" ? ` ${leads.filter((l) => l.status === s).length}` : ""}
+            {s === "all"
+              ? ""
+              : s === "waitlist"
+                ? ` ${waitlist.length}`
+                : ` ${pipeline.filter((l) => l.status === s).length}`}
           </button>
         ))}
       </div>
@@ -187,6 +207,9 @@ export default function CRMBoard() {
                   {lead.budget}
                 </span>
               ) : null}
+              <span className="rounded border border-white/10 px-2 py-0.5 text-xs text-white/35">
+                {lead.source}
+              </span>
               <span className="ml-auto text-xs text-white/30">
                 {new Date(lead.created_at).toLocaleString("vi-VN")}
               </span>

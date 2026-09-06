@@ -1,5 +1,12 @@
 /** Shared giữa form public (contact-showcase-section) và API /api/leads. */
 
+/**
+ * ponytail: waitlist tool dùng chung bảng `leads` thay vì bảng riêng — chỉ có mỗi
+ * cột email, không đáng một migration + một nguồn fetch thứ hai cho /crm.
+ * `source` là thứ tách nó khỏi pipeline bán hàng ở CRMBoard.
+ */
+export const WAITLIST_SOURCE = "tool-waitlist";
+
 export const LEAD_SERVICES = [
   "2D Art",
   "2D Animation",

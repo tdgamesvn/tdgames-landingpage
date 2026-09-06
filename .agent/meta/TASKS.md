@@ -6,6 +6,18 @@ _(empty)_
 
 ## To do
 
+- [x] ~~Trang /tools — hub + khung~~ (2026-09-06): `src/app/tools/{tools.ts,page.tsx}`,
+      nav + sitemap. 4 tool đều `coming-soon`, chưa có tool thật nào.
+- [x] ~~Waitlist email trên card coming-soon~~ (2026-09-06): `/api/tools/waitlist` +
+      `waitlist-form.tsx`, lưu vào `leads` với `source="tool-waitlist"`, hiện ở `/crm`
+      qua chip riêng. Chưa xem /crm bằng mắt (thiếu CRM_SECRET local).
+- [ ] **Chờ sếp gửi tool đầu tiên.** Thêm = 1 thư mục `src/app/tools/<slug>/` +
+      1 object vào mảng `TOOLS`. Trang tool phải là server component (SEO), widget
+      tương tác tách thành client component riêng.
+- [ ] Khi có tool loại `runsOn: "server"` đầu tiên: dựng `/api/tools/<slug>`, và
+      chỉ khi đó mới làm login (Supabase Auth + Google) + quota. Chưa cần trước đó.
+- [ ] Sếp tính mua Mac mini chạy 24/7 làm worker cho tool nặng — chưa có, chưa cấu hình.
+
 - [x] ~~Privacy Policy + Terms of Use~~ (2026-08-28): 2 trang mới + `legal-page.tsx`
       dùng chung, footer INFO nối link thật. Nội dung phỏng med-notes.com nhưng bỏ hết
       phần subscription/ads, thêm Recruitment Data + IP + Governing Law VN.

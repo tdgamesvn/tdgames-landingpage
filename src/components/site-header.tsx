@@ -54,6 +54,7 @@ const navLinks = [
   // { label: "SHOWREEL", href: "/showreel" },
   { label: "ABOUT", href: "/about" },
   { label: "BLOG", href: "/blog" },
+  { label: "TOOLS", href: "/tools" },
   { label: "CAREERS", href: "/careers" },
 ] as const;
 
