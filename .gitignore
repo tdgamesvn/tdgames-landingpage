@@ -69,3 +69,9 @@ scripts/.orphan-manifest.jsonl
 
 # file spine tải về để artist export lại texture — không commit
 spine-recovery/
+
+# script audit responsive dùng một lần (playwright-core từ npx cache của máy local)
+scripts/responsive-audit.mjs
+scripts/responsive-shots.mjs
+# ảnh chụp màn hình so sánh — rác local
+careers-after.png

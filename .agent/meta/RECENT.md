@@ -4,6 +4,53 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-09-08 (session 4 — self-review pass responsive header/hero + fix 5 findings)
+
+Chạy `/code-review` lên diff responsive chưa commit (site-header + home-hero), ra 5 finding,
+fix hết:
+
+1. **Card stack mất ở 1024–1279px** (`home-hero.tsx`): diff đổi `lg:block` → `xl:block`,
+   mà `switchVideo` chỉ nằm trong `DraggableStack` và không có auto-advance → iPad Pro dọc
+   chỉ xem được media đầu. Fix: trả lại `lg:block`, thêm wrapper `scale-[0.65] xl:scale-100
+   origin-bottom-right` để vừa chỗ. Verify bằng screenshot 1024 + 1280: không đè text.
+2. **Gạch chân nav ăn vào chữ** (`globals.css`): `.nav-link::after` hardcode `left/right:14px`
+   trong khi padding đã thành `clamp(8px,0.75vw,14px)`. Fix: dùng đúng clamp đó cho ::after.
+3. **`md:pt-0` bị xoá** → `pt-24` áp mọi desktop, đẩy hero xuống 96px đúng ở màn thấp.
+   Fix: trả lại `md:pt-0`.
+4. Comment cap `10.5vh` sai (nói ">=1000px không bind", thực ra bind dưới ~950px cao). Sửa comment.
+5. Script `responsive-audit.mjs` / `responsive-shots.mjs` import playwright-core bằng path
+   npx cache của máy local → gitignore cả 2 + `careers-after.png`; thêm default cho `argv[2]`.
+
+Verify: `tsc --noEmit` sạch, lint không thêm lỗi mới (91 lỗi còn lại đều pre-existing,
+không nằm ở dòng đã sửa). Chưa commit — chờ sếp duyệt.
+
+Note sandbox: `next dev` bị chặn `listen 0.0.0.0:3000` → phải chạy `dangerouslyDisableSandbox`.
+
+---
+
+## 2026-09-08 (session 3 — deploy fix cdn-proxy; lộ ra thủ phạm THỨ HAI: Cloudflare)
+
+Commit `f5d0e97` + push → CI deploy 1m10s OK. Spine careers-hero lành: sếp đã
+replace asset, DB trỏ `landing/spine/careers-hero/awakened-ancestor-fire-akira-karioka_3.{json,atlas,png}`
+— cả 3 file **200** (path `devil-lord/` trong manifest mồ côi là rác, bỏ qua).
+
+**Nhưng verify production lộ ra fix chưa đủ.** Origin VPS trả đúng
+(`404 + cache-control: no-store`, curl thẳng `127.0.0.1:3000` trên vps6core),
+Cloudflare **ghi đè** header thành `max-age=604800` cho cả 404 (`cf-cache-status: MISS`
+— không cache ở edge nhưng vẫn bơm Browser Cache TTL 7 ngày xuống browser khách).
+File 200 cũng bị đổi `max-age=300` → `604800, must-revalidate`.
+
+→ Zone `tdgamestudio.com` đang set **Browser Cache TTL = 1 week**, không phải
+"Respect Existing Headers". Code không sửa được chuyện này.
+
+**Việc còn lại (sếp làm trên dashboard, 1 click):** Cloudflare → tdgamestudio.com →
+Caching → Configuration → Browser Cache TTL → **Respect Existing Headers**.
+Hoặc hẹp hơn: Cache Rules, match `URI Path starts with /api/cdn-proxy/`,
+Browser TTL = Respect origin. Chưa có CF zone API token trong `.env.local` và
+MCP `cloudflare-api` chưa auth nên không tự làm được.
+
+---
+
 ## 2026-09-08 (session 2 — cache 404 ghim 1 tuần: `/cdn-proxy` rewrite là thủ phạm)
 
 Sếp upload lại `wolf-aquatic.png` (session trước) nhưng site vẫn "Couldn't load
@@ -116,88 +163,6 @@ LẪN VPS đều đang trỏ model này ⇒ AI eval bên /hr trên production c�
 .env.local` trên VPS (`pm2 restart --update-env`), và đổi 5 chỗ fallback hardcode
 trong src (reply, hr/evaluate, blog/reimage, blog/topics, blog/topics/interview).
 Model proxy đang phục vụ: gpt-5.5, gpt-5.6-sol/luna/terra, gpt-6-astra, gpt-image-*.
-
----
-
-## 2026-09-06 (session — Redesign /crm: list + panel chi tiết)
-
-### Task
-Sếp: "/crm khó nhìn và theo dõi quá, design lại" → sau đó "dễ nhìn, dễ hiểu,
-dễ filter hơn".
-
-### Vấn đề gốc
-Không phải màu sắc — là mật độ thông tin. Mỗi lead là 1 card in **full message**,
-5 lead = 3 màn hình cuộn, mắt không có mốc để quét. Status là `<select>` nên phải
-đọc chữ mới biết lead đang ở đâu.
-
-### Work Done — chỉ `src/app/crm/_components/CRMBoard.tsx`, 0 đụng API/DB
-- **List row thay card**: 1 lead = 1 dòng (avatar chữ cái · tên · email · dịch vụ ·
-  ngân sách · preview message 1 dòng · pill trạng thái · "7 ngày"). 5 lead gọn
-  trong ~250px thay vì 3 màn hình.
-- **Panel chi tiết** (slide phải, Esc/click nền đóng): full message cuộn riêng,
-  5 nút đổi trạng thái thay dropdown, textarea ghi chú, nút "Trả lời" mailto.
-- **Dễ hiểu**: hàng tiêu đề cột; nhãn tiếng Việt (Mới / Đã liên hệ / Đã báo giá /
-  Chốt / Trượt) thay `new/contacted/...`.
-- **Dễ nhìn**: vạch dọc màu theo trạng thái đầu mỗi dòng + avatar cùng tông màu →
-  quét trạng thái bằng màu, không phải bằng chữ. Lead `new` chưa có notes thì tên
-  đậm; đã ghi chú thì cột preview đổi thành `✎ <ghi chú>` (biết ngay xử lý tới đâu).
-- **Dễ filter**: click tiêu đề cột để sort (tên / trạng thái / thời gian, toggle
-  chiều); select "Mọi dịch vụ" (options derive từ data, không hardcode nên waitlist
-  tool cũng lọc được); badge "N chưa xử lý" bấm được thành filter; ô tìm kiếm
-  (tên/email/nội dung/notes); nút "Xoá lọc (N)".
-- `COL` object giữ width cột — header và row dùng chung nên luôn thẳng hàng.
-- `sortHead()` là hàm trả JSX, KHÔNG phải component trong render (lint
-  `set-state-in-effect`/component-in-render bắt được lần đầu, đã sửa).
-
-### Result
-`tsc --noEmit` sạch. Lint chỉ còn 1 lỗi `set-state-in-effect` ở effect auto-login
-CÓ TỪ TRƯỚC (cả repo đang 64 lỗi cùng loại) — không đụng.
-Verify bằng Playwright trên dev server với data production thật: list render đúng,
-panel mở đúng lead, sort A→Z + filter "2D Art" ra đúng 2 lead, "Xoá lọc (2)" hiện đúng.
-
-### Next Step
-Chưa commit — chờ sếp duyệt. Chưa làm (chờ khi lead nhiều lên): kanban kéo-thả,
-bulk action, phân trang. Ngưỡng gợi ý: >50 lead/tháng.
-
----
-
-## 2026-09-06 (session — Waitlist email trên card /tools coming-soon)
-
-### Task
-Card coming-soon ở /tools không click được → đổi khoảng chết đó thành ô nhập email
-"báo tôi khi mở" để thu lead ngay giai đoạn này.
-
-### Quyết định: lưu vào `leads` sẵn có, KHÔNG dựng bảng riêng
-Đã định làm `tool_waitlist` riêng, rồi bỏ khi thấy chỗ hiển thị bắt buộc là `/crm`
-(không phải /admin — quản lý nội dung, không phải /hr — ứng viên). Bảng riêng nghĩa
-là CRMBoard phải fetch 2 nguồn + merge 2 kiểu dữ liệu cho thứ chỉ có mỗi cột email.
-→ Dùng `leads` với `source = "tool-waitlist"` (hằng `WAITLIST_SOURCE` ở lib/leads.ts),
-`service = <tên tool>`, `name = phần trước @`. 0 migration.
-
-### Work Done
-- `src/lib/leads.ts` — thêm `WAITLIST_SOURCE`, dùng chung route + CRMBoard.
-- `src/app/api/tools/waitlist/route.ts` (mới) — POST {email, tool}; validate email,
-  slug phải có trong `TOOLS`; select trước insert để bấm 2 lần không đẻ row rác;
-  Discord notify kênh sales fire-and-forget. Không đụng `/api/leads` (giữ nguyên
-  trust boundary của form contact).
-- `src/app/tools/waitlist-form.tsx` (mới) — client component duy nhất của trang,
-  phần còn lại vẫn server-render cho SEO.
-- `src/app/tools/page.tsx` — nhánh coming-soon render form, `mt-auto` cho form
-  thẳng hàng đáy card.
-- `src/app/crm/_components/CRMBoard.tsx` — tách `waitlist` / `pipeline` theo `source`;
-  chip "all" + các chip status chỉ đếm pipeline → cột "new" không bị waitlist làm
-  loãng; thêm chip `waitlist`; badge `source` trên card.
-
-### Result
-`npx tsc --noEmit` sạch. Dev server: /tools 200, screenshot 3 card có ô email
-thẳng hàng. Endpoint: valid → 201, gửi lại → 200 cùng id (dedupe), email xấu → 400,
-tool bịa → 400. Row trong DB đúng format (`service="Image Compressor"`), đã xoá row test.
-
-### Next Step
-Chưa commit/push. Chưa xem `/crm` bằng mắt (CRM_SECRET nằm trong `app_settings`,
-không có ở .env.local) — logic filter chỉ mới verify qua tsc, nên mở /crm xem chip
-`waitlist` một lần khi có key. Chưa có mail xác nhận cho người đăng ký; hiện chỉ
-Discord báo nội bộ.
 
 ---
 

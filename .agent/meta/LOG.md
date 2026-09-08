@@ -1,5 +1,29 @@
 # LOG
 
+## 2026-09-08 (session 4 — self-review pass responsive header/hero + fix 5 findings)
+
+Chạy `/code-review` lên diff responsive chưa commit (site-header + home-hero), ra 5 finding,
+fix hết:
+
+1. **Card stack mất ở 1024–1279px** (`home-hero.tsx`): diff đổi `lg:block` → `xl:block`,
+   mà `switchVideo` chỉ nằm trong `DraggableStack` và không có auto-advance → iPad Pro dọc
+   chỉ xem được media đầu. Fix: trả lại `lg:block`, thêm wrapper `scale-[0.65] xl:scale-100
+   origin-bottom-right` để vừa chỗ. Verify bằng screenshot 1024 + 1280: không đè text.
+2. **Gạch chân nav ăn vào chữ** (`globals.css`): `.nav-link::after` hardcode `left/right:14px`
+   trong khi padding đã thành `clamp(8px,0.75vw,14px)`. Fix: dùng đúng clamp đó cho ::after.
+3. **`md:pt-0` bị xoá** → `pt-24` áp mọi desktop, đẩy hero xuống 96px đúng ở màn thấp.
+   Fix: trả lại `md:pt-0`.
+4. Comment cap `10.5vh` sai (nói ">=1000px không bind", thực ra bind dưới ~950px cao). Sửa comment.
+5. Script `responsive-audit.mjs` / `responsive-shots.mjs` import playwright-core bằng path
+   npx cache của máy local → gitignore cả 2 + `careers-after.png`; thêm default cho `argv[2]`.
+
+Verify: `tsc --noEmit` sạch, lint không thêm lỗi mới (91 lỗi còn lại đều pre-existing,
+không nằm ở dòng đã sửa). Chưa commit — chờ sếp duyệt.
+
+Note sandbox: `next dev` bị chặn `listen 0.0.0.0:3000` → phải chạy `dangerouslyDisableSandbox`.
+
+---
+
 ## 2026-09-08 (session 3 — deploy fix cdn-proxy; lộ ra thủ phạm THỨ HAI: Cloudflare)
 
 Commit `f5d0e97` + push → CI deploy 1m10s OK. Spine careers-hero lành: sếp đã

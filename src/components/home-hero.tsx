@@ -566,7 +566,10 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 className={`leading-[1] font-black ${changaOne.className}`}
                 style={{
                   // ponytail: 8vw cap giữ chữ trong khung trên mobile, desktop vẫn ăn var của admin
-                  fontSize: "min(var(--hero-title-size, 100px), 9vw)",
+                  // ponytail: thêm cap 10.5vh — màn thấp (768px: iPad ngang, laptop 1366x768)
+                  // title 4 dòng đẩy nút CTA xuống dưới fold. Cap bind khi viewport cao
+                  // < ~950px (100px title) → laptop 1440x900 title ~94px, đúng ý.
+                  fontSize: "min(var(--hero-title-size, 100px), 9vw, 10.5vh)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
@@ -580,7 +583,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className={`leading-[1] font-black ${changaOne.className}`}
                 style={{
-                  fontSize: "min(var(--hero-title-size, 100px), 9vw)",
+                  fontSize: "min(var(--hero-title-size, 100px), 9vw, 10.5vh)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
@@ -649,7 +652,10 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
           x: cardsXOffset
         }}
       >
-        <div style={{ transform: "translate(var(--hero-cards-x, 0px), var(--hero-cards-y, 0px))" }}>
+        {/* ponytail: 1024–1279px chỗ hẹp → thu nhỏ stack thay vì ẩn; ẩn thì mất luôn
+            cách chuyển media (switchVideo chỉ nằm ở đây, không có auto-advance). */}
+        <div className="origin-bottom-right scale-[0.65] xl:scale-100">
+          <div style={{ transform: "translate(var(--hero-cards-x, 0px), var(--hero-cards-y, 0px))" }}>
           <DraggableStack
             currentIdx={currentIdx}
             switchVideo={switchVideo}
@@ -662,6 +668,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
             cardVignette={cardVignette}
             mediaList={mediaList}
           />
+          </div>
         </div>
       </motion.div>
 

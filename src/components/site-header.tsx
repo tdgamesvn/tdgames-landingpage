@@ -137,7 +137,7 @@ function QuoteButton({
   scrolled: boolean;
 }) {
   const base =
-    "hidden md:inline-flex items-center gap-2.5 font-black text-[13px] uppercase tracking-[0.12em] transition-all duration-200";
+    "hidden xl:inline-flex shrink-0 whitespace-nowrap items-center gap-2.5 font-black text-[13px] uppercase tracking-[0.12em] transition-all duration-200";
   const font = { fontFamily: "var(--font-nunito-sans)" };
 
   if (style === "amber-clip")
@@ -273,12 +273,14 @@ export default function SiteHeader() {
               alt=""
               width={260}
               height={76}
-              className="h-[46px] w-auto object-contain object-left transition-[filter] duration-300 [filter:drop-shadow(0_0_6px_rgba(245,158,11,0.35))_drop-shadow(0_0_20px_rgba(245,158,11,0.18))] hover:[filter:drop-shadow(0_0_8px_rgba(245,158,11,0.55))_drop-shadow(0_0_26px_rgba(245,158,11,0.28))] md:h-[54px] lg:h-[58px]"
+              className="h-[46px] w-auto object-contain object-left transition-[filter] duration-300 [filter:drop-shadow(0_0_6px_rgba(245,158,11,0.35))_drop-shadow(0_0_20px_rgba(245,158,11,0.18))] hover:[filter:drop-shadow(0_0_8px_rgba(245,158,11,0.55))_drop-shadow(0_0_26px_rgba(245,158,11,0.28))] md:h-[54px] xl:h-[46px] 2xl:h-[58px]"
               priority
             />
           </Link>
 
-          <nav className="hidden md:flex h-full items-center">
+          {/* ponytail: nav 17px cần ~950px; container = 75% viewport → chỉ đủ từ 1280.
+              Dưới đó dùng hamburger, nếu không nav đè logo + nuốt nút CTA (iPad). */}
+          <nav className="hidden xl:flex h-full items-center">
             {navLinks.map((link) => {
               const isActive =
                 ("href" in link && pathname === link.href) ||
@@ -295,12 +297,12 @@ export default function SiteHeader() {
                       className={`nav-link services-trigger inline-flex cursor-default items-center transition-all duration-300 ${isActive ? "active-link" : "text-white"}`}
                       style={{
                         fontFamily: "var(--font-nunito-sans), sans-serif",
-                        fontSize: "17px",
+                        fontSize: "clamp(13px, 1vw, 17px)",
                         fontWeight: 700,
                         letterSpacing: "0.5px",
                         textTransform: "uppercase",
-                        padding: "7px 14px",
-                        margin: "0 5px",
+                        padding: "7px clamp(8px, 0.75vw, 14px)",
+                        margin: "0 clamp(2px, 0.25vw, 5px)",
                         lineHeight: 1,
                       }}
                       aria-haspopup="menu"
@@ -398,12 +400,12 @@ export default function SiteHeader() {
                   className={`nav-link transition-all duration-300 ${isActive ? "active-link" : "text-white"}`}
                   style={{
                     fontFamily: "var(--font-nunito-sans), sans-serif",
-                    fontSize: "17px",
+                    fontSize: "clamp(13px, 1vw, 17px)",
                     fontWeight: 700,
                     letterSpacing: "0.5px",
                     textTransform: "uppercase",
-                    padding: "7px 14px",
-                    margin: "0 5px",
+                    padding: "7px clamp(8px, 0.75vw, 14px)",
+                    margin: "0 clamp(2px, 0.25vw, 5px)",
                     lineHeight: 1,
                   }}
                 >
@@ -417,7 +419,7 @@ export default function SiteHeader() {
             <QuoteButton style={quoteStyle} scrolled={scrolled} />
 
             <button
-              className="md:hidden flex flex-col gap-1.5 p-2.5 rounded-lg border border-white/14 bg-white/6"
+              className="xl:hidden flex flex-col gap-1.5 p-2.5 rounded-lg border border-white/14 bg-white/6"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
             >
@@ -436,7 +438,7 @@ export default function SiteHeader() {
       </div>
 
       {menuOpen && (
-        <div className="mx-5 mt-2 md:hidden rounded-2xl border border-white/12 bg-[#090a0f]/96 backdrop-blur-xl px-5 py-5 flex flex-col gap-2 shadow-[0_18px_36px_rgba(0,0,0,0.5)]">
+        <div className="mx-5 mt-2 xl:hidden rounded-2xl border border-white/12 bg-[#090a0f]/96 backdrop-blur-xl px-5 py-5 flex flex-col gap-2 shadow-[0_18px_36px_rgba(0,0,0,0.5)]">
           {navLinks.map((link) => {
             const isActive =
               ("href" in link && pathname === link.href) ||

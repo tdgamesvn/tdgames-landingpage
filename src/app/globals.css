@@ -480,8 +480,10 @@ html {
   content: "";
   position: absolute;
   bottom: 0px;
-  left: 14px;
-  right: 14px;
+  /* ponytail: khớp padding ngang của nav-link (site-header.tsx) — hardcode 14px
+     làm gạch chân ăn vào chữ khi padding co lại ở 1280–1866px */
+  left: clamp(8px, 0.75vw, 14px);
+  right: clamp(8px, 0.75vw, 14px);
   height: 2px;
   background: #f7a31c;
   border-radius: 2px;
