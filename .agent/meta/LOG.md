@@ -1,5 +1,18 @@
 # LOG
 
+## 2026-09-08 (session 7 — footer: địa chỉ vỡ 7 dòng)
+
+Sếp chê khối địa chỉ trong footer xấu. Nguyên nhân: cột CONTACTS là 1 trong 4 cột chia đều
+(`lg:grid-cols-4`) bên trong khối phải chỉ chiếm `2fr` → rộng ~150px, địa chỉ 69 ký tự vỡ 7 dòng.
+
+Fix (`site-footer.tsx`, 2 class): grid cha `lg:grid-cols-[1.3fr_2fr]` → `[1fr_2.5fr]`;
+grid link `lg:grid-cols-4` → `[2fr_1fr_1fr_1fr]` + siết gap (`lg:gap-x-8 xl:gap-x-10`).
+Kết quả 7 → 4 dòng. Không đụng nội dung (địa chỉ lấy từ `/api/footer`, sếp sửa ở admin).
+
+Muốn còn 2 dòng thì rút text trong admin Footer, bỏ "Phường Vĩnh Tuy" — đã báo sếp.
+
+---
+
 ## 2026-09-08 (session 6 — hero đè logo khi xoay ngang iPad)
 
 Sếp gửi ảnh iPad landscape: dòng "2D ART &" trồi lên chồng vào logo TD GAMES.

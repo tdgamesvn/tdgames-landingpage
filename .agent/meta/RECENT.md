@@ -4,6 +4,28 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-09-08 (session 6 — hero đè logo khi xoay ngang iPad)
+
+Sếp gửi ảnh iPad landscape: dòng "2D ART &" trồi lên chồng vào logo TD GAMES.
+
+Root cause: hero container `flex min-h-screen items-center pt-24 md:pt-0` — từ md trở lên
+KHÔNG chừa chỗ cho header fixed (cao 104px = h-80 + py-3). Màn cao thì thừa chỗ nên không
+lộ; iPad ngang trong Safari chỉ còn ~700px cao, nội dung (~640px) căn giữa → mép trên rơi
+vào vùng header → đè logo.
+
+Fix (`home-hero.tsx`, 2 chỗ):
+- `md:pt-0` → `md:pt-[104px] md:pb-[104px]` — padding đối xứng nên màn cao vẫn căn giữa
+  y như cũ, màn thấp thì nội dung bị đẩy khỏi vùng header. Không dùng `pt` một phía vì
+  sẽ lệch tâm trên desktop.
+- Cap title `10.5vh` → `9vh`: sau khi trừ 208px padding, title 4 dòng ở 700px cao vẫn
+  đẩy CTA khỏi màn (section `overflow-hidden` nên tràn là mất luôn, không scroll được).
+
+Verify screenshot: 1180×700 (iPad ngang + Safari chrome), 1194×834, 1280×1024 — logo không
+bị đè, CTA + dòng "Reply within 24h" đều trong màn. Cap 9vh không bind ở màn cao
+(1366px → 123px > var 100px) nên desktop/iPad dọc không đổi.
+
+---
+
 ## 2026-09-08 (session 5 — fix mascot spine đè nút CTA trên iPad)
 
 Sếp báo lỗi trên iPad: con cá `contact-mascot` đè lên nút GET A FREE QUOTE ở card `//08 CONTACT`
@@ -104,33 +126,6 @@ root cause, giờ đã đóng.
 R2 — sếp mới upload `wolf-aquatic`, chưa upload cái này. Lưu ý slug `careers-hero`
 trong `spine_characters` trỏ tới `awakened-ancestor-fire-akira-karioka_3` (file này
 200, lành) — KHÔNG phải `devil-lord/` như manifest mồ côi ghi.
-
----
-
-## 2026-09-08 (session — Spine careers vỡ: texture bị chính script orphan xoá)
-
-Sếp báo section CAREERS in "Error: Assets could not be loaded" cho
-`awakened-ancestor-special-nebotus-evil-lord_3.png`.
-
-**Nguyên nhân (không phải bug code):** `.png` texture đã bị xoá khỏi R2.
-`scripts/.orphan-manifest.jsonl` có đúng 2 dòng:
-`landing/spine/devil-lord/...evil-lord_3.png` (4.29 MB) và
-`landing/spine/contact-mascot/wolf-aquatic.png` (1.42 MB). Chúng bị
-`backfill-compress.mjs --delete-orphans` (01/08) chuyển sang `trash/2026-08-01/`
-rồi `rclone purge` xoá hẳn ngày 10/08 (LOG session 2 hôm đó). Lý do heuristic sai:
-texture spine CHỈ được tham chiếu từ trong file `.atlas` nằm trên R2, không có
-trong `src/`, `media_assets` hay `page_slots` → luôn bị coi là mồ côi.
-R2 giờ chỉ còn `.json` + `.atlas` cho cả 2 nhân vật; `backup/pre-compress` cũng đã
-purge nên KHÔNG khôi phục được, phải xin lại file gốc từ artist.
-
-**Đã sửa:** `backfill-compress.mjs` — thêm filter loại `landing/spine/` khỏi danh
-sách mồ côi. Dry-run lại: 37 file (37.55 MB), không còn file spine nào.
-`/cdn-proxy` rewrite + `/api/admin/spine/upload` đều bình thường, không đụng.
-
-**Next:** sếp gửi 2 file PNG gốc → upload lại qua /admin tab Spine (hoặc đẩy thẳng
-vào key cũ để khỏi đổi `json_url`/`atlas_url` trong `spine_characters`).
-Cảnh báo phụ: 37 "mồ côi" còn lại phần lớn là video `projects/2026/08/*` — nghi
-false positive tương tự, ĐỪNG chạy `--apply` cho tới khi soát tay.
 
 ---
 

@@ -76,7 +76,7 @@ export default function SiteFooter() {
         className="mx-auto"
         style={{ width: "min(var(--layout-width, 85%), 1240px)" }}
       >
-        <div className="grid gap-10 lg:grid-cols-[1.3fr_2fr] lg:gap-x-12 xl:gap-x-16">
+        <div className="grid gap-10 lg:grid-cols-[1fr_2.5fr] lg:gap-x-12 xl:gap-x-16">
           <div>
             <div className="relative h-10 w-[170px]">
               <Image
@@ -175,7 +175,8 @@ export default function SiteFooter() {
             </div>
           </div>
 
-          <div className="grid min-w-0 gap-x-6 gap-y-10 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-4 lg:gap-x-10 lg:gap-y-8 xl:gap-x-14">
+          {/* ponytail: cột Contacts rộng hơn 3 cột link — địa chỉ dài, chia đều 4 cột thì vỡ 7 dòng */}
+          <div className="grid min-w-0 gap-x-6 gap-y-10 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-x-8 lg:gap-y-8 xl:gap-x-10">
             <div className="min-w-0 sm:max-lg:col-span-2">
               <div
                 className="text-sm font-black uppercase tracking-[0.14em] text-white"
