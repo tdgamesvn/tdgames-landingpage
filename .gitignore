@@ -66,3 +66,6 @@ scripts/.orphan-manifest.jsonl
 
 # ảnh sếp thả vào cho Claude đọc — không commit
 .tmp-screenshots/
+
+# file spine tải về để artist export lại texture — không commit
+spine-recovery/

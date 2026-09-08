@@ -46,6 +46,104 @@ function toSlug(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+/** Flatten 1 entry (file hoặc folder) từ drag-and-drop thành danh sách File. */
+async function collectFiles(entry: FileSystemEntry): Promise<File[]> {
+  if (entry.isFile) {
+    const file = await new Promise<File>((resolve, reject) =>
+      (entry as FileSystemFileEntry).file(resolve, reject)
+    );
+    return [file];
+  }
+  const reader = (entry as FileSystemDirectoryEntry).createReader();
+  const out: File[] = [];
+  // readEntries chỉ trả tối đa ~100 entry mỗi lần → loop đến khi rỗng
+  for (;;) {
+    const batch = await new Promise<FileSystemEntry[]>((resolve, reject) =>
+      reader.readEntries(resolve, reject)
+    );
+    if (batch.length === 0) break;
+    for (const e of batch) out.push(...(await collectFiles(e)));
+  }
+  return out;
+}
+
+/** Một ô duy nhất: kéo cả thư mục Spine (hoặc nhiều file) vào, tự phân loại theo đuôi. */
+function SpineDropZone({
+  jsonFile,
+  skelFile,
+  atlasFile,
+  pngFiles,
+  onFiles,
+}: {
+  jsonFile: File | null;
+  skelFile: File | null;
+  atlasFile: File | null;
+  pngFiles: File[];
+  onFiles: (files: File[]) => void;
+}) {
+  const [over, setOver] = useState(false);
+  const skeleton = skelFile ?? jsonFile;
+
+  return (
+    <label
+      onDragOver={(e) => {
+        e.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setOver(false);
+        const entries = Array.from(e.dataTransfer.items)
+          .map((i) => i.webkitGetAsEntry?.())
+          .filter((x): x is FileSystemEntry => Boolean(x));
+        const dropped = Array.from(e.dataTransfer.files);
+        void (async () => {
+          const files = entries.length
+            ? (await Promise.all(entries.map(collectFiles))).flat()
+            : dropped;
+          if (files.length) onFiles(files);
+        })();
+      }}
+      className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed px-3 py-5 text-center transition ${
+        over
+          ? "border-amber-500 bg-amber-500/10"
+          : "border-white/20 bg-white/3 hover:border-amber-500/50 hover:bg-white/5"
+      }`}
+    >
+      <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+        Kéo cả thư mục Spine vào đây
+      </span>
+      <span className="text-[11px] text-white/25">
+        .json/.skel + .atlas + .png · hoặc click để chọn nhiều file
+      </span>
+      <div className="mt-1 space-y-0.5 text-[11px]">
+        <p className={skeleton ? "text-amber-400" : "text-white/25"}>
+          {skeleton ? `✓ ${skeleton.name}` : "· chưa có .json/.skel"}
+        </p>
+        <p className={atlasFile ? "text-amber-400" : "text-white/25"}>
+          {atlasFile ? `✓ ${atlasFile.name}` : "· chưa có .atlas"}
+        </p>
+        <p className={pngFiles.length ? "text-amber-400" : "text-white/25"}>
+          {pngFiles.length
+            ? `✓ ${pngFiles.length} texture: ${pngFiles.map((f) => f.name).join(", ")}`
+            : "· chưa có texture .png"}
+        </p>
+      </div>
+      <input
+        type="file"
+        accept=".json,.skel,.atlas,.png,.webp"
+        multiple
+        className="sr-only"
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          if (files.length) onFiles(files);
+        }}
+      />
+    </label>
+  );
+}
+
 export function SpineTab({ adminKey }: Props) {
   const [characters, setCharacters] = useState<SpineCharacter[]>([]);
   const [loading, setLoading] = useState(false);
@@ -195,6 +293,28 @@ export function SpineTab({ adminKey }: Props) {
     }
   }
 
+  /** Phân loại file (từ folder drop hoặc multi-select) theo đuôi. */
+  function acceptFiles(files: File[]) {
+    const pngs: File[] = [];
+    for (const f of files) {
+      const n = f.name.toLowerCase();
+      if (n.startsWith(".")) continue; // bỏ .DS_Store & bạn bè
+      if (n.endsWith(".skel")) setSkelFile(f);
+      else if (n.endsWith(".json")) {
+        setJsonFile(f);
+        void parseSpineJson(f);
+      } else if (n.endsWith(".atlas")) setAtlasFile(f);
+      else if (n.endsWith(".png") || n.endsWith(".webp")) pngs.push(f);
+    }
+    if (pngs.length) setPngFiles(pngs);
+    const missing = [
+      files.some((f) => /\.(json|skel)$/i.test(f.name)) ? null : ".json/.skel",
+      files.some((f) => /\.atlas$/i.test(f.name)) ? null : ".atlas",
+      pngs.length ? null : "texture .png",
+    ].filter(Boolean);
+    setMsg(missing.length ? `⚠️ Thư mục thiếu: ${missing.join(", ")}` : "");
+  }
+
   async function handleUploadFiles(): Promise<{ jsonUrl: string; atlasUrl: string }> {
     const slug = form.slug.trim();
     let jsonUrl = form.json_url;
@@ -333,43 +453,6 @@ export function SpineTab({ adminKey }: Props) {
       arr.splice(index + 1, 0, arr[index]);
       return { ...f, animations: arr };
     });
-  }
-
-  // ── File drop zone ─────────────────────────────────────────────────────────
-  function FileZone({
-    label,
-    accept,
-    file,
-    onPick,
-    hint,
-  }: {
-    label: string;
-    accept: string;
-    file: File | null;
-    onPick: (f: File) => void;
-    hint?: string;
-  }) {
-    return (
-      <label className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-white/20 bg-white/3 px-3 py-3 text-center transition hover:border-amber-500/50 hover:bg-white/5">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-          {label}
-        </span>
-        {file ? (
-          <span className="text-xs text-amber-400 break-all">{file.name}</span>
-        ) : (
-          <span className="text-[11px] text-white/25">{hint ?? "Kéo hoặc chọn file"}</span>
-        )}
-        <input
-          type="file"
-          accept={accept}
-          className="sr-only"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onPick(f);
-          }}
-        />
-      </label>
-    );
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -531,51 +614,13 @@ export function SpineTab({ adminKey }: Props) {
                 <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
                   Files Spine (upload → R2 tự động)
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <FileZone
-                    label="JSON (hoặc SKEL)"
-                    accept=".json,.skel"
-                    file={skelFile ?? jsonFile}
-                    onPick={(f) => {
-                      if (f.name.endsWith(".skel")) {
-                        setSkelFile(f);
-                      } else {
-                        setJsonFile(f);
-                        void parseSpineJson(f);
-                      }
-                    }}
-                    hint=".json hoặc .skel"
-                  />
-                  <FileZone
-                    label="Atlas"
-                    accept=".atlas"
-                    file={atlasFile}
-                    onPick={setAtlasFile}
-                    hint=".atlas"
-                  />
-                </div>
-                <label className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-white/20 bg-white/3 px-3 py-3 text-center transition hover:border-amber-500/50 hover:bg-white/5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                    Texture PNGs (có thể chọn nhiều)
-                  </span>
-                  {pngFiles.length > 0 ? (
-                    <span className="text-xs text-amber-400">
-                      {pngFiles.map((f) => f.name).join(", ")}
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-white/25">.png</span>
-                  )}
-                  <input
-                    type="file"
-                    accept=".png,.webp"
-                    multiple
-                    className="sr-only"
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files ?? []);
-                      if (files.length) setPngFiles(files);
-                    }}
-                  />
-                </label>
+                <SpineDropZone
+                  jsonFile={jsonFile}
+                  skelFile={skelFile}
+                  atlasFile={atlasFile}
+                  pngFiles={pngFiles}
+                  onFiles={acceptFiles}
+                />
                 {parsedAnimations.length > 0 && (
                   <p className="text-[10px] text-emerald-400/80">
                     ✓ Parsed {parsedAnimations.length} animations, {parsedSkins.length} skins từ JSON
@@ -638,51 +683,13 @@ export function SpineTab({ adminKey }: Props) {
                     <p className="text-[10px] text-amber-400/70">
                       Chọn file mới để thay thế. Để trống = giữ nguyên file cũ.
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <FileZone
-                        label="JSON (hoặc SKEL)"
-                        accept=".json,.skel"
-                        file={skelFile ?? jsonFile}
-                        onPick={(f) => {
-                          if (f.name.endsWith(".skel")) {
-                            setSkelFile(f);
-                          } else {
-                            setJsonFile(f);
-                            void parseSpineJson(f);
-                          }
-                        }}
-                        hint=".json hoặc .skel"
-                      />
-                      <FileZone
-                        label="Atlas"
-                        accept=".atlas"
-                        file={atlasFile}
-                        onPick={setAtlasFile}
-                        hint=".atlas"
-                      />
-                    </div>
-                    <label className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-white/20 bg-white/3 px-3 py-3 text-center transition hover:border-amber-500/50 hover:bg-white/5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                        Texture PNGs (có thể chọn nhiều)
-                      </span>
-                      {pngFiles.length > 0 ? (
-                        <span className="text-xs text-amber-400">
-                          {pngFiles.map((f) => f.name).join(", ")}
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-white/25">.png</span>
-                      )}
-                      <input
-                        type="file"
-                        accept=".png,.webp"
-                        multiple
-                        className="sr-only"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files ?? []);
-                          if (files.length) setPngFiles(files);
-                        }}
-                      />
-                    </label>
+                    <SpineDropZone
+                      jsonFile={jsonFile}
+                      skelFile={skelFile}
+                      atlasFile={atlasFile}
+                      pngFiles={pngFiles}
+                      onFiles={acceptFiles}
+                    />
                     {parsedAnimations.length > 0 && (
                       <p className="text-[10px] text-emerald-400/80">
                         ✓ Parsed {parsedAnimations.length} animations, {parsedSkins.length} skins từ JSON

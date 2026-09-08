@@ -1,5 +1,32 @@
 # LOG
 
+## 2026-09-08 (session — Spine careers vỡ: texture bị chính script orphan xoá)
+
+Sếp báo section CAREERS in "Error: Assets could not be loaded" cho
+`awakened-ancestor-special-nebotus-evil-lord_3.png`.
+
+**Nguyên nhân (không phải bug code):** `.png` texture đã bị xoá khỏi R2.
+`scripts/.orphan-manifest.jsonl` có đúng 2 dòng:
+`landing/spine/devil-lord/...evil-lord_3.png` (4.29 MB) và
+`landing/spine/contact-mascot/wolf-aquatic.png` (1.42 MB). Chúng bị
+`backfill-compress.mjs --delete-orphans` (01/08) chuyển sang `trash/2026-08-01/`
+rồi `rclone purge` xoá hẳn ngày 10/08 (LOG session 2 hôm đó). Lý do heuristic sai:
+texture spine CHỈ được tham chiếu từ trong file `.atlas` nằm trên R2, không có
+trong `src/`, `media_assets` hay `page_slots` → luôn bị coi là mồ côi.
+R2 giờ chỉ còn `.json` + `.atlas` cho cả 2 nhân vật; `backup/pre-compress` cũng đã
+purge nên KHÔNG khôi phục được, phải xin lại file gốc từ artist.
+
+**Đã sửa:** `backfill-compress.mjs` — thêm filter loại `landing/spine/` khỏi danh
+sách mồ côi. Dry-run lại: 37 file (37.55 MB), không còn file spine nào.
+`/cdn-proxy` rewrite + `/api/admin/spine/upload` đều bình thường, không đụng.
+
+**Next:** sếp gửi 2 file PNG gốc → upload lại qua /admin tab Spine (hoặc đẩy thẳng
+vào key cũ để khỏi đổi `json_url`/`atlas_url` trong `spine_characters`).
+Cảnh báo phụ: 37 "mồ côi" còn lại phần lớn là video `projects/2026/08/*` — nghi
+false positive tương tự, ĐỪNG chạy `--apply` cho tới khi soát tay.
+
+---
+
 ## 2026-09-06 (session — /tools đồng bộ style với /blog)
 
 Sếp: "/tools không đồng bộ với các tab khác, tham khảo tab Blog".
@@ -4467,3 +4494,32 @@ Mac tắt. Preflight `curl` trong workflow qua được vì nó chạy lúc 05:1
 
 ### Next
 Không có. Theo dõi run sáng mai.
+
+---
+
+## 2026-09-08 (session — Spine admin: kéo cả thư mục vào 1 ô)
+
+### Hỏi/đáp
+Sếp hỏi có cần đổi `.atlas` → `.atlas.txt` không. **Không.** Đó là workaround cho
+static host không biết MIME của `.atlas`; repo này đã set `text/plain` ở
+`api/admin/spine/upload/route.ts:13` và fallback ở `api/cdn-proxy/[...path]/route.ts:56`.
+Đổi sang `.txt` còn buộc thêm `.txt` vào `ALLOWED_EXTENSIONS` của proxy → mở rộng
+bề mặt vô ích.
+
+### Việc đã làm
+`SpineTab.tsx` — thay 3 ô chọn file lẻ (JSON/SKEL, Atlas, PNGs) bằng **1 drop zone**
+`SpineDropZone`: kéo nguyên thư mục Spine export vào, `collectFiles()` duyệt
+`webkitGetAsEntry()` (loop `readEntries` vì batch tối đa ~100), `acceptFiles()` phân
+loại theo đuôi + cảnh báo file thiếu. Click vẫn mở multi-select file. Áp cho cả
+create mode lẫn "thay thế file" trong edit mode. Xoá `FileZone` (không còn dùng).
+
+Không dùng `webkitdirectory` trên input — nó khoá click thành chỉ-chọn-folder,
+mất khả năng thay 1 file lẻ.
+
+### Result
+`tsc --noEmit` sạch. Lint: chỉ còn 2 lỗi `no-unescaped-entities` ở dòng 830 (có sẵn
+từ trước, không đụng). Chưa test trên browser thật — cần admin key.
+
+### Next
+Sếp thử kéo thư mục ở /admin → tab Spine. Nếu Safari không trả entry cho folder thì
+fallback `dataTransfer.files` sẽ nhận file lẻ (đã có sẵn nhánh đó).

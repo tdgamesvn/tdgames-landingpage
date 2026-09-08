@@ -4,6 +4,33 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-09-08 (session — Spine careers vỡ: texture bị chính script orphan xoá)
+
+Sếp báo section CAREERS in "Error: Assets could not be loaded" cho
+`awakened-ancestor-special-nebotus-evil-lord_3.png`.
+
+**Nguyên nhân (không phải bug code):** `.png` texture đã bị xoá khỏi R2.
+`scripts/.orphan-manifest.jsonl` có đúng 2 dòng:
+`landing/spine/devil-lord/...evil-lord_3.png` (4.29 MB) và
+`landing/spine/contact-mascot/wolf-aquatic.png` (1.42 MB). Chúng bị
+`backfill-compress.mjs --delete-orphans` (01/08) chuyển sang `trash/2026-08-01/`
+rồi `rclone purge` xoá hẳn ngày 10/08 (LOG session 2 hôm đó). Lý do heuristic sai:
+texture spine CHỈ được tham chiếu từ trong file `.atlas` nằm trên R2, không có
+trong `src/`, `media_assets` hay `page_slots` → luôn bị coi là mồ côi.
+R2 giờ chỉ còn `.json` + `.atlas` cho cả 2 nhân vật; `backup/pre-compress` cũng đã
+purge nên KHÔNG khôi phục được, phải xin lại file gốc từ artist.
+
+**Đã sửa:** `backfill-compress.mjs` — thêm filter loại `landing/spine/` khỏi danh
+sách mồ côi. Dry-run lại: 37 file (37.55 MB), không còn file spine nào.
+`/cdn-proxy` rewrite + `/api/admin/spine/upload` đều bình thường, không đụng.
+
+**Next:** sếp gửi 2 file PNG gốc → upload lại qua /admin tab Spine (hoặc đẩy thẳng
+vào key cũ để khỏi đổi `json_url`/`atlas_url` trong `spine_characters`).
+Cảnh báo phụ: 37 "mồ côi" còn lại phần lớn là video `projects/2026/08/*` — nghi
+false positive tương tự, ĐỪNG chạy `--apply` cho tới khi soát tay.
+
+---
+
 ## 2026-09-06 (session — /tools đồng bộ style với /blog)
 
 Sếp: "/tools không đồng bộ với các tab khác, tham khảo tab Blog".
@@ -17,6 +44,14 @@ watermark "TOOLS" + glow amber + eyebrow `// Toolbox` + count + `<AccentHighligh
 + divider gradient đáy; grid 2 cột card `rounded-xl bg-white/[0.03]`; màu chốt lại
 `#f59e0b`. Nunito Sans thêm subset `vietnamese` (blog chỉ latin, /tools có dấu).
 Vẫn là server component — SEO không đổi.
+
+**Ngôn ngữ site = TIẾNG ANH** (sếp chốt). Đã dịch toàn bộ text hiển thị của /tools
+(page + tools.ts blurb + waitlist form) sang tiếng Anh, bỏ subset `vietnamese` khỏi
+Nunito Sans. Comment trong code vẫn tiếng Việt (team đọc, không hiển thị).
+Quét cả src: chỉ còn 2 chỗ public sai → đã sửa: meta description `/showreel` (viết
+tiếng Việt) và mũi tên "Back to Portfolio" ở 2 case study bị mojibake `â†` → `&larr;`.
+Chuỗi tiếng Việt còn lại đều nằm trong /admin, /crm, /hr, banner preview draft —
+nội bộ, giữ nguyên.
 
 ## 2026-09-06 (session — AI gợi ý email trả lời lead ở /crm)
 
@@ -280,32 +315,6 @@ phải từ `.env.local` hay `.env.local` trên VPS.
 Sếp xem lại /blog. Nếu vẫn thấy trùng: bơm `cover_prompt` của N bài gần nhất vào
 prompt để loại archetype đã dùng (random hiện chưa nhớ lịch sử, ~1/7 trùng
 liên tiếp).
-
----
-
-## 2026-08-03 (session — fix hero title tràn khung trên mobile)
-### Task
-Sếp gửi ảnh mobile: title "2D ART & ANIMATION OUTSOURCING STUDIO" bị cắt chữ
-("ANIMAT|", "OUTSOU") và đè lên logo header.
-
-### Nguyên nhân
-`--hero-title-size` mặc định **100px cố định** (không responsive) trong
-`home-hero.tsx`; container hero `width: var(--layout-width, 75%)` → trên màn
-~390px khung chữ chỉ ~290px, chữ 100px tràn ra và bị `overflow-hidden` cắt.
-Hero căn `items-center` không chừa chỗ cho header fixed → chữ đè logo.
-
-### Work Done
-- `src/components/home-hero.tsx` — 2 dòng title:
-  `fontSize: min(var(--hero-title-size, 100px), 8vw)` → desktop (>1250px) vẫn
-  ăn giá trị admin set, mobile tự co.
-- Container hero thêm `pt-24 md:pt-0` để không chui dưới header fixed.
-
-### Result
-Playwright viewport 393×852: title fit 2 dòng, không cắt, không đè logo;
-`scrollWidth == clientWidth` (không có overflow ngang). Impact LOW (0 caller).
-
-### Next Step
-Sếp duyệt → commit + push main (CI tự deploy).
 
 ---
 

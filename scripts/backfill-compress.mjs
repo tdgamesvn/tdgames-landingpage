@@ -222,6 +222,10 @@ async function deleteOrphans() {
   const used = await collectUsedKeys();
   const orphans = all
     .filter((o) => !o.Key.startsWith(BACKUP_PREFIX) && !o.Key.startsWith(TRASH_PREFIX))
+    // Texture spine chỉ được tham chiếu TRONG file .atlas (nằm trên R2), không bao
+    // giờ xuất hiện trong src/ hay DB → heuristic luôn coi là mồ côi. Đã mất 2 file
+    // vì lỗi này (01/08/2026, xoá hẳn 10/08) → cả thư mục miễn nhiễm.
+    .filter((o) => !o.Key.startsWith("landing/spine/"))
     .filter((o) => o.Size > MIN_BYTES)
     .filter((o) => MIME[ext(o.Key)])
     .filter((o) => !used.has(o.Key))
