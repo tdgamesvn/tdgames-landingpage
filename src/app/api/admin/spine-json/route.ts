@@ -27,6 +27,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "URL not allowed" }, { status: 403 });
   }
 
+  // ?check=1 → chỉ hỏi file còn tồn tại không (dùng cho texture .png, khỏi tải cả file)
+  if (searchParams.get("check")) {
+    try {
+      const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+      return NextResponse.json({ ok: res.ok, status: res.status });
+    } catch {
+      return NextResponse.json({ ok: false, status: 0 });
+    }
+  }
+
   try {
     const res = await fetch(url, { next: { revalidate: 0 } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

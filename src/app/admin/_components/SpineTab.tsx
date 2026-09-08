@@ -157,6 +157,9 @@ export function SpineTab({ adminKey }: Props) {
   const [parsedSkins, setParsedSkins] = useState<string[]>([]);
   const [parsedAnimations, setParsedAnimations] = useState<string[]>([]);
 
+  // texture pages đọc từ file .atlas trên CDN (DB không lưu texture)
+  const [textures, setTextures] = useState<{ name: string; ok: boolean | null }[]>([]);
+
   // file uploads
   const [jsonFile, setJsonFile] = useState<File | null>(null);
   const [skelFile, setSkelFile] = useState<File | null>(null);
@@ -213,6 +216,7 @@ export function SpineTab({ adminKey }: Props) {
     if (c.json_url?.endsWith(".json")) {
       void fetchAndParseJsonUrl(c.json_url);
     }
+    if (c.atlas_url) void loadTextures(c.atlas_url);
   }
 
   function closeEditor() {
@@ -234,6 +238,52 @@ export function SpineTab({ adminKey }: Props) {
   function resetParsed() {
     setParsedSkins([]);
     setParsedAnimations([]);
+    setTextures([]);
+  }
+
+  /**
+   * Texture PNG không nằm trong DB — tên trang texture chỉ có trong file .atlas.
+   * Đọc .atlas trên CDN, lấy tên các trang, rồi HEAD từng file xem còn sống không.
+   */
+  async function loadTextures(atlasUrl: string) {
+    const ask = (url: string, check = false) =>
+      fetch(
+        `/api/admin/spine-json?${check ? "check=1&" : ""}url=${encodeURIComponent(url)}`,
+        { headers: { "x-admin-key": adminKey } }
+      );
+
+    try {
+      const res = await ask(atlasUrl);
+      if (!res.ok) return;
+      const text = await res.text();
+      // Trang texture = dòng chỉ chứa tên file ảnh (không thụt đầu dòng như bounds/rotate)
+      const names = [
+        ...new Set(
+          text
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter((l) => /^[^:]+\.(png|webp)$/i.test(l))
+        ),
+      ];
+      if (names.length === 0) return;
+      setTextures(names.map((name) => ({ name, ok: null })));
+
+      const base = atlasUrl.slice(0, atlasUrl.lastIndexOf("/") + 1);
+      const checked = await Promise.all(
+        names.map(async (name) => {
+          try {
+            const r = await ask(base + name, true);
+            const j = (await r.json()) as { ok?: boolean };
+            return { name, ok: Boolean(j.ok) };
+          } catch {
+            return { name, ok: false };
+          }
+        })
+      );
+      setTextures(checked);
+    } catch {
+      // im lặng — chỉ là thông tin phụ trợ
+    }
   }
 
   // ── Parse Spine JSON client-side ────────────────────────────────────────────
@@ -658,6 +708,42 @@ export function SpineTab({ adminKey }: Props) {
                         </p>
                       ) : (
                         <p className="text-[11px] text-red-400/60">Chưa có file</p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Texture — DB không lưu, đọc tên từ chính file .atlas */}
+                  <div className="flex items-start gap-2">
+                    <span
+                      className={`shrink-0 text-xs leading-4 ${
+                        textures.some((t) => t.ok === false)
+                          ? "text-red-400"
+                          : textures.length > 0 && textures.every((t) => t.ok)
+                          ? "text-emerald-400"
+                          : "text-white/30"
+                      }`}
+                    >
+                      {textures.some((t) => t.ok === false) ? "✕" : "✓"}
+                    </span>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                        Texture (theo .atlas)
+                      </span>
+                      {textures.length === 0 ? (
+                        <p className="text-[11px] text-white/30">
+                          {form.atlas_url ? "Đang đọc .atlas…" : "Chưa có atlas để đọc"}
+                        </p>
+                      ) : (
+                        textures.map((t) => (
+                          <p
+                            key={t.name}
+                            className={`font-mono text-[11px] truncate ${
+                              t.ok === false ? "text-red-400" : "text-white/60"
+                            }`}
+                            title={t.name}
+                          >
+                            {t.ok === null ? "…" : t.ok ? "✓" : "❌ mất trên CDN"} {t.name}
+                          </p>
+                        ))
                       )}
                     </div>
                   </div>
