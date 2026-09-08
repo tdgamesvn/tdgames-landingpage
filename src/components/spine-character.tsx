@@ -19,8 +19,8 @@
  *
  * Usage:
  *   <SpineCharacter
- *     jsonUrl="/cdn-proxy/landing/spine/hero/hero.json"
- *     atlasUrl="/cdn-proxy/landing/spine/hero/hero.atlas"
+ *     jsonUrl="/api/cdn-proxy/landing/spine/hero/hero.json"
+ *     atlasUrl="/api/cdn-proxy/landing/spine/hero/hero.atlas"
  *     animation="idle"
  *     scale={1.2}
  *     offsetX={-20}

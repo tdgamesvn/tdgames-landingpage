@@ -7,16 +7,11 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["framer-motion"],
   },
-  // Proxy CDN assets through same origin to avoid CORS when fetched via XHR/fetch
-  // (e.g. Spine player loads .json + .atlas + textures via XMLHttpRequest)
-  async rewrites() {
-    return [
-      {
-        source: "/cdn-proxy/:path*",
-        destination: "https://cdn.tdgamestudio.com/:path*",
-      },
-    ];
-  },
+  // Không thêm lại rewrite `/cdn-proxy/:path*` → cdn.tdgamestudio.com. Rewrite
+  // proxy thẳng ra R2 nên response giữ nguyên `Cache-Control: max-age=604800`
+  // của R2, áp cho CẢ 404 → browser khách ghim lỗi 1 tuần, purge Cloudflare
+  // không dọn được. Dùng route handler `/api/cdn-proxy/[...path]` (nó set
+  // no-store cho lỗi và max-age ngắn cho 200).
   images: {
     remotePatterns: [
       {

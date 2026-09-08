@@ -71,8 +71,10 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": contentType,
-        // Allow browser to cache for 1 hour
-        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+        // ponytail: 5 phút, không phải 1 giờ. Spine asset bị thay tại chỗ (trùng
+        // tên → trùng URL) nên max-age chính là độ trễ khách thấy bản mới.
+        // Nâng lên nếu origin thấy tải; muốn tức thì thì phải purge lúc upload.
+        "Cache-Control": "public, max-age=300, stale-while-revalidate=86400",
         // CORS — allow same-site requests
         "Access-Control-Allow-Origin": "*",
       },

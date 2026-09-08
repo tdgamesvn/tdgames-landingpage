@@ -1,5 +1,42 @@
 # LOG
 
+## 2026-09-08 (session 2 — cache 404 ghim 1 tuần: `/cdn-proxy` rewrite là thủ phạm)
+
+Sếp upload lại `wolf-aquatic.png` (session trước) nhưng site vẫn "Couldn't load
+image". Hard refresh + tab ẩn danh đều vô dụng.
+
+**Bẫy chẩn đoán:** `curl -I` (HEAD) trả 200 nên tưởng đã lành. `curl` GET mới lộ
+`404 + cf-cache-status: HIT + age: 11981`. **HEAD không trúng cache entry — luôn
+dùng GET khi soi cache.**
+
+**Root cause:** site gọi `/cdn-proxy/...` → rewrite ở `next.config.ts` proxy
+THẲNG ra R2 → response giữ nguyên `Cache-Control: max-age=604800` của R2, áp cho
+cả 404. Browser ghim lỗi 1 tuần; purge Cloudflare chỉ dọn edge nên không cứu
+được. `Cmd+Shift+R` cũng vô dụng vì SpinePlayer nạp texture bằng XHR lúc runtime,
+hard reload không bypass cache cho request do JS bắn ra sau khi trang đã load.
+
+Route handler `/api/cdn-proxy/[...path]` từ đầu đã xử lý đúng (no-store cho lỗi)
+nhưng **không ai gọi** — code đúng nằm chết, site đi đường rewrite sai.
+
+**Đã sửa (4 file):** `proxyCdnUrl()` → `/api/cdn-proxy/`; xoá hẳn rewrite trong
+`next.config.ts` (kèm comment cảnh báo đừng thêm lại); route `max-age` 3600→300
+vì Spine asset bị thay tại chỗ nên max-age chính là độ trễ khách thấy bản mới;
+sửa docstring `spine-character.tsx`.
+
+**Verify:** file thật→200+max-age=300; file thiếu→**404+no-store**; `/cdn-proxy/`
+cũ→404 không còn proxy; `.html`→403. `npm run build` pass. 91 lint problem là nợ
+có sẵn (home-page-lower:217,258), không do thay đổi này.
+
+**Giải thích được bug cũ:** LOG:4543 "upload xong không tự động reload" — cùng
+root cause, giờ đã đóng.
+
+**Next:** deploy chưa chạy (chờ sếp). `devil-lord/...evil-lord_3.png` VẪN 404 trên
+R2 — sếp mới upload `wolf-aquatic`, chưa upload cái này. Lưu ý slug `careers-hero`
+trong `spine_characters` trỏ tới `awakened-ancestor-fire-akira-karioka_3` (file này
+200, lành) — KHÔNG phải `devil-lord/` như manifest mồ côi ghi.
+
+---
+
 ## 2026-09-08 (session — Spine careers vỡ: texture bị chính script orphan xoá)
 
 Sếp báo section CAREERS in "Error: Assets could not be loaded" cho

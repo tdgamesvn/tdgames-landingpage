@@ -376,10 +376,18 @@ type SpineCharacterData = {
   mix_duration: number;
 };
 
-/** Rewrite cdn.tdgamestudio.com URLs through the same-origin proxy to avoid CORS */
+/**
+ * Rewrite cdn.tdgamestudio.com URLs through the same-origin proxy to avoid CORS.
+ *
+ * Phải trỏ vào route handler `/api/cdn-proxy/`, KHÔNG phải rewrite `/cdn-proxy/`.
+ * Rewrite đi thẳng ra R2 nên response giữ nguyên `Cache-Control` của R2
+ * (`max-age=604800`) — kể cả khi R2 trả 404. Hậu quả: một file lỡ thiếu một nhịp
+ * là browser của khách ghim bản 404 suốt 1 tuần, purge Cloudflare không cứu được
+ * vì purge chỉ dọn edge. Route handler trả `no-store` cho mọi response lỗi.
+ */
 function proxyCdnUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  return url.replace("https://cdn.tdgamestudio.com/", "/cdn-proxy/");
+  return url.replace("https://cdn.tdgamestudio.com/", "/api/cdn-proxy/");
 }
 
 /** Fetch tất cả active Spine characters 1 lần, proxy CDN URLs */

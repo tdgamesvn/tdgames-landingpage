@@ -4,6 +4,43 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-09-08 (session 2 — cache 404 ghim 1 tuần: `/cdn-proxy` rewrite là thủ phạm)
+
+Sếp upload lại `wolf-aquatic.png` (session trước) nhưng site vẫn "Couldn't load
+image". Hard refresh + tab ẩn danh đều vô dụng.
+
+**Bẫy chẩn đoán:** `curl -I` (HEAD) trả 200 nên tưởng đã lành. `curl` GET mới lộ
+`404 + cf-cache-status: HIT + age: 11981`. **HEAD không trúng cache entry — luôn
+dùng GET khi soi cache.**
+
+**Root cause:** site gọi `/cdn-proxy/...` → rewrite ở `next.config.ts` proxy
+THẲNG ra R2 → response giữ nguyên `Cache-Control: max-age=604800` của R2, áp cho
+cả 404. Browser ghim lỗi 1 tuần; purge Cloudflare chỉ dọn edge nên không cứu
+được. `Cmd+Shift+R` cũng vô dụng vì SpinePlayer nạp texture bằng XHR lúc runtime,
+hard reload không bypass cache cho request do JS bắn ra sau khi trang đã load.
+
+Route handler `/api/cdn-proxy/[...path]` từ đầu đã xử lý đúng (no-store cho lỗi)
+nhưng **không ai gọi** — code đúng nằm chết, site đi đường rewrite sai.
+
+**Đã sửa (4 file):** `proxyCdnUrl()` → `/api/cdn-proxy/`; xoá hẳn rewrite trong
+`next.config.ts` (kèm comment cảnh báo đừng thêm lại); route `max-age` 3600→300
+vì Spine asset bị thay tại chỗ nên max-age chính là độ trễ khách thấy bản mới;
+sửa docstring `spine-character.tsx`.
+
+**Verify:** file thật→200+max-age=300; file thiếu→**404+no-store**; `/cdn-proxy/`
+cũ→404 không còn proxy; `.html`→403. `npm run build` pass. 91 lint problem là nợ
+có sẵn (home-page-lower:217,258), không do thay đổi này.
+
+**Giải thích được bug cũ:** LOG:4543 "upload xong không tự động reload" — cùng
+root cause, giờ đã đóng.
+
+**Next:** deploy chưa chạy (chờ sếp). `devil-lord/...evil-lord_3.png` VẪN 404 trên
+R2 — sếp mới upload `wolf-aquatic`, chưa upload cái này. Lưu ý slug `careers-hero`
+trong `spine_characters` trỏ tới `awakened-ancestor-fire-akira-karioka_3` (file này
+200, lành) — KHÔNG phải `devil-lord/` như manifest mồ côi ghi.
+
+---
+
 ## 2026-09-08 (session — Spine careers vỡ: texture bị chính script orphan xoá)
 
 Sếp báo section CAREERS in "Error: Assets could not be loaded" cho
@@ -161,160 +198,6 @@ Chưa commit/push. Chưa xem `/crm` bằng mắt (CRM_SECRET nằm trong `app_se
 không có ở .env.local) — logic filter chỉ mới verify qua tsc, nên mở /crm xem chip
 `waitlist` một lần khi có key. Chưa có mail xác nhận cho người đăng ký; hiện chỉ
 Discord báo nội bộ.
-
----
-
-## 2026-09-06 (session — Trang /tools: hub + khung, tất cả Coming soon)
-### Task
-Sếp muốn một trang Tools để sau này đổ các tool cho user dùng. Tool cụ thể chưa
-có, sếp sẽ gửi sau (ví dụ: nén ảnh, AI upscale, Spine auto rig+mesh, export VFX).
-Mục tiêu: SEO/lead + tiện ích thật cho artist + nội bộ dùng. Public trước, login
-sau vì nhiều tool sẽ phải giới hạn lượt dùng/user.
-
-### Phát hiện quan trọng khi brainstorm
-4 tool ví dụ của sếp thuộc 2 lớp khác hẳn nhau:
-- **browser** (nén ảnh, crop, convert): chạy trên máy user → 0đ, và **không đếm
-  được lượt dùng**. Cứ để free vô hạn, đúng mục tiêu SEO.
-- **server** (AI upscale, Spine auto rig, export VFX): tốn CPU/GPU → **bắt buộc**
-  login + quota.
-⇒ Quota chỉ áp được cho lớp server. Chi tiết ở DECISIONS.md.
-
-### Work Done
-- `src/app/tools/tools.ts` — mảng literal 4 tool, mỗi tool có `status`
-  (live|coming-soon) và `runsOn` (browser|server). Đây là toàn bộ "registry".
-- `src/app/tools/page.tsx` — hub, **server component** (bắt buộc, nếu "use client"
-  cả trang thì Google không đọc được → mất mục tiêu SEO). Grid card + CTA
-  `/contact`. Card coming-soon là `<div>` không click được.
-- `site-header.tsx` — thêm `{ label: "TOOLS", href: "/tools" }` (1 dòng).
-- `sitemap.ts` — thêm `/tools`. **Chưa** thêm URL từng tool vì chưa có trang thật.
-
-### Result
-`npx tsc --noEmit` sạch. Lint: 94 vấn đề nhưng **không cái nào** ở file vừa sửa
-(toàn bộ là nợ cũ). `npm run build` pass, `/tools` là `○ (Static)` — prerender,
-tốt cho SEO. Screenshot localhost xác nhận layout đúng theme amber/#0a0a0a.
-⚠ Build/dev cần `dangerouslyDisableSandbox: true` — sandbox chặn Google Fonts.
-
-### Next Step
-Chờ sếp gửi tool đầu tiên. Thêm tool = 1 thư mục `src/app/tools/<slug>/` +
-1 object vào mảng. Tool loại server phải gọi qua `/api/tools/<slug>` (chỗ nối để
-sau gắn auth+quota một lần cho tất cả) — route này **chưa tạo**, tạo khi có tool
-server thật đầu tiên.
-
-## 2026-08-29 (session — Privacy Policy + Terms of Use mở rộng cho game mobile)
-### Task
-Sếp cần 2 trang policy để publish game lên Google Play + App Store. Bản viết
-trước đó (28/08) chỉ bao website studio — store đòi policy mô tả đúng dữ liệu
-app thu thập.
-
-### Quyết định kiến trúc
-KHÔNG tách `/games/<slug>/privacy-policy`. Một URL chung cho cả studio là hợp
-lệ với cả 2 store — họ chỉ đòi policy công khai mô tả đúng thực tế thu thập,
-không đòi mỗi app một trang. Giữ nguyên `/privacy-policy` + `/terms-of-use`,
-viết theo hướng "website AND all our games". Ra game mới → không đẻ route.
-Chỉ tách khi một game lệch data profile (game trẻ <13 → COPPA/Families, hoặc
-game có đăng nhập tài khoản).
-
-### Giả định đã dùng (sếp chốt "mặc định")
-ads + IAP + Firebase Analytics/Crashlytics, KHÔNG có tài khoản đăng nhập,
-13+, publish cả Google Play lẫn App Store.
-
-### Work Done
-- `src/app/privacy-policy/page.tsx` — thêm section: Information Our Apps
-  Collect, Analytics in Our Apps (Firebase), Advertising (opt-out Android Ads
-  ID + iOS ATT), In-App Purchases. Mở rộng Definitions (Apps, Device
-  Identifiers), Use of Data, Service Providers, Data Retention (14 tháng
-  analytics), Your Rights (cách xoá data khi không có account).
-  **Children's Privacy: 18 → 13** (game 13+, không phải site 18+).
-- `src/app/terms-of-use/page.tsx` — thêm section: Eligibility (13+), Licence
-  to Play Our Games (cấm cheat/mod/reverse-engineer, cho phép làm video
-  gameplay), In-App Purchases and Virtual Items (virtual currency không có giá
-  trị thật, refund qua store), Advertising in Free Games, App Store Terms
-  (Apple là third-party beneficiary — điều khoản Apple bắt buộc),
-  Updates/Discontinuation, Termination. Mở rộng IP sang asset trong game.
-- Cả 2 file: bump `updated` → 29 August 2026.
-- Không đụng `src/components/legal-page.tsx` — component sẵn có đủ dùng.
-
-### Result
-`tsc --noEmit` + `eslint` sạch. `detect_changes` → risk LOW, 0 execution flow
-bị ảnh hưởng (chỉ sửa const array trong 2 page leaf).
-
-### Next Step
-- CHƯA commit/deploy — chờ sếp xác nhận giả định SDK.
-- Khi khai Data Safety (Play) / Privacy Nutrition Label (App Store) phải khớp
-  đúng danh sách này: Device/Advertising ID, gameplay usage, crash logs,
-  purchase confirmation, approximate location (IP-level). Khai lệch = lý do
-  bị từ chối phổ biến nhất.
-- Nếu game thật KHÔNG có ads hoặc KHÔNG có IAP → phải cắt section tương ứng,
-  đừng để policy khai thừa.
-
-
-### Bổ sung (cùng ngày)
-- Email liên hệ 2 trang legal: `tdgames.vn@gmail.com` → `privacy@tdgamestudio.com`
-  (alias Google Workspace trên tài khoản toan.dang@, đã bật "Send mail as" +
-  "Reply from the same address"). Contact section marketing giữ gmail cũ.
-- `src/components/legal-page.tsx` — thêm `linkifyEmails()`: split string theo
-  capture group của regex email, index lẻ = email → render `<a href="mailto:">`
-  màu amber-400. Không đổi kiểu `LegalSection`, data vẫn là string thuần.
-- Pháp nhân đã chốt: Developer account mở bằng **TD GAMES COMPANY LIMITED**
-  → policy giữ nguyên tên + địa chỉ. TD Consulting chỉ là reseller bán
-  Workspace, không liên quan store.
-- Gotcha: Cloudflare Email Obfuscation viết lại `href` thành
-  `/cdn-cgi/l/email-protection#...` trong HTML thô → `curl | grep mailto` ra
-  rỗng, tưởng hỏng. Verify bằng Playwright: DOM thật có `mailto:` + màu đúng.
-  Muốn tắt: Cloudflare → Scrape Shield → Email Address Obfuscation.
-
-## 2026-08-17 (session — phá thế "cover blog nào cũng giống nhau")
-### Task
-Sếp gửi screenshot /blog: 8/8 cover là cùng một ảnh — một anh cartoon râu-kính
-đứng chính giữa, cầm vật phát sáng, một vòng icon lơ lửng quanh, nền xanh-đen.
-
-### Nguyên nhân
-Không phải AI lười — `COVER_RULES` (`src/lib/blog-ai.ts`) ép đúng cái đó:
-"Prefer a living hero subject… large and centred" + "One clear focal subject…
-simple uncluttered background" + "One dramatic light source — warm amber rim
-light". Generator giải yêu cầu "depth" bằng cách rắc icon quanh nhân vật.
-Dòng khuyên mềm "VARY IT BETWEEN POSTS" vô hiệu vì mỗi bài dựng trong một AI
-call độc lập — AI không hề thấy cover của bài trước để mà tránh.
-
-### Work Done
-- `src/lib/blog-ai.ts` — `COVER_RULES` (const) → `coverRules()` (function).
-  Mỗi lần gọi bốc ngẫu nhiên 1 trong 7 **archetype** (hero character /
-  establishing environment / prop still life / process strip / isometric
-  diorama / split composition / macro close-up) + 1 trong 6 **accent palette**,
-  nhét vào prompt như yêu cầu BẮT BUỘC, không phải gợi ý.
-- Thay dòng "prefer a living hero subject" bằng luật trung tính: cần MỘT hình
-  khối trội đọc được ở 200px, không nhất thiết phải là nhân vật.
-- Thêm lệnh cấm rõ ràng: không rắc vòng icon/tia sáng lơ lửng quanh chủ thể —
-  đòi depth bằng staging (gần/xa/che nhau).
-- 2 call site đổi `${COVER_RULES}` → `${coverRules()}`:
-  `api/admin/blog/topics/route.ts`, `api/admin/blog/reimage/route.ts`.
-
-### Result
-`npx tsc --noEmit` sạch. Chạy `coverRules()` 15 lần → trúng 6 archetype khác
-nhau, palette đổi theo. Impact LOW (const string, chỉ 2 nơi import).
-
-### Deploy + render lại cover cũ (cùng session)
-- Commit `c20f699` → push main → CI deploy VPS OK (1m18s).
-- Thêm `scripts/recover-blog-covers.mjs` — chỉ render lại COVER, không đụng ảnh
-  in-post (nút "Render lại ảnh" trong /admin làm cả bài, ~3 ảnh, thừa và tốn).
-  Dry-run mặc định; `--apply` mới ghi; `--slug=<slug>` để thử một bài.
-- Blog thực tế có **26 bài** (screenshot chỉ là trang đầu), không phải 8.
-- Verify 1 bài trước khi chạy hàng loạt (`the-quote-is-not-the-final-art-budget`):
-  ra isometric diorama đảo nổi, palette lime/cyan trên forest green, KHÔNG có
-  nhân vật đứng giữa khung. Dry-run 26 bài cho thấy prompt trải đều các
-  archetype: split, process strip, diorama, environment, macro close-up.
-- Sau đó chạy `--apply` cho toàn bộ 26 bài.
-
-### Lưu ý vận hành (mất thời gian mới ra)
-`ADMIN_SECRET` trong `.env.local` KHÔNG phải secret đang chạy prod.
-`requireAdmin` (`src/lib/admin-auth.ts`) ưu tiên row `admin_secret` trong bảng
-`app_settings` rồi mới đến env. Muốn gọi admin API của prod thì lấy từ DB, không
-phải từ `.env.local` hay `.env.local` trên VPS.
-
-### Next Step
-Sếp xem lại /blog. Nếu vẫn thấy trùng: bơm `cover_prompt` của N bài gần nhất vào
-prompt để loại archetype đã dùng (random hiện chưa nhớ lịch sử, ~1/7 trùng
-liên tiếp).
 
 ---
 
