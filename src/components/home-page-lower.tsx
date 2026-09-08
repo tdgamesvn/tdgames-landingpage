@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { AccentHighlight } from "./accent-highlight";
 import ClientLogo from "./client-logo";
 import CharacterMarquee from "./character-marquee";
@@ -1136,8 +1136,13 @@ export default function HomePageLower() {
               </div>
             </div>
 
-            {/* Spine character — center column */}
-            <div className="relative hidden h-[220px] w-full md:block">
+            {/* Spine character — center column.
+                offset_x từ DB là px cứng (đang -200) → dưới xl card hẹp, cá đè lên nút.
+                Chỉ dịch từ xl trở lên; md/lg giữ cá gọn trong cột 240px. */}
+            <div
+              className="relative hidden h-[220px] w-full md:block xl:[transform:translateX(var(--mascot-x))]"
+              style={{ "--mascot-x": `${contactCharacter?.offset_x ?? 0}px` } as CSSProperties}
+            >
               {contactCharacter?.json_url && contactCharacter?.atlas_url ? (
                 <SpineCharacter
                   jsonUrl={contactCharacter.json_url}
@@ -1146,7 +1151,7 @@ export default function HomePageLower() {
                   skin={contactCharacter.skin ?? undefined}
                   premultipliedAlpha={contactCharacter.premultiplied_alpha ?? false}
                   scale={contactCharacter.scale ?? 1.0}
-                  offsetX={contactCharacter.offset_x ?? 0}
+                  offsetX={0}
                   offsetY={contactCharacter.offset_y ?? 0}
                   className="h-full w-full"
                 />

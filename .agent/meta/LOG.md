@@ -1,5 +1,24 @@
 # LOG
 
+## 2026-09-08 (session 5 — fix mascot spine đè nút CTA trên iPad)
+
+Sếp báo lỗi trên iPad: con cá `contact-mascot` đè lên nút GET A FREE QUOTE ở card `//08 CONTACT`
+(`home-page-lower.tsx`). Root cause: `spine_characters.contact-mascot.offset_x = -200` (px cứng,
+tune cho desktop) được truyền thẳng vào `SpineCharacter` → CSS transform, không chiếm layout,
+không co theo bề rộng card. Desktop rộng thì lọt chỗ trống; iPad card hẹp → chồng lên CTA.
+
+Fix ở call site (không đụng component dùng chung): `offsetX={0}`, wrapper div nhận
+`--mascot-x` từ DB và chỉ áp `xl:[transform:translateX(var(--mascot-x))]`. Lưu ý Tailwind v4:
+`xl:translate-x-[var(--mascot-x)]` KHÔNG sinh CSS (đo được `transform: none`) — phải dùng
+arbitrary property `[transform:...]`.
+
+Verify bằng playwright đo computed transform: 768 → none, 1024 → none, 1280 → matrix(...).
+`tsc --noEmit` sạch (lỗi `.next/dev/types/routes.d.ts` là rác do dev server đang chạy).
+
+Sếp vẫn chỉnh offset desktop qua admin Spine tab như cũ; giá trị chỉ còn tác dụng từ 1280px.
+
+---
+
 ## 2026-09-08 (session 4 — self-review pass responsive header/hero + fix 5 findings)
 
 Chạy `/code-review` lên diff responsive chưa commit (site-header + home-hero), ra 5 finding,
