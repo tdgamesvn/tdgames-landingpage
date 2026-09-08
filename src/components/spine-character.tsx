@@ -154,6 +154,9 @@ export function SpineCharacter({
           // Set crossfade duration between animations
           if (mixDuration > 0 && state.data) {
             state.data.defaultMix = mixDuration;
+            // Cùng tên nối tiếp chính nó (breathe → breathe) thì hard cut:
+            // crossfade một animation với bản lệch pha của nó trông rất kỳ.
+            for (const name of new Set(anims)) state.data.setMix(name, name, 0);
           }
 
           if (anims.length === 1) {

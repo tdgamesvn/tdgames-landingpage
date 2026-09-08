@@ -4523,3 +4523,24 @@ từ trước, không đụng). Chưa test trên browser thật — cần admin 
 ### Next
 Sếp thử kéo thư mục ở /admin → tab Spine. Nếu Safari không trả entry cho folder thì
 fallback `dataTransfer.files` sẽ nhận file lẻ (đã có sẵn nhánh đó).
+
+### Bổ sung cùng ngày — texture .png không hiện khi mở lại character
+
+**Root cause (xác định, không đoán):** `spine_characters` chỉ có `json_url` +
+`atlas_url` (xem PATCHABLE ở `api/admin/spine/[id]/route.ts` và select ở
+`api/spine/route.ts`). Texture PNG upload lên R2 xong **không được ghi vào DB ở
+đâu cả** → khối "Files hiện tại" đọc DB nên không thể biết có png nào.
+
+**Fix:** không đụng DB — đọc chính file `.atlas` trên CDN (nguồn sự thật duy nhất
+về tên trang texture). `loadTextures()` parse dòng `^[^:]+\.(png|webp)$`, rồi
+`spine-json?check=1` HEAD từng file → hiện ✓ / ❌ mất trên CDN. Verify bằng atlas
+thật: `careers-hero/...karioka_3.atlas` dòng 1 = tên png, HEAD png trả 200.
+
+Phụ lợi: nếu texture bị xoá khỏi R2 (như vụ devil-lord 01/08) thì admin thấy ❌
+ngay khi mở character, không phải đợi section vỡ ngoài production.
+
+### Chưa xong
+Sếp còn báo "upload xong không tự động reload" — chưa xác định được xảy ra ở
+admin hay ở site, nên chưa sửa. Giả thuyết mạnh nhất: file thay thế trùng tên →
+URL không đổi → `cdn-proxy` trả `Cache-Control: max-age=3600` + `revalidate:3600`
+nên browser giữ bản cũ 1 tiếng. Cần sếp xác nhận trước khi đụng cache.
