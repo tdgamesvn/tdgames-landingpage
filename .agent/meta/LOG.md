@@ -1,5 +1,28 @@
 # LOG
 
+## 2026-09-08 (session 3 — deploy fix cdn-proxy; lộ ra thủ phạm THỨ HAI: Cloudflare)
+
+Commit `f5d0e97` + push → CI deploy 1m10s OK. Spine careers-hero lành: sếp đã
+replace asset, DB trỏ `landing/spine/careers-hero/awakened-ancestor-fire-akira-karioka_3.{json,atlas,png}`
+— cả 3 file **200** (path `devil-lord/` trong manifest mồ côi là rác, bỏ qua).
+
+**Nhưng verify production lộ ra fix chưa đủ.** Origin VPS trả đúng
+(`404 + cache-control: no-store`, curl thẳng `127.0.0.1:3000` trên vps6core),
+Cloudflare **ghi đè** header thành `max-age=604800` cho cả 404 (`cf-cache-status: MISS`
+— không cache ở edge nhưng vẫn bơm Browser Cache TTL 7 ngày xuống browser khách).
+File 200 cũng bị đổi `max-age=300` → `604800, must-revalidate`.
+
+→ Zone `tdgamestudio.com` đang set **Browser Cache TTL = 1 week**, không phải
+"Respect Existing Headers". Code không sửa được chuyện này.
+
+**Việc còn lại (sếp làm trên dashboard, 1 click):** Cloudflare → tdgamestudio.com →
+Caching → Configuration → Browser Cache TTL → **Respect Existing Headers**.
+Hoặc hẹp hơn: Cache Rules, match `URI Path starts with /api/cdn-proxy/`,
+Browser TTL = Respect origin. Chưa có CF zone API token trong `.env.local` và
+MCP `cloudflare-api` chưa auth nên không tự làm được.
+
+---
+
 ## 2026-09-08 (session 2 — cache 404 ghim 1 tuần: `/cdn-proxy` rewrite là thủ phạm)
 
 Sếp upload lại `wolf-aquatic.png` (session trước) nhưng site vẫn "Couldn't load
