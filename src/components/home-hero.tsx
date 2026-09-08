@@ -550,9 +550,11 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
       </div>
 
       {/* Main Container */}
+      {/* ponytail: padding đối xứng = chiều cao header (104px) → màn cao vẫn căn giữa,
+          màn thấp (iPad ngang ~700px) nội dung không trồi lên đè logo/nav */}
       {/* ponytail: min/max thay media query — mobile nới lên ~88% (sàn 340px) để title có chỗ, desktop giữ nguyên var admin */}
       <motion.div
-        className="relative z-10 mx-auto flex min-h-screen items-center pt-24 md:pt-0"
+        className="relative z-10 mx-auto flex min-h-screen items-center pt-24 md:pt-[104px] md:pb-[104px]"
         style={{ width: "min(88%, max(var(--layout-width, 75%), 340px))", opacity: contentOpacity }}
       >
         <motion.div className="w-full" style={{ y: contentY }}>
@@ -569,7 +571,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                   // ponytail: thêm cap 10.5vh — màn thấp (768px: iPad ngang, laptop 1366x768)
                   // title 4 dòng đẩy nút CTA xuống dưới fold. Cap bind khi viewport cao
                   // < ~950px (100px title) → laptop 1440x900 title ~94px, đúng ý.
-                  fontSize: "min(var(--hero-title-size, 100px), 9vw, 10.5vh)",
+                  fontSize: "min(var(--hero-title-size, 100px), 9vw, 9vh)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
@@ -583,7 +585,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className={`leading-[1] font-black ${changaOne.className}`}
                 style={{
-                  fontSize: "min(var(--hero-title-size, 100px), 9vw, 10.5vh)",
+                  fontSize: "min(var(--hero-title-size, 100px), 9vw, 9vh)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >

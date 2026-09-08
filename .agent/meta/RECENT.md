@@ -4,6 +4,25 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-09-08 (session 5 — fix mascot spine đè nút CTA trên iPad)
+
+Sếp báo lỗi trên iPad: con cá `contact-mascot` đè lên nút GET A FREE QUOTE ở card `//08 CONTACT`
+(`home-page-lower.tsx`). Root cause: `spine_characters.contact-mascot.offset_x = -200` (px cứng,
+tune cho desktop) được truyền thẳng vào `SpineCharacter` → CSS transform, không chiếm layout,
+không co theo bề rộng card. Desktop rộng thì lọt chỗ trống; iPad card hẹp → chồng lên CTA.
+
+Fix ở call site (không đụng component dùng chung): `offsetX={0}`, wrapper div nhận
+`--mascot-x` từ DB và chỉ áp `xl:[transform:translateX(var(--mascot-x))]`. Lưu ý Tailwind v4:
+`xl:translate-x-[var(--mascot-x)]` KHÔNG sinh CSS (đo được `transform: none`) — phải dùng
+arbitrary property `[transform:...]`.
+
+Verify bằng playwright đo computed transform: 768 → none, 1024 → none, 1280 → matrix(...).
+`tsc --noEmit` sạch (lỗi `.next/dev/types/routes.d.ts` là rác do dev server đang chạy).
+
+Sếp vẫn chỉnh offset desktop qua admin Spine tab như cũ; giá trị chỉ còn tác dụng từ 1280px.
+
+---
+
 ## 2026-09-08 (session 4 — self-review pass responsive header/hero + fix 5 findings)
 
 Chạy `/code-review` lên diff responsive chưa commit (site-header + home-hero), ra 5 finding,
@@ -112,57 +131,6 @@ sách mồ côi. Dry-run lại: 37 file (37.55 MB), không còn file spine nào.
 vào key cũ để khỏi đổi `json_url`/`atlas_url` trong `spine_characters`).
 Cảnh báo phụ: 37 "mồ côi" còn lại phần lớn là video `projects/2026/08/*` — nghi
 false positive tương tự, ĐỪNG chạy `--apply` cho tới khi soát tay.
-
----
-
-## 2026-09-06 (session — /tools đồng bộ style với /blog)
-
-Sếp: "/tools không đồng bộ với các tab khác, tham khảo tab Blog".
-Khác biệt thật: bg `#050508` (blog `#0a0a0a`), container `max-w-6xl px-6` thay vì
-`min(var(--layout-width,85%),1280px)` → lệch hàng với header/footer, font heading
-Orbitron thay vì Rajdhani, không có font body Nunito Sans, hero trơ trụi (không
-watermark / glow / eyebrow / divider), grid 3 cột card nhỏ.
-
-Sửa `src/app/tools/page.tsx` + `waitlist-form.tsx` theo đúng khuôn /blog: hero có
-watermark "TOOLS" + glow amber + eyebrow `// Toolbox` + count + `<AccentHighlight>`
-+ divider gradient đáy; grid 2 cột card `rounded-xl bg-white/[0.03]`; màu chốt lại
-`#f59e0b`. Nunito Sans thêm subset `vietnamese` (blog chỉ latin, /tools có dấu).
-Vẫn là server component — SEO không đổi.
-
-**Ngôn ngữ site = TIẾNG ANH** (sếp chốt). Đã dịch toàn bộ text hiển thị của /tools
-(page + tools.ts blurb + waitlist form) sang tiếng Anh, bỏ subset `vietnamese` khỏi
-Nunito Sans. Comment trong code vẫn tiếng Việt (team đọc, không hiển thị).
-Quét cả src: chỉ còn 2 chỗ public sai → đã sửa: meta description `/showreel` (viết
-tiếng Việt) và mũi tên "Back to Portfolio" ở 2 case study bị mojibake `â†` → `&larr;`.
-Chuỗi tiếng Việt còn lại đều nằm trong /admin, /crm, /hr, banner preview draft —
-nội bộ, giữ nguyên.
-
-## 2026-09-06 (session — AI gợi ý email trả lời lead ở /crm)
-
-### Work Done
-- `src/app/api/crm/leads/[id]/reply/route.ts` (mới) — POST, `requireCRM`, đọc lead từ
-  DB, gọi cliproxyapi `/chat/completions` y hệt route evaluate bên /hr (cùng env
-  `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL`), trả `{subject, body}`. Prompt: trả lời đúng
-  ngôn ngữ khách viết, 120-180 chữ, cấm bịa giá/deadline, tối đa 2 câu hỏi chốt scope.
-- `CRMBoard.tsx` — component `ReplyDraft` trong panel chi tiết: nút "✨ Soạn bằng AI"
-  → subject + body sửa được → "Copy nội dung" / "Mở mail đã điền sẵn" (mailto prefill).
-  `key={selected.id}` để đổi lead là draft tự reset (không cần effect).
-- Prompt KHÔNG được ký tên / "Best regards" cuối mail (sếp bắt lỗi bản đầu tự ký
-  "Tuan — TD Games Studio") — mail client đã có chữ ký sẵn.
-- ponytail: draft KHÔNG lưu DB → 0 migration. Muốn lịch sử draft thì thêm cột sau.
-
-### Result
-tsc sạch; lint chỉ còn lỗi `set-state-in-effect` có sẵn. Test thật qua Playwright trên
-lead Ryan Fillingame: 10s ra email tiếng Anh đúng bối cảnh (pilot trước, hỏi sample +
-volume), subject "Re: Wrestling Masters 2D Card Illustration Project".
-
-### Env: gpt-5.4-mini → gpt-5.5 (ĐÃ SỬA)
-`AI_MODEL=gpt-5.4-mini` chết trên cliproxyapi (502 "unknown provider") — cả local
-LẪN VPS đều đang trỏ model này ⇒ AI eval bên /hr trên production cũng đang hỏng
-âm thầm. Đã đổi `AI_MODEL=gpt-5.5` ở `.env.local` local + `/opt/tdgames-landingpage/
-.env.local` trên VPS (`pm2 restart --update-env`), và đổi 5 chỗ fallback hardcode
-trong src (reply, hr/evaluate, blog/reimage, blog/topics, blog/topics/interview).
-Model proxy đang phục vụ: gpt-5.5, gpt-5.6-sol/luna/terra, gpt-6-astra, gpt-image-*.
 
 ---
 

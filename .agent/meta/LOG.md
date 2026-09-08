@@ -1,5 +1,27 @@
 # LOG
 
+## 2026-09-08 (session 6 — hero đè logo khi xoay ngang iPad)
+
+Sếp gửi ảnh iPad landscape: dòng "2D ART &" trồi lên chồng vào logo TD GAMES.
+
+Root cause: hero container `flex min-h-screen items-center pt-24 md:pt-0` — từ md trở lên
+KHÔNG chừa chỗ cho header fixed (cao 104px = h-80 + py-3). Màn cao thì thừa chỗ nên không
+lộ; iPad ngang trong Safari chỉ còn ~700px cao, nội dung (~640px) căn giữa → mép trên rơi
+vào vùng header → đè logo.
+
+Fix (`home-hero.tsx`, 2 chỗ):
+- `md:pt-0` → `md:pt-[104px] md:pb-[104px]` — padding đối xứng nên màn cao vẫn căn giữa
+  y như cũ, màn thấp thì nội dung bị đẩy khỏi vùng header. Không dùng `pt` một phía vì
+  sẽ lệch tâm trên desktop.
+- Cap title `10.5vh` → `9vh`: sau khi trừ 208px padding, title 4 dòng ở 700px cao vẫn
+  đẩy CTA khỏi màn (section `overflow-hidden` nên tràn là mất luôn, không scroll được).
+
+Verify screenshot: 1180×700 (iPad ngang + Safari chrome), 1194×834, 1280×1024 — logo không
+bị đè, CTA + dòng "Reply within 24h" đều trong màn. Cap 9vh không bind ở màn cao
+(1366px → 123px > var 100px) nên desktop/iPad dọc không đổi.
+
+---
+
 ## 2026-09-08 (session 5 — fix mascot spine đè nút CTA trên iPad)
 
 Sếp báo lỗi trên iPad: con cá `contact-mascot` đè lên nút GET A FREE QUOTE ở card `//08 CONTACT`
