@@ -946,7 +946,9 @@ export default function HomePageLower() {
 
             <div className="relative grid min-h-[380px] gap-8 md:min-h-[460px] md:grid-cols-[1.25fr_1fr] md:items-center md:gap-10">
               <div className="relative mx-auto flex w-full max-w-[520px] items-center justify-center md:max-w-none md:justify-end">
-                <div className="relative h-[min(420px,78vw)] w-full max-w-[420px] md:h-[520px] md:max-w-[480px]">
+                {/* md+: khung rộng hơn cột và thò 150px sang vùng chữ — nhân vật vung
+                    kiếm cần chỗ. Chữ có z-10 nên vẫn nằm trên. */}
+                <div className="relative h-[min(420px,78vw)] w-full max-w-[420px] md:h-[540px] md:w-[calc(100%+150px)] md:max-w-[660px] md:-mr-[150px]">
                   {careersCharacter?.json_url && careersCharacter?.atlas_url ? (
                     <SpineCharacter
                       jsonUrl={careersCharacter.json_url}
@@ -969,7 +971,7 @@ export default function HomePageLower() {
                 </div>
               </div>
 
-              <div className="relative flex flex-col justify-center pb-2 md:pb-0 md:pl-0">
+              <div className="relative z-10 flex flex-col justify-center pb-2 md:pb-0 md:pl-0">
                 <StudioSectionTitle
                   sectionNum="// 05"
                   label="Careers"

@@ -4553,3 +4553,14 @@ animation crossfade với bản lệch pha của chính nó → trôi/giật.
 
 Fix 1 dòng: `for (const name of new Set(anims)) state.data.setMix(name, name, 0)`
 → cùng tên = hard cut, chỉ khác tên mới mix. Không đụng DB, không thêm field.
+
+### Bổ sung — gộp animation lặp thành nhóm ×N (admin Spine)
+
+Queue 18 lượt (breathe ×3 → levelup → …) trước đây là 18 dòng riêng, mỗi cụm
+phải bấm ⊕ vài lần. Giờ các mục liên tiếp trùng tên hiển thị 1 dòng `breathe ×3`,
+nút − / + chỉnh số lần lặp, ↑ ↓ ✕ thao tác cả nhóm.
+
+Chỉ là lớp hiển thị — `src/lib/anim-runs.ts` (toRuns/expandRuns), DB `animations`
+và `<SpineCharacter>` vẫn nhận mảng phẳng như cũ, không migration.
+Test: `node --test src/lib/anim-runs.test.ts` (4 pass, có ca đổi chỗ làm 2 nhóm
+cùng tên nhập lại thành một).

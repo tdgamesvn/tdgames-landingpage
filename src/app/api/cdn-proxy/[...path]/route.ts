@@ -39,14 +39,20 @@ export async function GET(
   const cdnUrl = `${CDN_BASE}/${filePath}`;
 
   try {
+    // ponytail: no Next data cache. Nó từng nhớ luôn cả 404 trong 1h, nên khi
+    // texture được upload lại thì proxy vẫn trả 404. Response 200 dưới đây đã có
+    // Cache-Control 1h → Cloudflare edge lo phần cache, không cần cache 2 tầng.
     const res = await fetch(cdnUrl, {
       headers: { "User-Agent": "tdgamestudio-proxy/1.0" },
-      // Cache for 1 hour on the server
-      next: { revalidate: 3600 },
+      cache: "no-store",
     });
 
     if (!res.ok) {
-      return new NextResponse(`CDN returned ${res.status}`, { status: res.status });
+      // Không bao giờ cache lỗi — file có thể được upload lại bất cứ lúc nào.
+      return new NextResponse(`CDN returned ${res.status}`, {
+        status: res.status,
+        headers: { "Cache-Control": "no-store" },
+      });
     }
 
     const contentType =
@@ -73,6 +79,9 @@ export async function GET(
     });
   } catch (err) {
     console.error("[cdn-proxy] fetch error:", err);
-    return new NextResponse("Proxy error", { status: 502 });
+    return new NextResponse("Proxy error", {
+      status: 502,
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 }

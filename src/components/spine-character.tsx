@@ -181,6 +181,47 @@ export function SpineCharacter({
               },
             });
           }
+          // Camera: mình gọi state.setAnimation() thẳng nên player.setViewport()
+          // không bao giờ chạy → khung hình khoá theo animation đầu (breathe), các
+          // animation vươn xa hơn (attack: kiếm + lửa) bị cắt mất phần thò ra.
+          // Khung dưới đây ôm bounds của TẤT CẢ animation trong sequence: không cắt,
+          // và camera đứng yên thay vì zoom giật mỗi lần đổi animation.
+          // ponytail: chạm internal của spine-player (currentViewport,
+          // calculateAnimationViewport). Lib đổi tên field → catch, rơi về khung mặc định.
+          try {
+            const p = _player as any;
+            let box: { x: number; y: number; width: number; height: number } | null = null;
+            for (const name of new Set(anims)) {
+              const anim = p.skeleton?.data?.findAnimation?.(name);
+              if (!anim) continue;
+              const v = { x: 0, y: 0, width: 0, height: 0 };
+              p.calculateAnimationViewport(anim, v);
+              if (!(v.width > 0 && v.height > 0)) continue;
+              if (!box) {
+                box = v;
+                continue;
+              }
+              const right = Math.max(box.x + box.width, v.x + v.width);
+              const top = Math.max(box.y + box.height, v.y + v.height);
+              box.x = Math.min(box.x, v.x);
+              box.y = Math.min(box.y, v.y);
+              box.width = right - box.x;
+              box.height = top - box.y;
+            }
+            if (box) {
+              p.currentViewport = {
+                ...box,
+                padLeft: box.width * 0.04,
+                padRight: box.width * 0.04,
+                padTop: box.height * 0.04,
+                padBottom: box.height * 0.04,
+              };
+              p.previousViewport = null; // khỏi lerp từ khung cũ
+            }
+          } catch {
+            // giữ nguyên khung mặc định của player
+          }
+
           onSuccess?.();
         },
         error: onError ? (_player: unknown, msg: string) => onError(msg) : undefined,
