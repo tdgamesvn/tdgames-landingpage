@@ -4544,3 +4544,12 @@ Sếp còn báo "upload xong không tự động reload" — chưa xác định 
 admin hay ở site, nên chưa sửa. Giả thuyết mạnh nhất: file thay thế trùng tên →
 URL không đổi → `cdn-proxy` trả `Cache-Control: max-age=3600` + `revalidate:3600`
 nên browser giữ bản cũ 1 tiếng. Cần sếp xác nhận trước khi đụng cache.
+
+### Bổ sung — mix animation cùng tên (spine-character.tsx)
+
+Sếp báo sequence kiểu breathe → breathe trông buồn cười khi bật mix. Đúng:
+`state.data.defaultMix = mixDuration` áp cho MỌI cặp chuyển tiếp, nên một
+animation crossfade với bản lệch pha của chính nó → trôi/giật.
+
+Fix 1 dòng: `for (const name of new Set(anims)) state.data.setMix(name, name, 0)`
+→ cùng tên = hard cut, chỉ khác tên mới mix. Không đụng DB, không thêm field.

@@ -9,6 +9,7 @@ import {
   uploadSpineFile,
 } from "../_lib/api";
 import type { SpineCharacter } from "../_lib/types";
+import { toRuns, expandRuns, type AnimRun } from "@/lib/anim-runs";
 
 type Props = { adminKey: string };
 
@@ -480,32 +481,36 @@ export function SpineTab({ adminKey }: Props) {
     });
   }
 
-  function moveAnimation(index: number, direction: -1 | 1) {
-    setForm((f) => {
-      const arr = [...f.animations];
+  // Thao tác theo nhóm (breathe ×3) rồi trải lại thành mảng phẳng cho DB
+  function updateRuns(fn: (runs: AnimRun[]) => AnimRun[]) {
+    setForm((f) => ({ ...f, animations: expandRuns(fn(toRuns(f.animations))) }));
+  }
+
+  function moveRun(index: number, direction: -1 | 1) {
+    updateRuns((runs) => {
       const target = index + direction;
-      if (target < 0 || target >= arr.length) return f;
+      if (target < 0 || target >= runs.length) return runs;
+      const arr = [...runs];
       [arr[index], arr[target]] = [arr[target], arr[index]];
-      return { ...f, animations: arr };
+      return arr;
     });
   }
 
-  function removeAnimation(index: number) {
-    setForm((f) => ({
-      ...f,
-      animations: f.animations.filter((_, i) => i !== index),
-    }));
+  function setRunCount(index: number, count: number) {
+    updateRuns((runs) =>
+      runs.map((r, i) =>
+        i === index ? { ...r, count: Math.min(99, Math.max(1, count)) } : r
+      )
+    );
   }
 
-  function duplicateAnimation(index: number) {
-    setForm((f) => {
-      const arr = [...f.animations];
-      arr.splice(index + 1, 0, arr[index]);
-      return { ...f, animations: arr };
-    });
+  function removeRun(index: number) {
+    updateRuns((runs) => runs.filter((_, i) => i !== index));
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
+  const animRuns = toRuns(form.animations);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -855,19 +860,41 @@ export function SpineTab({ adminKey }: Props) {
                         Selected (thứ tự phát)
                       </p>
                       <div className="space-y-1">
-                        {form.animations.map((anim, idx) => (
+                        {animRuns.map((run, idx) => (
                           <div
-                            key={`${anim}-${idx}`}
+                            key={`${run.name}-${idx}`}
                             className="flex items-center gap-1.5 rounded bg-white/5 px-2 py-1"
                           >
                             <span className="text-[10px] font-mono text-white/30 w-4 text-right shrink-0">
                               {idx + 1}.
                             </span>
-                            <span className="flex-1 font-mono text-xs text-white/80 truncate">{anim}</span>
-                            <div className="flex shrink-0 gap-0.5">
+                            <span className="flex-1 font-mono text-xs text-white/80 truncate">
+                              {run.name}
+                              {run.count > 1 && (
+                                <span className="text-amber-400/70"> ×{run.count}</span>
+                              )}
+                            </span>
+                            <div className="flex shrink-0 items-center gap-0.5">
                               <button
                                 type="button"
-                                onClick={() => moveAnimation(idx, -1)}
+                                onClick={() => setRunCount(idx, run.count - 1)}
+                                disabled={run.count <= 1}
+                                className="flex h-5 w-5 items-center justify-center rounded text-[11px] text-amber-400/60 transition hover:text-amber-300 disabled:opacity-20"
+                                title="Bớt 1 lần lặp"
+                              >
+                                −
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setRunCount(idx, run.count + 1)}
+                                className="flex h-5 w-5 items-center justify-center rounded text-[11px] text-amber-400/60 transition hover:text-amber-300"
+                                title="Lặp thêm 1 lần"
+                              >
+                                +
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveRun(idx, -1)}
                                 disabled={idx === 0}
                                 className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-white/40 transition hover:text-white disabled:opacity-20"
                                 title="Lên"
@@ -876,8 +903,8 @@ export function SpineTab({ adminKey }: Props) {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => moveAnimation(idx, 1)}
-                                disabled={idx === form.animations.length - 1}
+                                onClick={() => moveRun(idx, 1)}
+                                disabled={idx === animRuns.length - 1}
                                 className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-white/40 transition hover:text-white disabled:opacity-20"
                                 title="Xuống"
                               >
@@ -885,17 +912,9 @@ export function SpineTab({ adminKey }: Props) {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => duplicateAnimation(idx)}
-                                className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-amber-400/60 transition hover:text-amber-300"
-                                title="Duplicate (chèn thêm 1 bản copy phía dưới)"
-                              >
-                                ⊕
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeAnimation(idx)}
+                                onClick={() => removeRun(idx)}
                                 className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-red-400 transition hover:text-red-300"
-                                title="Xóa khỏi danh sách"
+                                title="Xóa cả nhóm khỏi danh sách"
                               >
                                 ✕
                               </button>
@@ -905,7 +924,11 @@ export function SpineTab({ adminKey }: Props) {
                       </div>
                       {form.animations.length > 1 && (
                         <p className="mt-1.5 text-[9px] text-white/25">
-                          Sẽ phát tuần tự: {form.animations.join(" → ")} → (loop)
+                          Sẽ phát tuần tự:{" "}
+                          {animRuns
+                            .map((r) => (r.count > 1 ? `${r.name} ×${r.count}` : r.name))
+                            .join(" → ")}{" "}
+                          → (loop) — tổng {form.animations.length} lượt
                         </p>
                       )}
                     </div>
