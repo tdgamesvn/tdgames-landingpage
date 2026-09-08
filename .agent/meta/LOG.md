@@ -1,5 +1,25 @@
 # LOG
 
+## 2026-09-08 (session 8 — mobile: title bé, body to, tương phản cỡ chữ yếu)
+
+Sếp chê hero trên mobile: title nhỏ mà đoạn mô tả to, nhìn không có phân cấp.
+
+Đo lại ở 390px: title `min(100px, 9vw, 9vh)` = 35px, body `var(--hero-desc-size, 18px)`
+là px CỨNG không co → tỉ lệ title/body chỉ 1:1.9, trong khi desktop là 100/18 = 1:5.5.
+Body 18px trên màn 390 còn ăn 8 dòng, nuốt hết fold.
+
+Fix (`home-hero.tsx`, 3 chỗ): cap title `9vw` → `11vw` (390 → 43px, 360 → 40px);
+body `18px` → `min(var(--hero-desc-size, 18px), 4.2vw)` (390 → 16.4px, desktop giữ 18px
+vì 4.2vw đã > 18px từ ~430px rộng). Tỉ lệ mới ~2.6:1.
+
+Thử 11.5vw trước nhưng ở 360×800 dòng "Reply within 24h" chạm sát đáy — hero
+`overflow-hidden` nên tràn là mất, hạ về 11vw cho chừa chỗ thanh URL trình duyệt.
+
+Verify screenshot 390×844 + 360×800: CTA + dòng note đều trong màn.
+Thêm preset `mobile` / `mobile-sm` vào `scripts/responsive-shots.mjs` (file gitignored).
+
+---
+
 ## 2026-09-08 (session 7 — footer: địa chỉ vỡ 7 dòng)
 
 Sếp chê khối địa chỉ trong footer xấu. Nguyên nhân: cột CONTACTS là 1 trong 4 cột chia đều

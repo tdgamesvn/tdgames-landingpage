@@ -571,7 +571,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                   // ponytail: thêm cap 10.5vh — màn thấp (768px: iPad ngang, laptop 1366x768)
                   // title 4 dòng đẩy nút CTA xuống dưới fold. Cap bind khi viewport cao
                   // < ~950px (100px title) → laptop 1440x900 title ~94px, đúng ý.
-                  fontSize: "min(var(--hero-title-size, 100px), 9vw, 9vh)",
+                  fontSize: "min(var(--hero-title-size, 100px), 11vw, 9vh)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
@@ -585,7 +585,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className={`leading-[1] font-black ${changaOne.className}`}
                 style={{
-                  fontSize: "min(var(--hero-title-size, 100px), 9vw, 9vh)",
+                  fontSize: "min(var(--hero-title-size, 100px), 11vw, 9vh)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
@@ -613,7 +613,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
             <p
               className="max-w-[547px] leading-[1.5] mb-[15px] mt-4"
               style={{
-                fontSize: "var(--hero-desc-size, 18px)",
+                fontSize: "min(var(--hero-desc-size, 18px), 4.2vw)",
                 color: "var(--hero-desc-color, #e5e7eb)"
               }}
             >

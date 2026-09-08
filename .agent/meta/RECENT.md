@@ -4,6 +4,19 @@ _Auto-generated từ LOG.md. Không sửa tay._
 
 ---
 
+## 2026-09-08 (session 7 — footer: địa chỉ vỡ 7 dòng)
+
+Sếp chê khối địa chỉ trong footer xấu. Nguyên nhân: cột CONTACTS là 1 trong 4 cột chia đều
+(`lg:grid-cols-4`) bên trong khối phải chỉ chiếm `2fr` → rộng ~150px, địa chỉ 69 ký tự vỡ 7 dòng.
+
+Fix (`site-footer.tsx`, 2 class): grid cha `lg:grid-cols-[1.3fr_2fr]` → `[1fr_2.5fr]`;
+grid link `lg:grid-cols-4` → `[2fr_1fr_1fr_1fr]` + siết gap (`lg:gap-x-8 xl:gap-x-10`).
+Kết quả 7 → 4 dòng. Không đụng nội dung (địa chỉ lấy từ `/api/footer`, sếp sửa ở admin).
+
+Muốn còn 2 dòng thì rút text trong admin Footer, bỏ "Phường Vĩnh Tuy" — đã báo sếp.
+
+---
+
 ## 2026-09-08 (session 6 — hero đè logo khi xoay ngang iPad)
 
 Sếp gửi ảnh iPad landscape: dòng "2D ART &" trồi lên chồng vào logo TD GAMES.
@@ -89,43 +102,6 @@ Caching → Configuration → Browser Cache TTL → **Respect Existing Headers**
 Hoặc hẹp hơn: Cache Rules, match `URI Path starts with /api/cdn-proxy/`,
 Browser TTL = Respect origin. Chưa có CF zone API token trong `.env.local` và
 MCP `cloudflare-api` chưa auth nên không tự làm được.
-
----
-
-## 2026-09-08 (session 2 — cache 404 ghim 1 tuần: `/cdn-proxy` rewrite là thủ phạm)
-
-Sếp upload lại `wolf-aquatic.png` (session trước) nhưng site vẫn "Couldn't load
-image". Hard refresh + tab ẩn danh đều vô dụng.
-
-**Bẫy chẩn đoán:** `curl -I` (HEAD) trả 200 nên tưởng đã lành. `curl` GET mới lộ
-`404 + cf-cache-status: HIT + age: 11981`. **HEAD không trúng cache entry — luôn
-dùng GET khi soi cache.**
-
-**Root cause:** site gọi `/cdn-proxy/...` → rewrite ở `next.config.ts` proxy
-THẲNG ra R2 → response giữ nguyên `Cache-Control: max-age=604800` của R2, áp cho
-cả 404. Browser ghim lỗi 1 tuần; purge Cloudflare chỉ dọn edge nên không cứu
-được. `Cmd+Shift+R` cũng vô dụng vì SpinePlayer nạp texture bằng XHR lúc runtime,
-hard reload không bypass cache cho request do JS bắn ra sau khi trang đã load.
-
-Route handler `/api/cdn-proxy/[...path]` từ đầu đã xử lý đúng (no-store cho lỗi)
-nhưng **không ai gọi** — code đúng nằm chết, site đi đường rewrite sai.
-
-**Đã sửa (4 file):** `proxyCdnUrl()` → `/api/cdn-proxy/`; xoá hẳn rewrite trong
-`next.config.ts` (kèm comment cảnh báo đừng thêm lại); route `max-age` 3600→300
-vì Spine asset bị thay tại chỗ nên max-age chính là độ trễ khách thấy bản mới;
-sửa docstring `spine-character.tsx`.
-
-**Verify:** file thật→200+max-age=300; file thiếu→**404+no-store**; `/cdn-proxy/`
-cũ→404 không còn proxy; `.html`→403. `npm run build` pass. 91 lint problem là nợ
-có sẵn (home-page-lower:217,258), không do thay đổi này.
-
-**Giải thích được bug cũ:** LOG:4543 "upload xong không tự động reload" — cùng
-root cause, giờ đã đóng.
-
-**Next:** deploy chưa chạy (chờ sếp). `devil-lord/...evil-lord_3.png` VẪN 404 trên
-R2 — sếp mới upload `wolf-aquatic`, chưa upload cái này. Lưu ý slug `careers-hero`
-trong `spine_characters` trỏ tới `awakened-ancestor-fire-akira-karioka_3` (file này
-200, lành) — KHÔNG phải `devil-lord/` như manifest mồ côi ghi.
 
 ---
 
