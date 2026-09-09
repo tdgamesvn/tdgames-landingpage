@@ -63,6 +63,28 @@ const SHOTS = [
   // và mô tả ngắn. Muốn đủ đội hình thì xem step-3 (khung ngang, thoáng hơn).
   ["svc-full-game", `A victorious team of four cartoon devs cheering around a giant smartphone standing upright behind them running a colourful puzzle game: ${cast("maya", "rio", "vee", "bruno")}, warm amber and violet gradient background`, HANDMADE, "1024x1024"],
 
+  // ---- Workflow 5 bước của 3 trang service 2D (service-workflow-presets.ts).
+  //      Mỗi service gắn 1 chuyên gia trong roster: art=RIO, animation=KENJI, vfx=VEE
+  //      + palette riêng để 3 trang không lẫn nhau.
+  //      ponytail: tối đa 2 nhân vật/prompt — 6 người làm image API timeout.
+  ["art-1-brief", `${cast("rio", "maya")}. They stand in front of a giant moodboard easel pinning up style reference cards and colour swatches, RIO holding a marker, magenta and coral gradient background`],
+  ["art-2-concept", `${cast("rio")}. She fans out three huge character concept boards like playing cards, the middle one stamped with a glowing green approval tick, magenta and warm pink gradient background`],
+  ["art-3-render", `${cast("rio")}. She paints a giant cartoon hero statue that is half flat grey line art and half fully rendered colourful art, a hard vertical seam between the halves, orange and magenta gradient background`],
+  ["art-4-polish", `${cast("rio", "pip")}. RIO holds a huge magnifying glass over a finished character artwork fixing tiny details while PIP ticks items on an oversized checklist, coral and gold gradient background`],
+  ["art-5-delivery", `${cast("rio")}. She pushes a big wooden crate of art files into a giant smartphone standing on the ground, layered artboards and file icons flying out of the crate, pink and violet gradient background`],
+
+  ["anim-1-brief", `${cast("kenji", "maya")}. They stand at a giant whiteboard covered with a timing chart and a row of pose thumbnails, KENJI tapping the board mid-explanation, turquoise and blue gradient background`],
+  ["anim-2-blocking", `${cast("kenji")}. He poses a big wooden artist mannequin of a cartoon mascot, three rough blocked-out copies of the pose standing behind it, teal and lime gradient background`],
+  ["anim-3-timing", `${cast("kenji")}. He grabs and stretches a huge glowing ease curve on a floating timeline, a cartoon mascot running along the arc leaving motion trails, lime and cyan gradient background`],
+  ["anim-4-review", `${cast("kenji", "pip")}. They watch a giant screen replaying a looping run cycle with translucent onion-skin ghosts, KENJI pointing at a frame, PIP giving a thumbs up, blue and turquoise gradient background`],
+  ["anim-5-export", `${cast("kenji")}. He packs a glowing Spine skeleton rig and an atlas sheet into a big shipping crate stamped with a green tick, cyan and mint gradient background`],
+
+  ["vfx-1-brief", `${cast("vee", "maya")}. They pin three glowing effect style frames onto a board, VEE sparking a small test explosion in her palm, violet and orange gradient background`],
+  ["vfx-2-production", `${cast("vee")}. She builds a huge explosion out of separate glowing sprite layers floating apart in mid-air like exploded-view diagram, purple and fiery orange gradient background`],
+  ["vfx-3-timing", `${cast("vee")}. She drags a row of explosion frames along a glowing curved timeline, each frame a different stage of the same blast, magenta and orange gradient background`],
+  ["vfx-4-optimize", `${cast("vee")}. She compresses a giant swirling effect down into a neat glowing sprite sheet grid, a big green FPS meter needle pointing to the top, violet and lime gradient background`],
+  ["vfx-5-integration", `${cast("vee")}. She plugs a glowing effect cable into a giant smartphone running a game, sparks and skill effects bursting out of the screen, purple and amber gradient background`],
+
   // ---- // 01 What we do (6 card, khớp DEFAULT_CARDS trong page.tsx) ----
   ["card-1-game-design", `${cast("maya")}. She slams a huge glowing blueprint board down toward the camera, chunky level blocks, arrow tokens and dice erupting off it around her, grinning with wild confidence, low heroic camera angle, deep blue and violet gradient sky with cyan glow`],
   ["card-2-art-direction", `${cast("rio")}. She swings an oversized paintbrush like a sword, a thick arc of magenta and orange paint splashing across the frame and repainting a grey statue behind her into full colour, side three-quarter camera, hot pink and tangerine gradient background`],

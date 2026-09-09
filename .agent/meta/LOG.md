@@ -5072,3 +5072,25 @@ pipeline" (lệch sẵn từ trước). Thêm dịch vụ thứ 4:
 
 Verify: `tsc` sạch, `npm run build` pass, `/company-profile` render "Full Game Production"
 9 lần + 2 link `/services/full-game-production`. Tiêu đề "Four services" nay đúng số thật.
+
+## 2026-09-09 (session 21 — 15 ảnh workflow cho 3 trang service 2D)
+
+Sếp muốn 5 ảnh workflow của mỗi trang 2D Art / 2D Animation / 2D VFX đổi sang style
+casual Supercell + roster, nội dung khớp từng bước.
+
+Thêm 15 shot vào `gen-service-images.mjs` (prefix `art- / anim- / vfx-`), mỗi service
+gắn 1 chuyên gia + 1 palette để 3 trang không lẫn:
+- **art-*** RIO, magenta/coral: moodboard → 3 concept board (1 đóng dấu tick) → nửa line
+  art nửa render → kính lúp soi polish (kèm PIP) → thùng file art đẩy vào điện thoại.
+- **anim-*** KENJI, cyan/lime: whiteboard timing chart (kèm MAYA) → manơcanh blocking →
+  kéo ease curve trên timeline → onion-skin review (kèm PIP) → đóng gói Spine atlas.
+- **vfx-*** VEE, tím/cam: 3 style frame hiệu ứng (kèm MAYA) → nổ tách lớp kiểu
+  exploded-view → dãy frame trên timeline cong → nén vào sprite sheet + đồng hồ FPS →
+  cắm hiệu ứng vào điện thoại.
+
+Thay 15 URL trong `service-workflow-presets.ts` bằng script node map old→new (không sửa
+tay từng dòng). Kiểm letterbox trước khi gắn: 3 ảnh mẫu trim ra vẫn 1536x1024 → **ảnh
+1536x1024 không dính letterbox**, chỉ bản 1024x1024 và prompt "banner" mới bị.
+
+`tsc` sạch, mỗi trang service render đúng 5 ảnh AI. Xem tay vfx-4: đúng gu, VEE khớp
+thiết kế, nội dung khớp "Polish & optimization". Chưa commit.

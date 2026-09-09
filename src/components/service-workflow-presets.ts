@@ -14,27 +14,27 @@ export const service2DArtWorkflowConfig: ServiceWorkflowConfig = {
     {
       title: "Discovery & art brief",
       description: "Align on visual direction, style, and mood for your game.",
-      image: "https://cdn.tdgamestudio.com/landing/images/Character_Concept-1024x683.jpg",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/e80140b3-ff50-4830-8d6c-aa8165b859d6.webp",
     },
     {
       title: "Concept & design approval",
       description: "Explore directions, then lock the chosen design in clean lines.",
-      image: "https://cdn.tdgamestudio.com/landing/images/Casual_character-1024x683.jpg",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/99f39823-423f-4da4-85f3-6bb0411c20b3.webp",
     },
     {
       title: "Final rendering",
       description: "Apply colors, lighting, and atmosphere to the approved design.",
-      image: "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/74e09277-84e8-4f0b-bca4-909f29dc38ef.webp",
     },
     {
       title: "Polish & QA",
       description: "Enhance details, lighting, and overall quality.",
-      image: "https://cdn.tdgamestudio.com/landing/images/Slot_Art-1024x683.jpg",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/081177bf-f5e1-4382-83ed-581eec002b75.webp",
     },
     {
       title: "Delivery & integration",
       description: "Export production-ready assets and hand off for integration.",
-      image: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/1f2cd1f4-1536-4d06-8987-68f75ede1c00.webp",
     },
   ],
   pillars: [
@@ -70,27 +70,27 @@ export const service2DAnimationWorkflowConfig: ServiceWorkflowConfig = {
     {
       title: "Animation brief",
       description: "Lock style, timing targets, and technical constraints.",
-      image: "https://cdn.tdgamestudio.com/landing/images/minh-hong-minh-hong-thumbnail-2.jpg",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/fbeb66da-9bf4-4131-8528-932388869dd8.webp",
     },
     {
       title: "Blocking & posing",
       description: "Rough motion passes to nail silhouette and beats.",
-      image: "https://cdn.tdgamestudio.com/landing/images/7be77dae-b42e-44c0-b1be-397150c7ff3d.jpg",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/0001e234-1442-418b-94cf-9d9d273a0c16.webp",
     },
     {
       title: "Timing & motion",
       description: "Refine anticipation, follow-through, and impact frames.",
-      image: "https://cdn.tdgamestudio.com/landing/images/origins-thumbnail.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/6ce5ded7-8142-435f-b30e-a1a4b2ddfe9a.webp",
     },
     {
       title: "Polish & review",
       description: "Secondary motion refined, then walked through together.",
-      image: "https://cdn.tdgamestudio.com/landing/images/9985f5f1-9ed5-4f08-9143-7d86a9765272.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/3853c676-10fd-4522-a1d9-d92238288227.webp",
     },
     {
       title: "Export & delivery",
       description: "Spine/atlas checks, naming, and packages ready for build.",
-      image: "https://cdn.tdgamestudio.com/landing/images/a0a5dab6-1e06-4a1b-af95-af0b51fc27e6.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/237b0c6f-1168-4c2e-bc54-733ffddd7bee.webp",
     },
   ],
   pillars: [
@@ -126,27 +126,27 @@ export const service2DVfxWorkflowConfig: ServiceWorkflowConfig = {
     {
       title: "VFX brief & style",
       description: "Lock palette, shape language, and hero frames before build.",
-      image: "https://cdn.tdgamestudio.com/landing/images/9ab9a213-58d4-40c7-aacc-c6ad9f826d0f.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/b49a1a0f-4ddd-44b4-b8d1-239092a11e66.webp",
     },
     {
       title: "Effect production",
       description: "Layering sparks, trails, and glows for performance.",
-      image: "https://cdn.tdgamestudio.com/landing/images/3067c837-e030-403f-b7c5-0c7246bfe15f.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/2ad4fd27-d537-4abe-a5de-419e749cedfd.webp",
     },
     {
       title: "Motion & timing",
       description: "Timing, easing, and hold frames for impact readability.",
-      image: "https://cdn.tdgamestudio.com/landing/images/95bff405-e638-4cec-9260-e5c9af46f49b.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/185ef285-b86c-4411-8f55-b97f985a47cb.webp",
     },
     {
       title: "Polish & optimization",
       description: "Flashes and overlays tuned for mobile and PC targets.",
-      image: "https://cdn.tdgamestudio.com/landing/images/f8e2e81a-e72c-431b-b4ec-5ab7af73ea12.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/7d3802fe-a5e1-49a7-9bb5-4c65abfb4474.webp",
     },
     {
       title: "Integration & delivery",
       description: "Packed sheets, engine-ready hooks, and clear usage notes.",
-      image: "https://cdn.tdgamestudio.com/landing/images/21f8a0a6-048f-4a5c-9946-3a89f6303fcd.png",
+      image: "https://cdn.tdgamestudio.com/ai/2026/09/6f2cfc7f-8337-4504-8465-ff31c7d0c578.webp",
     },
   ],
   pillars: [
