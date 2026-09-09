@@ -68,6 +68,9 @@ export default function ProfileDeck() {
       const avail = window.innerHeight - CHROME;
       const list: Slide[] = [];
       document.querySelectorAll<HTMLElement>("main > section").forEach((sec, idx) => {
+        // ponytail: section gắn data-deck-skip vẫn nằm trong bản cuộn nhưng không
+        // thành slide — sếp chọn bỏ vài trang khỏi bản trình chiếu (2026-09-09).
+        if (sec.dataset.deckSkip !== undefined) return;
         // Wrapper để dịch nội dung sang trang sau mà không dịch cả khung nền.
         let inner = sec.querySelector<HTMLElement>(":scope > [data-deck-inner]");
         if (!inner) {

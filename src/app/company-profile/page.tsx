@@ -88,19 +88,6 @@ const HERO_VIDEO =
 const CONTACT_VIDEO =
   "https://cdn.tdgamestudio.com/projects/2026/08/957962de-4cc5-4931-bef0-cecf29a0482d-mid_autumn-.mp4";
 
-const COMPANY = [
-  ["Legal name", "TD Games Company Limited"],
-  ["Founded", "2022"],
-  ["Business registration", "0111386856"],
-  ["Head office", "4th Floor, H1 Tower — Hoa Binh Green City, 505 Minh Khai, Hai Ba Trung District, Hanoi, Vietnam"],
-  ["Time zone", "GMT+7 (ICT)"],
-  ["Working languages", "English, Vietnamese"],
-  ["Email", "info@tdgamestudio.com"],
-  ["Hotline", "(+84) 36 260 8491"],
-  ["Website", "tdgamestudio.com"],
-  ["Payment", "Bank transfer (USD/VND), Wise, Payoneer"],
-];
-
 const STATS = [
   { value: "2022", label: "Founded" },
   { value: "50+", label: "Projects delivered" },
@@ -199,15 +186,6 @@ const VISION_MISSION = [
     "Our Mission",
     "To empower game studios and publishers worldwide by delivering high-quality Game Art, Animation, VFX, and Game Development services that transform ideas into engaging gaming experiences — through creativity, technical excellence, transparent collaboration, and an unwavering commitment to quality.",
   ],
-];
-
-// Core values — PDF trang 5
-const CORE_VALUES = [
-  ["Commitment", "We pay attention to every detail to deliver polished, production-ready, game-ready results."],
-  ["Professionalism", "We ensure clear communication, efficient workflows, and on-time delivery."],
-  ["Quality", "We prioritize product excellence and client satisfaction in every project."],
-  ["Creativity", "We continuously innovate to create unique and impactful game experiences."],
-  ["Partnership", "We build long-term relationships through transparency, trust, and collaboration."],
 ];
 
 // Full game production — số liệu sếp cung cấp 2026-09-09. KHÔNG bịa thêm KPI
@@ -630,29 +608,10 @@ export default async function CompanyProfilePage() {
           </Wrap>
         </section>
 
-        {/* Stats */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
-          <Wrap>
-            <Reveal>
-              {/* Mobile: card chỉ rộng ~138px, "1000+" ở 40px chạm sát mép và label
-                  tracking 0.2em wrap lởm chởm → giảm padding + cỡ chữ + tracking. */}
-              <div data-deck-grid="2x2" className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                {STATS.map((s) => (
-                  <div key={s.label} className={`${CARD} px-5 py-6 md:px-6 md:py-7`}>
-                    <div className="text-[clamp(1.75rem,8vw,3rem)] font-black leading-none text-white">
-                      {s.value}
-                    </div>
-                    <div className="mt-2.5 text-[11px] uppercase leading-[1.5] tracking-[0.12em] text-white/50 md:mt-3 md:text-xs md:tracking-[0.2em]">
-                      {s.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </Wrap>
-        </section>
-
-        {/* Who we are */}
+        {/* Who we are — 2026-09-09 gộp 3 section (Stats + Who we are + Vision/mission)
+            thành 1 slide theo yêu cầu sếp. Đã cắt: bảng COMPANY 10 dòng pháp lý
+            (địa chỉ/email/hotline/web đã có ở slide Conclusion, MST dời xuống đó)
+            và CORE_VALUES 5 dòng khẩu hiệu — hai khối này làm slide cao gấp ba. */}
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
@@ -670,8 +629,24 @@ export default async function CompanyProfilePage() {
                   and without style drift along the way.
                 </p>
             </Reveal>
-            <Reveal className="mt-16">
-              <Facts rows={COMPANY} />
+            <Reveal className="mt-10">
+              {/* Mobile: card chỉ rộng ~138px, "1000+" ở 40px chạm sát mép và label
+                  tracking 0.2em wrap lởm chởm → giảm padding + cỡ chữ + tracking. */}
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {STATS.map((s) => (
+                  <div key={s.label} className={`${CARD} px-5 py-6 md:px-6 md:py-7`}>
+                    <div className="text-[clamp(1.75rem,8vw,3rem)] font-black leading-none text-white">
+                      {s.value}
+                    </div>
+                    <div className="mt-2.5 text-[11px] uppercase leading-[1.5] tracking-[0.12em] text-white/50 md:mt-3 md:text-xs md:tracking-[0.2em]">
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+            <Reveal className="mt-10">
+              <Facts rows={VISION_MISSION} />
             </Reveal>
           </Wrap>
         </section>
@@ -734,24 +709,6 @@ export default async function CompanyProfilePage() {
           </Wrap>
         </section>
 
-        {/* Team & capacity */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
-          <Wrap>
-            <Heading
-              no="04"
-              eyebrow="Vision & mission"
-              title="Where we're headed"
-            />
-            <Reveal>
-              <Facts rows={VISION_MISSION} />
-            </Reveal>
-            <Reveal className="mt-16">
-              <p className="mb-8 text-xs uppercase tracking-[0.25em] text-white/55">Core values</p>
-              <Facts rows={CORE_VALUES} />
-            </Reveal>
-          </Wrap>
-        </section>
-
         {/* Selected work */}
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
@@ -802,7 +759,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Case study spotlight */}
-        <section className="relative overflow-hidden py-14 md:py-24">
+        <section data-deck-skip className="relative overflow-hidden py-14 md:py-24">
           <Image
             src={CASE_STUDY.image}
             alt=""
@@ -979,7 +936,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Process */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
+        <section data-deck-skip className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="09"
@@ -1103,7 +1060,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Tools */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
+        <section data-deck-skip className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="14"
@@ -1136,7 +1093,7 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Clients */}
-        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
+        <section data-deck-skip className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="15"
@@ -1231,6 +1188,9 @@ export default async function CompanyProfilePage() {
                     4th Floor, H1 Tower — Hoa Binh Green City
                     <br />
                     505 Minh Khai, Hai Ba Trung, Hanoi (GMT+7)
+                    <br />
+                    {/* MST — chỗ duy nhất còn giữ sau khi cắt bảng COMPANY. */}
+                    Business reg. 0111386856
                   </dd>
                 </div>
                 <div>

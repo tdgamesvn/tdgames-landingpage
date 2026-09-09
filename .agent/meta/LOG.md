@@ -5227,3 +5227,18 @@ Kết quả toàn deck: zoom **0.69–1.0** (đáy giờ là slide 05 và 11), c
   KHÔNG đụng "Nov 2023"/"Feb 2023" ở portfolio — đó là ngày phát hành dự án thật.
 
 tsc sạch, build pass. 3 commit chờ push.
+
+## 2026-09-09 (session 27 — deck còn 14 slide: ẩn 4, gộp 3 thành 1)
+
+- Ẩn khỏi deck (vẫn còn ở bản cuộn): ORCA case study, "From brief to handoff",
+  "What lands in your repo", "Studios we've worked with" — gắn `data-deck-skip`,
+  measure trong `_deck.tsx` bỏ qua section có attr này.
+- Gộp Stats + "Who we are" + "Where we're headed" thành 1 section //01: heading +
+  2 đoạn intro + 4 stat card 1 hàng + Vision/Mission. Cắt bảng COMPANY (10 dòng pháp
+  lý — địa chỉ/email/hotline/web đã có ở slide Conclusion, MST dời xuống đó) và
+  CORE_VALUES (5 dòng khẩu hiệu). Xoá luôn 2 const, bỏ `data-deck-grid="2x2"` vì
+  Stats không còn đứng riêng.
+- Deck: 20 → **14 slide**. Số thứ tự //01..//09 giữ theo bản cuộn nên deck nhảy số,
+  chấp nhận.
+
+tsc sạch, build pass.
