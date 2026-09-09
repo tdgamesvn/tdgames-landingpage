@@ -109,6 +109,21 @@ const STATS = [
 
 const SERVICES = [
   {
+    title: "Full Game Production",
+    href: "/services/full-game-production",
+    image:
+      "https://cdn.tdgamestudio.com/projects/2026/09/bb9160cc-8f29-4020-8480-92f7e7b1c3ce-e9b70fd9-f4fd-4943-9b8a-da2640c62aef-t.webp",
+    lead: "Whole games taken from concept to store build — design, art, animation, VFX and Unity development under one roof.",
+    items: [
+      "Game design & GDD",
+      "Prototype & first playable",
+      "Level, economy & progression",
+      "Unity development & integration",
+      "QA & store submission",
+      "LiveOps & content updates",
+    ],
+  },
+  {
     title: "2D Art",
     href: "/services/2d-art",
     // Media 3 card service sếp chỉ định riêng cho trang này (2026-08-05).
@@ -162,7 +177,9 @@ const SERVICE_CARDS: StudioServiceCard[] = SERVICES.map((s, i) => {
   const c = siteContent.services.cards.find((x) => x.title === s.title);
   return {
     title: s.title,
-    icon: (c?.icon as StudioServiceCard["icon"]) ?? (["art", "animation", "vfx"] as const)[i],
+    icon:
+      (c?.icon as StudioServiceCard["icon"]) ??
+      (["game", "art", "animation", "vfx"] as const)[i],
     href: s.href,
     statValue: c?.statValue ?? "",
     statLabel: c?.statLabel ?? "",
@@ -635,7 +652,9 @@ export default async function CompanyProfilePage() {
           </Wrap>
         </section>
 
-        <Divider items={["2D Art", "2D Animation", "2D VFX", "Spine", "Unity", "Cocos"]} />
+        <Divider
+          items={["Full Game Production", "2D Art", "2D Animation", "2D VFX", "Spine", "Unity"]}
+        />
 
         {/* Services */}
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
@@ -653,7 +672,7 @@ export default async function CompanyProfilePage() {
           <Wrap className="pt-16">
             {/* Cùng container với StudioServiceCardsGrid (max-w-6xl, gap-5/lg:gap-6)
                 + px-7 = padding trong card, để chữ thẳng cột với tiêu đề card trên. */}
-            <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3 lg:gap-6">
+            <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
               {SERVICES.map((s, i) => (
                 <Reveal key={s.title} delay={i * 0.08} className="px-7">
                   <div className="mb-5 h-px w-12" style={{ background: A }} />
