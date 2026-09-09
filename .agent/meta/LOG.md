@@ -5094,3 +5094,19 @@ tay từng dòng). Kiểm letterbox trước khi gắn: 3 ảnh mẫu trim ra v�
 
 `tsc` sạch, mỗi trang service render đúng 5 ảnh AI. Xem tay vfx-4: đúng gu, VEE khớp
 thiết kế, nội dung khớp "Polish & optimization". Chưa commit.
+
+### Session 21 (tiếp) — TẠI SAO ĐỔI ẢNH TRONG CODE MÀ TRANG KHÔNG ĐỔI
+
+Sếp báo local vẫn hiện ảnh cũ (chibi kiếm sĩ) — không phải ảnh trong preset, cũng không
+phải ảnh mới. Root cause: **3 trang service 2D đọc ảnh workflow từ `page_slots`**
+(`page='services-2d-*'`, `slot='workflow-step'`, 5 row/trang, sort_order 0-4). Slot đè
+lên `steps[].image` trong `service-workflow-presets.ts` — sửa file chỉ đổi fallback mà
+fallback không ai dùng.
+
+Fix: UPDATE 15 row đó theo `(page, sort_order)` bằng SQL (bảng KHÔNG có cột `r2_url`,
+chỉ `url`). Verify qua chính API trang đọc:
+`/api/page-slots?page=services-2d-art&slot=workflow-step` → 5/5 ảnh mới, cả 3 trang.
+
+**Bài học ghi lại cho lần sau: trước khi sửa ảnh trong code, query `page_slots` xem
+trang đó có slot đè không.** Đã dính 2 lần trong ngày (4 card services trang chủ ở
+session 17, workflow 3 trang service ở đây).
