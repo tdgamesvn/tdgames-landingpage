@@ -5242,3 +5242,14 @@ tsc sạch, build pass. 3 commit chờ push.
   chấp nhận.
 
 tsc sạch, build pass.
+
+## 2026-09-09 (session 28 — vá số thứ tự section sau khi gộp/ẩn)
+
+Verify production sau session 27 phát hiện lỗi tự gây: xoá section Vision/mission làm
+bản cuộn nhảy số `//03 → //05` (mất hẳn //04). Đánh lại liền mạch **01–15**.
+
+Trong deck vẫn nhảy vì 4 section `data-deck-skip` chiếm số → ẩn luôn cụm `// xx` khi
+trình chiếu (`[data-heading-no]`, thanh dưới đã có "03/14"). Gạch nối + eyebrow giữ
+nguyên nên đầu slide không bị cụt.
+
+Production verify: 14 slide, tiêu đề dropdown đúng thứ tự, slide 02 (gộp) scaled 625 ≤ 629.

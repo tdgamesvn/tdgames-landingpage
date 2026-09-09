@@ -445,7 +445,10 @@ function Heading({
     <Reveal className="mb-9 text-center md:mb-14">
       <div className="mb-5 flex items-center justify-center gap-4">
         {no ? (
-          <span className="text-sm font-black italic tracking-tighter text-[#ffb04a] drop-shadow-[0_0_12px_rgba(255,176,74,0.35)]">
+          <span
+            data-heading-no
+            className="text-sm font-black italic tracking-tighter text-[#ffb04a] drop-shadow-[0_0_12px_rgba(255,176,74,0.35)]"
+          >
             {`// ${no}`}
           </span>
         ) : null}
@@ -713,7 +716,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="05"
+              no="04"
               eyebrow="Selected work" title="Shipped, not mocked up" />
           </Wrap>
           <Wrap>
@@ -805,7 +808,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="06"
+              no="05"
               eyebrow="Key people" title="Who leads the work" />
             <div className="grid gap-4 md:grid-cols-2">
               {KEY_PEOPLE.map((p, i) => (
@@ -844,7 +847,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="07"
+              no="06"
               eyebrow="Our team"
               title="The people behind the work"
               lead="A full-time core in Hanoi, extended by a vetted freelance bench when a project needs to scale."
@@ -887,7 +890,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="08"
+              no="07"
               eyebrow="Why choose us" title="What you actually get" />
             <div className="grid gap-4 md:grid-cols-2">
               {WHY.map((w, i) => (
@@ -939,7 +942,7 @@ export default async function CompanyProfilePage() {
         <section data-deck-skip className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="09"
+              no="08"
               eyebrow="How we work" title="From brief to handoff" />
             {/* Sơ đồ ngang: đường ray + 4 mốc, thẳng cột với card bên dưới.
                 Ẩn dưới lg vì 1–2 cột thì mũi tên ngang thành vô nghĩa. */}
@@ -992,7 +995,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="10"
+              no="09"
               eyebrow="Engagement" title="Three ways to work with us" />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {ENGAGEMENT.map((e, i) => (
@@ -1018,7 +1021,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="11"
+              no="10"
               eyebrow="Quality assurance"
               title="How we keep it consistent"
               lead="The controls that keep batch fifty looking like batch one."
@@ -1035,7 +1038,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="12"
+              no="11"
               eyebrow="Security & IP" title="Your work stays yours" />
             <MobileFold label="What we commit to">
               <Reveal>
@@ -1049,7 +1052,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="13"
+              no="12"
               eyebrow="Working together" title="How we stay in sync" />
             <MobileFold label="How it works">
               <Reveal>
@@ -1063,7 +1066,7 @@ export default async function CompanyProfilePage() {
         <section data-deck-skip className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="14"
+              no="13"
               eyebrow="Tools & deliverables" title="What lands in your repo" />
             <MobileFold label="See the stack">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1096,7 +1099,7 @@ export default async function CompanyProfilePage() {
         <section data-deck-skip className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="15"
+              no="14"
               eyebrow="Clients" title="Studios we've worked with" />
             <Reveal>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -1123,7 +1126,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="16"
+              no="15"
               eyebrow="FAQ" title="Before you ask" />
             <MobileFold label="Read the answers">
               <div className="grid gap-4 md:grid-cols-2">

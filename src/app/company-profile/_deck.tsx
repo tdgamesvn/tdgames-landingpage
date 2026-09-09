@@ -216,6 +216,9 @@ export default function ProfileDeck() {
           main[data-view="deck"] [data-deck-inner] .max-w-6xl,
           main[data-view="deck"] [data-deck-inner] .max-w-7xl { max-width: none; }
           main[data-view="deck"] > section h2 { font-size: clamp(1.9rem, 3.4vw, 2.75rem); }
+          /* Số // 01 // 02 đánh theo bản cuộn, mà deck bỏ bớt vài section nên nó
+             nhảy số giữa chừng. Trình chiếu đã có "05/14" ở thanh dưới → ẩn đi. */
+          main[data-view="deck"] [data-heading-no] { display: none; }
           /* Nén nhịp dọc TRƯỚC khi phải thu nhỏ hoặc cắt trang — khoảng trắng của
              bản scroll là để cuộn cho thoáng, trình chiếu thì không cần. */
           main[data-view="deck"] > section .mt-16 { margin-top: 1.5rem; }
