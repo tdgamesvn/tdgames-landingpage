@@ -90,7 +90,7 @@ const CONTACT_VIDEO =
 
 const COMPANY = [
   ["Legal name", "TD Games Company Limited"],
-  ["Founded", "2023"],
+  ["Founded", "2022"],
   ["Business registration", "0111386856"],
   ["Head office", "4th Floor, H1 Tower — Hoa Binh Green City, 505 Minh Khai, Hai Ba Trung District, Hanoi, Vietnam"],
   ["Time zone", "GMT+7 (ICT)"],
@@ -102,7 +102,7 @@ const COMPANY = [
 ];
 
 const STATS = [
-  { value: "2023", label: "Founded" },
+  { value: "2022", label: "Founded" },
   { value: "50+", label: "Projects delivered" },
   { value: "15+", label: "Studios served" },
   { value: "1000+", label: "Assets shipped" },
@@ -636,7 +636,7 @@ export default async function CompanyProfilePage() {
             <Reveal>
               {/* Mobile: card chỉ rộng ~138px, "1000+" ở 40px chạm sát mép và label
                   tracking 0.2em wrap lởm chởm → giảm padding + cỡ chữ + tracking. */}
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div data-deck-grid="2x2" className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {STATS.map((s) => (
                   <div key={s.label} className={`${CARD} px-5 py-6 md:px-6 md:py-7`}>
                     <div className="text-[clamp(1.75rem,8vw,3rem)] font-black leading-none text-white">
@@ -660,7 +660,7 @@ export default async function CompanyProfilePage() {
               eyebrow="Who we are" title="A boutique game art studio in Hanoi" />
             <Reveal className="grid gap-8 text-lg leading-relaxed text-white/75 md:grid-cols-2">
                 <p>
-                  TD Games Company Limited is a 2D art, animation and VFX studio founded in 2023.
+                  TD Games Company Limited is a 2D art, animation and VFX studio founded in 2022.
                   We work as an extension of your art team — you send a style guide, we return
                   production-ready assets that drop straight into the build.
                 </p>

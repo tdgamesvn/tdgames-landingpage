@@ -130,7 +130,7 @@ export default async function AboutPage() {
               </h1>
 
               <p className="mt-8 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
-                Founded in 2023, TD Games is a Vietnam based game outsourcing studio dedicated to delivering high quality Game Art, Animation, VFX, and Game Development services.
+                Founded in 2022, TD Games is a Vietnam based game outsourcing studio dedicated to delivering high quality Game Art, Animation, VFX, and Game Development services.
               </p>
 
               <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">

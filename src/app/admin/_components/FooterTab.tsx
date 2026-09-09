@@ -102,7 +102,7 @@ export function FooterTab({ adminKey }: { adminKey: string }) {
             className={inputCls}
             value={cfg.description1}
             onChange={(e) => setCfg((c) => ({ ...c, description1: e.target.value }))}
-            placeholder="Founded in 2023…"
+            placeholder="Founded in 2022…"
           />
         </div>
         <div>

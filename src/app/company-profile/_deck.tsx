@@ -189,7 +189,16 @@ export default function ProfileDeck() {
           main[data-view="deck"] > section:nth-of-type(${(cur?.sec ?? 0) + 1}) {
             /* padding-bottom lớn vì nó cũng bị zoom co lại — thiếu là dòng cuối
                chui xuống dưới thanh điều khiển. */
-            display: block; overflow: hidden; padding-top: 88px; padding-bottom: 88px;
+            /* flex + center: slide ít nội dung (Stats) nằm giữa màn hình thay vì
+               dính đỉnh và bỏ trống nửa dưới. */
+            display: flex; flex-direction: column; justify-content: center;
+            overflow: hidden; padding-top: 88px; padding-bottom: 88px;
+          }
+          /* Stats: 4 card một hàng ngang thì lọt thỏm giữa màn 16:9 → xếp 2x2, bó
+             hẹp lại cho ra khối. Chỉ ở deck, bản cuộn vẫn 1 hàng 4 card. */
+          main[data-view="deck"] [data-deck-grid="2x2"] {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            max-width: 62%; margin-inline: auto;
           }
           /* Reveal (animation khi cuộn tới) không fire cho slide đang display:none
              → tiêu đề section vô hình. Ở deck ép hiện luôn. */

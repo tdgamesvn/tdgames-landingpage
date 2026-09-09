@@ -5214,3 +5214,16 @@ Kết quả toàn deck: zoom **0.69–1.0** (đáy giờ là slide 05 và 11), c
 2.5 — nhìn đồng bộ. tsc sạch, build pass, lint không phát sinh lỗi mới ở file sửa.
 
 **Next:** sếp duyệt `/company-profile?view=deck` rồi push (2 commit đang chờ).
+
+## 2026-09-09 (session 26 — slide Stats 2x2, năm thành lập 2022)
+
+- Deck: slide đang chiếu đổi sang `flex + justify-center` → slide ít nội dung (Stats)
+  nằm giữa màn thay vì dính đỉnh. Stats thêm `data-deck-grid="2x2"`, CSS deck ép
+  2 cột + max-width 62% → 4 card xếp 2x2 giữa màn. Bản cuộn vẫn 1 hàng 4 card.
+- Năm thành lập 2023 → **2022** ở 4 file (site-footer default, FooterTab placeholder,
+  company-profile COMPANY+STATS+đoạn "Who we are", about page) VÀ trong DB
+  `site_config.key='footer'` — footer thật đọc từ DB nên sửa code không đủ, đã UPDATE
+  luôn (verify: `select key from site_config where value::text like '%2023%'` → rỗng).
+  KHÔNG đụng "Nov 2023"/"Feb 2023" ở portfolio — đó là ngày phát hành dự án thật.
+
+tsc sạch, build pass. 3 commit chờ push.
