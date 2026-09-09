@@ -1,5 +1,66 @@
 # LOG
 
+## 2026-09-09 (session 11 — bỏ section showreel, đổi vai section //05)
+
+`/services/full-game-production`: sếp bảo showreel chưa có thì ẩn tạm, và chê tiêu đề
+"FEATURED Games we've shipped" của `//05` không khớp nội dung (3 card đều là case
+outsource visual: Summoner Era / Puzzle Wonderland / Axie).
+
+- Xoá hẳn section `// 03 Game production showreel` (kèm `resolveSlot(PAGE,"showreel")`,
+  helper `isVideo`, import `Link` — chỉ dùng ở đó). Để lại comment `ponytail:` chỉ cách
+  khôi phục: `git log -S showreel-full-game-production`. Slot `showreel` trong DB không
+  đụng, còn nguyên chờ video thật.
+- `//05` KHÔNG bỏ (mất chỗ sửa ảnh qua admin Page Slots) mà đổi vai cho khỏi trùng
+  `//04`: title "FEATURED client titles", railLabel "Client work", description nói rõ
+  là game của studio khác, TD chạy pipeline art/animation/VFX. Giờ `//04` = game tự làm
+  end-to-end, `//05→//04` = việc làm cho khách.
+- Đánh lại số section: shipped 04→03, featured 05→04, faq 06→05, contact 07→06.
+
+Hỏi sếp chọn "đổi tiêu đề" vs "ẩn luôn" → ban đầu sếp không trả lời nên mặc định đổi
+tiêu đề, sau đó sếp gửi screenshot chốt **ẩn luôn** (không phải game production).
+Đã xoá `<ServiceFeaturedShowcaseSection>` + `DEFAULT_PRODUCTS` + `resolveFeaturedCards`
++ import. 3 card đó vẫn còn ở /portfolio và 3 trang service 2D nên không mất nội dung.
+
+Trang giờ còn 5 section: 01 What we do → 02 Workflow → 03 Games we shipped end to end
+→ 04 FAQ → 05 Contact. Slot `featured-card` của page `services-full-game-production`
+trong DB thành mồ côi (không ai đọc) — để nguyên, xoá sau nếu vướng.
+
+Verify: `tsc --noEmit` + `eslint` file này sạch. Chưa xem bằng mắt, chưa commit.
+
+## 2026-09-09 (session 10 — section //04 chứa 3 game thay vì 1, mockup)
+
+Sếp hỏi trang `/services/full-game-production` sẽ show sao khi có nhiều game (trước mắt 3),
+và chốt KHÔNG phân biệt game tự làm vs làm cho khách.
+
+Design chốt: `//04` từ spotlight-1-game thành list `SHIPPED_GAMES` — 1 section header chung
+("Games we shipped end to end"), mỗi game là 1 `<article>`: tên (3xl, không 5xl) + 1 dòng
+blurb + nút store/badge cùng hàng, dưới là rail ảnh riêng. Block cao ~380px thay ~560px,
+3 game = section 2035px. Rail tách thành `GameShotRail` trong cùng file (không đẻ file mới):
+duration = `shots.length × 4.5s`, `animationDelay: -i*6s` để 3 rail lệch pha, `< 5 ảnh` thì
+render lưới tĩnh vì rail 2 ảnh lặp trông giả. `dim: true` phủ `bg-black/80` lên ảnh.
+
+MOCKUP (sếp sẽ replace): game 2 "Tidy Mart Sort Puzzle" và game 3 "Coming Soon" đang mượn
+ảnh + link store của Shake It!. Đã ghi comment `ponytail:` ngay trên `SHIPPED_GAMES`.
+
+Section `//05 ServiceFeaturedShowcaseSection` GIỮ NGUYÊN — đã đề xuất gộp (giờ trùng vai)
+nhưng sếp chưa chốt, và data của nó sửa được từ admin Page Slots nên gộp là mất chỗ đó.
+
+Verify: `tsc --noEmit` + eslint file này sạch; screenshot 1440px: 3 article, 3 rail, lệch pha đúng.
+gitnexus impact `ServiceFullGameProductionPage`: LOW, 0 caller.
+
+## 2026-09-09 (session 9 — rail Shake It!: sửa giật khi lặp marquee)
+
+Sếp gửi screenshot section `// 04 Shipped title` (`/services/full-game-production`) xin cho
+ảnh chạy ngang liên tục + gradient mờ 2 mép. Screenshot là bản CŨ — marquee + `mask-image`
+đã có sẵn trong `page.tsx` (sửa 09:55 cùng ngày), sếp chỉ cần reload.
+
+Nhưng có bug thật: track dùng `gap-4`, gap chỉ chèn GIỮA các item nên với 3 bộ ×8 ảnh,
+track = 24 item + 23 gap, mà keyframe `marquee` dịch `-33.333%` → 1/3 track = 8 item +
+7.67 gap → mỗi vòng lặp nhảy ~5px. Fix: bỏ `gap-4`, thêm `mr-4` lên từng item → 1 bộ =
+8×(w+16), chia hết cho 3. `tsc --noEmit` sạch.
+
+Chưa xem bằng mắt (dev server không chạy) — cần `npm run dev` để verify chuyển động.
+
 ## 2026-09-08 (session 8 — mobile: title bé, body to, tương phản cỡ chữ yếu)
 
 Sếp chê hero trên mobile: title nhỏ mà đoạn mô tả to, nhìn không có phân cấp.
@@ -4722,3 +4783,292 @@ Chỉ là lớp hiển thị — `src/lib/anim-runs.ts` (toRuns/expandRuns), DB 
 và `<SpineCharacter>` vẫn nhận mảng phẳng như cũ, không migration.
 Test: `node --test src/lib/anim-runs.test.ts` (4 pass, có ca đổi chỗ làm 2 nhóm
 cùng tên nhập lại thành một).
+
+## 2026-09-08 (session 9 — trang service mới: Full Game Production)
+
+Sếp yêu cầu thêm trang service "làm full 1 con game" (GD + Dev + Visual). Đặt tên
+**Full Game Production**, slug `/services/full-game-production` (chuẩn ngành hơn "Game Product",
+đỡ mơ hồ với khách nước ngoài).
+
+Tái dùng nguyên bộ component 3 trang service cũ, KHÔNG tạo component mới:
+- `service-workflow-presets.ts` += `serviceFullGameProductionWorkflowConfig` (5 phase:
+  GDD → prototype → production → QA → launch/liveops)
+- `service-faq-presets.ts` += `serviceFullGameProductionFaqItems` (8 câu + 2 câu shared)
+- `src/app/services/full-game-production/{page,layout}.tsx` — gọi thẳng
+  ServiceWorkflowSection / ServiceFeaturedShowcaseSection / ServiceFaqSection thay vì đẻ
+  3 file wrapper như 2d-vfx.
+- Section showreel inline (`// 03`): `<video controls>` + fallback iframe nếu slot là embed URL.
+- Nội dung sửa qua admin Page Slots, page key `services-full-game-production`, slot
+  `hero` / `showreel` / `service-card` / `featured-card`.
+- Link vào: site-header dropdown SERVICES, site-footer cột Services, sitemap.ts.
+
+Verify: `tsc --noEmit` sạch, `npm run build` ok, route prerender static.
+
+CHƯA làm (chờ sếp): card ở home OUR SERVICES — `studio-service-cards.tsx` grid cứng
+`md:grid-cols-3`, thêm card thứ 4 vào site.json sẽ lòi 1 card lẻ hàng. Cần sếp quyết
+đổi grid (4 cột / 2x2) trước. Data thật (tên game, link store, video showreel) cũng
+đang là placeholder từ portfolio.
+
+## 2026-09-08 (session 9 — Shake It! showcase + OUR SERVICES 4 cột)
+
+Sếp chốt data thật cho `/services/full-game-production`: game **Shake It! Water Sort Puzzle**
+(Google Play `com.td.capybara.watersort`), chưa có video showreel, chỉ có 8 ảnh scene gameplay
+1080×1920 trong `~/Downloads/water_sort`.
+
+- Up ảnh: script tạm (đã xoá) dùng sharp resize width 720 + webp q80 → R2 key
+  `landing/games/shake-it-water-sort/scene-01..08.webp`. 12MB PNG → ~400KB tổng.
+- `page.tsx`: thêm section `// 04 Shipped title` — tiêu đề + CTA Google Play + rail 8 ảnh
+  cuộn ngang bằng CSS scroll-snap (aspect 9/16, không dùng carousel lib, không client component).
+  Renumber: featured 04→05, FAQ 05→06, contact 06→07.
+- `studio-service-cards.tsx`: `items.length >= 4` → `md:grid-cols-2 lg:grid-cols-4 max-w-7xl`;
+  3 card giữ nguyên `md:grid-cols-3` (company-profile + 3 trang service không đổi). Thêm icon
+  type `game` vẽ bằng SVG inline thay vì up thêm file mask.
+- `site.json`: thêm card "Full Game Production" đứng đầu `services.cards` → trang chủ có 4 card.
+  `home-services-section.tsx` thêm `service-full-game` vào SERVICE_LABELS (map theo index).
+
+Verify: `tsc --noEmit` sạch, `npm run build` pass, `/services/full-game-production` prerender static.
+Lưu ý: build phải chạy `dangerouslyDisableSandbox` — sandbox chặn fetch Google Fonts.
+
+Next: sếp xem thật rồi commit. Còn 3 card "Games we've shipped" vẫn trỏ portfolio cũ.
+
+## 2026-09-09 (session 9 — ảnh AI cho /services/full-game-production, CHƯA XONG)
+
+Sếp xin ảnh cover cartoon cho `// 01 What we do` + `// 02 Our process` bằng đúng luồng
+ảnh của blog. Hai mục này không có "1 ảnh cover" — chúng là 6 card (`DEFAULT_CARDS` trong
+`src/app/services/full-game-production/page.tsx`) + 5 step (`serviceFullGameProductionWorkflowConfig`
+trong `service-workflow-presets.ts`), tổng 11 ảnh, đang xài lại ảnh portfolio cũ.
+
+Thêm `scripts/gen-service-images.mjs`: 11 prompt (cartoon mobile game, nền tối, accent cam
+#ff8c3a, có đoạn chống "vẻ AI bóng nhẫy") bắn vào `POST /api/admin/generate-image` — cùng
+luồng gpt-image → sharp → R2 → media_assets mà blog dùng.
+
+BLOCKER: mọi POST tới localhost:3000 trả 404 rỗng (GET thì 200), kể cả `/api/admin/blog`.
+Dev log không ghi nhận request nào → nghi có process khác đang chiếm cổng 3000. Chưa sinh
+được ảnh nào. Next: xác định process trên 3000 (`lsof` không có trên máy này, dùng
+`netstat -anv | grep 3000` hoặc `ps aux | grep next`), tắt nó, chạy lại script.
+
+## 2026-09-09 (session 10 — gỡ blocker POST 404, sinh xong 11 ảnh AI)
+
+Root cause blocker session 9: **hai process cùng cổng 3000**. `next dev` (PID 32386)
+bind IPv6 `[::]:3000`; `vite` của **tdgames-platforms** (PID 43233, chạy lạc từ 3/9)
+bind IPv4 `*:3000`. curl `localhost` đi IPv6 → Next (GET 200), còn `fetch` của Node đi
+IPv4 → rơi vào vite → 404 rỗng, nên dev log Next không thấy request nào.
+Bằng chứng: POST `[::1]:3000` → 401, POST `127.0.0.1:3000` → 404.
+
+Fix (không đụng process dự án khác): `gen-service-images.mjs` default APP → `http://[::1]:3000`.
+
+Blocker thứ 2 sau đó: 401. `getAdminSecret()` (`src/lib/admin-auth.ts`) ưu tiên row
+`app_settings.admin_secret` trong DB, `.env.local` chỉ là fallback — hai giá trị lệch nhau
+(env 44 ký tự, DB 11). Chạy script với `ADMIN_SECRET=$(đọc row từ Supabase REST)`.
+
+Sinh đủ 11 ảnh (gpt-image → sharp → R2 `ai/2026/09/*.webp`), dán URL vào 6 `DEFAULT_CARDS`
+(`page.tsx`) + 5 step (`serviceFullGameProductionWorkflowConfig`). Script nay nhận nhiều
+prefix: `node ... gen-service-images.mjs card-2 step-`.
+
+Verify: ảnh card-1 xem tay (cartoon, nền tối ấm, không bóng nhẫy), `tsc --noEmit` sạch,
+`curl /services/full-game-production` render đủ ảnh mới.
+
+Next: sếp duyệt mắt thường rồi commit (working tree còn cả cụm Full Game Production
+chưa commit từ session 9). Vite lạc trên IPv4:3000 vẫn đang chạy — nên tắt khi rảnh.
+
+## 2026-09-09 (session 12 — render lại 11 ảnh AI theo gu casual/puzzle tươi sáng)
+
+Sếp gửi ref key art (WhooPaw / SummerPop / Mayan Mystery / Heroic Journey): game
+mình làm thiên casual + puzzle nên ảnh phải cartoon sáng, cute, tránh midcore/tối/rối.
+Bản cũ (session 10) prompt ép "deep near-black background" + warrior/fire VFX → sai gu.
+
+`scripts/gen-service-images.mjs`:
+- `STYLE` → candy-bright (sky blue / sunny yellow / mint / pink, accent cam), chibi
+  mắt to, nền SÁNG (ảnh nằm trong card nên tương phản với nền trang #0a0a0a là đúng ý).
+- `HANDMADE` → bỏ vế "matte/tối", thêm negative: no dark background, no muted colours,
+  no gritty realism, no epic fantasy armour, no midcore.
+- 3 subject sửa cho hợp casual: card-2 nền studio pastel, card-3 warrior → cún mascot
+  tròn, card-4 fire+lightning → burst match-3 kẹo/jelly. step-1/2 đổi desk tối → mint.
+
+Sinh lại đủ 11 ảnh, dán URL mới vào 6 `DEFAULT_CARDS` + 5 step workflow preset.
+Xem tay card-1 + card-4: đúng gu ref. `tsc --noEmit` sạch, trang render đủ 11 id mới.
+
+Vận hành (lặp lại từ session 10, đừng quên): dev server đã chạy sẵn PID 32386 — `npm run dev`
+lần 2 sẽ tự chết. `ADMIN_SECRET` phải lấy từ row `app_settings.admin_secret` trong DB
+(`Tdgames@123`), không phải giá trị trong `.env.local`.
+
+Next: sếp duyệt mắt thường 11 ảnh rồi commit (working tree còn cả cụm Full Game Production
+từ session 9-11 chưa commit).
+
+## 2026-09-09 (session 13 — đồng bộ style 11 ảnh theo card-4 VFX)
+
+Sếp xem grid, chê style chưa đồng bộ (ảnh trong nhà vs ngoài trời, cast khác nhau) và
+**chốt ảnh `VFX & game feel` (card-4) làm chuẩn**.
+
+Rút ra 3 thứ làm nên style đó, ép vào MỌI prompt trong `gen-service-images.mjs`:
+1. `STYLE` — bối cảnh cố định: đồi cỏ + trời xanh mây trắng + làng mái cam, cối xay gió,
+   thác nước ở xa; 1 chủ thể to tiền cảnh, nền thoáng.
+2. `CAST` (const mới) — dàn nhân vật cố định: bé gái tóc nâu buộc nơ hồng + yếm jean,
+   cún beagle khăn đỏ, mèo tabby xám. Prompt giờ là `STYLE + CAST + subject + HANDMADE`.
+3. `HANDMADE` — thêm negative "no indoor room or office scene", "no dense clutter".
+
+10 subject viết lại thành hành động ngoài trời (bàn làm việc/studio trong nhà bỏ hết).
+Regen 10 ảnh, **giữ nguyên card-4** làm mốc. Xem tay card-5 + step-3: cùng cast, cùng
+nền, cùng palette — đồng bộ.
+
+`tsc --noEmit` sạch, trang render đúng 11 id (không sót ảnh cũ).
+
+Next: sếp duyệt cả grid. Nếu còn tấm lệch: `node --env-file=.env.local
+scripts/gen-service-images.mjs <prefix>` (ADMIN_SECRET lấy từ DB, xem session 12).
+
+## 2026-09-09 (session 14 — style Supercell/Squad Busters, bỏ cast cố định)
+
+Sếp gửi ref mới: key art **Squad Busters (Supercell)**. Hai lỗi của bản session 13:
+(a) 11 ảnh na ná nhau, (b) style vẫn chưa phải cái sếp muốn.
+
+Nguyên nhân (a) là do chính cách sửa ở session 13: khoá cứng 1 bối cảnh (đồi cỏ + làng
+cối xay gió) + 1 `CAST` (bé gái + cún + mèo) cho cả 11 ảnh → đồng bộ quá tay, nội dung
+trùng. **Bài học: đồng bộ phải nằm ở ngôn ngữ tạo hình, không phải ở bối cảnh/nhân vật.**
+
+`gen-service-images.mjs` viết lại:
+- `STYLE` → Supercell look: toon 3D render, outline dày, tỉ lệ đầu/tay/chân phóng đại,
+  mặt hét biểu cảm mạnh, rim light + bóng đổ rõ, nền gradient rực, nhân vật lao vào
+  camera (wide-angle foreshortening), bụi + shape va đập, nền blur.
+- Bỏ `CAST`, thêm `VARIETY`: mỗi ảnh PHẢI khác nhân vật, khác palette, khác góc máy —
+  chỉ giữ nguyên cách render. Prompt = `STYLE + subject + VARIETY + HANDMADE`.
+- 11 subject viết lại, mỗi cái tự chỉ định palette riêng (xanh-tím, hồng-cam, lime-cyan,
+  đỏ-cam, xanh điện-vàng, lime-vàng, vàng-hổ phách, xám→magenta, tím-hồng, teal-cam,
+  hoàng hôn hồng-tím) + hành động riêng, không dùng chung bối cảnh.
+
+Regen cả 11. Xem tay card-1 + step-3: đúng gu ref, nội dung phân biệt rõ.
+`tsc --noEmit` sạch, trang render đúng 11 id mới.
+
+Next: sếp duyệt grid. Working tree vẫn chưa commit (cụm Full Game Production từ session 9).
+
+## 2026-09-09 (session 15 — roster 6 nhân vật core, có câu chuyện)
+
+Sếp chê tiếp: (1) nhân vật nữ xuất hiện nhiều ảnh nhưng mỗi ảnh một thiết kế khác →
+không nhất quán, (2) chưa có câu chuyện. Gợi ý: 1 nhân vật đóng mọi vai, HOẶC mỗi bộ
+phận một nhân vật core riêng thể hiện chuyên môn.
+
+Hỏi sếp 3 phương án (roster / 1 heroine / heroine + chuyên gia), sếp không trả lời →
+mặc định **roster 6 chuyên gia** (cũng là hướng sếp nghiêng, khác biệt tối đa).
+
+Nguyên nhân lỗi (1): prompt session 14 chỉ ghi "a cartoon hero/artist hero" — không tả
+mặt/tóc/trang phục nên generator bịa mỗi ảnh một người.
+
+`gen-service-images.mjs` thêm `CHARS` (6 nhân vật, mô tả khoá cứng tóc/mũ/màu áo/dáng)
++ helper `cast(...keys)`:
+- MAYA game designer (tóc xoăn đen puff, kính tròn, mũ nồi nâu, áo vàng mù tạt)
+- RIO art director (tóc hồng ngắn, beret trắng dính sơn, yếm trắng, khăn đỏ)
+- KENJI animator (tóc vàng dựng, băng đô xanh, hoodie cobalt, sneaker cam)
+- VEE VFX artist (da nâu, tóc tím 2 búi, goggles cam, găng phát sáng cyan)
+- BRUNO developer (râu đỏ, mũ bảo hộ xanh lá, jumpsuit xám, đai đồ nghề)
+- PIP QA (tóc bạch kim đuôi ngựa, mũ bảo hộ vàng, áo hi-vis cam)
+
+Câu chuyện: 6 card = chân dung hành động từng người; 5 step = họ chuyền việc —
+MAYA+RIO pitch → BRUNO greybox + RIO quét màu → cả 6 chạy thành hàng (production) →
+PIP+KENJI đập bug/test → MAYA+VEE+BRUNO phóng tên lửa. Bỏ `VARIETY` (thừa khi cast
+đã cố định), giữ palette riêng từng ảnh.
+
+Regen 11 ảnh. Xem tay card-2 + step-3: RIO ở 2 ảnh khớp thiết kế, squad shot đủ 6 người
+đúng mô tả. `tsc` sạch, trang render đúng 11 id mới.
+
+Next: sếp duyệt. Working tree vẫn chưa commit (cụm Full Game Production từ session 9).
+
+### Verify cuối session 15
+`npm run build` pass, `/services/full-game-production` prerender static. Soi thêm 2 ảnh:
+MAYA ở card-1 và step-5 khớp nhau (tóc xoăn puff, mũ nồi, kính tròn, áo vàng, bút sau
+tai); VEE + BRUNO ở step-5 cũng đúng mô tả `CHARS` → roster giữ được nhất quán qua nhiều
+ảnh. Chưa commit — chờ sếp duyệt.
+
+## 2026-09-09 (session 16 — hero BG mới cho /services/full-game-production)
+
+Ảnh hero cũ `summonerDetail.png` (art midcore fantasy) sai gu so với 11 ảnh casual vừa
+làm, và con sư tử nằm đè ngay dưới tiêu đề → chữ khó đọc.
+
+Thêm shot `hero-full-game-production` vào `gen-service-images.mjs` với `HERO_TAIL` riêng
+(gen() nay nhận tail thứ 3, default vẫn là HANDMADE): squad 6 nhân vật core dồn NỬA PHẢI,
+**40% trái để trống tối** cho chữ trắng, chủ thể canh giữa dọc vì banner bị crop trên dưới.
+
+2 cái bẫy gặp phải:
+1. gpt-image tự vẽ **dải đen letterbox** khi prompt có chữ "ultra-wide cinematic banner".
+   Đổi thành "wide full-bleed banner artwork" + cấm thẳng letterbox → vẫn còn dải mỏng.
+2. Fix dứt điểm không bằng regen mò mà bằng `sharp().trim({threshold:12})` → 1536x776,
+   up lại qua `POST /api/admin/upload` (field `file`). URL cuối nằm ở `projects/2026/09/`.
+
+`page_slots` không có row nào cho page này → sửa default URL trong `page.tsx` là đủ.
+`tsc` sạch, trang render đúng ảnh mới.
+
+Next: sếp xem hero thật trên trình duyệt (chữ có đọc được trên nền mới không, nhất là
+mobile khi crop hẹp hơn). Vẫn chưa commit.
+
+## 2026-09-09 (session 17 — render lại 4 card Services trang chủ)
+
+Sếp muốn 4 card dịch vụ (2D Animation / 2D Art / 2D VFX / Full Game Production) đổi sang
+style casual Supercell cho khớp bộ 11 ảnh + hero.
+
+Nguồn ảnh 4 card này KHÔNG chỉ ở site.json: `HomeServicesSection` đọc slot
+`home/service-card` khớp theo `display_label` (`service-animation|art|vfx|full-game`,
+map ở `SERVICE_SLOT_LABEL`), fallback mới về `services.cards[].image` trong site.json.
+DB đang có 3 row ghi đè (ảnh ChatGPT tím cũ) → đã **xoá 3 row đó**, giờ chỉ còn 1 nguồn
+duy nhất là site.json. Muốn đổi ảnh sau này: admin → Page Slots (sẽ đè lại), hoặc site.json.
+
+Ánh xạ nội dung theo roster: KENJI → animation (timeline + key pose + rig), RIO → 2D art
+(nhân vật trèo ra khỏi canvas), VEE → VFX (xoáy lửa/điện), team 4 người → full game
+(quây quanh điện thoại khổng lồ).
+
+3 bẫy gặp phải:
+1. Card gần vuông → `gen()` nay nhận tham số thứ 4 `size`, 4 shot này gen `1024x1024`
+   thay vì 1536x1024 (tránh object-cover xén mất hai bên).
+2. Prompt liệt kê đủ 6 nhân vật làm image API timeout ("AI backend chết") — rút còn 4
+   người thì pass. Đội hình đủ 6 chỉ dùng ở khung ngang (hero, step-3).
+3. **gpt-image lại tự thêm letterbox đen** ở cả 4 ảnh (1024→685 sau trim). Đã
+   `sharp().trim({threshold:12})` + up lại qua `/api/admin/upload` như hero. URL cuối
+   nằm ở `projects/2026/09/`. Rút ra: ảnh từ API này luôn phải trim trước khi dùng.
+
+`tsc` sạch, trang chủ render đủ 4 ảnh mới. Vẫn chưa commit.
+
+## 2026-09-09 (session 18 — 12 scene thật cho Tidy Mart Sort Puzzle)
+
+Sếp đưa art duyệt: `~/Downloads/goods_sort_style07_approved_12_scenes` — 12 PNG
+1080x2160 (~2.3MB/ảnh). Game **chưa lên Google Play** nên không có nút store.
+
+- Resize width 720 + webp q80 → 30-55KB/ảnh (24MB → ~430KB tổng), upload qua
+  `POST /api/admin/upload` (field `file`), URL nằm ở `projects/2026/09/*-tidy-mart-scene-NN.webp`.
+- `page.tsx`: thêm `TIDY_MART_SHOTS` (12 URL), game `tidy-mart-sort` bỏ `storeUrl`
+  (đang mượn link Shake It!) → dùng `badge: "In production"`. Type `ShippedGame` đã có
+  sẵn nhánh badge nên không phải sửa component.
+
+Verify: `tsc` sạch, trang render đủ 12 scene, Tidy Mart hiện badge thay vì nút store
+(còn đúng 1 nút "Play on Google Play" của Shake It!).
+
+Còn lại: game 3 "Coming Soon" vẫn mượn ảnh Shake It! — thay khi có art.
+
+## 2026-09-09 (session 19 — blur game chưa lộ art + phân cấp title section 03)
+
+Hai yêu cầu của sếp ở section "Games we shipped end to end":
+
+1. **Game 3 "Coming Soon"**: `dim: true` cũ chỉ phủ `bg-black/80` → vẫn đoán ra nội dung.
+   Nay: ảnh thêm `scale-125 blur-xl` + overlay `bg-black/70 backdrop-blur-md`. `scale-125`
+   là bắt buộc — blur không phóng to thì mép ảnh mờ ra trong suốt, lòi viền quanh khung.
+2. **Cho 3 game trông là "con" của h2**: bọc list trong `div` có rail dọc
+   (`md:border-l md:pl-10`), mỗi `<article>` có nhánh ngang nhỏ (`absolute -left-10 w-6`)
+   nối vào rail — kiểu cây thư mục. Kèm hạ cấp h3 `text-2xl/3xl` → `text-xl/2xl` và thêm
+   số thứ tự `01/02/03` màu cam nhạt trước tên game. Không bọc card/box vì viền hộp sẽ
+   đánh nhau với `border-t` sẵn có giữa các game.
+
+`tsc` + `eslint` sạch, trang 200, class blur render đúng. Chưa commit.
+
+## 2026-09-09 (session 20 — thêm Full Game Production vào /company-profile)
+
+Trang company-profile mới chỉ có 3 dịch vụ trong khi tiêu đề đã ghi "Four services, one
+pipeline" (lệch sẵn từ trước). Thêm dịch vụ thứ 4:
+
+- `SERVICES[]`: thêm entry `Full Game Production` **đứng đầu** (khớp thứ tự site.json),
+  ảnh dùng luôn card AI mới (team + điện thoại), 6 gạch đầu dòng: GDD → prototype →
+  level/economy → Unity dev → QA & store → liveops.
+- `SERVICE_CARDS`: fallback icon array `["art","animation","vfx"]` → `["game","art",
+  "animation","vfx"]` (icon thật vẫn lấy từ site.json theo title, đây chỉ là lưới an toàn).
+- Lưới danh sách items dưới card: `max-w-6xl md:grid-cols-3` → `max-w-7xl md:grid-cols-2
+  lg:grid-cols-4` cho khớp `StudioServiceCardsGrid` — component tự đổi sang 4 cột khi
+  `items.length >= 4`, nếu không sửa thì 2 lưới lệch cột nhau.
+- `Divider`: thêm "Full Game Production", bỏ "Cocos" cho khỏi tràn 7 mục.
+
+Verify: `tsc` sạch, `npm run build` pass, `/company-profile` render "Full Game Production"
+9 lần + 2 link `/services/full-game-production`. Tiêu đề "Four services" nay đúng số thật.
