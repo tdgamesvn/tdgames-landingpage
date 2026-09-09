@@ -5194,3 +5194,23 @@ cắt; team scaled 614 ≤ avail 629; slide 04 (Four services) gọn 1 slide; he
 tsc sạch, `npm run build` pass. Chưa push.
 
 **Next:** sếp xem lại `/company-profile?view=deck` rồi quyết push.
+
+## 2026-09-09 (session 25 — cân lại nội dung 2 slide nặng của deck)
+
+Sau session 24, sếp soi ra lỗ hổng thật: 1 section = 1 slide thì slide nặng phải zoom
+sâu → bề rộng thật co lại, chữ bé, **lệch hẳn các slide khác**. Đo ở 1200x769: zoom trải
+từ 0.39 (slide 04 Services) tới 1.0 — chênh 2.5 lần, slide 04 chỉ rộng ~440/1200px.
+
+Không có cách nào vừa giữ đủ nội dung, vừa 1 trang, vừa cùng cỡ chữ — phải bỏ 1 trong 3.
+Sếp chọn bỏ bớt nội dung (phương án A):
+
+- Slide 04: xoá khối "2D Game Production" (6 card + const `PRODUCTION`) — trùng cột
+  "Full Game Production" ngay trên và cả section //03. Còn 0.59, vẫn đáy → xoá tiếp
+  4 cột list chi tiết dịch vụ (chi tiết đã có đủ ở `/services/*`), `SERVICES` giờ chỉ
+  nuôi `SERVICE_CARDS`. → **0.87**.
+- Slide 10 (team): 6 ảnh → 3, grid 1 hàng 3 cột. → **0.83**.
+
+Kết quả toàn deck: zoom **0.69–1.0** (đáy giờ là slide 05 và 11), chênh 1.45 lần thay vì
+2.5 — nhìn đồng bộ. tsc sạch, build pass, lint không phát sinh lỗi mới ở file sửa.
+
+**Next:** sếp duyệt `/company-profile?view=deck` rồi push (2 commit đang chờ).

@@ -210,16 +210,6 @@ const CORE_VALUES = [
   ["Partnership", "We build long-term relationships through transparency, trust, and collaboration."],
 ];
 
-// 2D Game Production — dịch vụ thứ 4 trong PDF (trang 12)
-const PRODUCTION = [
-  ["Game Design", "Gameplay mechanics, level design, game economy, balancing, and feature planning."],
-  ["Unity Development", "Clean, optimized, and scalable game development for mobile and cross-platform projects."],
-  ["Rapid Prototyping", "Fast prototype development to validate gameplay concepts, user experience, and publisher pitches."],
-  ["Casual Game Development", "End-to-end production for Puzzle, Hybrid Casual, and Hyper-Casual games."],
-  ["Game Integration", "Seamless integration of art, animation, VFX, UI, audio, and gameplay into production-ready builds."],
-  ["QA & Optimization", "Bug fixing, performance optimization, and device compatibility testing for a stable, launch-ready product."],
-];
-
 // Full game production — số liệu sếp cung cấp 2026-09-09. KHÔNG bịa thêm KPI
 // (retention/CPI/downloads): game mới triển khai, chưa có số thật, publisher hỏi mà
 // số sai là mất uy tín.
@@ -703,37 +693,11 @@ export default async function CompanyProfilePage() {
           <Wrap>
             <StudioServiceCardsGrid items={SERVICE_CARDS} large />
           </Wrap>
-          <Wrap className="pt-16">
-            {/* Cùng container với StudioServiceCardsGrid (max-w-6xl, gap-5/lg:gap-6)
-                + px-7 = padding trong card, để chữ thẳng cột với tiêu đề card trên. */}
-            <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-              {SERVICES.map((s, i) => (
-                <Reveal key={s.title} delay={i * 0.08} className="px-7">
-                  <div className="mb-5 h-px w-12" style={{ background: A }} />
-                  <h4 className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-white">
-                    {s.title}
-                  </h4>
-                  <ul className="space-y-2.5 text-white/72">
-                    {s.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </Reveal>
-              ))}
-            </div>
-          </Wrap>
-          <Wrap className="pt-16">
-            <Reveal>
-              <p className="mb-3 text-xs uppercase tracking-[0.25em] text-white/55">
-                2D Game Production
-              </p>
-              <p className="mb-8 max-w-2xl leading-relaxed text-white/72">
-                From concept validation to a production-ready build — end-to-end production for
-                Puzzle, Hybrid Casual and Hyper-Casual games, without expanding your in-house team.
-              </p>
-              <Facts rows={PRODUCTION} />
-            </Reveal>
-          </Wrap>
+          {/* ponytail: slide này từng có thêm 4 cột list chi tiết dịch vụ và khối
+              "2D Game Production" (6 card). Cả hai đã bỏ: chồng lên nhau làm slide cao
+              gấp đôi khung 16:9, deck phải zoom 0.39 nên chữ bé lệch hẳn slide khác.
+              Chi tiết từng dịch vụ vẫn còn đủ ở /services/*. SERVICES giờ chỉ còn nuôi
+              SERVICE_CARDS. Khôi phục: git log -S PRODUCTION. */}
         </section>
 
         {/* Full game production — section dành cho publisher: timeline, đội hình, chi phí */}
@@ -943,8 +907,10 @@ export default async function CompanyProfilePage() {
             </div>
             {lifePhotos.length > 0 && (
               <Reveal className="mt-4">
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                  {lifePhotos.slice(0, 6).map((p) => (
+                {/* ponytail: 3 ảnh, không phải 6 — hàng ảnh thứ 2 đẩy slide cao quá
+                    khung 16:9 nên deck phải zoom xuống 0.6, lệch cỡ chữ các slide khác. */}
+                <div className="grid grid-cols-3 gap-3">
+                  {lifePhotos.slice(0, 3).map((p) => (
                     <div
                       key={p.id}
                       className={`${CARD} relative aspect-[4/3] overflow-hidden`}
