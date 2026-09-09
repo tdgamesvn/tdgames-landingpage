@@ -164,3 +164,47 @@ export const service2DVfxFaqItems: ServiceFaqItem[] = [
   },
   ...sharedClosingFaqItems,
 ];
+
+export const serviceFullGameProductionFaqItems: ServiceFaqItem[] = [
+  {
+    question: "What does full game production include?",
+    answer:
+      "Everything between a pitch and a store build: game design and GDD, prototyping, art direction, 2D art, animation, VFX, UI/UX, client engineering, integration, QA, and launch support. You bring the idea and the decisions; we bring the team that ships it.",
+  },
+  {
+    question: "Can you start from just an idea?",
+    answer:
+      "Yes. A one-page pitch is enough to begin. We turn it into a core-loop design, a scope and budget range, and a playable prototype before anyone commits to full production spend.",
+  },
+  {
+    question: "Which engines and platforms do you build for?",
+    answer:
+      "Unity is our default for mobile and PC 2D titles, with Spine for character rigs and the same atlas and performance budgets we use on outsourcing work. Tell us your target devices and we build against them from the prototype, not after.",
+  },
+  {
+    question: "Can you take over a project already in production?",
+    answer:
+      "Often, yes. We start with a short paid audit of your build, assets, and backlog, then propose either a co-development team alongside yours or a full takeover with a hand-over plan. No takeover starts without that audit.",
+  },
+  {
+    question: "Who owns the IP and the source?",
+    answer:
+      "You do. Source code, project files, and art sources transfer to you on payment, under the terms in the contract. We only show the work publicly with your written approval.",
+  },
+  {
+    question: "How is a full game project priced?",
+    answer:
+      "Milestone-based, on a scope agreed after the design phase — each milestone has a deliverable, a date, and a price. Small live titles and prototypes can run as a monthly dedicated team instead. You get a range within 24 hours of the first call and a firm number after scoping.",
+  },
+  {
+    question: "How long does a full game take?",
+    answer:
+      "A focused casual or puzzle title is a different scope from a mid-core game with progression and liveops. Prototypes typically land in weeks, full production in months — we commit to the milestone dates with the quote, once the GDD is locked.",
+  },
+  {
+    question: "What do you deliver at the end?",
+    answer:
+      "Store-ready builds for the agreed platforms, the full source project, art and animation sources, a build and release guide, and a hand-over session with your team so nothing lives only in our heads.",
+  },
+  ...sharedClosingFaqItems,
+];

@@ -115,7 +115,7 @@
         "statValue": "30+",
         "statLabel": "Completed projects",
         "description": "Stylized attack loops, promo motion, idle cycles, and lightweight animated sequences built for game readability.",
-        "image": "https://cdn.tdgamestudio.com/landing/images/service-animation.jpg"
+        "image": "https://cdn.tdgamestudio.com/projects/2026/09/be0d9184-d517-40d8-b2b5-57cb03776808-6a1ae698-77f3-4b7c-941f-e9e92c15636f-t.webp"
       },
       {
         "title": "2D Art",
@@ -124,7 +124,7 @@
         "statValue": "25+",
         "statLabel": "Completed projects",
         "description": "Character sheets, splash illustrations, UI-support art, and painted assets tuned for a cleaner, friendlier game look.",
-        "image": "https://cdn.tdgamestudio.com/landing/sinspired/character_6-min-1024x970.jpg"
+        "image": "https://cdn.tdgamestudio.com/projects/2026/09/1e968c57-9295-4b0e-b2be-03a5cef824f8-a9f1cd61-362a-46ea-9156-5ddede4a01a0-t.webp"
       },
       {
         "title": "2D VFX",
@@ -133,7 +133,16 @@
         "statValue": "15+",
         "statLabel": "Completed projects",
         "description": "Skill bursts, hit flashes, elemental trails, and screen-space accents that add energy without pushing the style too hard.",
-        "image": "https://cdn.tdgamestudio.com/landing/sinspired/Game_Animation-min-1024x612.jpg"
+        "image": "https://cdn.tdgamestudio.com/projects/2026/09/3721f3b6-b8fc-4693-9740-9cf31fd53b70-ad3ffbd7-067c-4660-a3c1-624aec0c5631-t.webp"
+      },
+      {
+        "title": "Full Game Production",
+        "icon": "game",
+        "href": "/services/full-game-production",
+        "statValue": "1",
+        "statLabel": "Title shipped on Google Play",
+        "description": "Game design, art, animation, VFX and development handled end to end by one team — you own the source and the IP.",
+        "image": "https://cdn.tdgamestudio.com/projects/2026/09/bb9160cc-8f29-4020-8480-92f7e7b1c3ce-e9b70fd9-f4fd-4943-9b8a-da2640c62aef-t.webp"
       }
     ]
   },

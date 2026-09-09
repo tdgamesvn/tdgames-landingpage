@@ -5,13 +5,12 @@ import { motion } from "framer-motion";
 
 import { AccentHighlight } from "./accent-highlight";
 import {
+  SERVICE_SLOT_LABEL,
   STUDIO_SERVICE_ACCENT,
   StudioServiceCardsGrid,
   studioServiceCards,
 } from "./studio-service-cards";
 import { usePageSlots, slotUrl } from "@/hooks/use-page-slots";
-
-const SERVICE_LABELS = ["service-animation", "service-art", "service-vfx"] as const;
 
 function ServicesStudioIntro() {
   const accentStyle = { color: STUDIO_SERVICE_ACCENT };
@@ -58,8 +57,9 @@ function ServicesStudioIntro() {
           className="mx-auto mt-5 max-w-2xl text-base leading-7 text-white/70 opacity-70"
           style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}
         >
-          Stylized 2D art, animation and VFX built to drop straight into your
-          engine — Spine, frame-by-frame, and Unity-ready effects.
+          Whole games built end to end — or stylized 2D art, animation and VFX
+          dropped straight into your engine: Spine, frame-by-frame, and
+          Unity-ready effects.
         </p>
       </div>
     </motion.div>
@@ -70,9 +70,11 @@ export default function HomeServicesSection() {
   const slots = usePageSlots("home", "service-card");
   const cards = useMemo(
     () =>
-      studioServiceCards.map((card, i) => ({
+      // map theo title, KHÔNG theo index — đổi thứ tự card trong site.json từng
+      // làm lệch ảnh sang card kế bên.
+      studioServiceCards.map((card) => ({
         ...card,
-        image: slotUrl(slots, SERVICE_LABELS[i], card.image),
+        image: slotUrl(slots, SERVICE_SLOT_LABEL[card.title] ?? "", card.image),
       })),
     [slots],
   );

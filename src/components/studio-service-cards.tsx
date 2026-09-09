@@ -5,8 +5,9 @@ import SlotMedia from "@/components/slot-media";
 import siteContent from "@/content/site.json";
 import { usePageSlots, slotUrl } from "@/hooks/use-page-slots";
 
-/** title → display_label của slot `home/service-card` (3 ảnh key art OUR SERVICES). */
-const SERVICE_SLOT_LABEL: Record<string, string> = {
+/** title → display_label của slot `home/service-card` (ảnh key art OUR SERVICES). */
+export const SERVICE_SLOT_LABEL: Record<string, string> = {
+  "Full Game Production": "service-full-game",
   "2D Animation": "service-animation",
   "2D Art": "service-art",
   "2D VFX": "service-vfx",
@@ -49,7 +50,7 @@ export const STUDIO_SERVICE_ACCENT = "#ff8c3a";
 
 export type StudioServiceCard = {
   title: string;
-  icon: "animation" | "art" | "vfx";
+  icon: "animation" | "art" | "vfx" | "game";
   href: string;
   statValue: string;
   statLabel: string;
@@ -65,9 +66,29 @@ export function StudioServiceIcon({
   type,
   color,
 }: {
-  type: "animation" | "art" | "vfx";
+  type: StudioServiceCard["icon"];
   color: string;
 }) {
+  // ponytail: gamepad vẽ thẳng bằng SVG thay vì up thêm 1 file mask lên R2.
+  if (type === "game") {
+    return (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M6.5 7h11a4.5 4.5 0 0 1 4.4 3.6l.8 4A4.2 4.2 0 0 1 18.6 19c-1.2 0-2.3-.6-3-1.6L15 16.5H9l-.6.9c-.7 1-1.8 1.6-3 1.6a4.2 4.2 0 0 1-4.1-4.4l.8-4A4.5 4.5 0 0 1 6.5 7Z" />
+        <path d="M7 11v3M5.5 12.5h3M16 11.5h.01M18 13.5h.01" />
+      </svg>
+    );
+  }
+
   const iconSrc =
     type === "art"
       ? "https://cdn.tdgamestudio.com/landing/images/art.png"
@@ -110,8 +131,13 @@ export function StudioServiceCardsGrid({
 
   return (
     <div
-      className={`mx-auto mt-6 grid items-center gap-5 md:mt-8 md:grid-cols-3 lg:gap-6 ${
-        large ? "max-w-6xl" : "max-w-5xl"
+      className={`mx-auto mt-6 grid items-center gap-5 md:mt-8 lg:gap-6 ${
+        // 4 card trở lên: 2x2 ở tablet rồi 1 hàng 4 ở desktop, container nới rộng
+        // để card không bị bóp. 3 card giữ nguyên layout cũ (company-profile,
+        // các trang service) — đừng đổi chung.
+        items.length >= 4
+          ? "max-w-7xl md:grid-cols-2 lg:grid-cols-4"
+          : `md:grid-cols-3 ${large ? "max-w-6xl" : "max-w-5xl"}`
       }`}
     >
       {items.map((service, index) => (

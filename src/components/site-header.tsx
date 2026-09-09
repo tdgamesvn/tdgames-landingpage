@@ -34,6 +34,12 @@ const navLinks = [
         description: "Skill Effects, Particles, Explosions & more",
         icon: "vfx",
       },
+      {
+        label: "Full Game Production",
+        href: "/services/full-game-production",
+        description: "Game Design, Art, VFX & Development — end to end",
+        icon: "art",
+      },
       // {
       //   label: "FAQ",
       //   href: "/portfolio#portfolio-faq",

@@ -311,6 +311,12 @@ export default function SiteFooter() {
                 >
                   2D VFX
                 </Link>
+                <Link
+                  href="/services/full-game-production"
+                  className="block transition-colors hover:text-white"
+                >
+                  Full Game Production
+                </Link>
                 {/* ponytail: Game UI chưa có trang riêng → tạm trỏ /contact.
                     Bỏ "Developer" / "Game Design" vì lệch định vị 2D art. */}
                 <Link
