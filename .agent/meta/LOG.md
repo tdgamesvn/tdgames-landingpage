@@ -5135,3 +5135,36 @@ Renumber toàn bộ `no="NN"` bằng script theo thứ tự xuất hiện (16 se
 tay 13 chỗ.
 
 Verify: `tsc` sạch, `npm run build` pass, trang 200 và render đủ nội dung mới. Chưa push.
+
+## 2026-09-09 (session 23 — chế độ Slides cho /company-profile)
+
+Sếp muốn gửi company profile cho publisher/khách dưới dạng trình chiếu, không bắt họ
+cuộn 16 section.
+
+`src/app/company-profile/_deck.tsx` (client, 341 dòng) + 1 dòng `<ProfileDeck />` trong
+`page.tsx`. **Không viết lại section nào thành layout deck riêng** — deck chỉ thao tác
+DOM có sẵn: bọc con TĨNH của mỗi `main > section` vào `[data-deck-inner]`, đo
+`scrollHeight`, `zoom` cho vừa màn hình (sàn 0.58), section vẫn dài thì cắt trang bằng
+`translateY`. Thêm section mới ⇒ tự có slide mới, không khai báo ở đâu.
+
+Bẫy đã dính và cách xử (đều ghi comment `ponytail:` tại chỗ):
+- `zoom` chứ không `transform: scale` — scale co cả nền gradient → lòi viền đen.
+- Chỉ bê phần tử `position: static` vào wrapper; `<video>`/ảnh nền `absolute inset-0`
+  phải ở ngoài, không thì nền neo theo wrapper và hở dải đen ở đỉnh.
+- Phải tạm `display:block` mới đo được (section khác đang `display:none` → height 0
+  → zoom luôn = 1).
+- Đo 2 lượt: zoom nhỏ lại làm bề rộng CSS nở ra → chữ xuống dòng ít hơn → section thấp
+  đi; lượt 2 mới là số dùng thật.
+- `?slide=N` từng bị chính effect đồng bộ URL xoá mất → cờ `ready` chặn.
+- Reveal-on-scroll không fire khi slide đang ẩn → ép `opacity: 1` trong deck.
+
+UI: chế độ Scroll chỉ 1 nút mờ góc phải dưới; trong deck là pill mờ 30% (‹ 04/22 ›,
+dropdown nhảy slide, copy link, ✕), phím ←/→/Space/Esc. URL `?view=deck&slide=N` chia
+sẻ được đúng trang.
+
+Verify: tsc sạch, `npm run build` pass, Playwright 1440x900 → 22 slide, section dài tự
+tách (04/05 = "Four services" 1/2 & 2/2, 11/12 = team), console không lỗi. Dọn 21 PNG
+debug ở root. Commit 1 file mới + 4 dòng.
+
+**Next:** sếp xem thử `/company-profile?view=deck` rồi quyết push. Slide 02 hiện tên
+"Slide 2" vì section đó không có `<h2>` — kệ, chỉ là nhãn trong dropdown.

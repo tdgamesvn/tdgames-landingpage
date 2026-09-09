@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import ProfileHeader from "./_header";
+import ProfileDeck from "./_deck";
 import Reveal from "./_reveal";
 import MobileFold from "./_fold";
 import ClientLogo from "@/components/client-logo";
@@ -567,6 +568,9 @@ export default async function CompanyProfilePage() {
   const lifePhotos = await resolveSlots("careers", "gallery");
   return (
     <main className="bg-[#0a0a0a]">
+      {/* Switch Scroll ↔ Deck + điều khiển slide. Đặt trong <main> vì nó bám
+          `main > section` để ẩn/hiện từng slide. */}
+      <ProfileDeck />
       {/* Hero */}
         <section className="relative flex min-h-[100svh] items-center overflow-hidden bg-[#0a0a0a]">
           {/* ponytail: <video> thuần, không cần "use client" — autoplay/loop là thuộc tính
