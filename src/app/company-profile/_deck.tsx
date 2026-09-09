@@ -9,9 +9,12 @@ import { useCallback, useEffect, useState } from "react";
  *
  * ponytail: KHÔNG viết lại 17 section thành layout riêng cho deck. Chỉ:
  *   1. bọc nội dung mỗi section vào 1 wrapper (tạo bằng JS, 1 lần),
- *   2. `zoom` để thu vừa bề cao màn hình,
- *   3. section nào vẫn dài thì cắt thành nhiều trang bằng translateY wrapper.
+ *   2. `zoom` để thu vừa bề cao màn hình.
  * Nhờ vậy thêm section mới là tự có slide mới, không phải khai báo ở đâu cả.
+ *
+ * 1 section = ĐÚNG 1 slide, không cắt trang. Cắt trang luôn cho ra slide thừa
+ * (nửa cái card lơ lửng, sếp chê ở slide 5 / 9 / 12-13) — thu nhỏ cả section
+ * cho vừa màn hình luôn đẹp hơn, ảnh bé lại là chuyện phải chấp nhận.
  *
  * ponytail: `zoom` chứ không `transform: scale` — scale co cả khung nền gradient
  * nên lòi viền đen; zoom cho layout tính lại nên nền vẫn phủ trọn màn hình.
@@ -19,14 +22,10 @@ import { useCallback, useEffect, useState } from "react";
 
 /** Chiều cao dành cho padding trên/dưới slide + thanh điều khiển nổi. */
 const CHROME = 140;
-/**
- * Thu nhỏ tối đa trước khi cắt sang trang mới. Để thấp một chút vì cắt trang
- * hay rơi vào giữa một cái card (xấu hơn là chữ nhỏ đi 20%) — chỉ những section
- * thật sự dài (portfolio, team) mới phải sang trang 2.
- */
-const MIN_ZOOM = 0.58;
+/** Sàn zoom chỉ để chặn số vô lý (đo hụt → scrollHeight = 0). */
+const MIN_ZOOM = 0.25;
 
-type Slide = { sec: number; page: number; pages: number; zoom: number; title: string };
+type Slide = { sec: number; zoom: number; title: string };
 
 export default function ProfileDeck() {
   const [deck, setDeck] = useState(false);
@@ -87,6 +86,12 @@ export default function ProfileDeck() {
             inner.appendChild(k);
           }
         }
+        // ponytail: bề rộng canvas chốt bằng PX, không phải %. Với % thì zoom nhỏ
+        // lại làm bề rộng CSS nở ra (94%/zoom) → ảnh giữ nguyên kích thước thật,
+        // thu nhỏ mấy cũng không bao giờ vừa màn hình (đúng chỗ sếp thấy ảnh
+        // tràn đáy). Chốt px thì zoom co đều cả chữ lẫn ảnh, đo 1 lượt là đúng —
+        // đổi lại slide ảnh nhiều sẽ hụt 2 bên, chấp nhận.
+        inner.style.width = `${Math.round(window.innerWidth * 0.94)}px`;
         // ponytail: phải tạm HIỆN section mới đo được. Chỉ có slide hiện tại là
         // display:block, các section khác đang display:none → scrollHeight = 0 →
         // zoom tính ra luôn bằng 1 và slide nào cũng bị cắt.
@@ -94,31 +99,29 @@ export default function ProfileDeck() {
         sec.style.display = "block";
         sec.style.zoom = "";
         sec.style.height = "";
-        inner.style.transform = "";
-        // ponytail: đo 2 lượt. Nội dung rộng 94% màn hình nên khi zoom nhỏ lại,
-        // bề rộng tính bằng CSS px NỞ RA (94%/zoom) → chữ xuống dòng ít hơn →
-        // section thấp hơn lượt đo đầu. Lượt 2 đo lại ở đúng zoom sẽ dùng thật,
-        // nhờ vậy slide lấp đầy màn hình thay vì thừa một khoảng trống dưới.
-        const fit = () => Math.max(Math.min(avail / inner.scrollHeight, 1), MIN_ZOOM);
-        let zoom = fit();
-        sec.style.zoom = String(zoom);
-        zoom = fit();
-        const h = inner.scrollHeight;
-        sec.style.zoom = "";
+        const zoom = Math.max(Math.min(avail / inner.scrollHeight, 1), MIN_ZOOM);
         sec.style.display = prevDisplay;
-        const pages = Math.max(1, Math.ceil((h * zoom) / avail - 0.02));
         const title = sec.querySelector("h2")?.textContent?.trim() || `Slide ${idx + 1}`;
-        for (let p = 0; p < pages; p++) {
-          list.push({ sec: idx, page: p, pages, zoom, title });
-        }
+        list.push({ sec: idx, zoom, title });
       });
       setSlides(list);
     };
-    const id = requestAnimationFrame(measure);
-    window.addEventListener("resize", measure);
+    let id = requestAnimationFrame(measure);
+    const schedule = () => {
+      cancelAnimationFrame(id);
+      id = requestAnimationFrame(measure);
+    };
+    window.addEventListener("resize", schedule);
+    // ponytail: ảnh Next/Image chỉ tải khi section được hiện (measure hiện tạm)
+    // nên lượt đo đầu luôn hụt chiều cao ảnh → section nhiều ảnh (team) lòi ra
+    // ngoài đáy. Đo lại mỗi lần một ảnh/font xong; `load` của <img> không bubble
+    // nên phải bắt ở capture. rAF gộp nhiều ảnh về 1 lượt đo.
+    document.addEventListener("load", schedule, true);
+    document.fonts?.ready.then(schedule);
     return () => {
       cancelAnimationFrame(id);
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", schedule);
+      document.removeEventListener("load", schedule, true);
     };
   }, [deck]);
 
@@ -128,18 +131,14 @@ export default function ProfileDeck() {
     const secs = document.querySelectorAll<HTMLElement>("main > section");
     const sec = secs[cur.sec];
     if (!sec) return;
-    const inner = sec.querySelector<HTMLElement>(":scope > [data-deck-inner]");
-    const avail = window.innerHeight - CHROME;
     sec.style.zoom = String(cur.zoom);
     // Khung nền luôn đúng 1 màn hình: chia ngược cho zoom.
     sec.style.height = `${window.innerHeight / cur.zoom}px`;
     sec.style.minHeight = "0";
-    if (inner) inner.style.transform = `translateY(${-cur.page * (avail / cur.zoom)}px)`;
     return () => {
       sec.style.zoom = "";
       sec.style.height = "";
       sec.style.minHeight = "";
-      if (inner) inner.style.transform = "";
     };
   }, [deck, cur]);
 
@@ -192,18 +191,15 @@ export default function ProfileDeck() {
                chui xuống dưới thanh điều khiển. */
             display: block; overflow: hidden; padding-top: 88px; padding-bottom: 88px;
           }
-          main[data-view="deck"] > section [data-deck-inner] {
-            transition: transform 420ms cubic-bezier(0.22,1,0.36,1);
-          }
           /* Reveal (animation khi cuộn tới) không fire cho slide đang display:none
              → tiêu đề section vô hình. Ở deck ép hiện luôn. */
           main[data-view="deck"] > section * { opacity: 1 !important; }
           /* Full chiều ngang: Wrap có inline style width nên phải !important;
              các max-w-* bên trong cũng phải nới, không thì grid card vẫn co giữa. */
-          /* Full ngang: bỏ trần 1320px, slide luôn rộng 94% màn hình. Vì zoom
-             không đổi tỉ lệ %, 94% lúc đo và lúc chiếu là cùng một bề rộng thật
-             → không cần bù --deck-wrap nữa. */
-          main[data-view="deck"] [data-deck-inner] > div { width: 94% !important; }
+          /* Bề rộng thật nằm ở [data-deck-inner] (px, set trong JS) — mấy div bên
+             trong chỉ việc ăn hết wrapper. */
+          main[data-view="deck"] [data-deck-inner] { margin-inline: auto; }
+          main[data-view="deck"] [data-deck-inner] > div { width: 100% !important; }
           main[data-view="deck"] [data-deck-inner] .max-w-5xl,
           main[data-view="deck"] [data-deck-inner] .max-w-6xl,
           main[data-view="deck"] [data-deck-inner] .max-w-7xl { max-width: none; }
@@ -297,9 +293,8 @@ export default function ProfileDeck() {
                 className="absolute inset-0 cursor-pointer opacity-0"
               >
                 {slides.map((s, idx) => (
-                  <option key={`${s.sec}-${s.page}`} value={idx}>
+                  <option key={s.sec} value={idx}>
                     {String(idx + 1).padStart(2, "0")} — {s.title}
-                    {s.pages > 1 ? ` (${s.page + 1}/${s.pages})` : ""}
                   </option>
                 ))}
               </select>

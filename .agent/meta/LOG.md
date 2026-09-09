@@ -5168,3 +5168,29 @@ debug ở root. Commit 1 file mới + 4 dòng.
 
 **Next:** sếp xem thử `/company-profile?view=deck` rồi quyết push. Slide 02 hiện tên
 "Slide 2" vì section đó không có `<h2>` — kệ, chỉ là nhãn trong dropdown.
+
+## 2026-09-09 (session 24 — deck: 1 section = 1 slide, không cắt trang)
+
+Sếp chê slide 5 / 9 / 12-13 bị cắt làm đôi ("nửa cái card lơ lửng"), muốn gộp về 1 slide
+và ảnh tự bé lại cho vừa màn hình.
+
+Root cause thật KHÔNG phải sàn MIN_ZOOM mà là `[data-deck-inner] > div { width: 94% }`:
+% tính theo bề rộng CSS, mà zoom nhỏ lại làm bề rộng CSS nở ra (94%/zoom) → **ảnh giữ
+nguyên kích thước thật dù zoom bao nhiêu**. Section nhiều ảnh (team) vì thế không bao
+giờ fit → buộc phải cắt trang. Đo 2 lượt cũng không hội tụ (h0 1018 → h1 1340 → h2 1629).
+
+Sửa: canvas rộng CHỐT bằng px (`inner.style.width = innerWidth * 0.94 + "px"`, căn giữa
+bằng margin-inline auto) → zoom co đều chữ + ảnh, đo 1 lượt là chính xác. Bỏ hẳn cơ chế
+cắt trang: `Slide` không còn `page`/`pages`, bỏ translateY + transition, nhãn dropdown
+bỏ hậu tố (1/2). MIN_ZOOM còn 0.25 chỉ để chặn số vô lý. Thêm re-measure khi ảnh/font
+load xong (`load` ở capture phase + `fonts.ready`, gộp bằng rAF) vì Next/Image chỉ tải
+khi section được hiện → lượt đo đầu luôn hụt chiều cao ảnh.
+
+Đánh đổi: slide ảnh nhiều sẽ hụt 2 bên (letterbox) thay vì full ngang — chấp nhận, đúng
+ý sếp "ảnh bé lại".
+
+Verify (1200x769, chỗ trước đây cắt nhiều nhất): 20 slide = 20 section, không slide nào
+cắt; team scaled 614 ≤ avail 629; slide 04 (Four services) gọn 1 slide; hero còn nguyên.
+tsc sạch, `npm run build` pass. Chưa push.
+
+**Next:** sếp xem lại `/company-profile?view=deck` rồi quyết push.
