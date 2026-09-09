@@ -219,6 +219,36 @@ const PRODUCTION = [
   ["QA & Optimization", "Bug fixing, performance optimization, and device compatibility testing for a stable, launch-ready product."],
 ];
 
+// Full game production — số liệu sếp cung cấp 2026-09-09. KHÔNG bịa thêm KPI
+// (retention/CPI/downloads): game mới triển khai, chưa có số thật, publisher hỏi mà
+// số sai là mất uy tín.
+const GAME_TIMELINE = [
+  {
+    when: "Week 1–2",
+    title: "Playable core loop",
+    body: "Core puzzle mechanic running on device: level flow, controls, win/lose states. Enough to judge whether the game is fun before any content spend.",
+  },
+  {
+    when: "Week 3–4",
+    title: "Full scope & release build",
+    body: "Blocker mechanics, IAP shop, progression and meta layer, art pass, polish and store build — a standard puzzle title goes from kickoff to release in about a month.",
+  },
+  {
+    when: "Post-launch",
+    title: "Content & liveops",
+    body: "New level packs, seasonal art and event content on the same team, so the title keeps shipping updates after release.",
+  },
+];
+
+const GAME_TEAM = [
+  ["Core team", "3 people per title — one game designer, one Unity developer, one artist — small enough to move fast, senior enough to own the whole build."],
+  ["Animation & VFX", "Pulled in on demand from our existing outsourcing team, so a title scales up without hiring or waiting on a new vendor."],
+  ["Timeline", "~2 weeks to a playable core loop; ~1 month from kickoff to release for a full-scope puzzle title."],
+  ["Budget", "From $5,000–10,000+ per title depending on scope, mechanics and content volume."],
+  ["Engagement", "Open to any structure: work-for-hire, co-development, revenue share or publishing deals — tell us how you prefer to work."],
+  ["Status", "Shake It! Water Sort Puzzle is live on Google Play; Tidy Mart Sort Puzzle is in production. Both built in-house end to end."],
+];
+
 // Key people — PDF trang 16–17. Ảnh chân dung lấy từ team_members (đúng ảnh đang
 // dùng ở section "Passionate Artists" trên /about).
 // ponytail: hardcode 2 URL thay vì query DB — cả file này đã là hằng số tĩnh, thêm
@@ -702,11 +732,45 @@ export default async function CompanyProfilePage() {
           </Wrap>
         </section>
 
-        {/* Team & capacity */}
+        {/* Full game production — section dành cho publisher: timeline, đội hình, chi phí */}
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
               no="03"
+              eyebrow="Full game production"
+              title="A puzzle title in about a month"
+              lead="What a publisher gets: a playable core loop in two weeks, a release build in roughly four, run by a three-person core team backed by our art studio."
+            />
+            <div className="grid gap-4 md:grid-cols-3">
+              {GAME_TIMELINE.map((p, i) => (
+                <Reveal key={p.title} delay={i * 0.06} className={`${CARD} p-7`}>
+                  <div className="mb-5 flex items-center gap-4">
+                    <StepNo n={i + 1} />
+                    <span className="rounded-full border border-white/10 bg-black/40 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-[#ffcc8e]/80 md:text-[10px]">
+                      {p.when}
+                    </span>
+                  </div>
+                  <h3 className="mb-3 text-lg font-bold text-white">{p.title}</h3>
+                  <p className="text-sm leading-relaxed text-white/70">{p.body}</p>
+                </Reveal>
+              ))}
+            </div>
+          </Wrap>
+          <Wrap className="pt-16">
+            <Reveal>
+              <p className="mb-3 text-xs uppercase tracking-[0.25em] text-white/55">
+                Team, budget & engagement
+              </p>
+              <Facts rows={GAME_TEAM} />
+            </Reveal>
+          </Wrap>
+        </section>
+
+        {/* Team & capacity */}
+        <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
+          <Wrap>
+            <Heading
+              no="04"
               eyebrow="Vision & mission"
               title="Where we're headed"
             />
@@ -724,7 +788,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="04"
+              no="05"
               eyebrow="Selected work" title="Shipped, not mocked up" />
           </Wrap>
           <Wrap>
@@ -816,7 +880,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="05"
+              no="06"
               eyebrow="Key people" title="Who leads the work" />
             <div className="grid gap-4 md:grid-cols-2">
               {KEY_PEOPLE.map((p, i) => (
@@ -855,7 +919,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="06"
+              no="07"
               eyebrow="Our team"
               title="The people behind the work"
               lead="A full-time core in Hanoi, extended by a vetted freelance bench when a project needs to scale."
@@ -896,7 +960,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="07"
+              no="08"
               eyebrow="Why choose us" title="What you actually get" />
             <div className="grid gap-4 md:grid-cols-2">
               {WHY.map((w, i) => (
@@ -948,7 +1012,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="08"
+              no="09"
               eyebrow="How we work" title="From brief to handoff" />
             {/* Sơ đồ ngang: đường ray + 4 mốc, thẳng cột với card bên dưới.
                 Ẩn dưới lg vì 1–2 cột thì mũi tên ngang thành vô nghĩa. */}
@@ -1001,7 +1065,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="09"
+              no="10"
               eyebrow="Engagement" title="Three ways to work with us" />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {ENGAGEMENT.map((e, i) => (
@@ -1027,7 +1091,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="10"
+              no="11"
               eyebrow="Quality assurance"
               title="How we keep it consistent"
               lead="The controls that keep batch fifty looking like batch one."
@@ -1044,7 +1108,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="11"
+              no="12"
               eyebrow="Security & IP" title="Your work stays yours" />
             <MobileFold label="What we commit to">
               <Reveal>
@@ -1058,7 +1122,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="12"
+              no="13"
               eyebrow="Working together" title="How we stay in sync" />
             <MobileFold label="How it works">
               <Reveal>
@@ -1072,7 +1136,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="13"
+              no="14"
               eyebrow="Tools & deliverables" title="What lands in your repo" />
             <MobileFold label="See the stack">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1105,7 +1169,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(820px_420px_at_88%_100%,rgba(255,140,58,0.07),transparent_60%),linear-gradient(180deg,#0b0c12_0%,#09090d_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="14"
+              no="15"
               eyebrow="Clients" title="Studios we've worked with" />
             <Reveal>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -1132,7 +1196,7 @@ export default async function CompanyProfilePage() {
         <section className="relative overflow-hidden border-t border-white/[0.07] bg-[radial-gradient(900px_440px_at_12%_0%,rgba(255,140,58,0.10),transparent_62%),linear-gradient(165deg,#14151f_0%,#0e0f14_45%,#0a0a10_100%)] py-14 md:py-24">
           <Wrap>
             <Heading
-              no="15"
+              no="16"
               eyebrow="FAQ" title="Before you ask" />
             <MobileFold label="Read the answers">
               <div className="grid gap-4 md:grid-cols-2">

@@ -5110,3 +5110,28 @@ chỉ `url`). Verify qua chính API trang đọc:
 **Bài học ghi lại cho lần sau: trước khi sửa ảnh trong code, query `page_slots` xem
 trang đó có slot đè không.** Đã dính 2 lần trong ngày (4 card services trang chủ ở
 session 17, workflow 3 trang service ở đây).
+
+## 2026-09-09 (session 22 — section Full Game Production cho publisher pitch)
+
+Sếp hỏi /company-profile đã đủ để pitch publisher chưa. Đánh giá: CHƯA — cả 15 section
+đều viết cho khách outsource art, publisher không tìm thấy timeline / đội hình / mô hình
+hợp tác / chi phí cho việc làm CẢ game.
+
+Số liệu THẬT sếp cung cấp 2026-09-09 (không bịa thêm):
+- 2 tuần → gameplay cơ bản playable; ~1 tháng kickoff → release cho full scope
+  (blocker mechanics, IAP shop, meta).
+- Team 3 người/game: 1 GD + 1 Dev + 1 Art; animation/VFX rút từ team outsource sẵn có.
+- Chi phí $5,000–10,000+/game tuỳ scope.
+- Open mọi hình thức hợp tác (work-for-hire / co-dev / rev-share / publishing).
+- **Chưa có KPI** (game mới triển khai) → KHÔNG viết retention/CPI/downloads. Phần
+  "Status" chỉ ghi Shake It! live + Tidy Mart in production.
+- SDK "như các công ty khác" → không liệt kê tên SDK cụ thể, tránh sai trước publisher.
+
+Thêm section `no="03"` "Full game production — A puzzle title in about a month":
+3 card timeline (Week 1-2 / Week 3-4 / Post-launch) + bảng `Facts` GAME_TEAM (core team,
+animation & VFX, timeline, budget, engagement, status).
+
+Renumber toàn bộ `no="NN"` bằng script theo thứ tự xuất hiện (16 section) thay vì sửa
+tay 13 chỗ.
+
+Verify: `tsc` sạch, `npm run build` pass, trang 200 và render đủ nội dung mới. Chưa push.
