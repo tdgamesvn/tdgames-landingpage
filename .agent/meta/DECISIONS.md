@@ -246,3 +246,39 @@ mà game khác không có. Lúc đó tách riêng CHỈ game đó, phần còn l
 **Ràng buộc kèm theo:** nội dung policy phải khớp Data Safety form (Play) và
 Privacy Nutrition Label (App Store). Thêm/bớt SDK trong game → sửa policy ngay,
 khai lệch là lý do bị từ chối phổ biến nhất.
+
+## 2026-09-16 — Upload ghi âm PV qua server, KHÔNG presigned PUT thẳng R2
+
+**Quyết định:** file ghi âm phỏng vấn (tới 100MB) đi qua `POST /api/hr/upload/audio`
+trên server Next, server mới `PutObject` lên R2. Không phát presigned URL cho browser
+PUT thẳng.
+
+**Lý do:** presigned PUT bắt buộc bucket R2 phải có CORS cho phép `PUT` từ
+`tdgamestudio.com`. Cấu hình đó nằm ở Cloudflare dashboard/API — agent không có quyền
+(MCP cloudflare-* chưa auth), và khi thiếu CORS thì lỗi xảy ra **trong browser**, hỏng
+âm thầm, khó lần. Đường qua server đánh đổi RAM/bandwidth VPS lấy việc không phụ thuộc
+hạ tầng cấu hình ngoài tầm với.
+
+**Ràng buộc kèm theo:** nginx `client_max_body_size` phải ≥ trần app + overhead
+multipart (app 100MB → nginx 120M), và route upload/analyze cần
+`proxy_read_timeout` dài (900s) vì gỡ băng file dài mất vài phút.
+
+**Khi nào phải xét lại:** ghi âm vượt ~200MB, hoặc HR upload đủ nhiều để VPS nghẽn
+RAM/băng thông. Lúc đó chuyển sang presigned và cấu hình CORS bucket một lần.
+
+## 2026-09-16 — Gỡ băng dùng nhà cung cấp riêng, tách khỏi AI_BASE_URL
+
+**Quyết định:** `src/lib/transcribe.ts` chọn provider theo key có sẵn:
+`GEMINI_API_KEY` → Gemini, rồi `OPENAI_API_KEY` → Whisper, không có key thì trả lỗi
+501 và HR dán transcript tay. Phần chấm điểm vẫn dùng `AI_BASE_URL` như cũ.
+
+**Lý do:** đã test và xác nhận cliproxyapi (`AI_BASE_URL`) KHÔNG nhận audio —
+`/v1/audio/transcriptions` trả 404, chat/completions trả "Audio input is not available."
+Không tái dùng được, buộc phải tách.
+
+**Ưu tiên Gemini trước Whisper:** Whisper trần 25MB/file, ghi âm 45 phút thường
+40-60MB → vượt. Gemini có Files API nuốt được file lớn. Nếu chỉ có key OpenAI thì HR
+phải nén mp3 (~48kbps mono) trước khi upload.
+
+**Ràng buộc:** ô transcript sửa tay luôn phải giữ — nó là đường thoát khi provider
+lỗi/hết quota, và là cách feature chạy được ngay cả khi chưa cắm key nào.

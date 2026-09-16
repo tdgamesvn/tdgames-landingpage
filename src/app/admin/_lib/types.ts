@@ -157,6 +157,60 @@ export type ApplicationComment = {
   created_at: string;
 };
 
+// ── Phỏng vấn ────────────────────────────────────────────────────────────────
+
+export type InterviewQuestion = {
+  q: string;
+  why: string;
+  green_flag: string;
+  red_flag: string;
+};
+
+export type InterviewQuestionGroup = {
+  topic: string;
+  questions: InterviewQuestion[];
+};
+
+export type InterviewQuestions = {
+  generated_at: string;
+  model: string;
+  groups: InterviewQuestionGroup[];
+};
+
+export type InterviewEvaluation = {
+  analyzed_at: string;
+  model: string;
+  score: number;
+  verdict: "strong_yes" | "yes" | "maybe" | "no";
+  fit_confirmed: boolean;
+  confidence: "high" | "medium" | "low";
+  summary: string;
+  score_delta_reason: string;
+  evidence: string[];
+  red_flags: string[];
+  follow_ups: string[];
+  transcript_source: string;
+  /** Điểm chấm hồ sơ trước PV — để so lệch trước/sau. */
+  prior_score: number | null;
+};
+
+export type InterviewSession = {
+  id: string;
+  application_id: string;
+  round: number;
+  title: string | null;
+  questions: InterviewQuestions | null;
+  audio_url: string | null;
+  audio_key: string | null;
+  audio_bytes: number | null;
+  transcript: string | null;
+  transcript_source: string | null;
+  evaluation: InterviewEvaluation | null;
+  score: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type SlotPreset = {
   id: string;
   label: string;

@@ -6,6 +6,22 @@ _(empty)_
 
 ## To do
 
+- [x] ~~/hr: AI soạn câu hỏi PV + ghi âm + phân tích sau PV~~ (2026-09-16): bảng
+      `interview_sessions`, `src/lib/{interview-ai,transcribe}.ts`, 5 route
+      `/api/hr/{upload/audio,applications/[id]/interviews,interviews/[id]{,/questions,/analyze}}`,
+      `InterviewPanel.tsx` gắn vào `CandidateModal`. nginx VPS đã nâng 120M + timeout
+      900s. tsc/eslint/build sạch. Test end-to-end qua API với ứng viên thật: tạo vòng
+      → sinh câu hỏi (13 câu bám CV) → transcript tay → analyze (bắt đúng mâu thuẫn
+      CV vs lời khai) → xoá. **Chưa commit.**
+- [ ] Chưa test: upload mp3 thật (chưa có file ghi âm) + nhánh gỡ băng tự động (chưa
+      có key). Cũng chưa mở UI `/hr` bằng mắt — mới test tầng API.
+- [ ] Cắm key gỡ băng. Sếp nói sẽ thêm `OPENAI_API_KEY` — **lưu ý Whisper trần 25MB**,
+      ghi âm 45 phút thường 40-60MB sẽ bị chặn ở bước phân tích (báo lỗi rõ, không
+      crash). Muốn nuốt file lớn thì cắm `GEMINI_API_KEY` thay vì OpenAI. Chỉ sửa
+      `.env.local` + VPS, KHÔNG phải sửa code.
+- [ ] `.agent/meta/SCHEMA.md` stale nặng (ghi "2026-05-23, migrations applied: 2") và
+      `API.md` không có route `/hr` nào. Cần rà lại cả hai, đừng tin số liệu trong đó.
+
 - [x] ~~AI gợi ý email trả lời ở /crm~~ (2026-09-06): `/api/crm/leads/[id]/reply` +
       `ReplyDraft` trong panel. Copy / mở mail prefill. Draft không lưu DB.
 - [x] ~~Sửa `AI_MODEL` chết~~ (2026-09-06): gpt-5.4-mini → **gpt-5.5** ở .env.local

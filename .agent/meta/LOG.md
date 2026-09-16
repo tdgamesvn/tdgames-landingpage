@@ -5253,3 +5253,59 @@ trình chiếu (`[data-heading-no]`, thanh dưới đã có "03/14"). Gạch n�
 nguyên nên đầu slide không bị cụt.
 
 Production verify: 14 slide, tiêu đề dropdown đúng thứ tự, slide 02 (gộp) scaled 625 ≤ 629.
+
+## 2026-09-16 (session 29 — /hr: AI soạn câu hỏi PV + ghi âm + phân tích sau PV)
+
+Feature mới cho HR dashboard, nối vào `CandidateModal` (impact: LOW, 1 direct caller).
+
+**DB:** bảng `interview_sessions` (migration `20260916000000`). Tách bảng riêng thay vì
+nhét cột vào `applications` vì 1 ứng viên nhiều vòng PV (HR screening → chuyên môn →
+gặp sếp), mỗi vòng có câu hỏi + audio + đánh giá riêng. RLS bật, **không policy** —
+mọi truy cập qua service role.
+
+**Lib mới:**
+- `src/lib/interview-ai.ts` — gom `callAiJson` + `extractCvText` + `candidateFacts`.
+  Route `evaluate` cũ đã bỏ bản `extractCvText` local (giống hệt 100%) để import chung.
+- `src/lib/transcribe.ts` — mp3 → text, pluggable: `GEMINI_API_KEY` → Gemini (có Files
+  API cho file >18MB) → `OPENAI_API_KEY` → Whisper → không key thì ném lỗi 501 bảo HR
+  dán transcript tay.
+
+**5 route:** `POST /api/hr/upload/audio` (100MB, audio/*), `GET+POST
+/api/hr/applications/[id]/interviews`, `PATCH+DELETE /api/hr/interviews/[id]`,
+`POST /api/hr/interviews/[id]/questions`, `POST /api/hr/interviews/[id]/analyze`.
+
+**UI:** `src/app/hr/_components/InterviewPanel.tsx` — sinh câu hỏi (có why/green_flag/
+red_flag mỗi câu) + copy ra text, dropzone mp3, player, transcript sửa tay, kết quả
+phân tích có so lệch điểm hồ sơ → sau PV.
+
+**Quyết định kỹ thuật** (chi tiết ở DECISIONS.md): upload qua server chứ KHÔNG presigned
+PUT thẳng R2 — presigned cần cấu hình CORS trên bucket mà agent không có quyền, hỏng
+thì hỏng âm thầm ở browser.
+
+**Đã xác minh cliproxyapi KHÔNG làm được audio**: `/v1/audio/transcriptions` → 404,
+chat/completions → "Audio input is not available." Nên transcribe buộc phải đi nhà
+cung cấp riêng, không tái dùng `AI_BASE_URL` được.
+
+**nginx VPS** (`/etc/nginx/sites-enabled/tdgamestudio.com`, backup `/root/tdgamestudio.com.bak-interview`):
+- `client_max_body_size` 100M → **120M** (100MB + multipart overhead sẽ dính 413)
+- thêm `location ~ ^/api/hr/(interviews|upload)/` với `proxy_read_timeout 900s` —
+  phải đặt **TRƯỚC** block `~ ^/(api|admin)/` vì nginx match regex theo thứ tự file.
+- Bẫy đã dính: để file `.bak` trong `sites-enabled/` → nginx load luôn cả nó →
+  `nginx -t` fail "real_ip_header duplicate". Backup phải để ngoài thư mục đó.
+
+tsc sạch, eslint file mới sạch, build pass (5 route đăng ký đúng). Site vẫn 200.
+
+**Test end-to-end thật** (dev server + ứng viên thật Karol Wałaszek / 2D Spine Animator):
+tạo vòng 1 → vòng 2 (round tự tăng ✅) → sinh câu hỏi (gpt-5.5, 5 nhóm/13 câu, trích
+đúng chi tiết CV: Push Gaming, Mad Blast, Flying Cactus ✅) → PATCH transcript tay
+(`transcript_source: manual` ✅) → analyze (score 68, verdict maybe, confidence **low**
+vì transcript ngắn ✅, bắt được mâu thuẫn CV khai "tích hợp Unity VFX" vs lời thật
+"chỉ export file cho dev" ✅) → DELETE dọn sạch ✅. Dữ liệu test đã xoá khỏi DB.
+
+**Bẫy khi test:** `.env.local` dùng line ending **CRLF** — `grep|cut` lấy secret sẽ
+kèm `\r`, nhét vào HTTP header làm request malformed → **400 với body rỗng** (dễ nhầm
+là bug route). Phải `tr -d '\r\n'`. Và HR key thật nằm ở DB `app_settings.hr_secret`
+(= `Tdgameshr@123`), KHÔNG phải `ADMIN_SECRET` — `getHRSecret()` ưu tiên DB trước env.
+
+**Next:** chưa commit/push. Chưa test upload mp3 thật (chưa có file ghi âm) và chưa
+test nhánh gỡ băng tự động (chưa cắm key).

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Application, ApplicationComment, ApplicationStatus, Job, JobType } from "@/app/admin/_lib/types";
+import InterviewPanel from "./InterviewPanel";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -564,6 +565,8 @@ function CandidateModal({
             </div>
 
             <AppDetail app={app} hrKey={hrKey} comments={false} />
+
+            <InterviewPanel appId={app.id} hrKey={hrKey} />
 
             {/* Note */}
             <div className="space-y-1 border-t border-white/8 pt-3">

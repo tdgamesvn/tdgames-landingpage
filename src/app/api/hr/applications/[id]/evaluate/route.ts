@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { extractCvText } from "@/lib/interview-ai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,28 +13,6 @@ If cv_text is provided it is the full text extracted from the candidate's CV —
 Reply with ONLY a JSON object, no markdown, no prose:
 {"score": <0-100 integer>, "verdict": "strong_yes"|"yes"|"maybe"|"no", "strengths": ["..."], "concerns": ["..."]}
 Keep strengths/concerns to 2-4 short bullet strings each, in Vietnamese.`;
-
-/** Download the CV and extract text (PDF only). Returns null on any failure. */
-async function extractCvText(cvUrl: string | null): Promise<string | null> {
-  if (!cvUrl) return null;
-  try {
-    const res = await fetch(cvUrl, { signal: AbortSignal.timeout(20_000) });
-    if (!res.ok) return null;
-    if (Number(res.headers.get("content-length") ?? 0) > 20 * 1024 * 1024) return null; // skip >20MB
-    const isPdf =
-      cvUrl.toLowerCase().includes(".pdf") ||
-      (res.headers.get("content-type") ?? "").includes("pdf");
-    if (!isPdf) return null; // ponytail: PDF only — docx/images can come later if HR needs it
-    const { extractText } = await import("unpdf");
-    const { text } = await extractText(new Uint8Array(await res.arrayBuffer()), {
-      mergePages: true,
-    });
-    const merged = (Array.isArray(text) ? text.join("\n") : text).trim();
-    return merged ? merged.slice(0, 12_000) : null; // cap prompt size
-  } catch {
-    return null; // CV unreadable — evaluate from form data only
-  }
-}
 
 export async function POST(
   request: Request,
