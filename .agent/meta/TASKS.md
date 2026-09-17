@@ -2,13 +2,23 @@
 
 ## ⚠️ GẤP — chờ sếp quyết
 
-- [ ] **HR key `Tdgameshr@123` đã lộ trong lịch sử git của repo PUBLIC** (2026-09-17).
-      Agent commit nhầm `e2e3.tmp.mjs` (có key viết cứng) ở commit `7f4fe1b`. Đã gỡ khỏi
-      HEAD + thêm `*.tmp.mjs` vào .gitignore (`5461fd1`), **nhưng key vẫn đọc được trong
-      history**. Ai đọc repo đều vào được `/hr` → toàn bộ CV, email, SĐT, đánh giá ứng viên.
-      **Cách chữa duy nhất: đổi `app_settings.hr_secret` trong Supabase** (kèm báo HR team
-      key mới). Force-push xoá history chỉ giảm phơi nhiễm, không thay thế được việc đổi key.
-      → Đã hỏi sếp, chưa có câu trả lời. KHÔNG tự đổi vì sẽ khoá HR team đang dùng.
+- [x] ~~HR key lộ trong lịch sử git repo PUBLIC~~ (2026-09-17): agent commit nhầm
+      `e2e3.tmp.mjs` (key viết cứng) ở `7f4fe1b`. Gỡ khỏi HEAD + `.gitignore *.tmp.mjs`
+      (`5461fd1`). **Sếp duyệt đổi key** → `app_settings.hr_secret` = key mới, và
+      GitHub Actions secret `HR_SECRET` cập nhật theo (hr-remind.yml dùng chung).
+      Verify production: key cũ → **401**, key mới → **200**. VPS không có `HR_SECRET`
+      trong env (đọc thẳng từ DB) nên không phải sửa gì thêm.
+      ⚠️ Key cũ vẫn nằm trong history — vô hại vì đã đổi, nhưng đừng bao giờ
+      `git add -A` mà không soi `git status` trước.
+
+- [ ] **Cột `phone_screening` không có trong DB enum** — UI (`HRDashboard.tsx`,
+      `CareersTab.tsx`, `admin/_lib/types.ts`) dùng `phone_screening` làm 1 cột pipeline
+      và đặt luồng `reviewing → phone_screening`, nhưng enum `application_status` trong
+      Postgres chỉ có `new, reviewing, test, interview, offer, rejected`. Hậu quả:
+      (1) cron `hr-remind.yml` chết **500 mỗi ngày** (ít nhất từ 10/09),
+      (2) cột "Phone Screening" trên /hr là bẫy — chuyển ứng viên vào là lỗi.
+      Sửa đề xuất: `ALTER TYPE application_status ADD VALUE 'phone_screening' AFTER
+      'reviewing'`. → Đã hỏi sếp, chưa trả lời. Không tự đụng schema production.
 
 
 

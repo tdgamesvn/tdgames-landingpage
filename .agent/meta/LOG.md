@@ -5401,3 +5401,26 @@ phỏng vấn thì đây vẫn là lỗ hổng riêng tư trong khoảng thời 
 **Bài học test:** script e2e đầu tiên đọc `j.id` trong khi route trả `{session:{id}}` ở vài
 nhánh → gọi vào `/interviews/undefined` → 500, suýt kết luận nhầm là code hỏng. Test hỏng
 thì phải soi test trước khi đổ cho code.
+
+## 2026-09-17 (session 30d — đổi HR key sau sự cố lộ, phát hiện bug enum)
+
+**Sự cố do agent gây ra:** `git add -A` nuốt luôn `e2e3.tmp.mjs` (script test có HR key
+viết cứng) → push lên repo PUBLIC ở `7f4fe1b`. Lệnh trước đó bị kill nên `rm -f` trong
+cùng dòng lệnh không chạy, file còn lại mà agent không soi `git status` trước khi add.
+**Luật rút ra: không bao giờ `git add -A` khi vừa tạo file tạm — add đúng path, hoặc
+soi `git status --porcelain` trước.**
+
+**Xử lý (sếp duyệt đổi key):**
+- `app_settings.hr_secret` → key mới (Supabase).
+- GitHub Actions secret `HR_SECRET` cập nhật theo — `hr-remind.yml` dùng chung, quên là
+  chết cron.
+- VPS không có `HR_SECRET` trong `.env.local`/`.env` → `getHRSecret()` đọc thẳng DB, không
+  cần restart pm2.
+- Verify production `GET /api/hr/jobs`: key cũ **401**, key mới **200**.
+
+**Bug có sẵn lộ ra khi chạy thử cron** (KHÔNG do đổi key — auth qua rồi mới 500):
+`{"error":"invalid input value for enum application_status: \"phone_screening\""}`.
+Enum trong Postgres thiếu `phone_screening` trong khi UI dùng nó làm cột pipeline và
+luồng `reviewing → phone_screening`. `hr-remind.yml` failure liên tục từ 10/09 tới nay.
+Cột "Phone Screening" trên /hr vì thế là bẫy: chuyển ứng viên vào sẽ lỗi.
+Đã hỏi sếp hướng sửa, chưa có trả lời → không tự chạy migration trên production.
