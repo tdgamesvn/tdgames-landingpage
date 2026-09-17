@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { deleteFromR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +34,23 @@ export async function PATCH(
     return NextResponse.json({ error: "No updatable fields" }, { status: 400 });
   }
 
-  const { data, error } = await getSupabaseAdmin()
+  const supabase = getSupabaseAdmin();
+
+  // Thay file ghi âm thì phải nhớ key cũ để dọn — nếu không, bản ghi bị thay
+  // nằm lại vĩnh viễn trên CDN công khai dù không còn ai trỏ tới.
+  let oldAudioKey: string | null = null;
+  if ("audio_key" in allowed) {
+    const { data: prev } = await supabase
+      .from("interview_sessions")
+      .select("audio_key")
+      .eq("id", id)
+      .single();
+    if (prev?.audio_key && prev.audio_key !== allowed.audio_key) {
+      oldAudioKey = prev.audio_key;
+    }
+  }
+
+  const { data, error } = await supabase
     .from("interview_sessions")
     .update(allowed)
     .eq("id", id)
@@ -42,6 +59,10 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Dọn sau khi DB đã đổi xong — hỏng bước này chỉ để lại rác, không mất dữ liệu.
+  if (oldAudioKey) await deleteFromR2(oldAudioKey);
+
   return NextResponse.json({ session: data });
 }
 
@@ -53,11 +74,22 @@ export async function DELETE(
   if (authError) return authError;
 
   const { id } = await params;
-  const { error } = await getSupabaseAdmin()
+  const supabase = getSupabaseAdmin();
+
+  // Lấy key TRƯỚC khi xoá dòng — xoá xong là mất đường tìm lại file trên R2.
+  const { data: prev } = await supabase
     .from("interview_sessions")
-    .delete()
-    .eq("id", id);
+    .select("audio_key")
+    .eq("id", id)
+    .single();
+
+  const { error } = await supabase.from("interview_sessions").delete().eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Ghi âm phỏng vấn là dữ liệu riêng tư — HR bấm xoá thì phải biến mất khỏi CDN
+  // luôn, không chỉ khuất khỏi giao diện.
+  if (prev?.audio_key) await deleteFromR2(prev.audio_key);
+
   return NextResponse.json({ ok: true });
 }

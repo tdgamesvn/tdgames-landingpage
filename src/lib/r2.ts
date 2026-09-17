@@ -1,6 +1,6 @@
 import "server-only";
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 
 // ponytail: tham số tune thực tế từ bot tdgames-discord. gif/svg cố ý không match
@@ -131,4 +131,25 @@ export async function uploadToR2(params: {
     size: body.length,
     contentType,
   };
+}
+
+/**
+ * Xoá 1 object khỏi R2. Best-effort: KHÔNG bao giờ throw — caller (xoá vòng PV,
+ * thay file ghi âm) đã xoá xong dữ liệu chính rồi, R2 hụt một nhịp không được
+ * phép làm hỏng request. Trả true nếu đã gửi lệnh xoá thành công.
+ */
+export async function deleteFromR2(key: string | null | undefined): Promise<boolean> {
+  const cleanKey = key?.trim().replace(/^\/+/, "");
+  if (!cleanKey) return false;
+
+  try {
+    const { bucket } = getR2Config();
+    await createR2Client().send(
+      new DeleteObjectCommand({ Bucket: bucket, Key: cleanKey }),
+    );
+    return true;
+  } catch (err) {
+    console.warn("[r2] xoá object thất bại, file còn lại trên CDN:", cleanKey, err);
+    return false;
+  }
 }
