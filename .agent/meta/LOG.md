@@ -5372,3 +5372,32 @@ vẫn trả HTTP 200 sau khi xoá session. File ghi âm phỏng vấn nằm lạ
 vĩnh viễn. Vừa là rác vừa là vấn đề riêng tư. Đã ghi thành task.
 
 **Trạng thái feature: XONG, chạy được trên production.**
+
+## 2026-09-17 (session 30c — vá rò rỉ file ghi âm trên R2)
+
+**Bug (phát hiện ở session trước):** DELETE `/api/hr/interviews/[id]` chỉ xoá dòng DB,
+file mp3 phỏng vấn nằm lại vĩnh viễn trên CDN công khai. PATCH thay file ghi âm cũng
+để lại bản cũ — cùng một lỗi.
+
+**Sửa (`a9bbdc2`):**
+- `src/lib/r2.ts`: thêm `deleteFromR2(key)` — best-effort, **không bao giờ throw**. DB đã
+  xong rồi thì R2 hụt nhịp chỉ để lại rác, không được phép làm hỏng request.
+- DELETE: `select audio_key` TRƯỚC khi xoá dòng (xoá xong là mất đường tìm lại file), xoá
+  DB rồi mới xoá R2.
+- PATCH: nếu `audio_key` đổi → xoá key cũ sau khi update DB thành công.
+- Impact trước khi sửa: MEDIUM, 1 consumer (`InterviewPanel.tsx`), response shape không
+  đổi → an toàn. tsc + eslint sạch.
+
+**Verify trên production (sau deploy):** tạo vòng PV → upload mp3 → gắn audio → file
+`?v=b` HTTP **200** → DELETE → file `?v=a` HTTP **404** ✅. DB còn đúng 1 session của sếp.
+Hai file rác từ các lần test trước đã xoá tay, cả hai giờ 404.
+
+**Caveat CDN (chưa xử lý):** xoá khỏi R2 **không** làm mất ngay quyền truy cập công khai —
+Cloudflare còn phục vụ bản cache ở edge cho URL đã từng được fetch (kiểm bằng `?v=` thấy
+404 ở origin nhưng URL trần vẫn 200). Muốn xoá tức thì phải purge cache Cloudflare theo
+URL sau khi delete (cần CF API token; MCP `cloudflare-api` hiện chưa auth). Với ghi âm
+phỏng vấn thì đây vẫn là lỗ hổng riêng tư trong khoảng thời gian cache còn sống.
+
+**Bài học test:** script e2e đầu tiên đọc `j.id` trong khi route trả `{session:{id}}` ở vài
+nhánh → gọi vào `/interviews/undefined` → 500, suýt kết luận nhầm là code hỏng. Test hỏng
+thì phải soi test trước khi đổ cho code.

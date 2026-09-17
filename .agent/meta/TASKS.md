@@ -23,10 +23,14 @@ _(empty)_
       Test thật trên tdgamestudio.com: upload mp3 → R2 → analyze trả
       `transcript_source: gemini` (33.1s) → xoá sạch. UI `/hr` đã xem bằng mắt, section
       PHỎNG VẤN render đúng trong modal ứng viên. **Feature XONG, chạy production.**
-- [ ] **Xoá vòng PV không xoá file ghi âm trên R2** — DELETE `/api/hr/interviews/[id]`
-      chỉ xoá dòng DB, file mp3 vẫn trả HTTP 200 trên CDN công khai. Rác + rủi ro riêng
-      tư (ghi âm phỏng vấn ứng viên nằm vĩnh viễn trên CDN). Sửa: gọi xoá object R2
-      theo `audio_key` trong route DELETE.
+- [x] ~~Xoá vòng PV không xoá file ghi âm trên R2~~ (2026-09-17, `a9bbdc2`): thêm
+      `deleteFromR2()`, gọi trong cả DELETE (xoá vòng PV) lẫn PATCH (thay file ghi âm).
+      Verify production: file 200 trước khi xoá → **404** sau khi xoá.
+- [ ] **Purge cache Cloudflare sau khi xoá file R2** — xoá khỏi R2 không cắt được quyền
+      truy cập ngay: edge cache vẫn phục vụ bản cũ cho URL đã từng fetch (origin 404
+      nhưng URL trần vẫn 200). Với ghi âm phỏng vấn đây là lỗ hổng riêng tư trong thời
+      gian cache còn sống. Cần CF API token + gọi purge-by-URL trong `deleteFromR2`.
+      MCP `cloudflare-api` hiện chưa auth → cần sếp cấp token.
 - [ ] `.agent/meta/SCHEMA.md` stale nặng (ghi "2026-05-23, migrations applied: 2") và
       `API.md` không có route `/hr` nào. Cần rà lại cả hai, đừng tin số liệu trong đó.
 
