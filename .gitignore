@@ -75,3 +75,6 @@ scripts/responsive-audit.mjs
 scripts/responsive-shots.mjs
 # ảnh chụp màn hình so sánh — rác local
 careers-after.png
+
+# script test tạm, không bao giờ commit
+*.tmp.mjs
