@@ -5346,3 +5346,29 @@ tsc sạch.
 bảo HR dán transcript tay (không crash, không regression). Muốn dùng gỡ băng thật trên
 production phải set env + `pm2 restart`. Cũng vẫn chưa mở UI `/hr` bằng mắt và chưa test
 đường upload mp3 qua `/api/hr/upload/audio` (mới test thẳng tầng transcribe).
+
+## 2026-09-17 (session 30b — deploy + verify gỡ băng trên PRODUCTION)
+
+Push `4b8df44` → CI deploy pass 1m18s. VPS hoá ra **đã có sẵn `GEMINI_API_KEY`** (thêm
+lúc 10:22 cùng ngày), key test trực tiếp từ VPS → `gemini-3.6-flash` HTTP 200.
+
+**Test end-to-end thật trên https://tdgamestudio.com** (ứng viên thật Karol Wałaszek,
+audio tiếng Việt 19s tự sinh):
+1. tạo vòng PV → 200, round 1
+2. `POST /api/hr/upload/audio` mp3 149KB → 200, lên CDN R2 ✅
+3. PATCH gắn audio vào session → 200
+4. `POST .../analyze` → 200 sau **33.1s**, `transcript_source: **gemini**` — tức nhánh
+   **gỡ băng tự động** chạy thật trên production, không phải transcript dán tay.
+   Transcript đúng format (nhãn người nói + mốc `[mm:ss]`), score 68 / maybe / low.
+5. DELETE dọn → 200. DB xác nhận còn đúng 1 session của sếp, 0 dòng test.
+
+**UI `/hr` đã xem bằng mắt** (Playwright, production): đăng nhập bằng HR key → pipeline
+7 cột hiện đủ. Mở modal ứng viên → section **PHỎNG VẤN** render đúng, có nút
+"+ Thêm vòng PV" và empty state "Chưa có vòng PV nào…". Không tạo vòng qua UI để khỏi
+để lại rác — tầng API đã chứng minh xong.
+
+**Phát hiện mới (chưa sửa):** DELETE vòng PV **không xoá file ghi âm trên R2** — URL test
+vẫn trả HTTP 200 sau khi xoá session. File ghi âm phỏng vấn nằm lại trên CDN công khai
+vĩnh viễn. Vừa là rác vừa là vấn đề riêng tư. Đã ghi thành task.
+
+**Trạng thái feature: XONG, chạy được trên production.**
