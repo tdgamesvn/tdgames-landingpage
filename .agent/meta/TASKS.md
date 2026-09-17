@@ -1,5 +1,17 @@
 # TASKS
 
+## ⚠️ GẤP — chờ sếp quyết
+
+- [ ] **HR key `Tdgameshr@123` đã lộ trong lịch sử git của repo PUBLIC** (2026-09-17).
+      Agent commit nhầm `e2e3.tmp.mjs` (có key viết cứng) ở commit `7f4fe1b`. Đã gỡ khỏi
+      HEAD + thêm `*.tmp.mjs` vào .gitignore (`5461fd1`), **nhưng key vẫn đọc được trong
+      history**. Ai đọc repo đều vào được `/hr` → toàn bộ CV, email, SĐT, đánh giá ứng viên.
+      **Cách chữa duy nhất: đổi `app_settings.hr_secret` trong Supabase** (kèm báo HR team
+      key mới). Force-push xoá history chỉ giảm phơi nhiễm, không thay thế được việc đổi key.
+      → Đã hỏi sếp, chưa có câu trả lời. KHÔNG tự đổi vì sẽ khoá HR team đang dùng.
+
+
+
 ## Doing
 
 _(empty)_
