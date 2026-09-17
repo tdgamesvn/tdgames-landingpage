@@ -13,12 +13,17 @@ _(empty)_
       900s. tsc/eslint/build sạch. Test end-to-end qua API với ứng viên thật: tạo vòng
       → sinh câu hỏi (13 câu bám CV) → transcript tay → analyze (bắt đúng mâu thuẫn
       CV vs lời khai) → xoá. **Chưa commit.**
-- [ ] Chưa test: upload mp3 thật (chưa có file ghi âm) + nhánh gỡ băng tự động (chưa
-      có key). Cũng chưa mở UI `/hr` bằng mắt — mới test tầng API.
-- [ ] Cắm key gỡ băng. Sếp nói sẽ thêm `OPENAI_API_KEY` — **lưu ý Whisper trần 25MB**,
-      ghi âm 45 phút thường 40-60MB sẽ bị chặn ở bước phân tích (báo lỗi rõ, không
-      crash). Muốn nuốt file lớn thì cắm `GEMINI_API_KEY` thay vì OpenAI. Chỉ sửa
-      `.env.local` + VPS, KHÔNG phải sửa code.
+- [x] ~~Cắm key gỡ băng + test nhánh tự động~~ (2026-09-17): `GEMINI_API_KEY` đã có ở
+      `.env.local` local. Model mặc định phải là **`gemini-3.6-flash`** —
+      `gemini-2.5-flash` bị Google khoá với key mới (404 "no longer available to new
+      users") dù vẫn hiện trong `GET /v1beta/models`. Test thật: audio tiếng Việt 19s
+      → transcript đúng format (nhãn người nói, mốc `[mm:ss]`, không dịch). Đi Gemini
+      nên KHÔNG dính trần 25MB của Whisper.
+- [ ] **Set `GEMINI_API_KEY` trên VPS + `pm2 restart`** — production hiện chưa có key,
+      `/hr` sẽ trả 501 bảo HR dán transcript tay. Không crash, không gấp, nhưng gỡ băng
+      tự động chưa dùng được trên production cho tới khi set.
+- [ ] Chưa mở UI `/hr` bằng mắt (mới test tầng API) và chưa test đường upload mp3 qua
+      `POST /api/hr/upload/audio` với file thật.
 - [ ] `.agent/meta/SCHEMA.md` stale nặng (ghi "2026-05-23, migrations applied: 2") và
       `API.md` không có route `/hr` nào. Cần rà lại cả hai, đừng tin số liệu trong đó.
 

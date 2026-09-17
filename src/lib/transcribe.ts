@@ -44,8 +44,13 @@ const GEMINI_BASE = "https://generativelanguage.googleapis.com";
 /** Trên ngưỡng này phải đi Files API — inline base64 làm phình request quá giới hạn. */
 const GEMINI_INLINE_MAX = 18 * 1024 * 1024;
 
+/**
+ * KHÔNG hạ về gemini-2.5-flash: Google đã khoá model đó với key tạo mới
+ * ("no longer available to new users" → 404), dù nó VẪN xuất hiện trong
+ * `GET /v1beta/models`. Danh sách models không phải bằng chứng model dùng được.
+ */
 function geminiModel() {
-  return process.env.GEMINI_TRANSCRIBE_MODEL ?? "gemini-2.5-flash";
+  return process.env.GEMINI_TRANSCRIBE_MODEL ?? "gemini-3.6-flash";
 }
 
 /**

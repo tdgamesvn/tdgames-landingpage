@@ -282,3 +282,18 @@ phải nén mp3 (~48kbps mono) trước khi upload.
 
 **Ràng buộc:** ô transcript sửa tay luôn phải giữ — nó là đường thoát khi provider
 lỗi/hết quota, và là cách feature chạy được ngay cả khi chưa cắm key nào.
+
+---
+
+## 2026-09-17 — Ghim model Gemini gỡ băng: `gemini-3.6-flash`, không hạ về 2.5
+
+**Quyết định:** mặc định `GEMINI_TRANSCRIBE_MODEL` là `gemini-3.6-flash`. Không được
+"sửa cho an toàn" bằng cách hạ về `gemini-2.5-flash`.
+
+**Lý do:** Google đã khoá `gemini-2.5-flash` với key tạo mới — gọi vào trả **404
+"This model is no longer available to new users"**. Đã xác minh bằng key production
+ngày 2026-09-17.
+
+**Bài học chung:** model vẫn xuất hiện trong `GET /v1beta/models` nhưng gọi vẫn 404.
+**Danh sách models KHÔNG phải bằng chứng model dùng được** — muốn chắc thì gọi thử
+một request text rẻ tiền.

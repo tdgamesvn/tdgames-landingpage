@@ -5309,3 +5309,40 @@ là bug route). Phải `tr -d '\r\n'`. Và HR key thật nằm ở DB `app_setti
 
 **Next:** chưa commit/push. Chưa test upload mp3 thật (chưa có file ghi âm) và chưa
 test nhánh gỡ băng tự động (chưa cắm key).
+
+## 2026-09-17 (session 30 — xác minh nhánh gỡ băng Gemini chạy thật)
+
+Session trước để lại `src/lib/transcribe.ts` sửa dở chưa commit chưa log: đổi model mặc
+định `gemini-2.5-flash` → `gemini-3.6-flash`. Session này **kiểm chứng end-to-end** thay
+vì tin comment.
+
+**Đã xác minh bằng key thật trong `.env.local`:**
+- `gemini-2.5-flash` → **404** `"This model models/gemini-2.5-flash is no longer
+  available to new users"`. Comment trong code nói đúng.
+- `gemini-3.6-flash` → 200.
+- Gỡ băng thật: tạo audio tiếng Việt bằng `say -v Linh` (19s, hội thoại PV giả) → mp3
+  153KB → nhánh inline base64 → **HTTP 200, 11.2s**, transcript đúng định dạng yêu cầu:
+  nhãn `Người phỏng vấn:` / `Ứng viên:`, mốc `[mm:ss]`, giữ nguyên tiếng Việt, giữ
+  thuật ngữ "Spine Animation". Nhánh gỡ băng tự động COI NHƯ ĐÃ CHẠY ĐƯỢC.
+
+tsc sạch.
+
+**2 bẫy môi trường mất thời gian, ghi lại cho lần sau:**
+1. **`$TMPDIR` khác nhau trong và ngoài sandbox.** Trong sandbox = `/tmp/claude-501`,
+   ngoài = `/var/folders/.../T`. Sinh file ngoài sandbox rồi đọc bằng đường dẫn
+   `$TMPDIR` trong sandbox → đọc nhầm file cũ/rỗng. Lần đầu gửi Gemini file AIFF **4KB
+   rỗng**, model trả "Vui lòng tải lên file ghi âm" — **HTTP 200 nên rất dễ tưởng là
+   model hỏng**, thực ra là mình gửi file rỗng. Dùng đường dẫn tuyệt đối khi bắc cầu
+   trong/ngoài sandbox.
+2. **`say` và `afconvert` bị sandbox chặn âm thầm** — vẫn exit 0 nhưng ghi ra file chỉ
+   có header, 0 byte audio (`afinfo` báo `audio bytes: 0`). Cần
+   `dangerouslyDisableSandbox: true`. `afconvert` hỏng cả ngoài sandbox → dùng `ffmpeg`
+   (`/opt/homebrew/bin/ffmpeg`) để chuyển đổi.
+3. Lấy secret bằng `grep|cut` từ `.env.local` vẫn hỏng dù đã `tr -d '\r\n'` — curl với
+   key đó trả 404 cho CẢ model đang chạy tốt, suýt kết luận sai. **Dùng
+   `node --env-file=.env.local` để đọc env, đừng parse tay.**
+
+**Next:** chưa push. Production vẫn CHƯA có `GEMINI_API_KEY` trên VPS → `/hr` sẽ trả 501
+bảo HR dán transcript tay (không crash, không regression). Muốn dùng gỡ băng thật trên
+production phải set env + `pm2 restart`. Cũng vẫn chưa mở UI `/hr` bằng mắt và chưa test
+đường upload mp3 qua `/api/hr/upload/audio` (mới test thẳng tầng transcribe).
