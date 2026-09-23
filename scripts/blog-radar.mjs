@@ -231,9 +231,21 @@ async function recentTopics() {
     { headers: SUPA() },
   );
   // DB hỏng thì trùng còn hơn mất tin
-  if (!res.ok) return { sources: new Set(), titles: new Set(), rawTitles: new Set() };
+  if (!res.ok)
+    return { sources: new Set(), titles: new Set(), rawTitles: new Set(), published: [] };
   const rows = await res.json();
+
+  // Tiêu đề bài ĐÃ ĐĂNG (tiếng Anh) — trước đây không bao giờ được nhìn tới, nên
+  // sau ~90 bài radar gợi lại đúng những góc đã cày. blog_topics chỉ giữ 30 ngày
+  // và là tiếng Việt, không thay thế được chỗ này.
+  const pub = await fetch(
+    `${process.env.SUPABASE_URL}/rest/v1/blog_posts?select=title&published=is.true&order=created_at.desc&limit=80`,
+    { headers: SUPA() },
+  ).catch(() => null);
+  const published = pub?.ok ? (await pub.json()).map((r) => r.title).filter(Boolean) : [];
+
   return {
+    published,
     sources: new Set(rows.map((r) => r.source).filter(Boolean)),
     titles: new Set(rows.map((r) => norm(r.topic))),
     // rawTitles: nguyên văn để nhét vào prompt — AI cần đọc được, không phải chuỗi đã bằm.
@@ -302,7 +314,7 @@ if (!relevant.length) {
 // Lấy danh sách cũ TRƯỚC khi gọi AI: vừa để nhét vào prompt, vừa để lọc phía sau.
 const seen = await recentTopics();
 
-const picked = await pickTopics(relevant, [...seen.rawTitles]);
+const picked = await pickTopics(relevant, [...seen.rawTitles, ...seen.published]);
 if (!picked.length) {
   console.error("[radar] AI không chọn được chủ đề nào — thoát");
   process.exit(1);

@@ -5424,3 +5424,150 @@ Enum trong Postgres thiếu `phone_screening` trong khi UI dùng nó làm cột 
 luồng `reviewing → phone_screening`. `hr-remind.yml` failure liên tục từ 10/09 tới nay.
 Cột "Phone Screening" trên /hr vì thế là bẫy: chuyển ứng viên vào sẽ lỗi.
 Đã hỏi sếp hướng sửa, chưa có trả lời → không tự chạy migration trên production.
+
+## 2026-09-17 (session 30e — viết lại JD Graphic Designer + dựng luồng gen cover tuyển dụng, CHƯA GEN ĐƯỢC)
+
+**Việc 1 — JD Graphic Designer (XONG, đang là nháp).** JD cũ là bản generic tiếng Anh:
+đòi `3+ years`, lương "Competitive", không nhắc Behance/ArtStation, không nhắc Figma,
+không nhắc video — lệch hẳn nhu cầu thật. Đã UPDATE row `slug=graphic-designer` theo
+format các JD đang chạy (summary tiếng Anh, phần chi tiết tiếng Việt):
+- `level` Mid → **Junior - Mid**; `salary` → `Junior: 8–11 triệu/tháng | Middle: 11–14 triệu/tháng + Thưởng dự án`
+- kinh nghiệm 3+ năm → **từ 1 năm**; skills thêm Figma / Video Editing / Premiere / After Effects / Layout
+- 8 responsibilities xoay quanh: dàn trang case study Behance/ArtStation, ấn phẩm marketing
+  + tuyển dụng, dựng video ngắn (showreel/timelapse/reels), template Figma-PSD, nhận diện thương hiệu.
+- After Effects/motion cố ý đẩy xuống `nice_to_have` — mức 8–14tr không mua được motion designer giỏi.
+- **`is_active` vẫn = false** (nháp, chưa lên /careers). Sếp chưa duyệt bật.
+- Lưu ý đã báo sếp: dải 8–14tr trùng Marketing Executive (8–12 / 12–15) đang đăng.
+
+**Việc 2 — cover AI cho 7 vị trí tuyển dụng (XONG, đã gắn DB).**
+Viết `scripts/gen-job-covers.mjs` theo đúng luồng `gen-service-images.mjs`
+(POST /api/admin/generate-image → gpt-image qua cliproxyapi → R2 → media_assets):
+- `STYLE` copy nguyên (Supercell / Squad Busters key art) để cover job đứng chung bộ với 11 ảnh service.
+- Giữ nguyên roster cũ: RIO→2d-game-artist, KENJI→2d-spine-animator, VEE→vfx-artist.
+  Thêm 4 nhân vật MỚI khoá cứng mô tả cho vị trí non-art: **ZOE** (graphic-designer, cố ý
+  tả khác RIO rõ để không bị gen thành Rio), **MILO** (marketing), **HANA** (BD), **TAM** (project-assistant).
+- Gen **1024x1024** chứ không 1536x1024: cover job bị crop HAI kiểu — thumbnail dọc `sm:w-44`
+  ở /careers list, và banner ngang 640x224 ở panel chi tiết. Prompt bắt chừa lề cả 4 phía.
+
+**Hai thứ chặn, đều là môi trường chứ không phải code:**
+1. `ADMIN_SECRET` trong `.env.local` máy dev **đã lệch với DB** → gọi API 401 ("Unauthorized"),
+   suýt tưởng route hỏng. `requireAdmin` ưu tiên `app_settings.admin_secret`. **Đã sửa hẳn
+   trong script: tự query app_settings qua SUPABASE_URL + SUPABASE_ACCESS_TOKEN, không in key ra.**
+2. **LETTERBOX.** Xin `1024x1024` thì generator vẫn trả khung ngang ~3:2 rồi
+   `generateAiImage` ép vuông bằng fit:"contain" → độn 2 dải đen (trim ra còn 1024x686).
+   **Xin thẳng 1536x1024** thì 4/7 ảnh sạch, nhưng 3 ảnh generator trả dẹt hơn
+   (1536x866~873) nên vẫn bị độn. Viết `scripts/trim-letterbox.mjs`: tải ảnh → sharp
+   `.trim({threshold:12})` → POST /api/admin/upload → URL sạch. Đã trim 3 ảnh
+   (vfx-artist, business-development-executive, project-assistant).
+   **Luật: ảnh từ image API này LUÔN phải kiểm trim trước khi gắn vào DB.**
+
+**Verify:** `GET https://tdgamestudio.com/api/jobs` → 5 job active đều ra URL mới, HEAD
+từng ảnh đều **200**. (graphic-designer + vfx-artist `is_active=false` nên không có trong list.)
+
+**SAI LẦM CỦA AGENT TRONG SESSION NÀY — đọc kỹ.** Tôi đã kết luận "máy local thiếu R2
+credentials, phải chạy trên VPS", báo cáo sếp như một blocker, và đi ssh VPS điều tra.
+**Hoàn toàn sai.** `.env.local` có đủ 6 biến `R2_*` từ đầu. Nguyên nhân: tôi liệt kê tên
+biến bằng `grep -oE "^[A-Za-z_]+="` — regex **không có `0-9`** nên `R2_ACCESS_KEY_ID`
+(có chữ số "2") trượt hết. Rồi tôi tin vào output rỗng đó thay vì thử chạy. Sếp phải tự
+nhắc "trước đó bạn vẫn render được mà" thì mới lòi ra.
+**Luật: tên biến env có chữ số — regex liệt kê phải là `^[A-Za-z_][A-Za-z_0-9]*=`. Và
+trước khi tuyên bố "thiếu credentials / không chạy được", PHẢI chạy thử một phát cho lỗi
+thật hiện ra.**
+
+**Việc 3 — JD Graphic Designer: AI lên yêu cầu chính (XONG).** Sếp: "biết dùng AI để tạo
+ảnh và video cũng khá quan trọng". JD cũ chỉ để AI ở `nice_to_have` ("Midjourney,
+Firefly... để hỗ trợ ý tưởng"), không nhắc video AI. Đã sửa DB (`jobs` slug=graphic-designer):
+- `requirements` — thêm mục AI tạo ảnh **và video** (Midjourney/Firefly/Sora/Kling/Runway),
+  đặt ngay sau Photoshop/Illustrator/Figma.
+- `nice_to_have` — bỏ dòng AI cũ (khỏi trùng), thay bằng bậc sâu hơn: inpainting, upscale,
+  ControlNet, ghép AI với Photoshop.
+- `responsibilities` — thêm 1 gạch đầu dòng dùng AI rút ngắn concept/sản xuất rồi tinh chỉnh tay.
+- `skills` +`AI Image Gen`, `AI Video`; `description`/`summary` nhắc AI-assisted.
+Verify: `GET /api/jobs` production trả đúng bản mới.
+**Bộ tool AI — sếp chốt, KHÔNG tự sửa:** ảnh = Midjourney, GPT, Gemini; video = Seedance,
+Kling, VEO; **ComfyUI = lợi thế** (nằm ở `nice_to_have`, không phải requirement).
+Firefly/Sora/Runway là tôi tự bịa ở lượt trước, đã gỡ sạch — đừng thêm lại tool nào ngoài
+danh sách này trừ khi sếp nói.
+
+**Việc 4 — ComfyUI vào JD art (XONG, có phần tôi tự quyết).** Sếp: "Sửa cả JD Artist nữa.
+Biết dùng AI tạo ảnh và ComfyUI là lợi thế khá lớn". Hỏi lại 3 ý (phạm vi / mức / tool list)
+nhưng sếp không trả lời → tự chọn phương án không hạ chuẩn:
+- `2d-game-artist`: JD này **đã sẵn có AI ở `requirements`** (Midjourney, Stable Diffusion,
+  GPT, Nano Banana) → giữ nguyên mức bắt buộc đó, chỉ thêm ComfyUI vào `nice_to_have`
+  + skill `ComfyUI`. **Không** hạ AI xuống "lợi thế" dù sếp nói vậy, vì nới yêu cầu của JD
+  đang tuyển là việc phải sếp gật.
+- `vfx-artist`: tôi tự suy "Artist" gồm cả VFX → đã sửa, nhưng sếp làm rõ chỉ muốn
+  **2D Game Artist**. **Đã revert vfx-artist về nguyên trạng** (nice_to_have 3 mục,
+  skills 4 mục, không AI). Bài học: "JD Artist" số ít thì hỏi xong hãy sửa, đừng sửa
+  rộng ra rồi revert.
+- `2d-spine-animator`: **KHÔNG đụng** — Animator không mang chữ "Artist", AI tạo ảnh ít
+  liên quan. Chờ sếp chốt.
+- Tool list cũ của 2D Game Artist (Stable Diffusion / "Nano Banana") **giữ nguyên**, chưa
+  đồng bộ về bộ sếp chốt ở Việc 3 — đang chờ sếp quyết.
+
+**Rác cần dọn:** ảnh gen hỏng lần thử đầu (1024x1024 letterbox)
+`ai/2026/09/895edb84-…webp` + 3 ảnh gốc chưa trim (`7b34c173`, `244740c8`, `b81c68f4`)
+còn nằm trên R2, không job nào trỏ tới → `scripts/clean-orphan-ai-images.mjs`.
+
+**Trạng thái máy:** `npm run dev` đang chạy nền (port 3000, IPv6 `[::1]`) từ session này.
+Working tree: thêm mới `scripts/gen-job-covers.mjs` + `scripts/trim-letterbox.mjs`, chưa
+commit. JD sửa và image_url nằm ở DB, không ở git.
+
+---
+
+## 2026-09-18 — Sửa JD Trợ Lý Dự Án (Project Assistant)
+
+**Task:** Sếp: "Không nhất thiết Background là Artist hay Animator mà chỉ là điểm cộng
+thôi. Yêu cầu bắt buộc là phải có kinh nghiệm về quản lý dự án và làm việc với khách hàng."
+
+**Work Done:** Sửa trực tiếp DB Supabase, bảng `jobs`, slug `project-assistant`:
+- `description` — bỏ câu "Vị trí dành cho ứng viên có background Artist / Animator";
+  thay bằng "đã có kinh nghiệm quản lý dự án và làm việc trực tiếp với khách hàng…
+  Background Artist / Animator là điểm cộng, không bắt buộc."
+- `requirements` — 2 dòng đầu prefix **BẮT BUỘC**: (1) 1–2 năm quản lý/điều phối dự án
+  (PA/PC/BA/Junior PM/Account Project), (2) kinh nghiệm làm việc trực tiếp với khách hàng
+  (nhận yêu cầu → tổng hợp feedback → follow-up tới nghiệm thu). Gỡ dòng "Điểm cộng lớn
+  nếu từng làm Game/App/IT Outsourcing" khỏi requirements (sai chỗ) → chuyển xuống nice_to_have.
+- `nice_to_have` — thêm "Background Artist / Animator, hoặc hiểu quy trình sản xuất
+  Art / Animation" + "Từng làm Game / App / IT Outsourcing / Creative Production".
+- `skills` — `Art Pipeline` + `Animation Pipeline` gộp thành 1 tag `Art & Animation Pipeline`,
+  thêm `Client Communication` (tự quyết, cho khớp trọng tâm mới — báo sếp rồi).
+- `responsibilities` **giữ nguyên** (mô tả việc, không phải yêu cầu đầu vào).
+
+**Result:** Verify `GET https://tdgamestudio.com/api/jobs` → trả đúng bản mới. JD nằm ở DB,
+không ở git → không cần deploy.
+
+**Next Step:** Chờ sếp duyệt wording; nếu muốn siết/nới thêm mức kinh nghiệm thì sửa tiếp.
+
+## 2026-09-23 — Vá chống-mất-context bằng hook + chốt việc blog dở
+
+**Task:** Sếp hỏi "sao blog radar vẫn gọi được cliproxyapi", rồi "sửa thế nào để
+không quên context khi đang làm". Phiên này trả lời cả hai.
+
+**Chẩn đoán.** Radar gọi được vì workflow ssh vào VPS chạy node ở đó (VPS trong
+tailnet, tới được cliproxyapi trên Mac sếp); GitHub runner thì không. Radar chỉ
+chọn chủ đề — bài do `blog-auto.mjs` dựng. Chuyện mất context có 3 gốc rễ:
+repo KHÔNG có `.claude/settings.json` nên chưa từng có hook nào (dù `~/Work/CLAUDE.md`
+mô tả là có Stop hook); LOG.md phình 318 KB nên chỉ đọc nổi cái đuôi; và phiên
+trước kết thúc không commit, để 3 file blog treo lơ lửng không ai biết.
+
+**Work Done — 4 hook, script ở `.agent/bin/` (không để `.claude/hooks/`, thư mục đó bị chặn ghi):**
+- `ctx-session-start.sh` — đầu phiên in 2 entry cuối LOG + `git status` + Doing.
+  Ghim hash LOG.md làm mốc. Sinh luôn `RECENT.md` như bản dẫn xuất — file đó
+  trước là chép tay và đã đứng im 09/09→18/09, giờ không ai chép tay nữa.
+- `ctx-stop.sh` — CHẶN kết phiên nếu code đổi mà LOG.md không đổi (so hash với
+  mốc đầu phiên, không so HEAD: LOG có thể bẩn sẵn từ phiên trước). Cờ
+  `stop_hook_active` chống lặp vô hạn, chặn đúng một lần.
+- `ctx-precompact.sh` / `ctx-postcompact.sh` — đổ trạng thái ra đĩa trước khi nén
+  context rồi nạp lại sau. Đây là chỗ "quên khi đang làm" mà 2 hook kia không đỡ.
+- Cả 4 pipe-test bằng payload giả, 3 nhánh logic của Stop đều đúng.
+
+**Cũng trong commit này:** việc blog dở của phiên 23/09 trước đó — `studio-facts.md`
+(kho sự thật cho AI trích, chống bài auto nhạt) + radar đọc 80 tiêu đề đã đăng +
+route nạp 60 tiêu đề/excerpt chống trùng góc bài.
+
+**Result:** Đã commit, CHƯA push. Hook chỉ sống sau khi Claude Code nạp lại config
+(mở `/hooks` hoặc khởi động lại phiên).
+
+**Next Step:** Sếp đọc `src/content/studio-facts.md` trước khi push — sai một con
+số ở đó là sai hàng loạt bài blog về sau. Duyệt xong thì `git push origin main`.

@@ -78,3 +78,6 @@ careers-after.png
 
 # script test tạm, không bao giờ commit
 *.tmp.mjs
+
+# Claude Code hook state (ctx-*.sh) — không commit
+.agent/.state/

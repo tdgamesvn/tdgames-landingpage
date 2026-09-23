@@ -1,4 +1,5 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -74,16 +75,67 @@ Reply with ONLY a JSON object, no markdown fence, no prose:
 {"title": "...", "excerpt": "1-2 sentence summary for listing cards", "tag": "Guide|Pipeline|2D Art|Animation|VFX|Insights", "cover_prompt": "cover image prompt — same style as the in-post images, a subject none of them use, one centred focal subject that still reads when cropped to a square thumbnail", "content_md": "the markdown, containing exactly ${imageCount} ![alt](ai:prompt) image(s)"}`;
 
 /**
- * Dùng khi sếp bấm "AI tự viết" — không có chất liệu thật nào từ CEO.
- * Bài vẫn phải đăng được, nên siết chặt: cấm bịa số liệu và case study.
+ * Kho sự thật studio — `src/content/studio-facts.md`, sếp sửa tay.
+ *
+ * 2026-09-23: 80/87 bài auto chạy chế độ không-chất-liệu, mà chế độ đó cấm sạch
+ * mọi con số / tên dự án / sự cố → bài chỉ còn nguyên tắc chung chung, đúng loại
+ * Google xếp cuối. Kho này cho AI một tập chi tiết THẬT để rút, thay vì chọn
+ * giữa "bịa" và "nói chung chung".
+ *
+ * Đọc mỗi request thay vì cache: file bé, sửa xong là bài sau ăn ngay.
+ * Thiếu file thì bài vẫn dựng được — chỉ mất phần cụ thể.
  */
-const AUTO_SUFFIX = `
+function studioFacts(): string {
+  try {
+    return readFileSync(join(process.cwd(), "src/content/studio-facts.md"), "utf8").trim();
+  } catch {
+    console.error("[blog draft] không đọc được studio-facts.md — bài sẽ thiếu chi tiết thật");
+    return "";
+  }
+}
 
-NO CEO INPUT FOR THIS POST. Write from the topic alone.
-- Use industry-standard practice and reasoning that any experienced 2D game art outsourcing studio could stand behind.
-- NEVER invent numbers, prices, turnaround times, percentages, client names, project names, team sizes, incidents or case studies. Not one.
-- Where a specific figure would normally go, write the trade-off or the range-free principle instead ("pricing depends on asset complexity and revision policy"), not a made-up figure.
+/**
+ * Dùng khi sếp bấm "AI tự viết" — không có chất liệu thật nào từ CEO.
+ *
+ * Vẫn cấm BỊA, nhưng giờ có kho facts để rút: cấm bịa ≠ cấm cụ thể.
+ */
+const autoSuffix = (facts: string) => `
+
+NO CEO INPUT FOR THIS POST. Write from the topic plus the studio fact sheet below.
+
+${facts ? `STUDIO FACT SHEET — everything here is verified and you may name it directly:
+
+${facts}
+
+How to use the fact sheet:
+- Ground the post in it. Name at least two concrete things from it — a shipped project, the specific service line, the actual tool — where they genuinely support the argument.
+- A line marked "(CHƯA ĐIỀN)" means that fact does NOT exist yet. Never state, estimate or imply anything under such a heading. Write the trade-off instead.
+- Never stretch a fact. The sheet says which projects we did and what kind of work they were — it does not say how long they took, how many assets they involved, or what they cost. Do not infer those.
+` : "No fact sheet available."}
+- Outside the fact sheet: NEVER invent numbers, prices, turnaround times, percentages, client names, project names, team sizes, incidents or case studies. Not one.
+- Where a specific figure would normally go but the sheet has none, write the trade-off or the range-free principle instead ("pricing depends on asset complexity and revision policy"), not a made-up figure.
 - Keep the same structure, formatting and image rules above.`;
+
+/**
+ * Chống trùng. Radar chỉ so chủ đề tiếng Việt trong 30 ngày, KHÔNG bao giờ nhìn
+ * bài đã đăng (tiêu đề tiếng Anh) — nên tới bài thứ 90 thì có ~10 bài xoay quanh
+ * pricing và ~9 bài xoay quanh chọn vendor, khác mỗi cái nhan đề. Đưa thẳng
+ * tiêu đề + excerpt đã đăng vào prompt để AI biết góc nào đã cày rồi.
+ */
+async function publishedAngles(supabase: ReturnType<typeof getSupabaseAdmin>): Promise<string> {
+  const { data } = await supabase
+    .from("blog_posts")
+    .select("title,excerpt")
+    .eq("published", true)
+    .order("created_at", { ascending: false })
+    .limit(60);
+  if (!data?.length) return "";
+  return `
+
+ALREADY PUBLISHED ON THIS BLOG — ${data.length} posts. Your post must not repeat an angle already covered here. If the topic overlaps one of these, find the part it did NOT cover and write that instead: a different project stage, a different buyer, a narrower asset class, the opposite trade-off. Do not restate a covered argument in fresh wording.
+
+${data.map((p) => `- ${p.title}${p.excerpt ? ` — ${String(p.excerpt).slice(0, 110)}` : ""}`).join("\n")}`;
+}
 
 /** GET — danh sách chủ đề radar đã gợi ý (mới nhất trước). */
 export async function GET(req: Request) {
@@ -182,6 +234,9 @@ export async function POST(req: Request) {
     .single();
   if (topicError || !topic) return NextResponse.json({ error: "Topic not found" }, { status: 404 });
 
+  // Lấy trước khi gọi AI: DB hỏng thì bài vẫn dựng được, chỉ mất lớp chống trùng.
+  const avoidAngles = await publishedAngles(supabase).catch(() => "");
+
   const wantImages = pickImageCount();
   console.log(`[blog draft] bốc ${wantImages} ảnh cho "${topic.topic}"`);
   try {
@@ -206,7 +261,13 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: draftPrompt(wantImages) + (note.trim() ? "" : AUTO_SUFFIX) },
+          {
+            role: "system",
+            content:
+              draftPrompt(wantImages) +
+              (note.trim() ? "" : autoSuffix(studioFacts())) +
+              avoidAngles,
+          },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.7,
