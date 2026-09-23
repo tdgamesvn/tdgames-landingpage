@@ -1,7 +1,7 @@
 # RECENT.md — SINH TỰ ĐỘNG, ĐỪNG SỬA TAY
 
 Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bởi
-`.agent/bin/ctx-session-start.sh`. Muốn sửa nội dung thì sửa LOG.md.
+`~/Work/control/bin/ctx-session-start.sh`. Muốn sửa nội dung thì sửa LOG.md.
 
 ---
 
