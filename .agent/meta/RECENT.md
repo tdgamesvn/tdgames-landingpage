@@ -1,33 +1,9 @@
 # RECENT.md — SINH TỰ ĐỘNG, ĐỪNG SỬA TAY
 
 Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bởi
-`~/Work/control/bin/ctx-session-start.sh`. Muốn sửa nội dung thì sửa LOG.md.
+`.agent/bin/ctx-session-start.sh`. Muốn sửa nội dung thì sửa LOG.md.
 
 ---
-
-## 2026-09-18 — Sửa JD Trợ Lý Dự Án (Project Assistant)
-
-**Task:** Sếp: "Không nhất thiết Background là Artist hay Animator mà chỉ là điểm cộng
-thôi. Yêu cầu bắt buộc là phải có kinh nghiệm về quản lý dự án và làm việc với khách hàng."
-
-**Work Done:** Sửa trực tiếp DB Supabase, bảng `jobs`, slug `project-assistant`:
-- `description` — bỏ câu "Vị trí dành cho ứng viên có background Artist / Animator";
-  thay bằng "đã có kinh nghiệm quản lý dự án và làm việc trực tiếp với khách hàng…
-  Background Artist / Animator là điểm cộng, không bắt buộc."
-- `requirements` — 2 dòng đầu prefix **BẮT BUỘC**: (1) 1–2 năm quản lý/điều phối dự án
-  (PA/PC/BA/Junior PM/Account Project), (2) kinh nghiệm làm việc trực tiếp với khách hàng
-  (nhận yêu cầu → tổng hợp feedback → follow-up tới nghiệm thu). Gỡ dòng "Điểm cộng lớn
-  nếu từng làm Game/App/IT Outsourcing" khỏi requirements (sai chỗ) → chuyển xuống nice_to_have.
-- `nice_to_have` — thêm "Background Artist / Animator, hoặc hiểu quy trình sản xuất
-  Art / Animation" + "Từng làm Game / App / IT Outsourcing / Creative Production".
-- `skills` — `Art Pipeline` + `Animation Pipeline` gộp thành 1 tag `Art & Animation Pipeline`,
-  thêm `Client Communication` (tự quyết, cho khớp trọng tâm mới — báo sếp rồi).
-- `responsibilities` **giữ nguyên** (mô tả việc, không phải yêu cầu đầu vào).
-
-**Result:** Verify `GET https://tdgamestudio.com/api/jobs` → trả đúng bản mới. JD nằm ở DB,
-không ở git → không cần deploy.
-
-**Next Step:** Chờ sếp duyệt wording; nếu muốn siết/nới thêm mức kinh nghiệm thì sửa tiếp.
 
 ## 2026-09-23 — Vá chống-mất-context bằng hook + chốt việc blog dở
 
@@ -61,3 +37,40 @@ route nạp 60 tiêu đề/excerpt chống trùng góc bài.
 
 **Next Step:** Sếp đọc `src/content/studio-facts.md` trước khi push — sai một con
 số ở đó là sai hàng loạt bài blog về sau. Duyệt xong thì `git push origin main`.
+
+## 2026-09-23 (bổ sung) — Đính chính chẩn đoán + bản vá global cho 15 dự án
+
+**Đính chính entry ngay trên.** Tôi viết "repo chưa từng có hook nào" — SAI.
+`~/.claude/settings.json` đã có `SessionStart` + `Stop` ở mức global từ trước,
+trỏ vào `~/Work/control/bin/`. Lý do sếp vẫn mất context còn tệ hơn là thiếu hook:
+
+`project-stop-reminder.sh` in bản nhắc nhở ra **stdout rồi `exit 0`**. Với Stop
+hook, exit 0 nghĩa là "cho phép dừng" và stdout bị bỏ qua hoàn toàn — nhiều tháng
+qua nó nhắc vào hư không. Muốn chặn thật phải trả `{"decision":"block"}` hoặc
+exit 2. Nó còn dò bằng `find -newer` không loại `.next/`, nên `.next/dev/trace`
+cũng bị tính là "code đã đổi" → kêu oan mỗi phiên.
+
+Bài học: **một hook chạy mà không có hiệu lực thì tệ hơn không có hook** — nó tạo
+cảm giác an toàn giả. Kiểm hook phải xem exit code và kênh output, không chỉ xem
+nó có chạy không.
+
+**Work Done.** `.agent/bin/global/` — 4 script tổng quát hoá (lấy dự án từ
+`CLAUDE_PROJECT_DIR`, không có `.agent/meta` thì im lặng), state chuyển sang
+`$TMPDIR/claude-ctx-state` để không phải sửa `.gitignore` của 14 repo. Kèm
+`install.sh`: backup settings, chép script, vá đúng khoá `.hooks` bằng jq (giữ
+nguyên cấu hình khác), rồi gỡ `.claude/settings.json` của landingpage — nếu để cả
+hai bộ thì repo này in context hai lần.
+
+**Validation.** bash -n cả 5 file; chạy thật: landingpage in context, tdgames-crm
+im lặng đúng như thiết kế, Stop trả `block`, state không bẩn git.
+
+**Result.** CHƯA CÀI. `~/.claude/settings.json` và `~/Work/control/bin/` nằm ngoài
+repo nên sandbox chặn ghi — cố ý để sếp tự chạy `install.sh`, toàn quyền kiểm soát
+file global. Hiện landingpage vẫn được bảo vệ bằng hook repo (commit 9094b9c);
+14 dự án còn lại thì chưa.
+
+**Next Step.** (1) Sếp chạy `bash .agent/bin/global/install.sh` nếu muốn phủ 15 dự
+án. (2) Câu hỏi còn treo: sếp nói "sau khi /new thì reset và quên cũng được" —
+chưa rõ /new là lệnh tạo dự án mới, `/clear`, hay ý "chốt việc cũ sang việc mới".
+Nếu là ý thứ ba thì cần thêm lệnh đóng việc; chưa làm vì chưa hỏi được.
+(3) `studio-facts.md` vẫn chờ sếp duyệt trước khi push.

@@ -5608,3 +5608,29 @@ file global. Hiện landingpage vẫn được bảo vệ bằng hook repo (comm
 chưa rõ /new là lệnh tạo dự án mới, `/clear`, hay ý "chốt việc cũ sang việc mới".
 Nếu là ý thứ ba thì cần thêm lệnh đóng việc; chưa làm vì chưa hỏi được.
 (3) `studio-facts.md` vẫn chờ sếp duyệt trước khi push.
+
+## 2026-09-23 (bổ sung 2) — ĐÃ CÀI hook global, phủ 10/15 dự án
+
+Sếp hỏi "các dự án khác thì vẫn còn bị quên à" → cài luôn. Chạy
+`.agent/bin/global/install.sh` (phải tắt sandbox: file đích nằm ngoài repo).
+Lần chạy đầu trong sandbox fail ngay ở bước backup nhờ `set -e` nên không để lại
+trạng thái nửa vời.
+
+**Kết quả cài:** `~/.claude/settings.json` giờ có đủ 4 hook trỏ vào
+`~/Work/control/bin/ctx-*.sh`. Backup bản cũ ở `settings.json.bak.20260923-132614`.
+`.claude/settings.json` của landingpage đã gỡ (tránh chạy đôi, in context 2 lần)
+— repo này từ nay dùng chung hook global như 9 dự án kia.
+
+**Phủ thật: 10/15.** Có `.agent/meta`: bot-manager-portable, scenario,
+tdgames-{backups,discord,download-images,landingpage,platforms,slack,slot-games},
+tdgames_preview. **Chưa có memory nên hook tự im lặng: tdgames-{apollo,
+communications,crm,hiring,preview}** — 5 dự án này muốn được bảo vệ thì phải
+dựng `.agent/meta/{LOG,TASKS}.md` trước. Chưa làm, chờ sếp bảo.
+
+**Verify:** gọi hook từ vị trí đã cài với `CLAUDE_PROJECT_DIR=tdgames-platforms`
+→ in đúng LOG của platforms (entry 22/09 Workforce). Ghi RECENT.md báo
+"Operation not permitted" nhưng đó là sandbox của agent lúc tự test, không phải
+lỗi hook; script dùng `set -uo pipefail` (không có -e) nên vẫn in đủ context.
+
+**Next Step:** (1) `studio-facts.md` chờ duyệt rồi push. (2) 5 dự án chưa có
+`.agent/meta` — hỏi sếp có dựng không. (3) Ý "/new thì reset" vẫn chưa rõ.
