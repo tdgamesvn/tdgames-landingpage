@@ -11,7 +11,10 @@
       ⚠️ Key cũ vẫn nằm trong history — vô hại vì đã đổi, nhưng đừng bao giờ
       `git add -A` mà không soi `git status` trước.
 
-- [ ] **Cột `phone_screening` không có trong DB enum** — UI (`HRDashboard.tsx`,
+- [x] ~~Cột `phone_screening` không có trong DB enum~~ (2026-09-24): verify production
+      `enum_range(application_status)` đã có `phone_screening` (sau `reviewing`).
+      File migration `20260924000000_add_phone_screening_status.sql` chưa commit.
+      Mô tả gốc: UI (`HRDashboard.tsx`,
       `CareersTab.tsx`, `admin/_lib/types.ts`) dùng `phone_screening` làm 1 cột pipeline
       và đặt luồng `reviewing → phone_screening`, nhưng enum `application_status` trong
       Postgres chỉ có `new, reviewing, test, interview, offer, rejected`. Hậu quả:

@@ -1,5 +1,15 @@
 # LOG
 
+## 2026-09-24 (fix HR: không chuyển được sang Phone Screening)
+
+Nguyên nhân: cột `applications.status` trên prod là enum `application_status`
+(`new,reviewing,test,interview,offer,rejected`) — thiếu `phone_screening` dù UI/API đã có
+stage này → PATCH bị Postgres từ chối. Migration file cũ trong repo (CHECK constraint) lệch
+với prod (prod dùng enum, không có CHECK).
+- Đã apply lên prod: `ALTER TYPE application_status ADD VALUE 'phone_screening' AFTER 'reviewing'`.
+- Thêm file `supabase/migrations/20260924000000_add_phone_screening_status.sql` (chưa commit).
+- Không đổi code app.
+
 ## 2026-09-09 (session 11 — bỏ section showreel, đổi vai section //05)
 
 `/services/full-game-production`: sếp bảo showreel chưa có thì ẩn tạm, và chê tiêu đề
@@ -5634,3 +5644,32 @@ lỗi hook; script dùng `set -uo pipefail` (không có -e) nên vẫn in đủ 
 
 **Next Step:** (1) `studio-facts.md` chờ duyệt rồi push. (2) 5 dự án chưa có
 `.agent/meta` — hỏi sếp có dựng không. (3) Ý "/new thì reset" vẫn chưa rõ.
+
+## 2026-09-24 — HR pipeline: kéo thả tự do kiểu ClickUp
+
+**Task.** Sếp muốn kéo card ứng viên qua lại giữa các cột status tự do, bỏ ràng buộc
+đi lần lượt (`STATUS_NEXT`).
+
+**Work Done** (`src/app/hr/_components/HRDashboard.tsx`, chỉ UI — API PATCH vốn không chặn transition):
+- Helper `patchStatus()` dùng chung; `AppCard.move` gọi qua nó.
+- `AppCard` draggable (HTML5 DnD, MIME `application/x-tdg-app-id`); tự tắt draggable khi
+  modal/note/reject đang mở (chúng là DOM con của card).
+- `PipelineView`: mỗi cột là drop zone, highlight viền amber khi kéo qua; cập nhật
+  optimistic, lỗi thì rollback + banner đỏ. Thả vào **Rejected** vẫn bật RejectModal hỏi
+  lý do (giữ dữ liệu cho KPI rejection).
+- `CandidateModal`: nút "→ Next" thay bằng dropdown chọn bất kỳ status.
+- Nút "→ Next" nhanh trên card giữ nguyên.
+
+**Result.** tsc sạch; eslint chỉ còn 2 lỗi set-state-in-effect có sẵn (dòng ~235, ~1881).
+Chưa test trên trình duyệt (sandbox chặn bind port; test thật sẽ đụng data prod). Chưa commit.
+
+**Next Step.** Sếp test ở /hr (dev hoặc sau deploy), OK thì commit + push.
+Lưu ý: working tree còn `supabase/migrations/20260924000000_add_phone_screening_status.sql`
++ sửa AGENTS.md/CLAUDE.md từ việc khác, chưa commit — đừng gộp nhầm.
+
+## 2026-09-24 (bổ sung) — Commit + deploy kéo thả HR; đóng việc enum phone_screening
+
+Verify production: enum `application_status` đã có `phone_screening` → đóng việc GẤP.
+Sếp duyệt push. Tách 2 commit: (a) migration + memory, (b) kéo thả HRDashboard
+(detect_changes: chỉ symbol trong HRDashboard.tsx). **Next:** sếp test kéo thả trên
+tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron hr-remind hết 500.
