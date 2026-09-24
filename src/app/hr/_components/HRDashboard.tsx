@@ -46,6 +46,28 @@ const STATUS_NEXT: Partial<Record<ApplicationStatus, ApplicationStatus>> = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/** PATCH status tự do sang bất kỳ cột nào (không ép thứ tự). Trả về true nếu OK. */
+async function patchStatus(
+  hrKey: string,
+  id: string,
+  status: ApplicationStatus,
+  rejection_reason?: string,
+): Promise<boolean> {
+  const body: Record<string, unknown> = {
+    status,
+    // Rời Rejected thì xoá lý do; vào Rejected thì ghi lý do.
+    rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null,
+  };
+  const res = await fetch(`/api/hr/applications/${id}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json", "x-hr-key": hrKey },
+    body: JSON.stringify(body),
+  });
+  return res.ok;
+}
+
+const DRAG_MIME = "application/x-tdg-app-id";
+
 function timeAgo(d: string) {
   const days = Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000);
   if (days === 0) return "Today";
@@ -439,7 +461,6 @@ function CandidateModal({
       setEvaluating(false);
     }
   }
-  const nextStatus = STATUS_NEXT[app.status];
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -486,15 +507,24 @@ function CandidateModal({
           <div className="space-y-3 overflow-y-auto px-5 py-4">
             {/* Actions */}
             <div className="flex flex-wrap gap-1.5">
-              {nextStatus && (
-                <button
-                  onClick={() => onMove(nextStatus)}
-                  disabled={saving}
-                  className="rounded border border-white/20 px-2.5 py-1 text-[11px] font-bold text-white/80 hover:bg-white/10 disabled:opacity-40 transition-colors"
-                >
-                  → {STATUS_LABEL[nextStatus]}
-                </button>
-              )}
+              {/* Chuyển tự do sang bất kỳ status nào (Rejected đi qua modal lý do bên dưới) */}
+              <select
+                value={app.status}
+                disabled={saving}
+                onChange={(e) => {
+                  const s = e.target.value as ApplicationStatus;
+                  if (s === "rejected") setShowRejectModal(true);
+                  else onMove(s);
+                }}
+                className="rounded border border-white/20 bg-[#141418] px-2 py-1 text-[11px] font-bold text-white/80 focus:outline-none disabled:opacity-40"
+                title="Move to status"
+              >
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s === app.status ? `● ${STATUS_LABEL[s]}` : `→ ${STATUS_LABEL[s]}`}
+                  </option>
+                ))}
+              </select>
               {app.status !== "rejected" && (
                 <button
                   onClick={() => setShowRejectModal(true)}
@@ -630,18 +660,11 @@ function AppCard({
   const [note, setNote] = useState(app.admin_notes ?? "");
 
   async function move(status: ApplicationStatus, rejection_reason?: string) {
+    if (status === app.status) return;
     setSaving(true);
     try {
-      const body: Record<string, unknown> = { status };
-      if (rejection_reason !== undefined) body.rejection_reason = rejection_reason;
-      // Clear rejection_reason when reopening
-      if (status !== "rejected") body.rejection_reason = null;
-      const res = await fetch(`/api/hr/applications/${app.id}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+      if (await patchStatus(hrKey, app.id, status, rejection_reason))
+        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
     } finally {
       setSaving(false);
     }
@@ -677,9 +700,24 @@ function AppCard({
   }
 
   const nextStatus = STATUS_NEXT[app.status];
+  const [dragging, setDragging] = useState(false);
+  // Modal/note editor là DOM con của card — tắt draggable khi chúng mở, kẻo
+  // bôi đen text trong textarea bị trình duyệt hiểu thành kéo cả card.
+  const canDrag = !saving && !showNote && !showModal && !showRejectModal;
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 space-y-2 hover:border-white/20 transition-colors">
+    <div
+      draggable={canDrag}
+      onDragStart={(e) => {
+        e.dataTransfer.setData(DRAG_MIME, app.id);
+        e.dataTransfer.effectAllowed = "move";
+        setDragging(true);
+      }}
+      onDragEnd={() => setDragging(false)}
+      className={`rounded-lg border border-white/10 bg-white/[0.04] p-3 space-y-2 hover:border-white/20 transition-colors ${
+        canDrag ? "cursor-grab active:cursor-grabbing" : ""
+      } ${dragging ? "opacity-40" : ""} ${saving ? "opacity-60" : ""}`}
+    >
       {/* Name + date */}
       <div className="flex items-start justify-between gap-2">
         <button
@@ -862,13 +900,71 @@ function PipelineView({
   onUpdate: (id: string, patch: Partial<Application>) => void;
   onDelete: (id: string) => void;
 }) {
+  const [overCol, setOverCol] = useState<ApplicationStatus | null>(null);
+  const [pendingReject, setPendingReject] = useState<Application | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Optimistic: đổi cột ngay, lỗi thì trả về chỗ cũ.
+  async function moveTo(app: Application, status: ApplicationStatus, reason?: string) {
+    const prev = { status: app.status, rejection_reason: app.rejection_reason };
+    onUpdate(app.id, {
+      status,
+      rejection_reason: status === "rejected" ? (reason ?? null) : null,
+    } as Partial<Application>);
+    setError(null);
+    let ok = false;
+    try {
+      ok = await patchStatus(hrKey, app.id, status, reason);
+    } catch {
+      ok = false;
+    }
+    if (!ok) {
+      onUpdate(app.id, prev as Partial<Application>);
+      setError(`Không chuyển được "${app.full_name}" sang ${STATUS_LABEL[status]} — thử lại.`);
+    }
+  }
+
+  function handleDrop(e: React.DragEvent, status: ApplicationStatus) {
+    e.preventDefault();
+    setOverCol(null);
+    const id = e.dataTransfer.getData(DRAG_MIME);
+    const app = apps.find((a) => a.id === id);
+    if (!app || app.status === status) return;
+    // Vào Rejected vẫn hỏi lý do (KPI rejection cần dữ liệu này).
+    if (status === "rejected") setPendingReject(app);
+    else void moveTo(app, status);
+  }
+
   return (
-    // 7 status → 7 cột, không phải 6, kẻo Rejected rớt xuống hàng dưới.
+    <>
+    {error && (
+      <div className="mb-3 flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+        <span>{error}</span>
+        <button onClick={() => setError(null)} className="text-red-300/70 hover:text-red-200">✕</button>
+      </div>
+    )}
+    {/* 7 status → 7 cột, không phải 6, kẻo Rejected rớt xuống hàng dưới. */}
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
       {STATUSES.map((status) => {
         const col = apps.filter((a) => a.status === status);
         return (
-          <div key={status} className="flex flex-col gap-2">
+          <div
+            key={status}
+            onDragOver={(e) => {
+              if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (overCol !== status) setOverCol(status);
+            }}
+            onDragLeave={(e) => {
+              // Chỉ bỏ highlight khi rời hẳn cột, không phải khi đi qua card con.
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOverCol(null);
+            }}
+            onDrop={(e) => handleDrop(e, status)}
+            className={`flex flex-col gap-2 rounded-xl p-1 -m-1 transition-colors ${
+              overCol === status ? "bg-white/[0.06] ring-1 ring-amber-500/50" : ""
+            }`}
+          >
             {/* Column header */}
             <div className="flex items-center justify-between px-1">
               <span
@@ -893,6 +989,18 @@ function PipelineView({
         );
       })}
     </div>
+    {pendingReject && (
+      <RejectModal
+        appName={pendingReject.full_name}
+        onConfirm={(reason) => {
+          const app = pendingReject;
+          setPendingReject(null);
+          void moveTo(app, "rejected", reason);
+        }}
+        onCancel={() => setPendingReject(null)}
+      />
+    )}
+    </>
   );
 }
 
