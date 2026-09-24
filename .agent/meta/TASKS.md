@@ -31,6 +31,11 @@ _(empty)_
 
 ## To do
 
+- [ ] **Marketing Google — chờ sếp:** code GA4/Ads/verification đã deploy (2026-09-24) nhưng
+      inert tới khi set env trên VPS (`/opt/tdgames-landingpage/.env.local`) rồi **build lại**:
+      `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GOOGLE_ADS_ID`, `NEXT_PUBLIC_GOOGLE_ADS_LEAD_CONVERSION`,
+      `GOOGLE_SITE_VERIFICATION`. Sau đó: submit sitemap ở Search Console, đánh dấu
+      `generate_lead` là Key event trong GA4. Kế tiếp: SEO title/description trang services.
 - [x] ~~/hr: AI soạn câu hỏi PV + ghi âm + phân tích sau PV~~ (2026-09-16): bảng
       `interview_sessions`, `src/lib/{interview-ai,transcribe}.ts`, 5 route
       `/api/hr/{upload/audio,applications/[id]/interviews,interviews/[id]{,/questions,/analyze}}`,

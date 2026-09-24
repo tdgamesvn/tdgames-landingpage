@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { type FormEvent, useState } from "react";
 
 import { AccentHighlight } from "@/components/accent-highlight";
+import { trackEvent } from "@/lib/analytics";
 import { LEAD_BUDGETS, LEAD_SERVICES } from "@/lib/leads";
 
 const CONTACT_EMAIL = "tdgames.vn@gmail.com";
@@ -77,6 +78,11 @@ export default function ContactShowcaseSection({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Something went wrong");
+      trackEvent("generate_lead", {
+        service: data.get("service"),
+        budget: data.get("budget") || undefined,
+        page: window.location.pathname,
+      });
       form.reset();
       setState("sent");
     } catch (err) {

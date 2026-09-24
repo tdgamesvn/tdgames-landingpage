@@ -5679,3 +5679,15 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - **Work Done:** `HRDashboard.tsx` / `CandidateModal`: thay `<select>` bằng nhãn "STATUS — bấm để chuyển" + hàng chip có màu, mỗi chip là một bước pipeline (chip hiện tại được highlight). Thêm nút tắt "→ <bước tiếp theo>". Nút Reject/Reopen/Delete vẫn giữ. Ô Note tự giãn theo nội dung (tối đa 60vh rồi mới cuộn), chữ text-sm, leading-relaxed.
 - **Result:** tsc sạch; lint không có lỗi mới (vẫn còn 2 lỗi set-state-in-effect từ trước ở dòng 235/1914). Chưa commit/deploy.
 - **Next Step:** Sếp xem ở localhost/hr → commit + push để CI deploy.
+
+## 2026-09-24 — Marketing Google: GA4 / Ads tracking + JSON-LD Organization
+- **Task:** Sếp hỏi cách quảng cáo trên Google; duyệt triển khai phần kỹ thuật.
+- **Work Done:** `src/components/google-analytics.tsx` (gtag.js, chỉ render khi có
+  `NEXT_PUBLIC_GA_ID` / `NEXT_PUBLIC_GOOGLE_ADS_ID`), `src/lib/analytics.ts` (`trackEvent`,
+  tự bắn Ads conversion cho `generate_lead` nếu có `NEXT_PUBLIC_GOOGLE_ADS_LEAD_CONVERSION`).
+  Form Contact (`contact-showcase-section.tsx`) bắn `generate_lead` khi gửi thành công.
+  `layout.tsx`: JSON-LD Organization + Offer 4 dịch vụ; `metadata.verification.google` từ
+  env `GOOGLE_SITE_VERIFICATION`.
+- **Result:** tsc + eslint sạch. Push main → CI deploy. Chưa set env → tracking chưa chạy.
+- **Next Step:** Sếp tạo GA4/Ads/Search Console, gửi ID → set env trên VPS + rebuild
+  (NEXT_PUBLIC_* inline lúc build). Sitemap đang hardcode portfolio slugs (hiện khớp 16 thư mục).
