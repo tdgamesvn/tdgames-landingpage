@@ -5673,3 +5673,9 @@ Verify production: enum `application_status` đã có `phone_screening` → đó
 Sếp duyệt push. Tách 2 commit: (a) migration + memory, (b) kéo thả HRDashboard
 (detect_changes: chỉ symbol trong HRDashboard.tsx). **Next:** sếp test kéo thả trên
 tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron hr-remind hết 500.
+
+## 2026-09-24 — HR CandidateModal UX: status chips + note auto-grow
+- **Task:** Sếp báo trong modal ứng viên (/hr), dropdown status trông như nhãn tĩnh nên không biết là bấm được; ô Note chỉ cao 2 dòng nên note dài rất khó đọc.
+- **Work Done:** `HRDashboard.tsx` / `CandidateModal`: thay `<select>` bằng nhãn "STATUS — bấm để chuyển" + hàng chip có màu, mỗi chip là một bước pipeline (chip hiện tại được highlight). Thêm nút tắt "→ <bước tiếp theo>". Nút Reject/Reopen/Delete vẫn giữ. Ô Note tự giãn theo nội dung (tối đa 60vh rồi mới cuộn), chữ text-sm, leading-relaxed.
+- **Result:** tsc sạch; lint không có lỗi mới (vẫn còn 2 lỗi set-state-in-effect từ trước ở dòng 235/1914). Chưa commit/deploy.
+- **Next Step:** Sếp xem ở localhost/hr → commit + push để CI deploy.

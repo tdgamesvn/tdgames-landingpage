@@ -438,6 +438,13 @@ function CandidateModal({
 }) {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [note, setNote] = useState(app.admin_notes ?? "");
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = noteRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + 2}px`;
+  }, [note]);
   const [evaluating, setEvaluating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
@@ -506,25 +513,48 @@ function CandidateModal({
           {/* Left: actions + info + note */}
           <div className="space-y-3 overflow-y-auto px-5 py-4">
             {/* Actions */}
+            {/* Status: chip bấm được cho từng bước pipeline — dropdown cũ bị HR tưởng là nhãn tĩnh. */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">
+                Status <span className="normal-case tracking-normal text-white/25">— bấm để chuyển</span>
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {STATUSES.filter((s) => s !== "rejected").map((s) => {
+                  const active = s === app.status;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => !active && onMove(s)}
+                      disabled={saving || active}
+                      className={`rounded-full border px-3 py-1 text-xs font-bold transition-colors disabled:cursor-default ${
+                        active
+                          ? `${STATUS_COLOR[s]} ring-1 ring-current`
+                          : "border-white/15 text-white/45 hover:border-white/40 hover:bg-white/5 hover:text-white disabled:opacity-40"
+                      }`}
+                    >
+                      {active ? "● " : ""}
+                      {STATUS_LABEL[s]}
+                    </button>
+                  );
+                })}
+                {app.status === "rejected" && (
+                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ring-1 ring-current ${STATUS_COLOR.rejected}`}>
+                    ● Rejected
+                  </span>
+                )}
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-1.5">
-              {/* Chuyển tự do sang bất kỳ status nào (Rejected đi qua modal lý do bên dưới) */}
-              <select
-                value={app.status}
-                disabled={saving}
-                onChange={(e) => {
-                  const s = e.target.value as ApplicationStatus;
-                  if (s === "rejected") setShowRejectModal(true);
-                  else onMove(s);
-                }}
-                className="rounded border border-white/20 bg-[#141418] px-2 py-1 text-[11px] font-bold text-white/80 focus:outline-none disabled:opacity-40"
-                title="Move to status"
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s === app.status ? `● ${STATUS_LABEL[s]}` : `→ ${STATUS_LABEL[s]}`}
-                  </option>
-                ))}
-              </select>
+              {app.status !== "rejected" && STATUS_NEXT[app.status] && (
+                <button
+                  onClick={() => onMove(STATUS_NEXT[app.status]!)}
+                  disabled={saving}
+                  className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/20 disabled:opacity-40 transition-colors"
+                >
+                  → {STATUS_LABEL[STATUS_NEXT[app.status]!]}
+                </button>
+              )}
               {app.status !== "rejected" && (
                 <button
                   onClick={() => setShowRejectModal(true)}
@@ -601,11 +631,14 @@ function CandidateModal({
             {/* Note */}
             <div className="space-y-1 border-t border-white/8 pt-3">
               <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Note</p>
+              {/* Tự giãn theo nội dung (tối đa 60vh rồi mới cuộn) — note dài bị bó 2 dòng rất khó đọc. */}
               <textarea
+                ref={noteRef}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                rows={2}
-                className="w-full rounded border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
+                rows={3}
+                className="w-full resize-y rounded border border-white/15 bg-white/5 px-3 py-2 text-sm leading-relaxed text-white/90 placeholder:text-white/30 focus:border-white/30 focus:outline-none"
+                style={{ maxHeight: "60vh" }}
                 placeholder="Add a note…"
               />
               {note !== (app.admin_notes ?? "") && (
