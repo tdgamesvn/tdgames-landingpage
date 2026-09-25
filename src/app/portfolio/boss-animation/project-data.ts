@@ -5,7 +5,7 @@ import type {
 } from "@/components/portfolio/case-study-types";
 
 export const projectMeta: ProjectMeta = {
-  title: "BOSS ANIMATION - THE TWINS",
+  title: "Boss Animation — The Twins",
   eyebrow: "Case study",
   summary:
     "Boss for the game project: The Twins — a series of in-game boss reels covering Samurai and supporting creatures.",

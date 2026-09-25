@@ -5,7 +5,7 @@ import type {
 } from "@/components/portfolio/case-study-types";
 
 export const projectMeta: ProjectMeta = {
-  title: "LORE AXIE ORIGIN | CINEMATIC",
+  title: "Axie Origins Lore — Cinematic Animation",
   eyebrow: "Case study",
   summary:
     "Cinematic lore trailer for Axie Infinity Origins — storyboard-led sequence with character beats, environment FX, and pacing tuned for an in-world reveal.",

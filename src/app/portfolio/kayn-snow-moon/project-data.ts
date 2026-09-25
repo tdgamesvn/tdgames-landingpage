@@ -5,7 +5,7 @@ import type {
 } from "@/components/portfolio/case-study-types";
 
 export const projectMeta: ProjectMeta = {
-  title: "Kayn Snow Moon | League of Legends - Login Screen",
+  title: "Kayn Snow Moon (League of Legends) — Login Screen Animation",
   eyebrow: "Case study",
   summary:
     "Login screen for Kayn Snow Moon — a fan-made League of Legends piece: looping hero motion, snow-moon atmosphere, and compositing tuned for a cinematic client-style login.",
@@ -15,7 +15,7 @@ export const projectMeta: ProjectMeta = {
       { text: " " },
       { text: "Snow Moon", color: "white" },
     ],
-    subtitle: [{ text: "League of Legends Â· Login screen", color: "soft" }],
+    subtitle: [{ text: "League of Legends · Login screen", color: "soft" }],
   },
   heroFacts: [
     { value: "Aug 2022", label: "Published", icon: "calendar" },
@@ -63,10 +63,10 @@ export const projectMeta: ProjectMeta = {
     sectionLabelBg: "#191919",
   },
   workflow: [
-    { n: "01", t: "Layout & mood", sub: "Key art Â· snow moon refs" },
-    { n: "02", t: "Animate", sub: "Spine 2D Â· Maya" },
-    { n: "03", t: "Composite", sub: "After Effects Â· Ps" },
-    { n: "04", t: "Ship", sub: "Timing Â· polish" },
+    { n: "01", t: "Layout & mood", sub: "Key art · snow moon refs" },
+    { n: "02", t: "Animate", sub: "Spine 2D · Maya" },
+    { n: "03", t: "Composite", sub: "After Effects · Ps" },
+    { n: "04", t: "Ship", sub: "Timing · polish" },
   ],
 };
 

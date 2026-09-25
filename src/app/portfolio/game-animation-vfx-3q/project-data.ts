@@ -6,7 +6,7 @@ import type {
 
 
 export const projectMeta: ProjectMeta = {
-  title: "GAME ANIMATION/VFX - 3Q",
+  title: "3Q — Game Animation & VFX",
   eyebrow: "Case study",
   summary:
     "2D mobile strategy game — hero motion, combat loops and polish passes for a quarterly content drop.",

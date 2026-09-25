@@ -26,8 +26,14 @@ Work Done:
 - /services → `permanentRedirect` (308), xoá khỏi sitemap (36 → 35 URL).
 - tsc sạch, eslint sạch trên file đã sửa.
 
-Next Step: verify prod (title + canonical từng trang); sếp gửi list URL 404 từ GSC.
-Ghi chú: `summoner-era/project-data.ts` có ký tự lỗi encoding "Â·" trong subtitle hero.
+Result: verified prod — canonical đủ mọi trang, /services 308, sitemap 35 URL.
+Fix thêm (a31b9b0): title case study dùng `{ absolute }` vì template root không tới được
+(portfolio/layout đặt title string → chặn template).
+Tiếp (sếp duyệt): viết lại 8 `projectMeta.title` IN HOA / có "|" thành dạng
+"Summoner Era — Heroes Fire Animation & VFX" (title chỉ dùng cho SEO + alt/iframe title,
+không phải hero hiển thị). Sửa 13 chỗ mojibake "Â·" → "·" (5 file portfolio).
+
+Next Step: sếp gửi list URL 404 + "chưa lập chỉ mục" từ GSC.
 
 ## 2026-09-25 (tiếp) — HR custom status phase 2: code xong, CHƯA chạy migration
 

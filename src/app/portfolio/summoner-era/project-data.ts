@@ -5,7 +5,7 @@ import type {
 } from "@/components/portfolio/case-study-types";
 
 export const projectMeta: ProjectMeta = {
-  title: "ANIMATION/VFX - HEROES LIGHT/DARK | SUMMONER ERA",
+  title: "Summoner Era — Heroes Light & Dark Animation & VFX",
   eyebrow: "Case study",
   summary:
     "Login-screen hero packages for Summoner Era: looping character motion, key-art presentation, and VFX passes tuned for in-game and promo use.",
@@ -16,7 +16,7 @@ export const projectMeta: ProjectMeta = {
       { text: "LIGHT", color: "accent" },
       { text: " / ", color: "divider" },
       { text: "DARK", color: "accentSoft" },
-      { text: " Â· ", color: "divider" },
+      { text: " · ", color: "divider" },
       { text: "Summoner Era", color: "soft" },
     ],
   },
@@ -63,10 +63,10 @@ export const projectMeta: ProjectMeta = {
     sectionLabelBg: "#191919",
   },
   workflow: [
-    { n: "01", t: "Concept & Style", sub: "Moodboard Â· refs" },
+    { n: "01", t: "Concept & Style", sub: "Moodboard · refs" },
     { n: "02", t: "Rig & Animate", sub: "Spine 2D" },
     { n: "03", t: "VFX Layer", sub: "After Effects" },
-    { n: "04", t: "Polish & Deliver", sub: "QA Â· handoff" },
+    { n: "04", t: "Polish & Deliver", sub: "QA · handoff" },
   ],
 };
 

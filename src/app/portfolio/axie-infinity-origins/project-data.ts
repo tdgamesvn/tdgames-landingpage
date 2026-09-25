@@ -6,7 +6,7 @@ import type {
 
 
 export const projectMeta: ProjectMeta = {
-  title: "AXIE INFINITY - ORIGINS | ANIMATION",
+  title: "Axie Infinity: Origins — Character Animation",
   eyebrow: "Case study",
   summary:
     "Character work for Axie Infinity: Origins — in-game Axie rigs, attack loops, and showcase reels for Sky Mavis production.",

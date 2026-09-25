@@ -6,7 +6,7 @@ import type {
 
 
 export const projectMeta: ProjectMeta = {
-  title: "Battle of the Gods | Mytheria - Login Screen",
+  title: "Battle of the Gods (Mytheria) — Login Screen Animation",
   eyebrow: "Case study",
   summary:
     "Login-screen package for Mytheria — Battle of the Gods. Six character loops with VFX, plus a hero reveal cinematic intro tuned for the title screen.",

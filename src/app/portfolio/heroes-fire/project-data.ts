@@ -6,7 +6,7 @@ import type {
 
 
 export const projectMeta: ProjectMeta = {
-  title: "ANIMATION/VFX - HEROES FIRE | SUMMONER ERA",
+  title: "Summoner Era — Heroes Fire Animation & VFX",
   eyebrow: "Case study",
   summary:
     "2D character and VFX for Summoner Era — Fire heroes: in-game attack loops, skill effects, and showcase reels.",

@@ -121,9 +121,9 @@ function PanelWorkflow() {
   const accentColor = projectMeta.theme?.accent || "#22d3ee";
   const steps = projectMeta.workflow || [
     { n: "01", t: "Concept", sub: "Art handoff" },
-    { n: "02", t: "Rig", sub: "Ps Â· Spine 2D" },
-    { n: "03", t: "Animate", sub: "Ae Â· VFX" },
-    { n: "04", t: "Polish", sub: "Loops Â· timing" },
+    { n: "02", t: "Rig", sub: "Ps · Spine 2D" },
+    { n: "03", t: "Animate", sub: "Ae · VFX" },
+    { n: "04", t: "Polish", sub: "Loops · timing" },
   ];
   return (
     <div className="mt-4 flex h-full flex-col rounded-2xl border border-white/10 bg-white/2 p-5">
@@ -597,7 +597,7 @@ export default function SummonerEra2020DetailPage() {
                           className="text-[10px] font-bold uppercase tracking-[0.34em]"
                           style={{ color: projectMeta.theme?.accent || "#22d3ee" }}
                         >
-                          Chapter Â· {module.id.replace("ch", "")}
+                          Chapter · {module.id.replace("ch", "")}
                         </div>
                         <h3
                           className="mt-2 text-[26px] font-black uppercase leading-[1] tracking-tight md:text-[34px]"

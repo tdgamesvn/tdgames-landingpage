@@ -122,7 +122,7 @@ function PanelWorkflow() {
     { n: "01", t: "Sketch", sub: "Rough concepts" },
     { n: "02", t: "Refine", sub: "Clean linework" },
     { n: "03", t: "Color", sub: "Base colors" },
-    { n: "04", t: "Render", sub: "Lighting Â· details" },
+    { n: "04", t: "Render", sub: "Lighting · details" },
   ];
   return (
     <div className="mt-4 flex h-full flex-col rounded-2xl border border-white/10 bg-white/2 p-5">
