@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact — TD Games Studio",
+  title: "Contact",
   description:
     "Get in touch with TD Games for 2D art, animation, and VFX outsourcing. Based in Hanoi, Vietnam — serving game studios worldwide.",
+  alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact TD Games Studio",
     description:

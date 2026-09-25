@@ -1,3 +1,4 @@
+import { caseStudyMetadata } from "@/lib/seo";
 import CaseStudyLayout from "@/components/portfolio/case-study-layout";
 import {
   projectMeta,
@@ -5,6 +6,8 @@ import {
   showcaseModules,
   showcaseUiInit,
 } from "./project-data";
+
+export const metadata = caseStudyMetadata("reaper-lady-project-overdrive", projectMeta);
 
 export default function ReaperLadyProjectOverdrivePage() {
   return (

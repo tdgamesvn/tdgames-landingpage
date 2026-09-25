@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import HomeHero from "@/components/home-hero";
 import HomePageLower from "@/components/home-page-lower-client";
 import HomeProjectsSection from "@/components/home-projects-section";
@@ -9,6 +11,9 @@ import { resolveSlots } from "@/lib/page-slots";
 
 // Hero media đọc từ DB mỗi request → không cache stale sau khi sếp sửa /admin.
 export const dynamic = "force-dynamic";
+
+// Canonical đặt ở từng page, KHÔNG đặt ở root layout (trang con sẽ kế thừa → trỏ hết về "/").
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const slots = await resolveSlots("home", "hero-carousel");

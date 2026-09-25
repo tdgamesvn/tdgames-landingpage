@@ -1,5 +1,34 @@
 # LOG
 
+## 2026-09-25 (tối) — SEO kỹ thuật: canonical + title trùng
+
+Bối cảnh: GSC (property Domain, đã verify từ 6/2026) báo 9 trang index / 13 không:
+404 ×5, redirect ×5, "trùng lặp chưa chọn canonical" ×1, "đã thu thập chưa index" ×2.
+Sitemap CHƯA từng được submit → sếp đã submit `https://tdgamestudio.com/sitemap.xml`
+(property Domain phải nhập URL đầy đủ, gõ `sitemap.xml` bị báo không hợp lệ).
+
+Tìm thấy trên prod:
+- Chỉ /blog/[slug] và /tools có canonical.
+- 16 case study dùng chung title "Portfolio — TD Games Studio" (kế thừa portfolio/layout).
+- Title bị lặp brand: "X — TD Games Studio | TD Games" (template root là "%s | TD Games").
+- /blog dùng title mặc định của trang chủ.
+- /services redirect 307 → / nhưng vẫn nằm trong sitemap.
+
+Work Done:
+- `src/lib/seo.ts` `caseStudyMetadata(slug, projectMeta)`: title/description/canonical/OG.
+  14 case study server page export `metadata`; 2 page client (art-study, summoner-era-2020)
+  → thêm `layout.tsx` riêng.
+- Canonical ở từng page/layout (home page.tsx, about, careers, contact, portfolio, 4 service,
+  blog/layout.tsx mới). KHÔNG đặt ở root layout (con kế thừa → trỏ hết về "/").
+- Bỏ " — TD Games Studio" khỏi title layout. Title dịch vụ theo từ khoá:
+  2D Game Art Outsourcing / 2D Game Animation & Spine Animation Service /
+  2D Game VFX Outsourcing / Full-Cycle Game Development Outsourcing.
+- /services → `permanentRedirect` (308), xoá khỏi sitemap (36 → 35 URL).
+- tsc sạch, eslint sạch trên file đã sửa.
+
+Next Step: verify prod (title + canonical từng trang); sếp gửi list URL 404 từ GSC.
+Ghi chú: `summoner-era/project-data.ts` có ký tự lỗi encoding "Â·" trong subtitle hero.
+
 ## 2026-09-25 (tiếp) — HR custom status phase 2: code xong, CHƯA chạy migration
 
 Sếp duyệt: sửa status ngay trên /hr, chưa thêm Hired (Offer = kind won).

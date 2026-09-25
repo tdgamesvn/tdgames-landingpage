@@ -8,6 +8,11 @@
   - [x] Migration đã apply prod (version DB 20260925014849) → commit/push
   - [ ] Test /hr trên prod (sửa/thêm/xoá status, Remind)
 
+- [ ] SEO kỹ thuật (2026-09-25): canonical mọi trang, title riêng 16 case study, title dịch vụ
+      theo từ khoá, /services 308 + bỏ khỏi sitemap. Đã sitemap submit GSC (chờ Google đọc).
+  - [ ] Sếp gửi list URL 404 (5) + "đã thu thập chưa lập chỉ mục" (2) từ GSC → redirect nếu cần
+  - [ ] Chờ mã GA4 / Google Ads từ sếp → set env VPS → build lại
+
 ## ⚠️ GẤP — chờ sếp quyết
 
 - [x] ~~HR key lộ trong lịch sử git repo PUBLIC~~ (2026-09-17): agent commit nhầm

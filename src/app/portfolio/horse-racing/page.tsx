@@ -1,9 +1,12 @@
+import { caseStudyMetadata } from "@/lib/seo";
 import CaseStudyLayout from "@/components/portfolio/case-study-layout";
 import {
   projectMeta,
   relatedProjects,
   showcaseModules,
 } from "./project-data";
+
+export const metadata = caseStudyMetadata("horse-racing", projectMeta);
 
 export default function HorseRacingDetailPage() {
   return (
