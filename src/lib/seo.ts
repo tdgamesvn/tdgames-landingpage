@@ -13,7 +13,8 @@ export function caseStudyMetadata(
   const title = meta.title.replace(/\s+/g, " ").trim();
   const description = meta.summary?.replace(/\s+/g, " ").trim();
   return {
-    title,
+    // absolute: template "%s | TD Games" của root không tới được đây vì portfolio/layout đặt title dạng string.
+    title: { absolute: `${title} | TD Games` },
     description,
     alternates: { canonical: path },
     openGraph: {
