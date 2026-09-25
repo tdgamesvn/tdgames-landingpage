@@ -12,6 +12,15 @@ const nextConfig: NextConfig = {
   // của R2, áp cho CẢ 404 → browser khách ghim lỗi 1 tuần, purge Cloudflare
   // không dọn được. Dùng route handler `/api/cdn-proxy/[...path]` (nó set
   // no-store cho lỗi và max-age ngắn cho 200).
+  // URL của site cũ mà Google vẫn còn nhớ (Search Console báo 404, 2026-09-25) → 308 sang trang mới.
+  async redirects() {
+    return [
+      { source: "/quote", destination: "/contact", permanent: true },
+      { source: "/services/art", destination: "/services/2d-art", permanent: true },
+      { source: "/services/animation", destination: "/services/2d-animation", permanent: true },
+      { source: "/services/vfx", destination: "/services/2d-vfx", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {

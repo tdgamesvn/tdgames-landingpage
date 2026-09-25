@@ -33,7 +33,11 @@ Tiếp (sếp duyệt): viết lại 8 `projectMeta.title` IN HOA / có "|" thà
 "Summoner Era — Heroes Fire Animation & VFX" (title chỉ dùng cho SEO + alt/iframe title,
 không phải hero hiển thị). Sửa 13 chỗ mojibake "Â·" → "·" (5 file portfolio).
 
-Next Step: sếp gửi list URL 404 + "chưa lập chỉ mục" từ GSC.
+GSC 404 (5 URL, site cũ, không có trong git history): /quote (+www), /services/art,
+/services/animation, /services/vfx → thêm `redirects()` 308 trong next.config.ts
+sang /contact, /services/2d-art, /services/2d-animation, /services/2d-vfx.
+
+Next Step: sếp bấm "Xác thực kết quả khắc phục" cho dòng 404; gửi 2 URL "chưa lập chỉ mục".
 
 ## 2026-09-25 (tiếp) — HR custom status phase 2: code xong, CHƯA chạy migration
 
