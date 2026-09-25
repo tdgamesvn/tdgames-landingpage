@@ -1,48 +1,57 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Application, ApplicationComment, ApplicationStatus, Job, JobType } from "@/app/admin/_lib/types";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { Application, ApplicationComment, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
 import InterviewPanel from "./InterviewPanel";
+import StatusManager from "./StatusManager";
+import { STATUS_PALETTE } from "./status-palette";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const STATUSES: ApplicationStatus[] = [
-  "new",
-  "reviewing",
-  "phone_screening",
-  "test",
-  "interview",
-  "offer",
-  "rejected",
+// Status giờ nằm ở bảng application_statuses (HR tự thêm/bớt) → phát qua context.
+// Màu lưu dạng key palette để Tailwind vẫn thấy class tĩnh.
+
+/** Fallback khi API statuses chưa tải xong / lỗi — khớp seed của migration 20260925. */
+const DEFAULT_STATUSES: StatusDef[] = [
+  { key: "new", label: "New", color: "blue", position: 10, kind: "open", remind_days: 2, is_system: true },
+  { key: "reviewing", label: "Reviewing", color: "yellow", position: 20, kind: "open", remind_days: 7, is_system: false },
+  { key: "phone_screening", label: "Phone Screening", color: "orange", position: 30, kind: "open", remind_days: 7, is_system: false },
+  { key: "test", label: "Test", color: "cyan", position: 40, kind: "open", remind_days: null, is_system: false },
+  { key: "interview", label: "Interview", color: "purple", position: 50, kind: "open", remind_days: 14, is_system: false },
+  { key: "offer", label: "Offer", color: "green", position: 60, kind: "won", remind_days: null, is_system: false },
+  { key: "rejected", label: "Rejected", color: "red", position: 70, kind: "lost", remind_days: null, is_system: true },
 ];
 
-const STATUS_LABEL: Record<ApplicationStatus, string> = {
-  new: "New",
-  reviewing: "Reviewing",
-  phone_screening: "Phone Screening",
-  test: "Test",
-  interview: "Interview",
-  offer: "Offer",
-  rejected: "Rejected",
+type StatusApi = {
+  list: StatusDef[];
+  keys: ApplicationStatus[];
+  label: (key: ApplicationStatus) => string;
+  color: (key: ApplicationStatus) => string;
+  /** Bước kế tiếp: status liền sau nếu hiện tại là "open" và cột sau không phải "lost". */
+  next: (key: ApplicationStatus) => ApplicationStatus | undefined;
 };
 
-const STATUS_COLOR: Record<ApplicationStatus, string> = {
-  new: "border-blue-500/40 bg-blue-500/10 text-blue-300",
-  reviewing: "border-yellow-500/40 bg-yellow-500/10 text-yellow-300",
-  phone_screening: "border-orange-500/40 bg-orange-500/10 text-orange-300",
-  test: "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
-  interview: "border-purple-500/40 bg-purple-500/10 text-purple-300",
-  offer: "border-green-500/40 bg-green-500/10 text-green-300",
-  rejected: "border-red-500/40 bg-red-500/10 text-red-300",
-};
+function buildStatusApi(list: StatusDef[]): StatusApi {
+  const sorted = [...list].sort((a, b) => a.position - b.position);
+  const byKey = new Map(sorted.map((s) => [s.key, s]));
+  return {
+    list: sorted,
+    keys: sorted.map((s) => s.key),
+    label: (k) => byKey.get(k)?.label ?? k,
+    color: (k) => STATUS_PALETTE[byKey.get(k)?.color ?? "slate"] ?? STATUS_PALETTE.slate,
+    next: (k) => {
+      const i = sorted.findIndex((s) => s.key === k);
+      if (i < 0 || sorted[i].kind !== "open") return undefined;
+      const n = sorted[i + 1];
+      return n && n.kind !== "lost" ? n.key : undefined;
+    },
+  };
+}
 
-const STATUS_NEXT: Partial<Record<ApplicationStatus, ApplicationStatus>> = {
-  new: "reviewing",
-  reviewing: "phone_screening",
-  phone_screening: "test",
-  test: "interview",
-  interview: "offer",
-};
+const StatusContext = createContext<StatusApi>(buildStatusApi(DEFAULT_STATUSES));
+const useStatuses = () => useContext(StatusContext);
+
+const COLLAPSED_KEY = "hr.pipeline.collapsed";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -436,6 +445,7 @@ function CandidateModal({
   onPatch: (patch: Partial<Application>) => void;
   onClose: () => void;
 }) {
+  const S = useStatuses();
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [note, setNote] = useState(app.admin_notes ?? "");
   const noteRef = useRef<HTMLTextAreaElement>(null);
@@ -493,9 +503,9 @@ function CandidateModal({
             <div className="mt-1 flex flex-wrap items-center gap-2">
               {app.jobs && <span className="text-xs text-white/55">{app.jobs.title}</span>}
               <span
-                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_COLOR[app.status]}`}
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${S.color(app.status)}`}
               >
-                {STATUS_LABEL[app.status]}
+                {S.label(app.status)}
               </span>
               <span className="text-[10px] text-white/40">{timeAgo(app.created_at)}</span>
             </div>
@@ -519,7 +529,7 @@ function CandidateModal({
                 Status <span className="normal-case tracking-normal text-white/25">— bấm để chuyển</span>
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {STATUSES.filter((s) => s !== "rejected").map((s) => {
+                {S.keys.filter((s) => s !== "rejected").map((s) => {
                   const active = s === app.status;
                   return (
                     <button
@@ -528,17 +538,17 @@ function CandidateModal({
                       disabled={saving || active}
                       className={`rounded-full border px-3 py-1 text-xs font-bold transition-colors disabled:cursor-default ${
                         active
-                          ? `${STATUS_COLOR[s]} ring-1 ring-current`
+                          ? `${S.color(s)} ring-1 ring-current`
                           : "border-white/15 text-white/45 hover:border-white/40 hover:bg-white/5 hover:text-white disabled:opacity-40"
                       }`}
                     >
                       {active ? "● " : ""}
-                      {STATUS_LABEL[s]}
+                      {S.label(s)}
                     </button>
                   );
                 })}
                 {app.status === "rejected" && (
-                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ring-1 ring-current ${STATUS_COLOR.rejected}`}>
+                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ring-1 ring-current ${S.color("rejected")}`}>
                     ● Rejected
                   </span>
                 )}
@@ -546,13 +556,13 @@ function CandidateModal({
             </div>
 
             <div className="flex flex-wrap gap-1.5">
-              {app.status !== "rejected" && STATUS_NEXT[app.status] && (
+              {app.status !== "rejected" && S.next(app.status) && (
                 <button
-                  onClick={() => onMove(STATUS_NEXT[app.status]!)}
+                  onClick={() => onMove(S.next(app.status)!)}
                   disabled={saving}
                   className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/20 disabled:opacity-40 transition-colors"
                 >
-                  → {STATUS_LABEL[STATUS_NEXT[app.status]!]}
+                  → {S.label(S.next(app.status)!)}
                 </button>
               )}
               {app.status !== "rejected" && (
@@ -686,6 +696,7 @@ function AppCard({
   onUpdate: (id: string, patch: Partial<Application>) => void;
   onDelete: (id: string) => void;
 }) {
+  const S = useStatuses();
   const [saving, setSaving] = useState(false);
   const [showNote, setShowNote] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -732,7 +743,7 @@ function AppCard({
     }
   }
 
-  const nextStatus = STATUS_NEXT[app.status];
+  const nextStatus = S.next(app.status);
   const [dragging, setDragging] = useState(false);
   // Modal/note editor là DOM con của card — tắt draggable khi chúng mở, kẻo
   // bôi đen text trong textarea bị trình duyệt hiểu thành kéo cả card.
@@ -854,7 +865,7 @@ function AppCard({
             disabled={saving}
             className="rounded border border-white/20 px-2 py-0.5 text-[10px] font-bold text-white/80 hover:bg-white/10 disabled:opacity-40 transition-colors"
           >
-            → {STATUS_LABEL[nextStatus]}
+            → {S.label(nextStatus)}
           </button>
         )}
         {app.status !== "rejected" && (
@@ -933,9 +944,26 @@ function PipelineView({
   onUpdate: (id: string, patch: Partial<Application>) => void;
   onDelete: (id: string) => void;
 }) {
+  const S = useStatuses();
   const [overCol, setOverCol] = useState<ApplicationStatus | null>(null);
   const [pendingReject, setPendingReject] = useState<Application | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Cột thu gọn — nhớ qua localStorage, mặc định thu gọn Rejected (cột dài nhất).
+  // PipelineView chỉ render phía client sau khi đăng nhập (hrKey set trong effect) → đọc localStorage ngay được.
+  const [collapsed, setCollapsed] = useState<ApplicationStatus[]>(() => {
+    try {
+      const raw = localStorage.getItem(COLLAPSED_KEY);
+      if (raw) return JSON.parse(raw) as ApplicationStatus[];
+    } catch { /* bỏ qua giá trị hỏng */ }
+    return ["rejected"];
+  });
+  function toggleCollapsed(status: ApplicationStatus) {
+    setCollapsed((prev) => {
+      const next = prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status];
+      try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next)); } catch { /* private mode */ }
+      return next;
+    });
+  }
 
   // Optimistic: đổi cột ngay, lỗi thì trả về chỗ cũ.
   async function moveTo(app: Application, status: ApplicationStatus, reason?: string) {
@@ -953,7 +981,7 @@ function PipelineView({
     }
     if (!ok) {
       onUpdate(app.id, prev as Partial<Application>);
-      setError(`Không chuyển được "${app.full_name}" sang ${STATUS_LABEL[status]} — thử lại.`);
+      setError(`Không chuyển được "${app.full_name}" sang ${S.label(status)} — thử lại.`);
     }
   }
 
@@ -976,39 +1004,74 @@ function PipelineView({
         <button onClick={() => setError(null)} className="text-red-300/70 hover:text-red-200">✕</button>
       </div>
     )}
-    {/* 7 status → 7 cột, không phải 6, kẻo Rejected rớt xuống hàng dưới. */}
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-      {STATUSES.map((status) => {
+    {/* Kiểu ClickUp: 1 hàng ngang cuộn được, cột rộng cố định, mỗi cột tự cuộn dọc.
+        Thêm bao nhiêu status cũng không rớt hàng. Cột có thể thu gọn thành dải hẹp. */}
+    <div className="-mx-1 flex h-[calc(100vh-180px)] min-h-[420px] gap-3 overflow-x-auto overflow-y-hidden px-1 pb-3">
+      {S.keys.map((status) => {
         const col = apps.filter((a) => a.status === status);
+        const isCollapsed = collapsed.includes(status);
+        const dropProps = {
+          onDragOver: (e: React.DragEvent) => {
+            if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            if (overCol !== status) setOverCol(status);
+          },
+          onDragLeave: (e: React.DragEvent) => {
+            // Chỉ bỏ highlight khi rời hẳn cột, không phải khi đi qua card con.
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOverCol(null);
+          },
+          onDrop: (e: React.DragEvent) => handleDrop(e, status),
+        };
+        const ring = overCol === status ? "bg-white/[0.06] ring-1 ring-amber-500/50" : "";
+
+        if (isCollapsed) {
+          return (
+            <button
+              key={status}
+              type="button"
+              {...dropProps}
+              onClick={() => toggleCollapsed(status)}
+              title={`Mở rộng ${S.label(status)}`}
+              className={`flex w-10 shrink-0 flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] py-3 transition-colors hover:bg-white/[0.05] ${ring}`}
+            >
+              <span className="text-xs font-bold text-white/50">{col.length}</span>
+              <span
+                className={`rounded-full border px-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider [writing-mode:vertical-rl] ${S.color(status)}`}
+              >
+                {S.label(status)}
+              </span>
+            </button>
+          );
+        }
+
         return (
           <div
             key={status}
-            onDragOver={(e) => {
-              if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "move";
-              if (overCol !== status) setOverCol(status);
-            }}
-            onDragLeave={(e) => {
-              // Chỉ bỏ highlight khi rời hẳn cột, không phải khi đi qua card con.
-              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOverCol(null);
-            }}
-            onDrop={(e) => handleDrop(e, status)}
-            className={`flex flex-col gap-2 rounded-xl p-1 -m-1 transition-colors ${
-              overCol === status ? "bg-white/[0.06] ring-1 ring-amber-500/50" : ""
-            }`}
+            {...dropProps}
+            className={`flex w-[272px] shrink-0 flex-col gap-2 rounded-xl p-1 transition-colors ${ring}`}
           >
             {/* Column header */}
-            <div className="flex items-center justify-between px-1">
+            <div className="flex items-center justify-between gap-2 px-1">
               <span
-                className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_COLOR[status]}`}
+                className={`truncate rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${S.color(status)}`}
               >
-                {STATUS_LABEL[status]}
+                {S.label(status)}
               </span>
-              <span className="text-xs font-bold text-white/50">{col.length}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-white/50">{col.length}</span>
+                <button
+                  type="button"
+                  onClick={() => toggleCollapsed(status)}
+                  title="Thu gọn cột"
+                  className="rounded px-1 text-xs text-white/30 hover:bg-white/10 hover:text-white/70"
+                >
+                  ⇤
+                </button>
+              </div>
             </div>
-            {/* Cards */}
-            <div className="space-y-2 min-h-[60px]">
+            {/* Cards — cuộn dọc riêng trong cột */}
+            <div className="min-h-[60px] flex-1 space-y-2 overflow-y-auto pr-0.5">
               {col.length === 0 && (
                 <div className="rounded-lg border border-dashed border-white/10 py-4 text-center text-[10px] text-white/20">
                   Empty
@@ -1057,23 +1120,22 @@ function KPIView({ apps }: { apps: Application[] }) {
   const totalRejected = apps.filter((a) => a.status === "rejected").length;
   const withReason = apps.filter((a) => a.status === "rejected" && a.rejection_reason).length;
 
+  const S = useStatuses();
+  const wonKeys = S.list.filter((st) => st.kind === "won").map((st) => st.key);
   const rows = useMemo(() => {
-    const map = new Map<string, Record<string, number>>();
-
+    const map = new Map<string, { total: number; counts: Record<string, number> }>();
     for (const app of apps) {
       const key = app.referred_by ?? "(direct)";
-      if (!map.has(key)) {
-        map.set(key, { total: 0, new: 0, reviewing: 0, phone_screening: 0, test: 0, interview: 0, offer: 0, rejected: 0 });
-      }
+      if (!map.has(key)) map.set(key, { total: 0, counts: {} });
       const row = map.get(key)!;
       row.total += 1;
-      row[app.status] = (row[app.status] ?? 0) + 1;
+      row.counts[app.status] = (row.counts[app.status] ?? 0) + 1;
     }
-
     return [...map.entries()]
-      .map(([name, counts]) => ({ name, total: 0, new: 0, reviewing: 0, phone_screening: 0, test: 0, interview: 0, offer: 0, rejected: 0, ...counts }))
+      .map(([name, r]) => ({ name, ...r }))
       .sort((a, b) => b.total - a.total);
   }, [apps]);
+  const textColor = (k: string) => S.color(k).split(" ").find((c) => c.startsWith("text-")) ?? "";
 
   if (rows.length === 0) {
     return <p className="py-8 text-center text-sm text-white/40">No applications yet.</p>;
@@ -1087,20 +1149,16 @@ function KPIView({ apps }: { apps: Application[] }) {
           <tr className="border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40">
             <th className="px-4 py-3 text-left">Referrer</th>
             <th className="px-3 py-3 text-center">Total</th>
-            <th className="px-3 py-3 text-center">New</th>
-            <th className="px-3 py-3 text-center">Reviewing</th>
-            <th className="px-3 py-3 text-center">Phone</th>
-            <th className="px-3 py-3 text-center">Test</th>
-            <th className="px-3 py-3 text-center">Interview</th>
-            <th className="px-3 py-3 text-center">Offer</th>
-            <th className="px-3 py-3 text-center">Rejected</th>
-            <th className="px-3 py-3 text-center">Offer %</th>
+            {S.list.map((st) => (
+              <th key={st.key} className="px-3 py-3 text-center">{st.label}</th>
+            ))}
+            <th className="px-3 py-3 text-center">Won %</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => {
-            const offerRate =
-              row.total > 0 ? Math.round((row.offer / row.total) * 100) : 0;
+            const won = wonKeys.reduce((n, k) => n + (row.counts[k] ?? 0), 0);
+            const offerRate = row.total > 0 ? Math.round((won / row.total) * 100) : 0;
             return (
               <tr
                 key={row.name}
@@ -1118,13 +1176,11 @@ function KPIView({ apps }: { apps: Application[] }) {
                   )}
                 </td>
                 <td className="px-3 py-3 text-center font-bold text-white">{row.total}</td>
-                <td className="px-3 py-3 text-center text-blue-300">{row.new || "—"}</td>
-                <td className="px-3 py-3 text-center text-yellow-300">{row.reviewing || "—"}</td>
-                <td className="px-3 py-3 text-center text-orange-300">{row.phone_screening || "—"}</td>
-                <td className="px-3 py-3 text-center text-cyan-300">{row.test || "—"}</td>
-                <td className="px-3 py-3 text-center text-purple-300">{row.interview || "—"}</td>
-                <td className="px-3 py-3 text-center text-green-300">{row.offer || "—"}</td>
-                <td className="px-3 py-3 text-center text-red-300">{row.rejected || "—"}</td>
+                {S.list.map((st) => (
+                  <td key={st.key} className={`px-3 py-3 text-center ${textColor(st.key)}`}>
+                    {row.counts[st.key] || "—"}
+                  </td>
+                ))}
                 <td className="px-3 py-3 text-center">
                   {offerRate > 0 ? (
                     <span className="font-bold text-green-400">{offerRate}%</span>
@@ -1659,6 +1715,7 @@ function DataView({
   onUpdate: (id: string, patch: Partial<Application>) => void;
   onDelete: (id: string) => void;
 }) {
+  const S = useStatuses();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterJob, setFilterJob] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
@@ -1711,7 +1768,7 @@ function DataView({
         />
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={selectCls}>
           <option value="all">All Status</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+          {S.keys.map((s) => <option key={s} value={s}>{S.label(s)}</option>)}
         </select>
         <select value={filterJob} onChange={(e) => setFilterJob(e.target.value)} className={selectCls}>
           <option value="all">All Jobs</option>
@@ -1760,8 +1817,8 @@ function DataView({
                     <td className="px-3 py-2.5 font-medium text-white">{app.full_name}</td>
                     <td className="px-3 py-2.5 text-white/60 text-xs">{app.jobs?.title ?? "—"}</td>
                     <td className="px-3 py-2.5 text-center">
-                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${STATUS_COLOR[app.status]}`}>
-                        {STATUS_LABEL[app.status]}
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${S.color(app.status)}`}>
+                        {S.label(app.status)}
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-center text-xs text-white/50">{app.work_type}</td>
@@ -1796,8 +1853,8 @@ function DataView({
                         <AppDetail app={app} hrKey={hrKey} />
                         {/* Quick actions */}
                         <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
-                          {STATUS_NEXT[app.status] && (
-                            <QuickAction app={app} hrKey={hrKey} targetStatus={STATUS_NEXT[app.status]!} onUpdate={onUpdate} />
+                          {S.next(app.status) && (
+                            <QuickAction app={app} hrKey={hrKey} targetStatus={S.next(app.status)!} onUpdate={onUpdate} />
                           )}
                           {app.status !== "rejected" && (
                             <QuickAction app={app} hrKey={hrKey} targetStatus="rejected" onUpdate={onUpdate} variant="reject" />
@@ -1839,6 +1896,7 @@ function QuickAction({
   onUpdate: (id: string, patch: Partial<Application>) => void;
   variant?: "reject" | "reopen";
 }) {
+  const S = useStatuses();
   const [saving, setSaving] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
 
@@ -1865,7 +1923,7 @@ function QuickAction({
 
   const label = variant === "reject" ? "✕ Reject"
     : variant === "reopen" ? "↺ Reopen"
-    : `→ ${STATUS_LABEL[targetStatus]}`;
+    : `→ ${S.label(targetStatus)}`;
 
   return (
     <>
@@ -1919,15 +1977,25 @@ export default function HRDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [statuses, setStatuses] = useState<StatusDef[]>(DEFAULT_STATUSES);
+  const statusApi = useMemo(() => buildStatusApi(statuses), [statuses]);
+  const [showStatusMgr, setShowStatusMgr] = useState(false);
+
   async function loadData(key: string) {
-    const [appsRes, jobsRes] = await Promise.all([
+    const [appsRes, jobsRes, stRes] = await Promise.all([
       fetch("/api/hr/applications", { headers: { "x-hr-key": key } }),
       fetch("/api/hr/jobs",         { headers: { "x-hr-key": key } }),
+      fetch("/api/hr/statuses",     { headers: { "x-hr-key": key } }).catch(() => null),
     ]);
     if (!appsRes.ok) throw new Error("Invalid key");
     const [appsData, jobsData] = await Promise.all([appsRes.json(), jobsRes.json()]);
     setApps(appsData.applications ?? []);
     setJobs(jobsData.jobs ?? []);
+    // Không chặn đăng nhập nếu bảng statuses lỗi/chưa migrate → giữ DEFAULT_STATUSES.
+    if (stRes?.ok) {
+      const st = await stRes.json().catch(() => null);
+      if (Array.isArray(st?.statuses) && st.statuses.length > 0) setStatuses(st.statuses);
+    }
   }
 
   async function signIn() {
@@ -2022,9 +2090,11 @@ export default function HRDashboard() {
   }
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
-  const activeCount = apps.filter((a) => a.status !== "rejected").length;
+  const lostKeys = new Set(statuses.filter((st) => st.kind === "lost").map((st) => st.key));
+  const activeCount = apps.filter((a) => !lostKeys.has(a.status)).length;
 
   return (
+    <StatusContext.Provider value={statusApi}>
     <div className="min-h-screen bg-[#0a0a10] text-white">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-white/10 bg-[#0a0a10]/95 backdrop-blur px-4 py-3">
@@ -2056,6 +2126,15 @@ export default function HRDashboard() {
                 </button>
               ))}
             </div>
+
+            {/* Custom statuses */}
+            <button
+              onClick={() => setShowStatusMgr(true)}
+              title="Thêm / bớt / sửa status pipeline"
+              className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-bold text-white/60 hover:border-white/30 hover:text-white transition-colors"
+            >
+              ⚙ Statuses
+            </button>
 
             {/* Remind button */}
             <button
@@ -2114,6 +2193,19 @@ export default function HRDashboard() {
           />
         )}
       </main>
+      {showStatusMgr && (
+        <StatusManager
+          hrKey={hrKey}
+          statuses={statuses}
+          counts={apps.reduce<Record<string, number>>((m, a) => ({ ...m, [a.status]: (m[a.status] ?? 0) + 1 }), {})}
+          onChange={setStatuses}
+          onMoved={(from, to) =>
+            setApps((prev) => prev.map((a) => (a.status === from ? { ...a, status: to } : a)))
+          }
+          onClose={() => setShowStatusMgr(false)}
+        />
+      )}
     </div>
+    </StatusContext.Provider>
   );
 }

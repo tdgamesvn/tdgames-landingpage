@@ -1,5 +1,13 @@
 # TASKS
 
+## Doing
+
+- [ ] HR pipeline custom status (2026-09-25)
+  - [x] Phase 1: cuộn ngang kiểu ClickUp + thu gọn cột (code xong, chưa commit/deploy)
+  - [x] Phase 2: bảng `application_statuses` + UI thêm/bớt/sửa status — code xong (LOG 2026-09-25 tiếp)
+  - [x] Migration đã apply prod (version DB 20260925014849) → commit/push
+  - [ ] Test /hr trên prod (sửa/thêm/xoá status, Remind)
+
 ## ⚠️ GẤP — chờ sếp quyết
 
 - [x] ~~HR key lộ trong lịch sử git repo PUBLIC~~ (2026-09-17): agent commit nhầm

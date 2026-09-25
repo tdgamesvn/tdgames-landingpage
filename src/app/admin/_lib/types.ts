@@ -91,7 +91,20 @@ export type ProjectContent = {
 };
 
 export type JobType = "fulltime" | "parttime" | "remote" | "freelancer";
-export type ApplicationStatus = "new" | "reviewing" | "phone_screening" | "test" | "interview" | "offer" | "rejected";
+/** Key trong bảng application_statuses (HR tự thêm/bớt). "new" và "rejected" luôn tồn tại (is_system). */
+export type ApplicationStatus = string;
+
+export type StatusKind = "open" | "won" | "lost";
+
+export type StatusDef = {
+  key: string;
+  label: string;
+  color: string;
+  position: number;
+  kind: StatusKind;
+  remind_days: number | null;
+  is_system: boolean;
+};
 
 export type Job = {
   id: string;

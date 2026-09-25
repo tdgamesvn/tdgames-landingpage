@@ -6,11 +6,7 @@ import { discordNotify, getDiscordUrl } from "@/lib/discord-notify";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const THRESHOLDS = {
-  new: 2,        // days before nudging to review
-  reviewing: 7,  // days before nudging to schedule interview
-  interview: 14, // days before nudging to make offer/close
-};
+// Ngưỡng nhắc lấy từ application_statuses.remind_days (null = không nhắc cột đó).
 
 function daysAgo(dateStr: string) {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
@@ -28,31 +24,36 @@ export async function GET(request: Request) {
   if (authError) return authError;
 
   const supabase = getSupabaseAdmin();
+  const { data: statuses, error: stErr } = await supabase
+    .from("application_statuses")
+    .select("key, label, remind_days, kind")
+    .not("remind_days", "is", null)
+    .order("position", { ascending: true });
+  if (stErr) return NextResponse.json({ error: stErr.message }, { status: 500 });
+
+  const watched = (statuses ?? []).filter((s) => s.kind === "open" && s.remind_days);
+  if (watched.length === 0) {
+    return NextResponse.json({ sent: false, reason: "No status has remind_days", total: 0 });
+  }
+
   const { data, error } = await supabase
     .from("applications")
     .select("id, full_name, status, created_at, referred_by, jobs(title)")
-    .in("status", ["new", "reviewing", "phone_screening", "interview"])
+    .in("status", watched.map((s) => s.key))
     .order("created_at", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const apps = data ?? [];
-
-  const needsReview = apps.filter(
-    (a) => a.status === "new" && daysAgo(a.created_at) >= THRESHOLDS.new
-  );
-  const stuckReview = apps.filter(
-    // ponytail: phone_screening dùng chung ngưỡng với reviewing
-    (a) =>
-      (a.status === "reviewing" || a.status === "phone_screening") &&
-      daysAgo(a.created_at) >= THRESHOLDS.reviewing
-  );
-  const postInterview = apps.filter(
-    (a) => a.status === "interview" && daysAgo(a.created_at) >= THRESHOLDS.interview
-  );
+  const groups = watched
+    .map((s) => ({
+      status: s,
+      stale: apps.filter((a) => a.status === s.key && daysAgo(a.created_at) >= (s.remind_days as number)),
+    }))
+    .filter((g) => g.stale.length > 0);
 
   const total = apps.length;
-  const staleCount = needsReview.length + stuckReview.length + postInterview.length;
+  const staleCount = groups.reduce((n, g) => n + g.stale.length, 0);
 
   // Skip Discord if nothing is stale
   if (staleCount === 0) {
@@ -63,27 +64,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ sent: false, reason: "No Discord webhook configured for HR channel", staleCount });
   }
 
-  // Build Discord embed fields
-  const fields: { name: string; value: string; inline?: boolean }[] = [];
-
-  if (needsReview.length > 0) {
-    fields.push({
-      name: `📋 Needs Review — new > ${THRESHOLDS.new}d (${needsReview.length})`,
-      value: needsReview.map(formatApp).join("\n"),
-    });
-  }
-  if (stuckReview.length > 0) {
-    fields.push({
-      name: `🔍 Stuck in Review — reviewing > ${THRESHOLDS.reviewing}d (${stuckReview.length})`,
-      value: stuckReview.map(formatApp).join("\n"),
-    });
-  }
-  if (postInterview.length > 0) {
-    fields.push({
-      name: `💬 Post-Interview — interview > ${THRESHOLDS.interview}d (${postInterview.length})`,
-      value: postInterview.map(formatApp).join("\n"),
-    });
-  }
+  const fields: { name: string; value: string; inline?: boolean }[] = groups.map((g) => ({
+    name: `⏳ ${g.status.label} > ${g.status.remind_days}d (${g.stale.length})`,
+    value: g.stale.map(formatApp).join("\n").slice(0, 1024),
+  }));
 
   fields.push({
     name: "📊 Pipeline total",
@@ -104,5 +88,9 @@ export async function GET(request: Request) {
     ],
   });
 
-  return NextResponse.json({ sent: true, staleCount, needsReview: needsReview.length, stuckReview: stuckReview.length, postInterview: postInterview.length });
+  return NextResponse.json({
+    sent: true,
+    staleCount,
+    byStatus: Object.fromEntries(groups.map((g) => [g.status.key, g.stale.length])),
+  });
 }

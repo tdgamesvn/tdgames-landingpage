@@ -1,5 +1,56 @@
 # LOG
 
+## 2026-09-25 (tiếp) — HR custom status phase 2: code xong, CHƯA chạy migration
+
+Sếp duyệt: sửa status ngay trên /hr, chưa thêm Hired (Offer = kind won).
+
+Work Done:
+- `supabase/migrations/20260925000000_application_statuses_table.sql`: bảng
+  `application_statuses` (key PK, label, color=key palette, position, kind open/won/lost,
+  remind_days, is_system) + seed 7 status; `applications.status` enum → text + FK
+  (on update cascade, on delete restrict); drop type `application_status`.
+  Đã kiểm prod: chỉ `applications.status` + `idx_applications_status` dùng enum, không có view/function.
+- `src/app/api/hr/statuses/route.ts`: GET / POST {label} / PATCH {statuses[]} / DELETE ?key&move_to
+  (còn ứng viên mà thiếu move_to → 409; is_system → 400).
+- `api/hr/remind`: ngưỡng lấy từ `remind_days` từng status (kind open), bỏ THRESHOLDS cứng.
+  Response đổi `needsReview/stuckReview/postInterview` → `byStatus` (không ai đọc các field cũ).
+- `HRDashboard.tsx`: bỏ STATUSES/LABEL/COLOR/NEXT cứng → `StatusContext` + `useStatuses()`
+  (`S.label/color/next/keys`); `next` = cột liền sau nếu đang open & cột sau không phải lost.
+  KPI table cột động + "Won %". Fallback `DEFAULT_STATUSES` nếu API statuses lỗi.
+  Nút "⚙ Statuses" → `StatusManager.tsx` (sửa tên/màu/loại/ngưỡng nhắc, kéo đổi thứ tự, thêm, xoá kèm chuyển ứng viên).
+  Palette tách ra `status-palette.ts`.
+- `admin/_lib/types.ts`: `ApplicationStatus = string`, thêm `StatusDef`, `StatusKind`.
+- tsc sạch, eslint chỉ còn 2 lỗi có sẵn. `npm run build` không chạy được trong sandbox (Google Fonts bị chặn).
+
+Chưa làm: CareersTab (admin) vẫn list status cứng — chỉ hiển thị, không hỏng; status mới sẽ ra màu mặc định.
+
+Result: sếp duyệt → đã apply migration lên prod (DB version 20260925014849, file local giữ
+20260925000000 như lệ cũ). Kiểm: 7 status, applications.status=text, 53 đơn giữ nguyên, enum cũ đã drop.
+Đã commit + push → CI deploy.
+
+Next Step: test /hr trên prod; cân nhắc cho CareersTab (admin) đọc /api/hr/statuses.
+
+## 2026-09-25 (HR pipeline: cuộn ngang kiểu ClickUp — phase 1 của "custom status")
+
+Task: sếp muốn (a) thêm/bớt status pipeline, (b) nhiều cột thì cuộn ngang như ClickUp.
+Sếp chốt: làm cuộn ngang trước, custom status sau.
+
+Work Done (`src/app/hr/_components/HRDashboard.tsx`, `PipelineView`, impact LOW):
+- Bỏ `xl:grid-cols-7` → 1 hàng `flex overflow-x-auto`, cột `w-[272px] shrink-0`,
+  board cao `calc(100vh-180px)`, mỗi cột tự cuộn dọc.
+- Nút ⇤ thu gọn cột thành dải dọc 40px (vẫn nhận kéo-thả), click để mở.
+  Nhớ qua localStorage `hr.pipeline.collapsed`, mặc định thu gọn Rejected.
+- tsc sạch; eslint còn 2 lỗi set-state-in-effect có sẵn từ trước (không phải do thay đổi này).
+
+Result: chưa commit / chưa deploy, chưa test trên trình duyệt (cần HR key).
+
+Next Step — phase 2 custom status (thiết kế đã trình sếp): bảng `application_statuses`
+(key,label,color,position,kind open/won/lost,remind_days), đổi `applications.status`
+enum → text + FK, API `/api/hr/statuses`, modal ⚙ Customize (thêm/đổi tên/màu/kéo thứ
+tự/xoá kèm chuyển ứng viên), `new`/`rejected` là system (không xoá). KPI, STATUS_NEXT,
+remind route, CareersTab đọc theo bảng. Còn chờ sếp xác nhận: ai được sửa status
+(/hr hay chỉ /admin), có thêm cột Hired không.
+
 ## 2026-09-24 (fix HR: không chuyển được sang Phone Screening)
 
 Nguyên nhân: cột `applications.status` trên prod là enum `application_status`

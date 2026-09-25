@@ -297,3 +297,11 @@ ngày 2026-09-17.
 **Bài học chung:** model vẫn xuất hiện trong `GET /v1beta/models` nhưng gọi vẫn 404.
 **Danh sách models KHÔNG phải bằng chứng model dùng được** — muốn chắc thì gọi thử
 một request text rẻ tiền.
+
+## 2026-09-25 — HR pipeline status cấu hình qua DB
+- Status ứng viên nằm ở bảng `application_statuses`, không còn enum Postgres / hằng số trong code.
+  `applications.status` = text FK → `application_statuses.key`.
+- `new` và `rejected` là `is_system` (form ứng tuyển ghi `new`, luồng reject + rejection_reason dùng `rejected`)
+  → không xoá, không đổi kind. Key không bao giờ đổi qua API, chỉ đổi label.
+- `kind`: open (đang xử lý, có thể nhắc), won (tính Won % trong KPI), lost (cuối board, không tính active).
+- Màu lưu key palette (`status-palette.ts`), không lưu class Tailwind (Tailwind cần class tĩnh).
