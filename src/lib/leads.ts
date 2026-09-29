@@ -21,6 +21,19 @@ export const LEAD_BUDGETS = [
   "Not sure yet",
 ] as const;
 
+/** Kênh chat khách muốn được liên hệ — email hay bị bỏ qua. */
+export const LEAD_CONTACT_CHANNELS = [
+  "Telegram",
+  "WhatsApp",
+  "Discord",
+  "Slack",
+  "Facebook Messenger",
+  "LINE",
+  "WeChat",
+  "Zalo",
+  "Other",
+] as const;
+
 export const LEAD_STATUSES = [
   "new",
   "contacted",
@@ -37,6 +50,8 @@ export interface Lead {
   email: string;
   service: string;
   budget: string | null;
+  contact_channel: string | null;
+  contact_handle: string | null;
   message: string;
   source: string;
   status: LeadStatus;

@@ -5781,3 +5781,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - **Result:** tsc + eslint sạch. Push main → CI deploy. Chưa set env → tracking chưa chạy.
 - **Next Step:** Sếp tạo GA4/Ads/Search Console, gửi ID → set env trên VPS + rebuild
   (NEXT_PUBLIC_* inline lúc build). Sitemap đang hardcode portfolio slugs (hiện khớp 16 thư mục).
+
+## 2026-09-29 — Contact form: kênh chat ưu tiên (Telegram/WhatsApp/Discord...)
+- **Task:** Sếp báo khách để lại email nhưng gần như không trả lời email → thêm trường "liên hệ qua app nào + tài khoản".
+- **Work Done:** DB `leads` thêm `contact_channel`, `contact_handle` (nullable; migration `20260929000000_leads_contact_channel.sql`, đã áp lên prod qua Supabase MCP — Supabase CLI ở máy này chưa login). `src/lib/leads.ts`: `LEAD_CONTACT_CHANNELS` (Telegram, WhatsApp, Discord, Slack, Facebook Messenger, LINE, WeChat, Zalo, Other) + field trong `Lead`. `/api/leads`: whitelist kênh, bắt buộc handle khi đã chọn kênh, thêm field "Chat" vào Discord notify. Form: thêm dòng select kênh + input handle (không bắt buộc; ô handle mở khi chọn kênh). CRM drawer hiện "💬 Kênh: handle", ô search tìm được theo handle.
+- **Result:** tsc sạch; lint chỉ còn lỗi set-state-in-effect có từ trước ở CRMBoard:186. Đã commit + push main → CI deploy.
+- **Next Step:** Kiểm tra form /contact trên production sau khi CI xong.

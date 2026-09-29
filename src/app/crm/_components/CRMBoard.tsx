@@ -280,7 +280,7 @@ export default function CRMBoard() {
     const term = q.trim().toLowerCase();
     if (term)
       base = base.filter((l) =>
-        `${l.name} ${l.email} ${l.service} ${l.message} ${l.admin_notes ?? ""}`
+        `${l.name} ${l.email} ${l.contact_handle ?? ""} ${l.service} ${l.message} ${l.admin_notes ?? ""}`
           .toLowerCase()
           .includes(term),
       );
@@ -585,6 +585,14 @@ export default function CRMBoard() {
                 >
                   {selected.email}
                 </a>
+                {selected.contact_channel ? (
+                  <p className="mt-1 text-sm text-emerald-300/90">
+                    💬 {selected.contact_channel}:{" "}
+                    <span className="select-all font-medium">
+                      {selected.contact_handle}
+                    </span>
+                  </p>
+                ) : null}
               </div>
               <button
                 onClick={() => setSelectedId(null)}

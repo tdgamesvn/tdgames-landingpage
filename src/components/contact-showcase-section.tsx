@@ -6,7 +6,7 @@ import { type FormEvent, useState } from "react";
 
 import { AccentHighlight } from "@/components/accent-highlight";
 import { trackEvent } from "@/lib/analytics";
-import { LEAD_BUDGETS, LEAD_SERVICES } from "@/lib/leads";
+import { LEAD_BUDGETS, LEAD_CONTACT_CHANNELS, LEAD_SERVICES } from "@/lib/leads";
 
 const CONTACT_EMAIL = "tdgames.vn@gmail.com";
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
@@ -27,6 +27,7 @@ export default function ContactShowcaseSection({
 }) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [channel, setChannel] = useState("");
   const reduceMotion = useReducedMotion();
 
   const listParent = {
@@ -72,6 +73,8 @@ export default function ContactShowcaseSection({
           email: data.get("email"),
           service: data.get("service"),
           budget: data.get("budget") || null,
+          contactChannel: data.get("contactChannel") || null,
+          contactHandle: data.get("contactHandle") || null,
           message: data.get("note"),
           source: window.location.pathname,
         }),
@@ -84,6 +87,7 @@ export default function ContactShowcaseSection({
         page: window.location.pathname,
       });
       form.reset();
+      setChannel("");
       setState("sent");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
@@ -222,6 +226,48 @@ export default function ContactShowcaseSection({
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-white/65 md:text-base">
+                Fastest way to reach you? We usually reply faster on chat than email.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-5">
+                <label className="sr-only" htmlFor="contact-channel">
+                  Preferred contact app
+                </label>
+                <select
+                  id="contact-channel"
+                  name="contactChannel"
+                  value={channel}
+                  onChange={(e) => setChannel(e.target.value)}
+                  className="rounded-xl border border-white/14 bg-[#12131c]/90 px-4 py-4 text-base text-white outline-none transition-colors focus:border-[#ff8c3a]/45 focus:bg-[#16171f] md:px-5 md:py-[1.125rem] md:text-lg"
+                >
+                  <option value="" className="text-white/38">
+                    Chat app (optional)
+                  </option>
+                  {LEAD_CONTACT_CHANNELS.map((c) => (
+                    <option key={c} value={c} className="bg-[#12131c]">
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <label className="sr-only" htmlFor="contact-handle">
+                  Your username or phone number
+                </label>
+                <input
+                  id="contact-handle"
+                  name="contactHandle"
+                  type="text"
+                  required={channel !== ""}
+                  disabled={channel === ""}
+                  placeholder={
+                    channel
+                      ? `Your ${channel === "Other" ? "app + username" : channel} username / number`
+                      : "Username or phone number"
+                  }
+                  className="rounded-xl border border-white/14 bg-[#12131c]/90 px-4 py-4 text-base text-white placeholder:text-white/38 outline-none transition-colors focus:border-[#ff8c3a]/45 focus:bg-[#16171f] disabled:opacity-50 md:px-5 md:py-[1.125rem] md:text-lg"
+                />
+              </div>
             </div>
             <label className="sr-only" htmlFor="contact-note">
               Message
