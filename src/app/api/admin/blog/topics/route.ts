@@ -282,7 +282,14 @@ export async function POST(req: Request) {
   }
   if (!res.ok) return NextResponse.json({ error: `AI backend error ${res.status}` }, { status: 502 });
 
-  const raw: string = (await res.json())?.choices?.[0]?.message?.content ?? "";
+  // Đọc body trong try: signal timeout phủ cả lúc stream body — ném ra ngoài là
+  // 500 rỗng (2026-09-30, cùng lỗi ở ai-image). 502 để blog-auto còn thử lại.
+  let raw: string;
+  try {
+    raw = (await res.json())?.choices?.[0]?.message?.content ?? "";
+  } catch {
+    return NextResponse.json({ error: "AI backend trả response hỏng / timeout giữa chừng" }, { status: 502 });
+  }
   let draft: {
     title: string;
     excerpt: string;

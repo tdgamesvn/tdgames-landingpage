@@ -5787,3 +5787,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - **Work Done:** DB `leads` thêm `contact_channel`, `contact_handle` (nullable; migration `20260929000000_leads_contact_channel.sql`, đã áp lên prod qua Supabase MCP — Supabase CLI ở máy này chưa login). `src/lib/leads.ts`: `LEAD_CONTACT_CHANNELS` (Telegram, WhatsApp, Discord, Slack, Facebook Messenger, LINE, WeChat, Zalo, Other) + field trong `Lead`. `/api/leads`: whitelist kênh, bắt buộc handle khi đã chọn kênh, thêm field "Chat" vào Discord notify. Form: thêm dòng select kênh + input handle (không bắt buộc; ô handle mở khi chọn kênh). CRM drawer hiện "💬 Kênh: handle", ô search tìm được theo handle.
 - **Result:** tsc sạch; lint chỉ còn lỗi set-state-in-effect có từ trước ở CRMBoard:186. Đã commit + push main → CI deploy.
 - **Next Step:** Kiểm tra form /contact trên production sau khi CI xong.
+
+## 2026-09-30 — "Blog radar hỏng": thật ra auto-blog, TimeoutError khi đọc body ảnh
+- **Task:** Run 36677580825 (06:18 UTC) đỏ.
+- **Chẩn đoán:** Radar chạy đúng (32 tin → lưu 4 chủ đề → Discord). Hỏng ở `blog-auto.mjs`: POST `/api/admin/blog/topics` trả **500 body rỗng** sau ~173s (≈53s viết draft + 120s ảnh). PM2 error log: `⨯ Error [TimeoutError]` không bắt. Bài bốc 4 ảnh → 5 call gen ảnh song song; `AbortSignal.timeout(120s)` phủ cả lúc stream body b64, mà `res.json()` trong `generateAiImage` nằm NGOÀI try → reject xuyên `Promise.all` → route crash. Lỗi này đã xuất hiện 3 lần trong log trước đó. Vì 500 (không phải 502) nên blog-auto cũng không thử lại.
+- **Work Done:** `src/lib/ai-image.ts` — bọc `res.text()/res.json()` trong try → trả `{error, 502}` (route bỏ ảnh đó, giữ bài). `topics/route.ts` — bọc `res.json()` của call viết draft → 502 (blog-auto sẽ retry).
+- **Result:** tsc + eslint sạch. Chưa commit/deploy (chờ sếp). Chủ đề hôm nay vẫn `pending` → lần chạy sau sẽ dựng lại.
+- **Next Step:** push main → CI deploy; có thể chạy lại workflow 📡 Blog Radar để lấy bài hôm nay.

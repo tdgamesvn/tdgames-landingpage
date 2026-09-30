@@ -60,12 +60,20 @@ export async function generateAiImage(
     return { error: "Image API không gọi được (AI backend chết / timeout)", status: 502 };
   }
 
-  if (!res.ok) {
-    const detail = await res.text();
-    return { error: `Image API ${res.status}: ${detail.slice(0, 300)}`, status: 502 };
+  // Đọc body PHẢI nằm trong try: AbortSignal.timeout phủ cả lúc stream body
+  // (b64 vài MB). 2026-09-30: bài bốc 4 ảnh → 5 call song song, header về kịp
+  // nhưng body chạm mốc 120s → TimeoutError ném ra ngoài → Promise.all trong
+  // route dựng bài reject → 500 rỗng, mất nguyên bài thay vì chỉ mất 1 ảnh.
+  let json: { data?: { b64_json?: unknown }[] };
+  try {
+    if (!res.ok) {
+      const detail = await res.text();
+      return { error: `Image API ${res.status}: ${detail.slice(0, 300)}`, status: 502 };
+    }
+    json = await res.json();
+  } catch {
+    return { error: "Image API đọc response hỏng (timeout giữa chừng / JSON lỗi)", status: 502 };
   }
-
-  const json = await res.json();
   const b64 = json?.data?.[0]?.b64_json;
   if (typeof b64 !== "string") return { error: "Image API không trả b64_json", status: 502 };
 
