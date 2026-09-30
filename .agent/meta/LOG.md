@@ -5794,3 +5794,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - **Work Done:** `src/lib/ai-image.ts` — bọc `res.text()/res.json()` trong try → trả `{error, 502}` (route bỏ ảnh đó, giữ bài). `topics/route.ts` — bọc `res.json()` của call viết draft → 502 (blog-auto sẽ retry).
 - **Result:** tsc + eslint sạch. Chưa commit/deploy (chờ sếp). Chủ đề hôm nay vẫn `pending` → lần chạy sau sẽ dựng lại.
 - **Next Step:** push main → CI deploy; có thể chạy lại workflow 📡 Blog Radar để lấy bài hôm nay.
+- **Follow-up:** Commit 20d0a89 → CI deploy success. Chạy lại 📡 Blog Radar (run 36679035416): success, radar lưu 5 chủ đề, auto-blog đăng https://tdgamestudio.com/blog/quote-2d-art-by-gameplay-lock-not-only-by-asset-count
