@@ -4,6 +4,10 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const BASE_URL = "https://tdgamestudio.com";
 
+// Auto-blog đăng bài mỗi ngày. Để static thì sitemap bị đông cứng lúc build
+// (fetch cache giữ lại danh sách 8 bài cũ) → render theo từng request.
+export const dynamic = "force-dynamic";
+
 const portfolioSlugs = [
   "animation-contest-sky-mavis",
   "art-study",

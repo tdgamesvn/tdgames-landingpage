@@ -44,7 +44,7 @@ _(empty)_
 
 ## To do
 
-- [ ] **Marketing Google — chờ sếp:** code GA4/Ads/verification đã deploy (2026-09-24) nhưng
+- [ ] **Marketing Google — chờ sếp:** (2026-10-01: GA4 `G-2M5ZNY433F` ĐÃ BẬT; 2026-10-05: Ads AW-18473620402 + conversion ĐÃ BẬT; 2026-10-05: sếp CHỐT giữ GA `G-2M5ZNY433F`, bỏ `G-84PCN1R6HE`; còn verification) code GA4/Ads/verification đã deploy (2026-09-24) nhưng
       inert tới khi set env trên VPS (`/opt/tdgames-landingpage/.env.local`) rồi **build lại**:
       `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GOOGLE_ADS_ID`, `NEXT_PUBLIC_GOOGLE_ADS_LEAD_CONVERSION`,
       `GOOGLE_SITE_VERIFICATION`. Sau đó: submit sitemap ở Search Console, đánh dấu

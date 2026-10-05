@@ -5795,3 +5795,20 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - **Result:** tsc + eslint sạch. Chưa commit/deploy (chờ sếp). Chủ đề hôm nay vẫn `pending` → lần chạy sau sẽ dựng lại.
 - **Next Step:** push main → CI deploy; có thể chạy lại workflow 📡 Blog Radar để lấy bài hôm nay.
 - **Follow-up:** Commit 20d0a89 → CI deploy success. Chạy lại 📡 Blog Radar (run 36679035416): success, radar lưu 5 chủ đề, auto-blog đăng https://tdgamestudio.com/blog/quote-2d-art-by-gameplay-lock-not-only-by-asset-count
+
+## 2026-10-01 — GA4 bật trên production
+- **Work Done:** Sếp gửi Measurement ID `G-2M5ZNY433F`. Thêm `NEXT_PUBLIC_GA_ID` vào `/opt/tdgames-landingpage/.env.local` trên VPS (backup `.env.local.bak-*`), `npm run build` + `pm2 restart --update-env`.
+- **Result:** Trang chủ prod có `gtag/js?id=G-2M5ZNY433F`. Ads + Search Console verification chưa set.
+- **Next Step:** Sếp gửi `AW-...` + `AW-.../label` → set env + rebuild. Đánh dấu `generate_lead` là Key event sau khi có lead đầu tiên; submit sitemap.
+
+## 2026-10-05 — Google Ads conversion bật trên production
+- **Work Done:** Sếp tạo conversion "Lượt gửi biểu mẫu khách hàng tiềm năng" (thủ công, có lập trình). Thêm `NEXT_PUBLIC_GOOGLE_ADS_ID=AW-18473620402` + `NEXT_PUBLIC_GOOGLE_ADS_LEAD_CONVERSION=AW-18473620402/N9ABCOPk0pEdELKn9OhE` vào `.env.local` VPS (backup `.env.local.bak-*`), build + `pm2 restart --update-env`.
+- **Result:** Prod có `gtag('config','AW-18473620402')` + label conversion trong JS bundle. GA vẫn `G-2M5ZNY433F`.
+- **Open:** Sếp gửi thêm GA ID khác `G-84PCN1R6HE` (property mới?) — chờ sếp chọn giữ cái nào trước khi đổi. Search Console verification chưa rõ. Còn: link GA4↔Ads, submit sitemap, Key event `generate_lead`.
+- **Chốt (2026-10-05):** Sếp quyết giữ GA `G-2M5ZNY433F`, KHÔNG dùng `G-84PCN1R6HE`. Không đổi gì trên VPS; đã verify prod vẫn load `G-2M5ZNY433F` + `AW-18473620402`. Còn: Search Console verification, link GA4↔Ads, submit sitemap, Key event `generate_lead`.
+
+## 2026-10-05 — Sitemap thiếu ~94 bài blog
+- **Task:** Kiểm tra Search Console: sitemap "Thành công" 35 URL, nhưng blog có 102 bài published, sitemap chỉ có 8 bài cũ (2025).
+- **Nguyên nhân:** `src/app/sitemap.ts` static (`x-nextjs-cache: HIT`) → prerender lúc build, Supabase fetch bị data cache giữ danh sách cũ; auto-blog đăng hằng ngày không vào sitemap.
+- **Work Done:** thêm `export const dynamic = "force-dynamic"` vào `sitemap.ts`. Impact LOW (0 caller). Search Console đã xác minh (Domain property) từ trước — không cần làm Bước 1.
+- **Next Step:** verify prod sitemap ~113 URL sau CI. Còn: link GA4↔Ads, Key event `generate_lead`. 13 trang "chưa lập chỉ mục" — chờ sếp chụp lý do.
