@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useSlotUrl, BRAND_LOGO_FALLBACK } from "@/lib/use-slot-url";
+import { GOOGLE_MAPS_URL } from "@/lib/company-location";
 
 type FooterConfig = {
   description1: string;
@@ -185,7 +186,14 @@ export default function SiteFooter() {
                 Contacts
               </div>
               <ul className="mt-4 space-y-3.5 text-sm text-white/65">
-                <li className="flex min-w-0 items-start gap-3">
+                <li>
+                  <a
+                    href={GOOGLE_MAPS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="View on Google Maps"
+                    className="group flex min-w-0 items-start gap-3 transition-colors hover:text-white"
+                  >
                   <ContactIconBox>
                     <svg
                       className="h-4 w-4"
@@ -206,9 +214,10 @@ export default function SiteFooter() {
                       />
                     </svg>
                   </ContactIconBox>
-                  <span className="min-w-0 pt-1.5 leading-snug">
+                  <span className="min-w-0 pt-1.5 leading-snug underline-offset-2 group-hover:underline">
                     {cfg.contacts.address}
                   </span>
+                  </a>
                 </li>
                 <li>
                   <Link

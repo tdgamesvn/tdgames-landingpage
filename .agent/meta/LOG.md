@@ -5812,3 +5812,11 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - **Nguyên nhân:** `src/app/sitemap.ts` static (`x-nextjs-cache: HIT`) → prerender lúc build, Supabase fetch bị data cache giữ danh sách cũ; auto-blog đăng hằng ngày không vào sitemap.
 - **Work Done:** thêm `export const dynamic = "force-dynamic"` vào `sitemap.ts`. Impact LOW (0 caller). Search Console đã xác minh (Domain property) từ trước — không cần làm Bước 1.
 - **Next Step:** verify prod sitemap ~113 URL sau CI. Còn: link GA4↔Ads, Key event `generate_lead`. 13 trang "chưa lập chỉ mục" — chờ sếp chụp lý do.
+- **Result:** commit 979f581 → CI deploy. Prod sitemap 129 URL (102 bài blog), không còn `x-nextjs-cache: HIT`.
+
+## 2026-10-07 — Gắn Google Maps (hồ sơ "Công ty TNHH TD GAMES")
+- **Task:** Sếp tạo Google Business Profile riêng cho TD Games (pháp nhân riêng, chung văn phòng TD Consulting 505 Minh Khai). Gắn vị trí lên website.
+- **Work Done:** `src/lib/company-location.ts` (GOOGLE_MAPS_URL `maps.app.goo.gl/X3KV9vpPG9L95pqg6` + embed URL). Footer: địa chỉ thành link mở Maps. `/contact`: thêm section "Visit our studio" + iframe Maps. `layout.tsx` JSON-LD: address đầy đủ + `location.hasMap` (`maps.google.com/?cid=16662951877678538407`, CID từ embed). Impact LOW.
+- **Result:** Chưa commit/deploy (working tree còn thay đổi dở của `company-profile/page.tsx` đang lỗi tsc — không thuộc task này).
+- **Next Step:** Sếp duyệt → commit riêng 4 file + LOG, push. Địa chỉ footer lấy từ Admin Footer tab — nên sửa thành "Hoa Binh Green City, 505 Minh Khai, Vinh Tuy, Hanoi" cho khớp hồ sơ Maps.
+- **Follow-up (2026-10-07):** Phần dở `company-profile/page.tsx` (sửa 05/10, không rõ ai: thay ảnh/video 4 thẻ dịch vụ bằng illustration code, xoá "Selected work" + "Case study ORCA", lỗi tsc) → sếp chọn **A**: cất vào `git stash` ("WIP company-profile ... sep chon A"), trang giữ nguyên như prod. tsc sạch; lint chỉ còn 2 lỗi `<a href="/">` có sẵn ở site-footer. detect_changes LOW. Commit + push phần Maps.

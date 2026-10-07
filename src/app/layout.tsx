@@ -84,7 +84,19 @@ const ORGANIZATION_JSON_LD = {
   email: "tdgames.vn@gmail.com",
   description:
     "Vietnam-based outsourcing studio specializing in 2D Art, Animation, and VFX for mobile games.",
-  address: { "@type": "PostalAddress", addressCountry: "VN" },
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Hoa Binh Green City, 505 Minh Khai",
+    addressLocality: "Hanoi",
+    postalCode: "100000",
+    addressCountry: "VN",
+  },
+  // Nối website với hồ sơ Google Business "Công ty TNHH TD GAMES" (CID từ link embed).
+  location: {
+    "@type": "Place",
+    name: "TD Games Studio",
+    hasMap: "https://maps.google.com/?cid=16662951877678538407",
+  },
   areaServed: "Worldwide",
   knowsAbout: [
     "Game art outsourcing",
