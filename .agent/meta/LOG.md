@@ -5820,3 +5820,7 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - **Result:** Chưa commit/deploy (working tree còn thay đổi dở của `company-profile/page.tsx` đang lỗi tsc — không thuộc task này).
 - **Next Step:** Sếp duyệt → commit riêng 4 file + LOG, push. Địa chỉ footer lấy từ Admin Footer tab — nên sửa thành "Hoa Binh Green City, 505 Minh Khai, Vinh Tuy, Hanoi" cho khớp hồ sơ Maps.
 - **Follow-up (2026-10-07):** Phần dở `company-profile/page.tsx` (sửa 05/10, không rõ ai: thay ảnh/video 4 thẻ dịch vụ bằng illustration code, xoá "Selected work" + "Case study ORCA", lỗi tsc) → sếp chọn **A**: cất vào `git stash` ("WIP company-profile ... sep chon A"), trang giữ nguyên như prod. tsc sạch; lint chỉ còn 2 lỗi `<a href="/">` có sẵn ở site-footer. detect_changes LOW. Commit + push phần Maps.
+
+## 2026-10-07 — Sửa địa chỉ footer khớp hồ sơ Google Maps
+- **Work Done:** `site_config.footer.contacts.address` (Supabase, qua MCP): "Tâng 4 TTTM Hoà Bình Green City, 505 Minh Khai, Phường Vĩnh Tuy, Hà Nội" (sai chính tả "Tâng", tiếng Việt trên site tiếng Anh) → "4th Floor, Hoa Binh Green City, 505 Minh Khai, Vinh Tuy, Hanoi, Vietnam". Không đổi code.
+- **Result:** Prod `/api/footer` trả địa chỉ mới ngay (footer fetch client-side, không cần build). Muốn đổi lại: Admin → Footer tab.
