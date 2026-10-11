@@ -127,6 +127,35 @@ export type Job = {
   created_at: string;
 };
 
+/** Đề test của job (file R2 hoặc link ngoài). */
+export type JobTest = {
+  id: string;
+  job_id: string;
+  kind: "file" | "link";
+  title: string;
+  url: string;
+  r2_key: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  note: string | null;
+  sort_order: number;
+  created_at: string;
+};
+
+/** Bài làm test của ứng viên — ứng viên tự nộp hoặc HR lưu hộ. */
+export type TestSubmission = {
+  id: string;
+  application_id: string;
+  kind: "file" | "link";
+  url: string;
+  r2_key: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  note: string | null;
+  submitted_by: "candidate" | "hr";
+  created_at: string;
+};
+
 export type AiEvaluation = {
   score: number;
   verdict: "strong_yes" | "yes" | "maybe" | "no";

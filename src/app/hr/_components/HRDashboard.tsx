@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Application, ApplicationComment, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
 import InterviewPanel from "./InterviewPanel";
+import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import { STATUS_PALETTE } from "./status-palette";
 
@@ -635,6 +636,8 @@ function CandidateModal({
             </div>
 
             <AppDetail app={app} hrKey={hrKey} comments={false} />
+
+            <SubmissionsPanel appId={app.id} hrKey={hrKey} />
 
             <InterviewPanel appId={app.id} hrKey={hrKey} />
 
@@ -1522,6 +1525,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
     typeof window !== "undefined" ? (localStorage.getItem(REFCODE_KEY) ?? "") : ""
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [testsId, setTestsId] = useState<string | null>(null);
 
   function saveRefCode(val: string) {
     setRefCode(val);
@@ -1668,6 +1672,17 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
                   {copiedId === job.id ? "✓ Copied!" : "📋 Copy Link"}
                 </button>
 
+                {/* Bài test */}
+                <button
+                  onClick={() => setTestsId(testsId === job.id ? null : job.id)}
+                  className={`rounded-lg border px-3 py-1 text-[10px] transition-colors ${
+                    testsId === job.id
+                      ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300"
+                      : "border-white/15 text-white/60 hover:bg-white/5"
+                  }`}>
+                  📝 Test
+                </button>
+
                 {/* Edit */}
                 <button
                   onClick={() => setEditingId(editingId === job.id ? null : job.id)}
@@ -1691,6 +1706,13 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
                   hrKey={hrKey}
                   onSave={(j) => { onUpdate(j); setEditingId(null); }}
                   onCancel={() => setEditingId(null)} />
+              </div>
+            )}
+
+            {/* Bài test của job */}
+            {testsId === job.id && (
+              <div className="border-t border-white/10 px-4 py-4">
+                <JobTestsPanel jobId={job.id} hrKey={hrKey} />
               </div>
             )}
           </div>

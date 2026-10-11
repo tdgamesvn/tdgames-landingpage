@@ -1,0 +1,326 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { JobTest, TestSubmission } from "@/app/admin/_lib/types";
+
+const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
+const INPUT =
+  "w-full rounded border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none";
+const BTN_AMBER =
+  "rounded border border-amber-500/30 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/10 disabled:opacity-40 transition-colors";
+const BTN_PLAIN =
+  "rounded border border-white/20 px-2 py-0.5 text-[10px] text-white/60 hover:bg-white/10 transition-colors";
+const MAX_SIZE = 50 * 1024 * 1024;
+
+function fmtSize(n: number | null) {
+  if (!n) return "";
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    window.prompt("Copy:", text);
+    return false;
+  }
+}
+
+/**
+ * Form thêm file/link — dùng chung cho đề test (job) và bài làm (ứng viên).
+ * `endpoint` nhận multipart `file` hoặc JSON `{ url, title, note }`.
+ */
+function AddItemForm<T>({
+  endpoint,
+  hrKey,
+  withTitle,
+  onAdded,
+}: {
+  endpoint: string;
+  hrKey: string;
+  withTitle: boolean;
+  onAdded: (item: T) => void;
+}) {
+  const [mode, setMode] = useState<"file" | "link">("file");
+  const [file, setFile] = useState<File | null>(null);
+  const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [drag, setDrag] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function submit() {
+    setErr("");
+    let init: RequestInit;
+    if (mode === "file") {
+      if (!file) return setErr("Chọn file trước");
+      if (file.size > MAX_SIZE) return setErr("File quá 50 MB");
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("title", title);
+      fd.append("note", note);
+      init = { method: "POST", headers: { "x-hr-key": hrKey }, body: fd };
+    } else {
+      if (!url.trim()) return setErr("Dán link trước");
+      init = {
+        method: "POST",
+        headers: { "x-hr-key": hrKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url.trim(), title, note }),
+      };
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(endpoint, init);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      onAdded((json.test ?? json.submission) as T);
+      setFile(null);
+      setUrl("");
+      setTitle("");
+      setNote("");
+      if (fileRef.current) fileRef.current.value = "";
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Lỗi upload");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border border-dashed border-white/15 p-2.5">
+      <div className="flex gap-1.5">
+        {(["file", "link"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${
+              mode === m ? "border-amber-500/50 bg-amber-500/10 text-amber-300" : "border-white/15 text-white/45"
+            }`}
+          >
+            {m === "file" ? "📎 File (≤50MB)" : "🔗 Link"}
+          </button>
+        ))}
+      </div>
+      {mode === "file" ? (
+        <label
+          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDrag(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f) setFile(f);
+          }}
+          className={`flex cursor-pointer items-center justify-center rounded border px-3 py-3 text-[11px] transition-colors ${
+            drag ? "border-amber-500/60 bg-amber-500/10 text-amber-200" : "border-white/10 text-white/50 hover:bg-white/5"
+          }`}
+        >
+          {file ? `${file.name} · ${fmtSize(file.size)}` : "Kéo thả file vào đây hoặc bấm để chọn"}
+          <input ref={fileRef} type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        </label>
+      ) : (
+        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://drive.google.com/…" className={INPUT} />
+      )}
+      {withTitle && (
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Tiêu đề (vd: Đề test Concept Art)" className={INPUT} />
+      )}
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Ghi chú / hướng dẫn / deadline" className={INPUT} />
+      {err && <p className="text-[11px] text-red-400">{err}</p>}
+      <button onClick={() => void submit()} disabled={busy} className={BTN_AMBER}>
+        {busy ? "Đang tải lên…" : "+ Thêm"}
+      </button>
+    </div>
+  );
+}
+
+function ItemRow({
+  icon,
+  title,
+  url,
+  sub,
+  note,
+  onDelete,
+}: {
+  icon: string;
+  title: string;
+  url: string;
+  sub: string;
+  note: string | null;
+  onDelete: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+      <div className="flex items-center gap-2">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate text-xs font-semibold text-white hover:text-amber-300">
+          {icon} {title}
+        </a>
+        {sub && <span className="shrink-0 text-[10px] text-white/35">{sub}</span>}
+        <button
+          onClick={() => void copyText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); })}
+          className={BTN_PLAIN}
+        >
+          {copied ? "✓" : "Copy"}
+        </button>
+        <button onClick={onDelete} className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400">
+          ✕
+        </button>
+      </div>
+      {note && <p className="mt-1 whitespace-pre-wrap text-[11px] text-white/50">{note}</p>}
+    </div>
+  );
+}
+
+// ── Đề test của job (tab Jobs) ─────────────────────────────────────────────────
+export function JobTestsPanel({ jobId, hrKey }: { jobId: string; hrKey: string }) {
+  const [tests, setTests] = useState<JobTest[] | null>(null);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/hr/jobs/${jobId}/tests`, { headers: { "x-hr-key": hrKey } })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!alive) return;
+        if (j.error) setErr(j.error);
+        else setTests(j.tests);
+      })
+      .catch(() => alive && setErr("Không tải được"));
+    return () => { alive = false; };
+  }, [jobId, hrKey]);
+
+  async function remove(t: JobTest) {
+    if (!confirm(`Xoá "${t.title}"?`)) return;
+    const res = await fetch(`/api/hr/job-tests/${t.id}`, { method: "DELETE", headers: { "x-hr-key": hrKey } });
+    if (res.ok) setTests((l) => l?.filter((x) => x.id !== t.id) ?? null);
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className={LABEL}>📝 Bài test của job</p>
+      {err && <p className="text-[11px] text-red-400">{err}</p>}
+      {tests === null && !err && <p className="text-[11px] text-white/30">Đang tải…</p>}
+      {tests?.length === 0 && <p className="text-[11px] text-white/30">Chưa có bài test.</p>}
+      {tests?.map((t) => (
+        <ItemRow
+          key={t.id}
+          icon={t.kind === "file" ? "📎" : "🔗"}
+          title={t.title}
+          url={t.url}
+          sub={fmtSize(t.file_size)}
+          note={t.note}
+          onDelete={() => void remove(t)}
+        />
+      ))}
+      <AddItemForm<JobTest>
+        endpoint={`/api/hr/jobs/${jobId}/tests`}
+        hrKey={hrKey}
+        withTitle
+        onAdded={(t) => setTests((l) => [...(l ?? []), t])}
+      />
+    </div>
+  );
+}
+
+// ── Bài test + bài làm của ứng viên (Candidate modal) ─────────────────────────
+export function SubmissionsPanel({ appId, hrKey }: { appId: string; hrKey: string }) {
+  const [subs, setSubs] = useState<TestSubmission[]>([]);
+  const [tests, setTests] = useState<JobTest[]>([]);
+  const [token, setToken] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/hr/applications/${appId}/submissions`, { headers: { "x-hr-key": hrKey } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive || !j) return;
+        setSubs(j.submissions);
+        setTests(j.tests);
+        setToken(j.token);
+        setLoaded(true);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [appId, hrKey]);
+
+  async function copyTestLink() {
+    let t = token;
+    if (!t) {
+      const res = await fetch(`/api/hr/applications/${appId}/submissions`, {
+        method: "POST",
+        headers: { "x-hr-key": hrKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "token" }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.token) return alert(j.error ?? "Không tạo được link");
+      t = j.token as string;
+      setToken(t);
+    }
+    await copyText(`${window.location.origin}/test/${t}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function remove(s: TestSubmission) {
+    if (!confirm("Xoá bài làm này?")) return;
+    const res = await fetch(`/api/hr/submissions/${s.id}`, { method: "DELETE", headers: { "x-hr-key": hrKey } });
+    if (res.ok) setSubs((l) => l.filter((x) => x.id !== s.id));
+  }
+
+  if (!loaded) return null;
+
+  return (
+    <div className="space-y-2 border-t border-white/8 pt-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className={LABEL}>📝 Bài test {subs.length > 0 && `· ${subs.length} bài nộp`}</p>
+        <button onClick={() => void copyTestLink()} className={BTN_AMBER} title="Link cho ứng viên xem đề + nộp bài">
+          {copied ? "✓ Đã copy" : "🔗 Copy link test"}
+        </button>
+      </div>
+
+      {tests.length === 0 ? (
+        <p className="text-[11px] text-white/30">Job này chưa có đề test — thêm ở tab Jobs.</p>
+      ) : (
+        <p className="text-[11px] text-white/45">
+          Đề: {tests.map((t, i) => (
+            <span key={t.id}>
+              {i > 0 && " · "}
+              <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-amber-300/80 hover:underline">{t.title}</a>
+            </span>
+          ))}
+        </p>
+      )}
+
+      {subs.map((s) => (
+        <ItemRow
+          key={s.id}
+          icon={s.kind === "file" ? "📎" : "🔗"}
+          title={s.file_name ?? s.url}
+          url={s.url}
+          sub={`${s.submitted_by === "hr" ? "HR lưu" : "Ứng viên nộp"} · ${new Date(s.created_at).toLocaleDateString("vi-VN")}${s.file_size ? ` · ${fmtSize(s.file_size)}` : ""}`}
+          note={s.note}
+          onDelete={() => void remove(s)}
+        />
+      ))}
+
+      {showAdd ? (
+        <AddItemForm<TestSubmission>
+          endpoint={`/api/hr/applications/${appId}/submissions`}
+          hrKey={hrKey}
+          withTitle={false}
+          onAdded={(s) => { setSubs((l) => [...l, s]); setShowAdd(false); }}
+        />
+      ) : (
+        <button onClick={() => setShowAdd(true)} className={BTN_PLAIN}>+ HR lưu bài làm</button>
+      )}
+    </div>
+  );
+}

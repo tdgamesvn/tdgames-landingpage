@@ -2,6 +2,8 @@
 
 ## Doing
 
+- [x] HR bài test theo job + bài làm ứng viên (2026-10-11) — đã commit + push (LOG 2026-10-11)
+
 - [ ] HR pipeline custom status (2026-09-25)
   - [x] Phase 1: cuộn ngang kiểu ClickUp + thu gọn cột (code xong, chưa commit/deploy)
   - [x] Phase 2: bảng `application_statuses` + UI thêm/bớt/sửa status — code xong (LOG 2026-09-25 tiếp)
