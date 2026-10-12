@@ -42,7 +42,6 @@
 
 ## Doing
 
-- [ ] **Portfolio Epic Card** (`/portfolio/epic-card`) — Spine 2D VFX, đã commit/push. Sau CI: insert row `projects` (slug epic-card) → xoá `media-inbox/EPIC CARD`.
 
 ## To do
 
