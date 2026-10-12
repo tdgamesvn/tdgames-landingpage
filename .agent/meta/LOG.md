@@ -5884,3 +5884,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - yomi-2: https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/gwen-desperation.jpg
 - Commit kèm: xoá art-study (code), 2 script cover, .gitignore scripts/.out/.
 - Deploy 434e89e fail: tsconfig include .next/types/** → type route của build cũ (còn art-study) bị check cùng build .next-new. Fix: deploy.yml xoá .next/types trước build.
+- Update 4: sếp chê boss-animation + epic-card. Lấy frame thật: boss = oni ninja da xanh cầm kiếm vàng (thumbnail Vimeo oEmbed), epic-card = 3 poster clip in-game. Script hỗ trợ nhiều ảnh mẫu (image[]). Gắn boss v3a, epic-card v3b (bản còn lại ở scripts/.out/portfolio-covers/v3a|v3b).

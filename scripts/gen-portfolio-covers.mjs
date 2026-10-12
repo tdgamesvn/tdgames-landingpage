@@ -41,7 +41,12 @@ const PROJECTS = [
   ["kayn-snow-moon", `${CDN}/images/Screenshot%202026-05-13%20232709.png`, "Snow Moon Kayn login screen illustration, moonlit snowy atmosphere, keep the splash composition feel"],
   ["summoner-era", `${CDN}/images/summonerDetail.png`, "light and dark element heroes of Summoner Era, contrast of holy light and shadow VFX"],
   ["axie-infinity-origins", `${CDN}/portfolio-covers/axie-infinity-origins.png`, "cute Axie creatures in a lively battle animation moment"],
-  ["boss-animation", `${CDN}/portfolio-covers/boss-animation.png`, "the twin bosses as an imposing boss-fight showcase"],
+  // Cover cũ chỉ là logo "The Twins" → AI bịa ra sư tử + thú vàng. Lấy frame thật của
+  // con boss từ video Vimeo trong bài (thumbnail oEmbed, d_1280).
+  ["boss-animation", [
+    "https://i.vimeocdn.com/video/1510105572-aa66966e985b1196479af07a06a76e148bd2164fdb4e86e89cd67ac09f78015b-d_1280?region=us",
+    "https://i.vimeocdn.com/video/1510105605-0954841163950b7f9a885f35044c89b306f89809df1aec80949bffeace55f3b8-d_1280?region=us",
+  ], "the green-skinned oni ninja boss from The Twins — red horned mask, wild black hair, crimson armour, a giant curved golden blade and a chain-sickle — in a menacing wide attack stance, crouched low and swinging the huge golden blade; he is the only character; plain backdrop"],
   ["horse-racing", `${CDN}/portfolio-covers/horse-racing.jpg`, "splash art of racing horses and riders in full gallop, motion and speed"],
   ["battle-of-the-gods-mytheria", `${CDN}/portfolio-covers/battle-of-the-gods-mytheria.png`, "epic clash of gods from Mytheria, login screen grandeur"],
   ["animation-contest-sky-mavis", `${CDN}/portfolio-covers/animation-contest-sky-mavis.png`, "Axie characters from the Sky Mavis animation contest entry in an energetic action beat"],
@@ -51,21 +56,30 @@ const PROJECTS = [
   ["puzzle-wonderland", `${CDN}/portfolio-covers/puzzle-wonderland.png`, "whimsical Puzzle Wonderland characters in a playful animated pose"],
   ["summoner-era-2020", `${CDN}/portfolio-covers/summoner-era-2020.jpg`, "Summoner Era login screen heroes, grand fantasy splash composition"],
   ["yomi-2", `${CDN}/portfolio/yomi-2/gwen-desperation.jpg`, "fighting-game super-move cutscene moment, intense dramatic framing"],
-  ["epic-card", `${CDN}/portfolio/epic-card/magic-orb.jpg`, "a glowing magic orb card VFX, arcane energy swirling"],
+  // Nguồn là screenshot in-game có UI → dùng nhiều frame skill để AI thấy rõ nhân vật,
+  // dặn bỏ hết UI. Bản v2 đầu (từ magic-orb.jpg) ra cô bé đứng trên đá lơ lửng, xấu.
+  ["epic-card", [
+    `${CDN}/portfolio/epic-card/debuff-immunity.jpg`,
+    `${CDN}/portfolio/epic-card/shield-invincibility.jpg`,
+    `${CDN}/portfolio/epic-card/magic-orb.jpg`,
+  ], "the white-haired chibi heroine in a grey gothic dress from the Epic Card battle captures, large and centred, casting a spell: golden angel wings of light unfold behind her and a glowing blue shield ring circles her — those two effects only; backdrop is a simplified pale moonlit gothic ruin hall in cool blue-grey; drop every UI element (no HP bar, no portraits, no buttons)"],
 ];
 
 async function gen([slug, src, content]) {
   const t0 = Date.now();
-  const ref = await fetch(src);
-  if (!ref.ok) return console.error(`✗ ${slug}: tải ảnh nguồn ${ref.status}`);
-  // Ảnh nguồn lẫn jpg/png, có ảnh 404px — chuẩn hoá về PNG để /images/edits nhận.
-  const png = await sharp(Buffer.from(await ref.arrayBuffer())).png().toBuffer();
-
+  const srcs = Array.isArray(src) ? src : [src];
   const form = new FormData();
   form.set("model", MODEL);
   form.set("size", "1536x1024");
   form.set("prompt", `${RULES}. Subject of this portfolio piece: ${content}.`);
-  form.set("image", new Blob([png], { type: "image/png" }), `${slug}.png`);
+  for (const [i, u] of srcs.entries()) {
+    const ref = await fetch(u);
+    if (!ref.ok) return console.error(`✗ ${slug}: tải ảnh nguồn ${ref.status} ${u}`);
+    // Ảnh nguồn lẫn jpg/png, có ảnh 404px — chuẩn hoá về PNG để /images/edits nhận.
+    const png = await sharp(Buffer.from(await ref.arrayBuffer())).png().toBuffer();
+    // 1 ảnh: field `image` như cũ; nhiều ảnh: `image[]` (OpenAI multi-reference).
+    form.append(srcs.length > 1 ? "image[]" : "image", new Blob([png], { type: "image/png" }), `${slug}-${i}.png`);
+  }
 
   let json;
   try {
