@@ -10,7 +10,6 @@ export const dynamic = "force-dynamic";
 
 const portfolioSlugs = [
   "animation-contest-sky-mavis",
-  "art-study",
   "axie-infinity-origins",
   "battle-of-the-gods-mytheria",
   "boss-animation",

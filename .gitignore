@@ -84,3 +84,6 @@ careers-after.png
 
 # Media gốc tạm (video/ảnh trước khi nén + upload R2)
 media-inbox/
+
+# preview ảnh AI chưa duyệt (scripts/gen-portfolio-covers.mjs)
+/scripts/.out/

@@ -5856,3 +5856,30 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - **Follow-up (2026-10-12):** Sếp: tạm bỏ UI/UX, VFX làm bằng **Spine 2D**. `epic-card/project-data.ts`: title "Epic Card — Spine 2D In-Game VFX", subtitle/scope/fields/tools đổi UI/UX → Spine 2D, overview thêm câu Spine (chạy native trong engine, nhẹ hơn video/sprite sheet), stat "60fps" → "Built with: Spine 2D", workflow bước 03/04 theo Spine, tags thêm spine; xoá TODO UI/UX. tsc + eslint sạch. Chưa commit.
 - **Yomi 2 prod (2026-10-12):** Sếp hỏi chưa thấy Yomi 2 trên prod → trang `/portfolio/yomi-2` đã 200 nhưng thiếu row `projects` nên không hiện ở lưới /portfolio. Đã insert (title "Yomi 2 | Super-Move Cutscenes", category Cinematic, cover gwen-desperation.jpg).
 - **Epic Card prod (2026-10-12):** CI deploy xong (`/portfolio/epic-card` 200). Insert row `projects` (title "Epic Card | In-Game VFX", subtitle "Spine 2D VFX", category "Game Animation & VFX", cover magic-orb.jpg). `/api/projects` có cả epic-card + yomi-2. Verify 34/34 file trên CDN → xoá `media-inbox/EPIC CARD ` + upload-epic-card.mjs. Task Epic Card done.
+
+## 2026-10-12 — Làm lại ảnh bìa list /portfolio (đang chờ duyệt)
+- Task: sếp chê ảnh bìa portfolio xấu, muốn gen lại bằng cliproxyapi, giữ nội dung + art style từng bài.
+- Work Done: `scripts/gen-portfolio-covers.mjs` — dùng `/images/edits` (ảnh bìa thật làm ảnh tham chiếu), ra 1536x1024 vào `scripts/.out/portfolio-covers/` (đã gitignore). Không upload R2, không đụng DB. Thử 3 bài: heroes-fire, kayn-snow-moon, boss-animation.
+- Result: cliproxyapi nhận `/images/edits` (~30-60s/ảnh). Giữ nhân vật tốt. boss-animation nguồn chỉ là logo "The Twins" → AI tự vẽ 2 con boss, cần ảnh nguồn tốt hơn. Sandbox chặn localhost:8317 → chạy ngoài sandbox.
+- Next: sếp duyệt style → chạy 14 bài còn lại → upload R2 + UPDATE projects.image. Việc xoá art-study: row DB đã không còn; code local đã xoá, chưa commit.
+- Update: sếp chê bản edit-từ-cover "trông AI quá". Đổi hướng: lấy frame thật từ ảnh/video trong project-data.ts (ffmpeg cắt frame, contact sheet ở scripts/.out/sheets/<slug>/). Lưu ý project-data có lẫn thumbnail bài liên quan (Axie, Kayn, Horse...) → phải lọc tay. Thử heroes-fire: A = frame thật crop+upscale (mềm vì video gốc chỉ 1200x500), B = /images/edits với 3 frame thật + prompt "giữ đúng sprite 2D, nền tối trơn, không vẽ thêm" → giống frame in-engine, nét. Chờ sếp chọn A/B.
+- Update 2: sếp chọn lại hướng edit-từ-cover nhưng muốn cartoon hơn, bớt màu mè. RULES v2 trong gen-portfolio-covers.mjs (cel shading phẳng, outline sạch, nền 1 màu, cấm particle/glow/sparkle). Chạy `VARIANT=v2` → scripts/.out/portfolio-covers/v2/. So sánh: cmp-v1-v2.jpg. Chờ sếp duyệt rồi chạy 14 bài còn lại.
+- Update 3 (2026-10-13): sếp duyệt v2 → gen đủ 17 bài, `scripts/apply-portfolio-covers.mjs v2` upload R2 (/api/admin/upload) + PATCH /api/projects. 17/17 lên production ngay (DB dùng chung, không cần deploy). Rollback: PATCH /api/projects {id, image: <ảnh cũ>} — ảnh cũ vẫn trên CDN:
+  - animation-contest-sky-mavis: https://cdn.tdgamestudio.com/landing/portfolio-covers/animation-contest-sky-mavis.png
+  - axie-infinity-origins: https://cdn.tdgamestudio.com/landing/portfolio-covers/axie-infinity-origins.png
+  - battle-of-the-gods-mytheria: https://cdn.tdgamestudio.com/landing/portfolio-covers/battle-of-the-gods-mytheria.png
+  - boss-animation: https://cdn.tdgamestudio.com/landing/portfolio-covers/boss-animation.png
+  - epic-card: https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.jpg
+  - game-animation-vfx-3q: https://cdn.tdgamestudio.com/landing/portfolio-covers/game-animation-vfx-3q.png
+  - heroes-fire: https://cdn.tdgamestudio.com/landing/portfolio-covers/heroes-fire.png
+  - horse-racing: https://cdn.tdgamestudio.com/landing/portfolio-covers/horse-racing.jpg
+  - kayn-snow-moon: https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png
+  - lore-axie-origin: https://cdn.tdgamestudio.com/landing/portfolio-covers/lore-axie-origin.png
+  - mid-autumn-summoner-era: https://cdn.tdgamestudio.com/landing/portfolio-covers/mid-autumn-summoner-era.jpg
+  - puzzle-wonderland: https://cdn.tdgamestudio.com/landing/portfolio-covers/puzzle-wonderland.png
+  - reaper-lady-project-overdrive: https://cdn.tdgamestudio.com/landing/portfolio-covers/reaper-lady-project-overdrive.png
+  - summoner-era-2020: https://cdn.tdgamestudio.com/landing/portfolio-covers/summoner-era-2020.jpg
+  - summoner-era-arena-of-heroes: https://cdn.tdgamestudio.com/landing/portfolio-covers/summoner-era-arena-of-heroes.png
+  - summoner-era: https://cdn.tdgamestudio.com/landing/images/summonerDetail.png
+  - yomi-2: https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/gwen-desperation.jpg
+- Commit kèm: xoá art-study (code), 2 script cover, .gitignore scripts/.out/.
