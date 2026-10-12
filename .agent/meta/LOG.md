@@ -5883,3 +5883,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - summoner-era: https://cdn.tdgamestudio.com/landing/images/summonerDetail.png
   - yomi-2: https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/gwen-desperation.jpg
 - Commit kèm: xoá art-study (code), 2 script cover, .gitignore scripts/.out/.
+- Deploy 434e89e fail: tsconfig include .next/types/** → type route của build cũ (còn art-study) bị check cùng build .next-new. Fix: deploy.yml xoá .next/types trước build.

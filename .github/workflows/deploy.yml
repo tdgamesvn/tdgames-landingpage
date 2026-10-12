@@ -68,6 +68,11 @@ jobs:
             rm -rf .next-new
             mkdir -p .next-new
             cp -r .next/cache .next-new/cache 2>/dev/null || true
+            # tsconfig include cả .next/types/** → type route của build CŨ bị type-check
+            # cùng build mới. Xoá 1 route (2026-10-13: /portfolio/art-study) là fail
+            # "'/portfolio/art-study' is not assignable to LayoutRoutes". Thư mục types
+            # chỉ dùng lúc type-check, app đang chạy không đọc → xoá an toàn.
+            rm -rf .next/types .next/dev/types
             NEXT_DIST_DIR=.next-new npm run build
 
             echo "🔀 Swap .next-new -> .next..."
