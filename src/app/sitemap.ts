@@ -15,6 +15,7 @@ const portfolioSlugs = [
   "battle-of-the-gods-mytheria",
   "boss-animation",
   "game-animation-vfx-3q",
+  "yomi-2",
   "heroes-fire",
   "horse-racing",
   "kayn-snow-moon",

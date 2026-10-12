@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 
 import { AutoLoopMedia } from "./auto-loop-media";
+import { CutsceneGrid } from "./cutscene-grid";
 import type { ProjectTheme, ShowcaseModule } from "./case-study-types";
 import { hexToRgba } from "./portfolio-color-utils";
 
@@ -634,6 +635,19 @@ function ShowcaseRenderer({
           );
         }
 
+        if (module.variant === "cutsceneGrid") {
+          return (
+            <CutsceneGrid
+              key={module.id}
+              items={module.items}
+              aspect={module.aspect}
+              featureFirst={module.featureFirst}
+              theme={theme}
+              panelBg={panelBg}
+            />
+          );
+        }
+
         if (module.variant === "duo") {
           return (
             <div
@@ -732,6 +746,67 @@ function ShowcaseRenderer({
           const isLarge = (module.size ?? "lg") === "lg";
           const color =
             module.color ?? (isLarge ? theme.accent : "rgba(255,255,255,0.55)");
+
+          if (isLarge && module.backgroundVideo) {
+            return (
+              <div
+                key={module.id}
+                className="relative isolate flex min-h-[420px] items-center justify-center overflow-hidden px-6 py-20 md:min-h-[560px] md:py-28"
+                style={{ backgroundColor: "#000" }}
+              >
+                <video
+                  src={module.backgroundVideo}
+                  poster={module.backgroundPoster}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  aria-hidden
+                  className="absolute inset-0 -z-20 h-full w-full scale-105 object-cover opacity-60 blur-[2px]"
+                />
+                <div
+                  aria-hidden
+                  className="absolute inset-0 -z-10"
+                  style={{
+                    background: `radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.82) 70%), linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.85) 100%)`,
+                  }}
+                />
+                <div className="flex max-w-4xl flex-col items-center text-center">
+                  <span
+                    aria-hidden
+                    className="mb-6 h-px w-16"
+                    style={{ backgroundColor: theme.accent }}
+                  />
+                  <h3
+                    className="text-[40px] font-black uppercase leading-[0.95] tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] sm:text-[56px] md:text-[80px]"
+                    style={{ fontFamily: "var(--font-rajdhani)" }}
+                  >
+                    <span className="block">{module.text}</span>
+                    {module.highlight && (
+                      <span className="block" style={{ color }}>
+                        {module.highlight}
+                      </span>
+                    )}
+                  </h3>
+                  {module.cta && (
+                    <a
+                      href={module.cta.href}
+                      className="mt-10 inline-flex items-center gap-2 rounded-full px-7 py-3 text-[12px] font-black uppercase tracking-[0.22em] text-black transition-transform hover:scale-[1.04]"
+                      style={{
+                        backgroundColor: theme.accent,
+                        boxShadow: `0 10px 40px -8px ${hexToRgba(theme.accent, 0.6)}`,
+                      }}
+                    >
+                      {module.cta.label}
+                      <span aria-hidden>&rarr;</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div
               key={module.id}

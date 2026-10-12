@@ -340,6 +340,7 @@ export default function CaseStudyLayout({
 
                 {/* RIGHT — CTA buttons, aligned bottom-right */}
                 <div className="flex shrink-0 flex-col items-start gap-2.5 lg:items-end">
+                  {meta.behanceUrl ? (
                   <a
                     href={meta.behanceUrl}
                     target="_blank"
@@ -353,6 +354,7 @@ export default function CaseStudyLayout({
                     </svg>
                     View Project on Behance
                   </a>
+                  ) : null}
                   <Link
                     href="/contact"
                     className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/6 px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] text-white backdrop-blur-sm transition-colors hover:bg-white/12"
@@ -373,14 +375,30 @@ export default function CaseStudyLayout({
                 boxShadow: `0 -16px 48px -12px ${accentRing}`,
               }}
             >
-              <Image
-                src={meta.coverImage}
-                alt={meta.title}
-                fill
-                priority
-                sizes="(max-width: 1280px) 88vw, 1200px"
-                className="object-cover object-top"
-              />
+              {meta.coverVideo ? (
+                <video
+                  src={meta.coverVideo}
+                  poster={meta.coverImage}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  aria-label={meta.title}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ objectPosition: meta.coverPosition ?? "center" }}
+                />
+              ) : (
+                <Image
+                  src={meta.coverImage}
+                  alt={meta.title}
+                  fill
+                  priority
+                  sizes="(max-width: 1280px) 88vw, 1200px"
+                  className="object-cover"
+                  style={{ objectPosition: meta.coverPosition ?? "top" }}
+                />
+              )}
               <div
                 className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/10"
                 aria-hidden

@@ -70,12 +70,24 @@ export type ProjectMeta = {
   madeForLabel?: string;
   madeForUrl?: string;
   coverImage: string;
+  /** Optional looping muted video for the hero; coverImage becomes its poster. */
+  coverVideo?: string;
+  /** CSS object-position for the hero media (default "top"). */
+  coverPosition?: string;
   credits?: readonly Credit[];
   tools: readonly string[];
   fields: readonly string[];
   tags?: readonly string[];
   theme: ProjectTheme;
   workflow: readonly WorkflowStep[];
+};
+
+export type CutsceneItem = {
+  src: string;
+  poster: string;
+  title: string;
+  /** Small label above the title, e.g. character name. */
+  kicker?: string;
 };
 
 export type ShowcaseModule =
@@ -104,12 +116,28 @@ export type ShowcaseModule =
   | { id: string; variant: "sectionLabel"; label: string }
   | {
       id: string;
+      variant: "cutsceneGrid";
+      /** width/height of every clip, defaults to 16/9. */
+      aspect?: number;
+      /** First clip spans the full row as a featured piece. */
+      featureFirst?: boolean;
+      items: readonly CutsceneItem[];
+    }
+  | {
+      id: string;
       variant: "closing";
       text: string;
       /** Big = "lg", small = "sm" (default lg). */
       size?: "sm" | "lg";
       /** Optional hex override; defaults to theme.accent for lg, white/55 for sm. */
       color?: string;
+      /** Optional second line rendered in theme.accent (lg only). */
+      highlight?: string;
+      /** Looping muted video behind the text (lg only) — turns it into a cinematic outro. */
+      backgroundVideo?: string;
+      backgroundPoster?: string;
+      /** Optional CTA button under the text. */
+      cta?: { label: string; href: string };
     }
   | {
       id: string;
