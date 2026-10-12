@@ -46,21 +46,54 @@ async function getPost(slug: string) {
 
 const BASE_URL = "https://tdgamestudio.com";
 
-// Bài liên quan: 1 query, ưu tiên cùng tag rồi mới tới bài mới nhất.
+type RelatedPost = { slug: string; title: string; tag: string; cover_image: string; created_at: string };
+
+// Bài liên quan + bài trước/sau. Bản cũ chỉ lấy 9 bài MỚI NHẤT → cả trăm bài đều
+// link về cùng ~6 bài, bài cũ không ai link tới (mồ côi, Google không crawl).
+// Giờ lấy các bài HÀNG XÓM của bài hiện tại (cùng tag trước, xoay vòng) → mọi bài
+// đều nhận link từ bài lân cận, cả kho blog nối thành chuỗi.
 async function getRelated(slug: string, tag: string) {
+  const empty = { related: [] as RelatedPost[], prev: null as RelatedPost | null, next: null as RelatedPost | null };
   try {
     const { data } = await getSupabaseAdmin()
       .from("blog_posts")
       .select("slug, title, tag, cover_image, created_at")
       .eq("published", true)
-      .neq("slug", slug)
-      .order("created_at", { ascending: false })
-      .limit(9);
-    return (data ?? [])
-      .sort((a, b) => Number(b.tag === tag) - Number(a.tag === tag))
-      .slice(0, 3);
+      .order("created_at", { ascending: false });
+    const all = (data ?? []) as RelatedPost[];
+    const idx = all.findIndex((p) => p.slug === slug);
+    if (idx === -1) return empty; // bản nháp đang preview — khỏi tính
+
+    const prev = all[idx + 1] ?? null; // cũ hơn
+    const next = all[idx - 1] ?? null; // mới hơn
+    const taken = new Set([slug, prev?.slug, next?.slug]);
+
+    // Duyệt vòng quanh bài hiện tại: +1, -1, +2, -2, … trong một danh sách.
+    const around = (list: RelatedPost[], center: number) => {
+      const out: RelatedPost[] = [];
+      for (let d = 1; d < list.length; d++) {
+        for (const i of [center + d, center - d]) {
+          out.push(list[((i % list.length) + list.length) % list.length]);
+        }
+      }
+      return out;
+    };
+
+    const sameTag = all.filter((p) => p.tag === tag);
+    const candidates = [
+      ...around(sameTag, sameTag.findIndex((p) => p.slug === slug)),
+      ...around(all, idx),
+    ];
+    const related: RelatedPost[] = [];
+    for (const p of candidates) {
+      if (related.length === 3) break;
+      if (taken.has(p.slug)) continue;
+      taken.add(p.slug);
+      related.push(p);
+    }
+    return { related, prev, next };
   } catch {
-    return [];
+    return empty;
   }
 }
 
@@ -108,7 +141,7 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const htmlContent = post.content_md ? (marked(post.content_md) as string) : "";
-  const related = await getRelated(slug, post.tag);
+  const { related, prev, next } = await getRelated(slug, post.tag);
 
   // JSON-LD cho Google rich result. Bản nháp thì thôi, khỏi rác.
   const jsonLd = post.isPreview
@@ -331,6 +364,24 @@ export default async function BlogPostPage({ params }: Props) {
                 ))}
               </div>
             </section>
+          )}
+
+          {/* Bài trước / sau — nối cả kho blog thành chuỗi crawl được */}
+          {(prev || next) && (
+            <nav aria-label="More articles" className="mt-12 grid gap-4 border-t border-white/10 pt-8 sm:grid-cols-2">
+              {prev ? (
+                <Link href={`/blog/${prev.slug}`} rel="prev" className="group block rounded-lg border border-white/10 p-4 transition hover:border-[#f59e0b]/60">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">← Previous article</span>
+                  <span className="mt-1.5 line-clamp-2 block text-sm font-semibold leading-snug text-white/85 group-hover:text-[#f59e0b]">{prev.title}</span>
+                </Link>
+              ) : <span />}
+              {next && (
+                <Link href={`/blog/${next.slug}`} rel="next" className="group block rounded-lg border border-white/10 p-4 text-right transition hover:border-[#f59e0b]/60">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Next article →</span>
+                  <span className="mt-1.5 line-clamp-2 block text-sm font-semibold leading-snug text-white/85 group-hover:text-[#f59e0b]">{next.title}</span>
+                </Link>
+              )}
+            </nav>
           )}
 
           {/* Back link */}

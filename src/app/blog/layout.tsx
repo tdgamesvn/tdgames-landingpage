@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-// Blog index là client page → metadata đặt ở layout. /blog/[slug] tự override bằng generateMetadata.
+// Metadata chung cho blog. /blog tự override canonical theo ?page/?tag; /blog/[slug] override bằng generateMetadata.
 export const metadata: Metadata = {
   title: "Blog — 2D Game Art, Animation & VFX Insights",
   description:

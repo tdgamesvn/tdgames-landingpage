@@ -1,15 +1,21 @@
-"use client";
-
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo, useEffect } from "react";
 import { Nunito_Sans } from "next/font/google";
 
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
 import { AccentHighlight } from "@/components/accent-highlight";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
+
+// Server-rendered: link tới từng bài PHẢI có sẵn trong HTML để Googlebot crawl.
+// (Bản cũ là client page fetch /api/blog — mà robots.txt chặn /api/ → Google
+// thấy /blog trống trơn, ~100 bài thành mồ côi, kẹt "Đã phát hiện – chưa lập chỉ mục".)
+// Phân trang + lọc tag bằng URL thật (?page=, ?tag=) thay vì button onClick.
 
 const nunitoSans = Nunito_Sans({ weight: ["400", "600", "700"], subsets: ["latin"] });
+
+const PER_PAGE = 10;
 
 type Post = {
   id: string;
@@ -19,11 +25,45 @@ type Post = {
   tag: string;
   cover_image: string;
   views: number;
-  author: string;
   created_at: string;
 };
 
-const PER_PAGE = 10;
+type Props = { searchParams: Promise<{ page?: string; tag?: string }> };
+
+async function getPosts(): Promise<Post[]> {
+  try {
+    const { data } = await getSupabaseAdmin()
+      .from("blog_posts")
+      .select("id, slug, title, excerpt, tag, cover_image, views, created_at")
+      .eq("published", true)
+      .order("created_at", { ascending: false });
+    return (data ?? []) as Post[];
+  } catch (err) {
+    console.error("[blog index]", err);
+    return [];
+  }
+}
+
+function parseParams(sp: { page?: string; tag?: string }) {
+  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
+  const tag = sp.tag && sp.tag !== "All" ? sp.tag : undefined;
+  return { page, tag };
+}
+
+function blogHref(page: number, tag?: string) {
+  const qs = new URLSearchParams();
+  if (tag) qs.set("tag", tag);
+  if (page > 1) qs.set("page", String(page));
+  const s = qs.toString();
+  return s ? `/blog?${s}` : "/blog";
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { page, tag } = parseParams(await searchParams);
+  // Mỗi trang phân trang tự canonical về chính nó (không dồn về /blog) để Google
+  // vẫn coi là trang riêng và đi theo link bài bên trong.
+  return { alternates: { canonical: blogHref(page, tag) } };
+}
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -33,34 +73,15 @@ function fmtDate(iso: string) {
   }).replace(/\//g, ".");
 }
 
-export default function BlogPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTag, setActiveTag] = useState("All");
-  const [page, setPage] = useState(1);
+export default async function BlogPage({ searchParams }: Props) {
+  const { page: requestedPage, tag: activeTag } = parseParams(await searchParams);
+  const posts = await getPosts();
 
-  useEffect(() => {
-    fetch("/api/blog")
-      .then((r) => r.json())
-      .then((d) => setPosts(d.posts ?? []))
-      .catch(() => {/* silently fail */})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const tags = useMemo(() => {
-    const unique = Array.from(new Set(posts.map((p) => p.tag)));
-    return ["All", ...unique];
-  }, [posts]);
-
-  const filtered = useMemo(
-    () => (activeTag === "All" ? posts : posts.filter((p) => p.tag === activeTag)),
-    [activeTag, posts]
-  );
-
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const tags = ["All", ...Array.from(new Set(posts.map((p) => p.tag).filter(Boolean)))];
+  const filtered = activeTag ? posts.filter((p) => p.tag === activeTag) : posts;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const page = Math.min(requestedPage, totalPages);
   const pagePosts = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-
-  const changeTag = (tag: string) => { setActiveTag(tag); setPage(1); };
 
   return (
     <>
@@ -91,7 +112,7 @@ export default function BlogPage() {
               </span>
               <div className="h-px w-16 shrink-0 bg-gradient-to-r from-[#ff8c3a]/60 to-transparent" />
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/70">
-                {loading ? "…" : `${posts.length} Articles`}
+                {posts.length} Articles
               </span>
             </div>
 
@@ -116,51 +137,38 @@ export default function BlogPage() {
           <div className="mx-auto px-4" style={{ width: "min(var(--layout-width,85%),1280px)" }}>
 
             {/* Filter tabs */}
-            {!loading && tags.length > 1 && (
+            {tags.length > 2 && (
               <div className="mb-8">
                 <p className="mb-3 text-sm text-white/55">Choose the articles you are interested in</p>
                 <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => changeTag(tag)}
-                      className={`rounded-full border px-5 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
-                        activeTag === tag
-                          ? "border-[#f59e0b] bg-[#f59e0b] text-black"
-                          : "border-white/20 text-white/70 hover:border-white/40 hover:text-white"
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
+                  {tags.map((tag) => {
+                    const isActive = tag === "All" ? !activeTag : activeTag === tag;
+                    return (
+                      <Link
+                        key={tag}
+                        href={blogHref(1, tag === "All" ? undefined : tag)}
+                        scroll={false}
+                        className={`rounded-full border px-5 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                          isActive
+                            ? "border-[#f59e0b] bg-[#f59e0b] text-black"
+                            : "border-white/20 text-white/70 hover:border-white/40 hover:text-white"
+                        }`}
+                      >
+                        {tag}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Loading skeleton */}
-            {loading && (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex min-h-[180px] overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] animate-pulse">
-                    <div className="w-[190px] shrink-0 bg-white/[0.06]" />
-                    <div className="flex-1 p-5 space-y-3">
-                      <div className="h-3 w-16 rounded bg-white/10" />
-                      <div className="h-5 w-4/5 rounded bg-white/10" />
-                      <div className="h-3 w-full rounded bg-white/[0.06]" />
-                      <div className="h-3 w-3/4 rounded bg-white/[0.06]" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
             {/* Empty state */}
-            {!loading && posts.length === 0 && (
+            {pagePosts.length === 0 && (
               <p className="text-center text-sm text-white/40 py-16">No posts yet. Check back soon!</p>
             )}
 
             {/* 2-column grid */}
-            {!loading && pagePosts.length > 0 && (
+            {pagePosts.length > 0 && (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {pagePosts.map((post) => (
                   <article
@@ -211,7 +219,7 @@ export default function BlogPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                               d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                          {post.views.toLocaleString()}
+                          {(post.views ?? 0).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -220,23 +228,20 @@ export default function BlogPage() {
               </div>
             )}
 
-            {/* Pagination */}
+            {/* Pagination — <a> thật để crawler đi được sang trang 2, 3… */}
             {totalPages > 1 && (
-              <div className="mt-10 flex items-center justify-center gap-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 text-white/60 transition-all hover:border-white/30 hover:text-white disabled:opacity-30"
-                >
+              <nav aria-label="Blog pagination" className="mt-10 flex flex-wrap items-center justify-center gap-2">
+                <PageLink href={blogHref(page - 1, activeTag)} disabled={page === 1} label="Previous page" rel="prev">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
-                </button>
+                </PageLink>
 
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                  <button
+                  <Link
                     key={n}
-                    onClick={() => setPage(n)}
+                    href={blogHref(n, activeTag)}
+                    aria-current={page === n ? "page" : undefined}
                     className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-bold transition-all ${
                       page === n
                         ? "border-[#f59e0b] bg-[#f59e0b] text-black"
@@ -244,19 +249,15 @@ export default function BlogPage() {
                     }`}
                   >
                     {n}
-                  </button>
+                  </Link>
                 ))}
 
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 text-white/60 transition-all hover:border-white/30 hover:text-white disabled:opacity-30"
-                >
+                <PageLink href={blogHref(page + 1, activeTag)} disabled={page === totalPages} label="Next page" rel="next">
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
-              </div>
+                </PageLink>
+              </nav>
             )}
           </div>
         </section>
@@ -264,5 +265,34 @@ export default function BlogPage() {
         <SiteFooter />
       </main>
     </>
+  );
+}
+
+function PageLink({
+  href,
+  disabled,
+  label,
+  rel,
+  children,
+}: {
+  href: string;
+  disabled: boolean;
+  label: string;
+  rel: string;
+  children: React.ReactNode;
+}) {
+  const cls =
+    "flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 text-white/60 transition-all hover:border-white/30 hover:text-white";
+  if (disabled) {
+    return (
+      <span aria-hidden className={`${cls} opacity-30`}>
+        {children}
+      </span>
+    );
+  }
+  return (
+    <Link href={href} rel={rel} aria-label={label} className={cls}>
+      {children}
+    </Link>
   );
 }
