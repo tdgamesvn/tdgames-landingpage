@@ -5895,3 +5895,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Trang src/app/portfolio/stickman-legend/ (sectionLabel + cutsceneGrid mỗi quái, closing 3013 skill_02, related = epic-card) + sitemap. Không ghi thể loại game (sếp chưa xác nhận).
 - Cover list: gen-portfolio-covers.mjs entry stickman-legend (3013 quỷ cánh), chọn sl-b.
 - Prod: deploy xong (/portfolio/stickman-legend 200). Thêm row projects (POST /api/projects): 'Stickman Legend | Monster Animation', subtitle 'Spine 2D Animation', category 'Character Animation', cover sl-b. /api/projects: 18 bài. Source media-inbox/Stickman Legend + stickman-out + upload-stickman.mjs CHƯA xoá (chờ sếp duyệt).
+- Update: sếp chê hiện ID → tự đặt tên theo concept: 3008 Cerberus Hound, 3009 Brood Mother, 3010 Gorehorn Maw, 3012 Bonecrusher Brute, 3013 Nightwing Demon (section label + caption + overview). ID vẫn là tên file CDN.

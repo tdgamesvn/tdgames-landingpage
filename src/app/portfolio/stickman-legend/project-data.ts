@@ -22,20 +22,22 @@ const ANIMS = [
   ["skill_02", "Skill 02"],
 ] as const;
 
-const clip = (id: string, anim: string, title: string): CutsceneItem => ({
+const clip = (id: string, anim: string, title: string, name: string): CutsceneItem => ({
   src: `${CDN}/${id}_${anim}.mp4`,
   poster: `${CDN}/${id}_${anim}.jpg`,
   title,
-  kicker: `Monster ${id}`,
+  kicker: name,
 });
 
+// Khách chỉ giao ID. Sếp (2026-10-13): hiện ID không hay → tự đặt tên theo concept.
+// `id` vẫn là tên file trên CDN, `name` chỉ để hiển thị.
 // 3013 không có clip move trong bộ bàn giao.
 const MONSTERS = [
-  { id: "3008", anims: ["idle", "move", "attack", "skill_01", "skill_02"] },
-  { id: "3009", anims: ["idle", "move", "attack", "skill_01", "skill_02"] },
-  { id: "3010", anims: ["idle", "move", "attack", "skill_01", "skill_02"] },
-  { id: "3012", anims: ["idle", "move", "attack", "skill_01", "skill_02"] },
-  { id: "3013", anims: ["idle", "attack", "skill_01", "skill_02"] },
+  { id: "3008", name: "Cerberus Hound", anims: ["idle", "move", "attack", "skill_01", "skill_02"] }, // chó ba đầu
+  { id: "3009", name: "Brood Mother", anims: ["idle", "move", "attack", "skill_01", "skill_02"] }, // nhện cõng trứng
+  { id: "3010", name: "Gorehorn Maw", anims: ["idle", "move", "attack", "skill_01", "skill_02"] }, // miệng răng + sừng đỏ
+  { id: "3012", name: "Bonecrusher Brute", anims: ["idle", "move", "attack", "skill_01", "skill_02"] }, // vác chuỳ gai
+  { id: "3013", name: "Nightwing Demon", anims: ["idle", "attack", "skill_01", "skill_02"] }, // quỷ cánh dơi
 ] as const;
 
 export const projectMeta: ProjectMeta = {
@@ -66,7 +68,7 @@ export const projectMeta: ProjectMeta = {
     "Two signature skill animations per monster",
   ],
   overview: {
-    body: "The client supplied finished monster designs; our job was to bring them to life in Spine 2D. Each creature got a full combat set — an idle that sells its weight, a movement cycle, a basic attack and two signature skills — rigged as lightweight skeletal animation so they run natively in the game engine. The roster is deliberately varied: a three-headed hound, an egg-laden spider, a horned maw, a club-wielding brute and a winged demon, each needing its own rig logic and sense of mass. We kept the black-and-crimson silhouettes readable at a glance and timed every attack with a clear anticipation, strike and recovery so every hit reads clearly in combat.",
+    body: "The client supplied finished monster designs; our job was to bring them to life in Spine 2D. Each creature got a full combat set — an idle that sells its weight, a movement cycle, a basic attack and two signature skills — rigged as lightweight skeletal animation so they run natively in the game engine. The roster is deliberately varied: the three-headed Cerberus Hound, the egg-laden Brood Mother, the Gorehorn Maw, the club-wielding Bonecrusher Brute and the Nightwing Demon, each needing its own rig logic and sense of mass. We kept the black-and-crimson silhouettes readable at a glance and timed every attack with a clear anticipation, strike and recovery so every hit reads clearly in combat.",
     stats: [
       { value: "5", label: "Monsters" },
       { value: "24", label: "Animations" },
@@ -107,13 +109,13 @@ export const projectMeta: ProjectMeta = {
 
 export const showcaseModules: readonly ShowcaseModule[] = [
   ...MONSTERS.flatMap((m): ShowcaseModule[] => [
-    { id: `label-${m.id}`, variant: "sectionLabel", label: `Monster ${m.id}` },
+    { id: `label-${m.id}`, variant: "sectionLabel", label: m.name },
     {
       id: `monster-${m.id}`,
       variant: "cutsceneGrid",
       aspect: CLIP_ASPECT,
       items: m.anims.map((a) =>
-        clip(m.id, a, ANIMS.find(([k]) => k === a)?.[1] ?? a),
+        clip(m.id, a, ANIMS.find(([k]) => k === a)?.[1] ?? a, m.name),
       ),
     },
   ]),
