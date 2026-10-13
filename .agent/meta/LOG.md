@@ -5886,3 +5886,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Deploy 434e89e fail: tsconfig include .next/types/** → type route của build cũ (còn art-study) bị check cùng build .next-new. Fix: deploy.yml xoá .next/types trước build.
 - Update 4: sếp chê boss-animation + epic-card. Lấy frame thật: boss = oni ninja da xanh cầm kiếm vàng (thumbnail Vimeo oEmbed), epic-card = 3 poster clip in-game. Script hỗ trợ nhiều ảnh mẫu (image[]). Gắn boss v3a, epic-card v3b (bản còn lại ở scripts/.out/portfolio-covers/v3a|v3b).
 - Update 5: sếp muốn 2 bài ấn tượng/dynamic hơn → prompt v4 (góc máy thấp, bố cục chéo, khoảnh khắc ra đòn, 1 vệt chém/hiệu ứng đồ hoạ; epic-card thêm quạt lá bài). Gắn boss v4a, epic-card v4b.
+- Update 6: sếp bắt lỗi boss v4 (chuôi 1 tay, lưỡi 1 tay). Prompt v5: 1 thanh greatsword liền khối, 2 tay cùng nắm chuôi, xích liềm treo thắt lưng. 3 bản v5a/b/c đều đúng (đã zoom check tay cầm). Gắn v5b.
