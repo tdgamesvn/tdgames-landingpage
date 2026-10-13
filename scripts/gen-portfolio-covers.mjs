@@ -59,7 +59,12 @@ const PROJECTS = [
   ["mid-autumn-summoner-era", `${CDN}/portfolio-covers/mid-autumn-summoner-era.jpg`, "Mid-Autumn festival scene with Summoner Era heroes, lanterns and full moon"],
   ["puzzle-wonderland", `${CDN}/portfolio-covers/puzzle-wonderland.png`, "whimsical Puzzle Wonderland characters in a playful animated pose"],
   ["summoner-era-2020", `${CDN}/portfolio-covers/summoner-era-2020.jpg`, "Summoner Era login screen heroes, grand fantasy splash composition"],
-  ["yomi-2", `${CDN}/portfolio/yomi-2/gwen-desperation.jpg`, "fighting-game super-move cutscene moment, intense dramatic framing"],
+  // v2 cũ (ref gwen-desperation, Gwen ngã ngửa) — sếp chê không ấn tượng. Lấy frame
+  // super-move thật; "slug@biến-thể" để thử nhiều chủ thể, file ra vẫn là yomi-2.png.
+  ["yomi-2@gwen", [`${CDN}/portfolio/yomi-2/gwen-ice-shards.jpg`, `${CDN}/portfolio/yomi-2/gwen-desperation.jpg`],
+    "GWEN from Yomi 2 — blue-skinned assassin in a red-brown hood with glowing yellow eyes, a long golden braid, teal wraps and white clawed gauntlets — diving head-first straight down toward the viewer out of the sky at the peak of her Ice Shards super move, extreme high-to-low foreshortening so one clawed hand reaches huge into the foreground, her braid whipping behind her in a long S-curve; a ring of big sharp ice shards bursting outward around her as the one signature effect, drawn as bold flat cartoon shapes, plus bold radial anime speed lines converging on her; correct anatomy: head between the shoulders, two arms, two legs; backdrop deep teal to navy radial burst"],
+  ["yomi-2@onimaru", [`${CDN}/portfolio/yomi-2/onimaru-clockwork-soldiers.jpg`, `${CDN}/portfolio/yomi-2/onimaru-martial-law.jpg`],
+    "ONIMARU from Yomi 2 — a stocky samurai warlord in red lacquered armour with gold trim, horned kabuto helmet and a huge broad-bladed sword — charging straight at the viewer in a low wide-angle shot, the broad sword held in both hands at his side in a horizontal two-handed grip ready to cleave (NOT raised overhead), armour plates and cape flaring back with the speed; one signature effect only: a bold flat orange flame slash trail sweeping across the frame behind the blade, plus bold anime speed lines; correct anatomy: head above the shoulders, both arms attached at the shoulders; backdrop a hot orange to deep red radial burst"],
   // Nguồn là screenshot in-game có UI → dùng nhiều frame skill để AI thấy rõ nhân vật,
   // dặn bỏ hết UI. Bản v2 đầu (từ magic-orb.jpg) ra cô bé đứng trên đá lơ lửng, xấu.
   ["epic-card", [
@@ -115,8 +120,8 @@ async function gen([slug, src, content]) {
     .resize(1536, 1024, { fit: "cover", position: "attention" })
     .png()
     .toBuffer();
-  await writeFile(`${OUT}/${slug}.png`, out);
-  console.log(`✓ ${slug}\t${OUT}/${slug}.png\t${Math.round((Date.now() - t0) / 1000)}s`);
+  await writeFile(`${OUT}/${slug.split("@")[0]}.png`, out);
+  console.log(`✓ ${slug}\t${OUT}/${slug.split("@")[0]}.png\t${Math.round((Date.now() - t0) / 1000)}s`);
 }
 
 const only = process.argv.slice(2);
