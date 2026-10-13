@@ -80,6 +80,9 @@ const PROJECTS = [
     "https://cdn.tdgamestudio.com/landing/portfolio/stickman-legend/3013_idle.jpg",
     "https://cdn.tdgamestudio.com/landing/portfolio/stickman-legend/3010_skill_02.jpg",
   ], "the black winged demon monster from the first reference — jet-black body, huge tattered bat wings spread wide, white curved horns, crimson markings on face and chest — rearing up in a menacing roar toward the viewer with wings fully open, seen from a slightly low angle; keep its flat black-and-crimson silhouette style exactly; he is the only character; one bold graphic crimson energy shape behind him; backdrop a deep crimson to near-black gradient with a large pale moon disc behind the wings for silhouette"],
+  // A002 casual roster: 3 nhân vật + 1 pet, nền pastel sáng — khác tông tối của cả bộ có chủ đích (sếp muốn tươi sáng).
+  ["chibi-heroes-pets", ["https://cdn.tdgamestudio.com/landing/portfolio/chibi-heroes-pets/char_17_idle.jpg", "https://cdn.tdgamestudio.com/landing/portfolio/chibi-heroes-pets/hero_31_idle.jpg", "https://cdn.tdgamestudio.com/landing/portfolio/chibi-heroes-pets/pet_3_idle.jpg"],
+    "a cheerful group shot of the chibi cast from the references: the red-scarf ninja with twin curved blades in the centre front, the blonde knight girl with her oversized sword on one side, and the orange Shiba pup bouncing at their feet; big heads, tiny bodies, thick dark outlines, exactly the same cute casual art style; all three posed happily toward the viewer as if ready for adventure; backdrop a bright soft sky-blue to pastel lavender gradient with a few simple chunky white clouds — light, sunny and playful, NOT dark"],
 ];
 
 async function gen([slug, src, content]) {
