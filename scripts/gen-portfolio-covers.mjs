@@ -68,6 +68,13 @@ const PROJECTS = [
     `${CDN}/portfolio/epic-card/magic-orb.jpg`,
     // v4: thêm động tác + góc nghiêng + "card" làm motif để ra đúng chất Epic Card.
   ], "the white-haired chibi heroine in a grey gothic dress from the Epic Card battle captures, large in frame, mid-air in a dynamic twisting spell-casting leap toward the viewer, one arm thrust forward with her staff, long hair and dress flaring in a sweeping S-curve; camera tilted at a dutch angle from slightly below; a fan of three oversized glowing trading cards bursts out of her outstretched hand and spins toward the camera with motion blur, the nearest card huge in the foreground; golden angel wings of light snap open behind her and a crisp blue shield ring slices diagonally through the frame — those effects only, drawn as bold flat cartoon shapes; backdrop a simplified moonlit gothic ruin hall in cool blue with a strong diagonal shaft of light; drop every UI element (no HP bar, no portraits, no buttons, no card text)"],
+  // Quái chỉ có ID (khách không đặt tên). Lấy 3013 (quỷ có cánh) làm chủ thể — dáng
+  // xoè cánh đọc rõ nhất ở thumbnail; 3008 + 3010 làm mẫu chung cho art style.
+  ["stickman-legend", [
+    "https://cdn.tdgamestudio.com/landing/portfolio/stickman-legend/3013_skill_02.jpg",
+    "https://cdn.tdgamestudio.com/landing/portfolio/stickman-legend/3013_idle.jpg",
+    "https://cdn.tdgamestudio.com/landing/portfolio/stickman-legend/3010_skill_02.jpg",
+  ], "the black winged demon monster from the first reference — jet-black body, huge tattered bat wings spread wide, white curved horns, crimson markings on face and chest — rearing up in a menacing roar toward the viewer with wings fully open, seen from a slightly low angle; keep its flat black-and-crimson silhouette style exactly; he is the only character; one bold graphic crimson energy shape behind him; backdrop a deep crimson to near-black gradient with a large pale moon disc behind the wings for silhouette"],
 ];
 
 async function gen([slug, src, content]) {

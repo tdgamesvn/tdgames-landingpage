@@ -5888,3 +5888,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Update 5: sếp muốn 2 bài ấn tượng/dynamic hơn → prompt v4 (góc máy thấp, bố cục chéo, khoảnh khắc ra đòn, 1 vệt chém/hiệu ứng đồ hoạ; epic-card thêm quạt lá bài). Gắn boss v4a, epic-card v4b.
 - Update 6: sếp bắt lỗi boss v4 (chuôi 1 tay, lưỡi 1 tay). Prompt v5: 1 thanh greatsword liền khối, 2 tay cùng nắm chuôi, xích liềm treo thắt lưng. 3 bản v5a/b/c đều đúng (đã zoom check tay cầm). Gắn v5b.
 - Update 7: boss v5 sai anatomy (giơ kiếm qua đầu → tay mọc dưới đầu). Prompt v6: đổi dáng chém ngang 2 tay ngang ngực, cấm giơ tay quá đầu, mô tả rõ vai/khuỷu. Gắn v6a. Bài học: AI hay vẽ sai dáng overhead — tránh khi prompt nhân vật cầm vũ khí lớn.
+
+## 2026-10-13 — Portfolio: case study Stickman Legend
+- Nguồn: media-inbox/Stickman Legend — 5 quái (3008/3009/3010/3012/3013; không có 3011, 3013 thiếu move), 24 clip Spine 2D, 50fps, lệch khung (1280×720/720×720/960×720), nền #3a3b42. Sếp: studio CHỈ làm animation Spine 2D, quái không có tên → caption dùng ID.
+- ffmpeg → 960×720, 30fps, CRF24, faststart, không audio + poster (3.9MB). 3008 scale+pad (cắt thì chạm mép), 3009 pad, 3012 giữ nguyên (zoom làm cụt chuỳ). Đã quét mép từng frame: không clip nào chạm mép. R2 landing/portfolio/stickman-legend/ (48/48 CDN 200, script tạm media-inbox/upload-stickman.mjs).
+- Trang src/app/portfolio/stickman-legend/ (sectionLabel + cutsceneGrid mỗi quái, closing 3013 skill_02, related = epic-card) + sitemap. Không ghi thể loại game (sếp chưa xác nhận).
+- Cover list: gen-portfolio-covers.mjs entry stickman-legend (3013 quỷ cánh), chọn sl-b.

@@ -16,6 +16,7 @@ const portfolioSlugs = [
   "game-animation-vfx-3q",
   "yomi-2",
   "epic-card",
+  "stickman-legend",
   "heroes-fire",
   "horse-racing",
   "kayn-snow-moon",
