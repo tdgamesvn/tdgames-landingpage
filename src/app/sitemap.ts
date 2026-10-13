@@ -17,6 +17,7 @@ const portfolioSlugs = [
   "yomi-2",
   "epic-card",
   "stickman-legend",
+  "chibi-heroes-pets",
   "heroes-fire",
   "horse-racing",
   "kayn-snow-moon",

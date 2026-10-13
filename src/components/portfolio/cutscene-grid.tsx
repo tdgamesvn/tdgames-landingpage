@@ -14,12 +14,15 @@ export function CutsceneGrid({
   items,
   aspect = 16 / 9,
   featureFirst = false,
+  columns = 2,
   theme,
   panelBg,
 }: {
   items: readonly CutsceneItem[];
   aspect?: number;
   featureFirst?: boolean;
+  /** Số cột trên desktop. 3 cho clip nhân vật nhỏ (casual roster) để trang đỡ dài. */
+  columns?: 2 | 3;
   theme: ProjectTheme;
   panelBg: string;
 }) {
@@ -50,7 +53,11 @@ export function CutsceneGrid({
 
   return (
     <div className="px-3 py-6 md:px-6 md:py-10" style={{ backgroundColor: panelBg }}>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+      <div
+        className={`grid gap-3 md:gap-4 ${
+          columns === 3 ? "grid-cols-2 lg:grid-cols-3" : "grid-cols-1 md:grid-cols-2"
+        }`}
+      >
         {items.map((item, idx) => {
           const featured = featureFirst && idx === 0;
           return (

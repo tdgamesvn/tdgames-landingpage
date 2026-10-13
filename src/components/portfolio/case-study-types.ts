@@ -121,6 +121,8 @@ export type ShowcaseModule =
       aspect?: number;
       /** First clip spans the full row as a featured piece. */
       featureFirst?: boolean;
+      /** Desktop column count, defaults to 2. Use 3 for small character clips. */
+      columns?: 2 | 3;
       items: readonly CutsceneItem[];
     }
   | {

@@ -5900,3 +5900,8 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Update: sếp chê v2 (scale nhỏ + lệch màu nền do overlay lên lavfi color). v3: crop 48px trên + pad đáy fillborders smear (nền khớp 3a3b42 mọi điểm), giữ size gốc; subject top 10–211, bottom 574–628. Bài học: dịch khung thì crop+smear, đừng scale/overlay nền tự tạo.
 - Update: sếp chê cover yomi-2 (Gwen ngã ngửa). Entry mới 'slug@biến-thể' (yomi-2@gwen / @onimaru, file ra vẫn yomi-2.png), ref = poster super-move thật. 4 bản; gwen-a lỗi 2 bím tóc → gắn gwen-b (Gwen bổ nhào + băng nhọn + speed lines). Onimaru (oni-a/b) để sếp chọn nếu muốn.
 - Update: banner (coverVideo/coverImage) Stickman Legend → 3010_idle (Gorehorn Maw idle) theo sếp.
+
+## 2026-10-13 — Portfolio: Chibi Heroes & Pets (media-inbox/A002)
+- A002 = mã nội bộ; 26 unit (3 hero, 12 char, 9 pet, 2 summon), 57 clip Spine 2D 640×480 nền #d3e6f8. Sếp: chỉ làm animation Spine 2D, design tươi sáng/casual. Tên unit tự đặt theo concept.
+- Clip: pad đáy +64 bằng fillborders smear → 640×544 (đất ~74%, trên caption), 30fps CRF23; R2 landing/portfolio/chibi-heroes-pets/ 114/114. Script tạm media-inbox/upload-a002.mjs.
+- CutsceneGrid thêm prop tuỳ chọn columns (2|3, mặc định 2; impact LOW). Trang 3 cột, 4 nhóm, theme indigo + vàng/xanh trời. Chưa thêm row projects/cover list.

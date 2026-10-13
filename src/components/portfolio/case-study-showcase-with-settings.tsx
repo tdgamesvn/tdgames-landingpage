@@ -642,6 +642,7 @@ function ShowcaseRenderer({
               items={module.items}
               aspect={module.aspect}
               featureFirst={module.featureFirst}
+              columns={module.columns}
               theme={theme}
               panelBg={panelBg}
             />
