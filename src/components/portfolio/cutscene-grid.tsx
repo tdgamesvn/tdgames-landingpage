@@ -55,7 +55,8 @@ export function CutsceneGrid({
     <div className="px-3 py-6 md:px-6 md:py-10" style={{ backgroundColor: panelBg }}>
       <div
         className={`grid gap-3 md:gap-4 ${
-          columns === 3 ? "grid-cols-2 lg:grid-cols-3" : "grid-cols-1 md:grid-cols-2"
+          // Mobile luôn 1 cột: 2 cột trên điện thoại → card ~170px, caption đè kín nhân vật.
+          columns === 3 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 md:grid-cols-2"
         }`}
       >
         {items.map((item, idx) => {
