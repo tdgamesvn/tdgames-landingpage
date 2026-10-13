@@ -46,7 +46,9 @@ const PROJECTS = [
   ["boss-animation", [
     "https://i.vimeocdn.com/video/1510105572-aa66966e985b1196479af07a06a76e148bd2164fdb4e86e89cd67ac09f78015b-d_1280?region=us",
     "https://i.vimeocdn.com/video/1510105605-0954841163950b7f9a885f35044c89b306f89809df1aec80949bffeace55f3b8-d_1280?region=us",
-  ], "the green-skinned oni ninja boss from The Twins — red horned mask, wild black hair, crimson armour, a giant curved golden blade and a chain-sickle — in a menacing wide attack stance, crouched low and swinging the huge golden blade; he is the only character; plain backdrop"],
+    // v4 (sếp: v3 "chưa ấn tượng, chưa dynamic") — tả khoảnh khắc ra đòn + góc máy,
+    // không thêm particle: chuyển động nằm ở pose, phối cảnh và 1 vệt chém đồ hoạ.
+  ], "the green-skinned oni ninja boss from The Twins — red horned mask, wild black hair, crimson armour, a giant curved golden blade and a chain-sickle — captured at the peak of a leaping overhead slash, lunging diagonally toward the viewer from the upper left to the lower right, seen from a low heroic worm's-eye angle with strong wide-angle foreshortening so the golden blade and his clawed fist loom huge in the foreground; his hair and loincloth whip back with the motion; the chain-sickle snaps out in a long tense arc behind him; one bold graphic crescent slash trail in crimson follows the blade, a few sharp cartoon speed lines and a chunky ground-crack shockwave under his landing foot; glaring eyes, snarling mouth; backdrop a deep crimson to near-black diagonal gradient with a huge pale blood-moon disc behind his head for silhouette; he is the only character"],
   ["horse-racing", `${CDN}/portfolio-covers/horse-racing.jpg`, "splash art of racing horses and riders in full gallop, motion and speed"],
   ["battle-of-the-gods-mytheria", `${CDN}/portfolio-covers/battle-of-the-gods-mytheria.png`, "epic clash of gods from Mytheria, login screen grandeur"],
   ["animation-contest-sky-mavis", `${CDN}/portfolio-covers/animation-contest-sky-mavis.png`, "Axie characters from the Sky Mavis animation contest entry in an energetic action beat"],
@@ -62,7 +64,8 @@ const PROJECTS = [
     `${CDN}/portfolio/epic-card/debuff-immunity.jpg`,
     `${CDN}/portfolio/epic-card/shield-invincibility.jpg`,
     `${CDN}/portfolio/epic-card/magic-orb.jpg`,
-  ], "the white-haired chibi heroine in a grey gothic dress from the Epic Card battle captures, large and centred, casting a spell: golden angel wings of light unfold behind her and a glowing blue shield ring circles her — those two effects only; backdrop is a simplified pale moonlit gothic ruin hall in cool blue-grey; drop every UI element (no HP bar, no portraits, no buttons)"],
+    // v4: thêm động tác + góc nghiêng + "card" làm motif để ra đúng chất Epic Card.
+  ], "the white-haired chibi heroine in a grey gothic dress from the Epic Card battle captures, large in frame, mid-air in a dynamic twisting spell-casting leap toward the viewer, one arm thrust forward with her staff, long hair and dress flaring in a sweeping S-curve; camera tilted at a dutch angle from slightly below; a fan of three oversized glowing trading cards bursts out of her outstretched hand and spins toward the camera with motion blur, the nearest card huge in the foreground; golden angel wings of light snap open behind her and a crisp blue shield ring slices diagonally through the frame — those effects only, drawn as bold flat cartoon shapes; backdrop a simplified moonlit gothic ruin hall in cool blue with a strong diagonal shaft of light; drop every UI element (no HP bar, no portraits, no buttons, no card text)"],
 ];
 
 async function gen([slug, src, content]) {
