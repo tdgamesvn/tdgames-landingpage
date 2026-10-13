@@ -37,7 +37,8 @@ const MONSTERS = [
   { id: "3009", name: "Brood Mother", anims: ["idle", "move", "attack", "skill_01", "skill_02"] }, // nhện cõng trứng
   { id: "3010", name: "Gorehorn Maw", anims: ["idle", "move", "attack", "skill_01", "skill_02"] }, // miệng răng + sừng đỏ
   { id: "3012", name: "Bonecrusher Brute", anims: ["idle", "move", "attack", "skill_01", "skill_02"] }, // vác chuỳ gai
-  { id: "3013", name: "Nightwing Demon", anims: ["idle", "attack", "skill_01", "skill_02"] }, // quỷ cánh dơi
+  // -v2: thu nhỏ 84% + đẩy lên (sếp: sát mép dưới, bị caption che). Tên mới vì CDN cache immutable 1 năm.
+  { id: "3013-v2", name: "Nightwing Demon", anims: ["idle", "attack", "skill_01", "skill_02"] }, // quỷ cánh dơi
 ] as const;
 
 export const projectMeta: ProjectMeta = {
@@ -124,8 +125,8 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     variant: "closing",
     text: "Five monsters,",
     highlight: "every hit felt.",
-    backgroundVideo: `${CDN}/3013_skill_02.mp4`,
-    backgroundPoster: `${CDN}/3013_skill_02.jpg`,
+    backgroundVideo: `${CDN}/3013-v2_skill_02.mp4`,
+    backgroundPoster: `${CDN}/3013-v2_skill_02.jpg`,
     cta: { label: "Ask for similar work", href: "/contact" },
   },
 ];
