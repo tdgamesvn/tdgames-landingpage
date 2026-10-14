@@ -5907,3 +5907,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - CutsceneGrid thêm prop tuỳ chọn columns (2|3, mặc định 2; impact LOW). Trang 3 cột, 4 nhóm, theme indigo + vàng/xanh trời. Chưa thêm row projects/cover list.
 - Prod: row projects 'Chibi Heroes & Pets | Casual Animation' (subtitle Spine 2D Animation, Character Animation), cover gen entry chibi-heroes-pets (ninja + knight + shiba, nền pastel). Source media-inbox/A002 + a002-out chưa xoá.
 - Fix: CutsceneGrid columns=3 trên mobile để 2 cột → card bé, caption đè nhân vật (sếp chụp iPhone). Đổi grid-cols-1 sm:2 lg:3.
+- Update 2026-10-14: banner (coverVideo/coverImage) Chibi Heroes & Pets → char_24_idle (Bat Demon idle) theo sếp. Cover list (gen-portfolio-covers) vẫn ảnh Ninja — chưa đổi.
