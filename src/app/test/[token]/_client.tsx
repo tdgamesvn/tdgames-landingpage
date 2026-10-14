@@ -26,6 +26,7 @@ type Submission = {
 type Data = {
   candidate: string;
   job: string;
+  eta: string | null;
   tests: TestItem[];
   submissions: Submission[];
   maxItems: number;
@@ -39,6 +40,24 @@ const newEntry = (kind: "file" | "link"): Entry =>
 
 const MAX_SIZE = 50 * 1024 * 1024;
 const MAX_TOTAL = 95 * 1024 * 1024;
+
+/** Date → giá trị cho <input type="datetime-local"> theo giờ máy ứng viên. */
+function toLocalInput(d: Date) {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function fmtEta(iso: string) {
+  return new Date(iso).toLocaleString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
 
 function fmtSize(n: number | null) {
   if (!n) return "";
@@ -54,6 +73,9 @@ export default function TestPageClient({ token }: { token: string }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [etaInput, setEtaInput] = useState("");
+  const [etaSaving, setEtaSaving] = useState(false);
+  const [etaError, setEtaError] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -71,6 +93,30 @@ export default function TestPageClient({ token }: { token: string }) {
 
   function update(id: number, patch: Partial<{ file: File | null; url: string }>) {
     setEntries((es) => es.map((e) => (e.id === id ? ({ ...e, ...patch } as Entry) : e)));
+  }
+
+  async function saveEta(e: React.FormEvent) {
+    e.preventDefault();
+    setEtaError("");
+    const when = etaInput ? new Date(etaInput) : null;
+    if (!when || Number.isNaN(when.getTime())) return setEtaError("Please pick a date and time.");
+    if (when.getTime() <= Date.now()) return setEtaError("The expected time must be in the future.");
+    if (!confirm(`Confirm you will submit by ${fmtEta(when.toISOString())}? You can only set this once.`)) return;
+    setEtaSaving(true);
+    try {
+      const res = await fetch(`/api/test/${encodeURIComponent(token)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "eta", eta: when.toISOString() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `Error ${res.status}`);
+      setData((d) => (d ? { ...d, eta: json.eta } : d));
+    } catch (err) {
+      setEtaError(err instanceof Error ? err.message : "Could not save");
+    } finally {
+      setEtaSaving(false);
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -156,10 +202,57 @@ export default function TestPageClient({ token }: { token: string }) {
           ))}
         </section>
 
-        {/* Nộp bài */}
+        {/* Bước 1: chốt thời gian dự kiến nộp (bắt buộc trước khi nộp bài) */}
         <section className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-5">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-white/50">Submit your work</h2>
-          {!submitted && (
+          <h2 className="text-sm font-bold uppercase tracking-wider text-white/50">
+            Step 1 · Expected submission time
+          </h2>
+          {data.eta ? (
+            <p className="text-sm text-white/80">
+              <span className="text-green-400">✓</span> You plan to submit by{" "}
+              <span className="font-semibold text-amber-300">{fmtEta(data.eta)}</span>
+              <span className="block pt-1 text-xs text-white/40">Need more time? Please contact our HR team.</span>
+            </p>
+          ) : submitted ? (
+            <p className="text-sm text-white/40">—</p>
+          ) : (
+            <form onSubmit={saveEta} className="space-y-3">
+              <p className="text-xs text-white/50">
+                Please review the test materials, then let us know when you expect to submit your work. You need to
+                confirm this before you can submit.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="datetime-local"
+                  value={etaInput}
+                  min={toLocalInput(new Date())}
+                  onChange={(e) => setEtaInput(e.target.value)}
+                  className={`${input} w-auto [color-scheme:dark]`}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={etaSaving}
+                  className="rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+                >
+                  {etaSaving ? "Saving…" : "Confirm"}
+                </button>
+              </div>
+              <p className="text-[11px] text-white/35">
+                Time zone: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+              </p>
+              {etaError && <p className="text-sm text-red-400">{etaError}</p>}
+            </form>
+          )}
+        </section>
+
+        {/* Bước 2: nộp bài */}
+        <section className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-5">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-white/50">Step 2 · Submit your work</h2>
+          {!submitted && !data.eta && (
+            <p className="text-sm text-white/40">Please confirm your expected submission time first (Step 1).</p>
+          )}
+          {!submitted && data.eta && (
           <form onSubmit={submit} className="space-y-3">
             <p className="text-xs text-white/50">
               Add all your files and links, then submit once. Up to {data.maxItems} items, 50 MB per file

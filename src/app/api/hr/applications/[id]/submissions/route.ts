@@ -18,7 +18,7 @@ export async function GET(request: Request, { params }: Ctx) {
 
   const { data: app } = await supabase
     .from("applications")
-    .select("id, job_id, test_token")
+    .select("id, job_id, test_token, test_eta, test_eta_set_at")
     .eq("id", id)
     .maybeSingle();
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -33,6 +33,8 @@ export async function GET(request: Request, { params }: Ctx) {
     submissions: subs.data ?? [],
     tests: tests.data ?? [],
     token: app.test_token as string | null,
+    eta: app.test_eta as string | null,
+    etaSetAt: app.test_eta_set_at as string | null,
   });
 }
 

@@ -232,6 +232,7 @@ export function SubmissionsPanel({ appId, hrKey }: { appId: string; hrKey: strin
   const [subs, setSubs] = useState<TestSubmission[]>([]);
   const [tests, setTests] = useState<JobTest[]>([]);
   const [token, setToken] = useState<string | null>(null);
+  const [eta, setEta] = useState<{ at: string; setAt: string | null; overdue: boolean } | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
@@ -245,6 +246,8 @@ export function SubmissionsPanel({ appId, hrKey }: { appId: string; hrKey: strin
         setSubs(j.submissions);
         setTests(j.tests);
         setToken(j.token);
+        // "Quá hạn" tính 1 lần lúc mở modal (Date.now trong render bị lint cấm).
+        setEta(j.eta ? { at: j.eta, setAt: j.etaSetAt, overdue: Date.now() > new Date(j.eta).getTime() } : null);
         setLoaded(true);
       })
       .catch(() => {});
@@ -285,6 +288,34 @@ export function SubmissionsPanel({ appId, hrKey }: { appId: string; hrKey: strin
           {copied ? "✓ Đã copy" : "🔗 Copy link test"}
         </button>
       </div>
+
+      {(() => {
+        const candidateSubs = subs.filter((s) => s.submitted_by === "candidate");
+        if (!eta) {
+          return token && candidateSubs.length === 0 ? (
+            <p className="text-[11px] text-white/30">⏰ Ứng viên chưa hẹn thời gian nộp bài.</p>
+          ) : null;
+        }
+        const due = new Date(eta.at);
+        const firstSub = candidateSubs[0] ? new Date(candidateSubs[0].created_at) : null;
+        const late = firstSub ? firstSub > due : eta.overdue;
+        const fmt = (d: Date) =>
+          d.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+        return (
+          <p className="text-[11px] text-white/60">
+            ⏰ Hẹn nộp: <span className="font-semibold text-amber-300">{fmt(due)}</span>
+            {late && (
+              <span className="ml-1.5 rounded bg-red-500/20 px-1.5 py-0.5 text-red-300">
+                {firstSub ? "nộp trễ" : "quá hạn"}
+              </span>
+            )}
+            {firstSub && !late && (
+              <span className="ml-1.5 rounded bg-green-500/20 px-1.5 py-0.5 text-green-300">đúng hẹn</span>
+            )}
+            {eta.setAt && <span className="text-white/30"> · chốt lúc {fmt(new Date(eta.setAt))}</span>}
+          </p>
+        );
+      })()}
 
       {tests.length === 0 ? (
         <p className="text-[11px] text-white/30">Job này chưa có đề test — thêm ở tab Jobs.</p>

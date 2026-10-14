@@ -5908,3 +5908,8 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Prod: row projects 'Chibi Heroes & Pets | Casual Animation' (subtitle Spine 2D Animation, Character Animation), cover gen entry chibi-heroes-pets (ninja + knight + shiba, nền pastel). Source media-inbox/A002 + a002-out chưa xoá.
 - Fix: CutsceneGrid columns=3 trên mobile để 2 cột → card bé, caption đè nhân vật (sếp chụp iPhone). Đổi grid-cols-1 sm:2 lg:3.
 - Update 2026-10-14: banner (coverVideo/coverImage) Chibi Heroes & Pets → char_24_idle (Bat Demon idle) theo sếp. Cover list (gen-portfolio-covers) vẫn ảnh Ninja — chưa đổi.
+
+## 2026-10-14 — HR bài test: ứng viên hẹn thời gian nộp (ETA)
+- Work Done: migration `20261014000000_application_test_eta.sql` (applications.test_eta, test_eta_set_at — đã apply prod). `/test/<token>`: Bước 1 ứng viên chọn giờ dự kiến nộp (datetime-local, giờ máy, chốt 1 lần, ≤60 ngày, POST JSON {action:"eta"}, chống đua bằng `.is(test_eta,null)`, Discord notify ⏰); Bước 2 nộp bài chỉ mở sau khi có ETA (API chặn 409). HR SubmissionsPanel hiện "Hẹn nộp" + badge quá hạn / nộp trễ / đúng hẹn; embed Discord lúc nộp có field Hẹn nộp.
+- Result: tsc + eslint sạch, detect_changes đúng scope. Commit + push → CI deploy.
+- Lưu ý: ứng viên đã có link test từ trước giờ cũng phải chọn ETA trước khi nộp. Muốn đổi ETA → HR sửa tay DB (chưa có UI).
