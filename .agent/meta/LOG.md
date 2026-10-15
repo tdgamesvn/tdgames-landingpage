@@ -5913,3 +5913,20 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Work Done: migration `20261014000000_application_test_eta.sql` (applications.test_eta, test_eta_set_at — đã apply prod). `/test/<token>`: Bước 1 ứng viên chọn giờ dự kiến nộp (datetime-local, giờ máy, chốt 1 lần, ≤60 ngày, POST JSON {action:"eta"}, chống đua bằng `.is(test_eta,null)`, Discord notify ⏰); Bước 2 nộp bài chỉ mở sau khi có ETA (API chặn 409). HR SubmissionsPanel hiện "Hẹn nộp" + badge quá hạn / nộp trễ / đúng hẹn; embed Discord lúc nộp có field Hẹn nộp.
 - Result: tsc + eslint sạch, detect_changes đúng scope. Commit + push → CI deploy.
 - Lưu ý: ứng viên đã có link test từ trước giờ cũng phải chọn ETA trước khi nộp. Muốn đổi ETA → HR sửa tay DB (chưa có UI).
+
+## 2026-10-15 — Phiên nhầm repo (việc bot-manager-portable), không sửa code landingpage
+- Task: sếp giao làm tiếp bot-manager-portable (verify bot, verify limits, chạy patch-framework.sh, hỏi việc trỏ LaunchAgent, cập nhật LOG). Phiên lại mở trong tdgames-landingpage và bị giới hạn thao tác file trong repo này → không làm được.
+- Work Done: không có. `launchctl list | grep com.tdgames` không trả về dòng nào (có thể sandbox ẩn đi, chưa xác định được).
+- Working tree còn dở từ phiên TRƯỚC (phiên này không tạo ra): AGENTS.md + CLAUDE.md chỉ đổi số liệu index GitNexus (3047→3055 symbols) do `gitnexus analyze` sinh ra; .agent/meta/RECENT.md do hook tự sinh; scripts/gen-pawtrol-ui.mjs (untracked) = script gen asset AI + upload R2 cho case study UI/UX "Pawtrol Tactics", chưa có entry LOG/TASKS nào nói tới.
+- Next Step: mở `claude` trong ~/Work/apps/bot-manager-portable để làm tiếp. Bên landingpage: hỏi sếp có làm tiếp case study Pawtrol Tactics không, có thì commit script, không thì xoá.
+- Update 2026-10-15 (sau): sếp nhắn "Làm tiếp" (mơ hồ). Đã hỏi chọn giữa Pawtrol / bot-manager-portable / xoá Pawtrol — chưa có trả lời → không làm gì, không gen ảnh (tốn phí). Pawtrol hiện chỉ có scripts/.out/pawtrol/key-art.png, chưa có trang portfolio hay row projects.
+
+## 2026-10-15 — Portfolio: Pawtrol Tactics (case study UI/UX, concept nội bộ 100% AI)
+- Task: làm tiếp case study Pawtrol Tactics (phiên trước chỉ có script + key-art.png).
+- Work Done:
+  - scripts/gen-pawtrol-ui.mjs: fix 2 bug — (1) chạy không đối số thì gen lại cả key-art (neo style) → chỉ gen lại khi gọi đích danh/chưa có; (2) proxy ảnh KHÔNG giữ `size` (màn dọc ra ~852×1846, key-art 1774×887) mà script `resize cover` về size yêu cầu → cắt mất top bar/bottom nav. Giờ giữ nguyên tỉ lệ + log kích thước. Thêm `--preview` và BOARDS: ghép 3 màn dọc thành 1 board ngang lúc upload (trio của layout cao max 460px → màn điện thoại chỉ ~210px ngang, không đọc được UI).
+  - Gen đủ 17 ảnh (key art, art direction, user flow, 12 màn, UI kit, showcase), upload R2 landing/portfolio/pawtrol-tactics/ (17 ảnh + 4 board screens-*.jpg).
+  - Trang src/app/portfolio/pawtrol-tactics (variant full + sectionLabel, theme cam #ff8a3d / teal #2ec4b6 nền navy), eyebrow "In-house concept" (không phải khách). Thêm vào sitemap.
+  - Prod DB: row projects 'Pawtrol Tactics | Mobile Game UI/UX', category mới 'UI/UX Design', cover = key-art.jpg.
+- Result: tsc + eslint sạch, detect_changes risk low. Dev: trang + /portfolio card OK, mọi ảnh load. Commit + push → CI deploy.
+- Next Step: cover list chưa chạy qua gen-portfolio-covers (đang dùng thẳng key art). Board ~1MB/ảnh — giảm nếu cần tốc độ.
