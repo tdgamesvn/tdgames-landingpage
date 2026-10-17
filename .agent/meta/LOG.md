@@ -5961,3 +5961,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - (5) Bỏ chọn quái: mỗi quái 1 sân khấu xếp dọc, lướt là xem; chỉ dựng WebGL khi gần màn hình, huỷ + loseContext khi ra xa (đo: 3 canvas sống / 11 quái).
 - Asset cũ không dùng nữa trên R2: monster-legends-fire/spine/, arena.webp, thumbs/ → cho vào trash khi tiện.
 - Trang vẫn ẨN (chưa row projects, chưa sitemap) chờ sếp duyệt.
+- Update 2026-10-18 (sếp: 'mấy nhân vật bị bé', ảnh Akira): Akira có slot fx-sword_fx blend thường, alpha 0 ở idle, dài gấp đôi thân → khung thân phình. Đo thân giờ bỏ thêm attachment 'fx/…' + slot alpha≈0 (kiểm bằng spine-core node trên 21 skeleton: Akira −586..1131 → −77..857). Nền neo mép trên (sàn ~75% trên desktop) + FILL 0.5→0.62. Đã chụp kiểm 11 con desktop + mobile.

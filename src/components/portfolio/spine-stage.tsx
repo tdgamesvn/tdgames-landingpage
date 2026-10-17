@@ -23,7 +23,7 @@ import { hexToRgba } from "./portfolio-color-utils";
 const ORDER = ["breathe", "walk", "attack", "attack_skill", "special1", "levelup", "prone"];
 const SHOWREEL = "__showreel";
 /** Chiều cao thân (dáng idle) so với chiều cao khung nhân vật. */
-const FILL = 0.5;
+const FILL = 0.62;
 
 type Box = { x: number; y: number; width: number; height: number };
 type Foot = { x: number; y: number; w: number };
@@ -40,15 +40,24 @@ function bodyBounds(player: Player, idle: string): Box | null {
   const sk = player.skeleton;
   const anim = sk?.data?.findAnimation?.(idle) ?? sk?.data?.animations?.[0];
   if (!anim) return null;
-  // BlendMode.Additive = 1 trong spine-core.
-  const fx = sk.slots.filter((s: Player) => s.data.blendMode === 1);
-  for (const s of fx) s.getAttachment = () => null;
+  // Không tính vào thân: slot additive (BlendMode.Additive = 1), attachment FX (rig Monster
+  // Legends đặt tên "fx/…", thân là "basic/…"), và slot đang ẩn (alpha ≈ 0). Akira có
+  // "fx-sword_fx" blend thường, alpha 0 ở idle, dài gấp đôi thân → quái bé + bóng rơi xa.
+  for (const s of sk.slots) {
+    const own = Object.getPrototypeOf(s).getAttachment;
+    s.getAttachment = function () {
+      const a = own.call(this);
+      if (!a || this.data.blendMode === 1 || this.color.a < 0.05) return null;
+      if (a.name?.startsWith("fx/") || (a.color && a.color.a < 0.05)) return null;
+      return a;
+    };
+  }
   try {
     const v = { x: 0, y: 0, width: 0, height: 0 };
     player.calculateAnimationViewport(anim, v);
     return v.width > 0 && v.height > 0 ? v : null;
   } finally {
-    for (const s of fx) delete s.getAttachment;
+    for (const s of sk.slots) delete s.getAttachment;
   }
 }
 
@@ -196,13 +205,13 @@ function MonsterStage({
     frameBody(p, body, W, H);
     const f = footOf(p, body, W, H);
     setFoot(f);
-    // Tâm sàn của ảnh nền sau object-cover (căn giữa) → toạ độ sân khấu.
+    // Tâm sàn của ảnh nền sau object-cover (neo mép trên) → toạ độ sân khấu.
     const img = bgRef.current;
     const aspect = img?.naturalWidth ? img.naturalWidth / img.naturalHeight : 1.5;
     const SW = stage.clientWidth;
     const SH = stage.clientHeight;
     const drawnH = Math.max(SH, SW / aspect);
-    const ground = (SH - drawnH) / 2 + groundY * drawnH;
+    const ground = groundY * drawnH;
     setLift(f ? ground - box.offsetTop - f.y : 0);
   }, [groundY]);
 
@@ -282,7 +291,9 @@ function MonsterStage({
           loading="lazy"
           onLoad={layout}
           className="absolute inset-0 -z-20 h-full w-full object-cover"
-          style={{ filter: "brightness(0.82)" }}
+          // Neo mép trên: trên khung ngang ảnh bị cắt phần đáy thay vì đều hai đầu → sàn
+          // hạ thấp (~75% thay vì ~65%), phía trên đủ chỗ cho quái to.
+          style={{ filter: "brightness(0.82)", objectPosition: "50% 0%" }}
         />
         <div
           aria-hidden
