@@ -9,7 +9,7 @@
  *   khi ra xa → cả trang chỉ 1–3 context sống, dù có 11+ quái.
  * - Cỡ quái đồng đều: khung camera ôm THÂN ở dáng idle (bỏ slot additive = FX/aura),
  *   thân luôn cao FILL × khung. Chân (đáy thân) đặt đúng tâm sàn của ảnh nền (groundY).
- * - Bóng: elip mờ dưới chân + drop-shadow theo dáng trên canvas.
+ * - Không vẽ bóng: elip/drop-shadow tĩnh không khớp dáng + animation (sếp bỏ 2026-10-18).
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -23,7 +23,9 @@ import { hexToRgba } from "./portfolio-color-utils";
 const ORDER = ["breathe", "walk", "attack", "attack_skill", "special1", "levelup", "prone"];
 const SHOWREEL = "__showreel";
 /** Chiều cao thân (dáng idle) so với chiều cao khung nhân vật. */
-const FILL = 0.62;
+const FILL = 0.57;
+/** Hạ chân quái thấp hơn tâm sàn ảnh một chút (tỉ lệ chiều cao sân khấu). */
+const DROP = 0.03;
 
 type Box = { x: number; y: number; width: number; height: number };
 type Foot = { x: number; y: number; w: number };
@@ -161,7 +163,6 @@ function MonsterStage({
   const [anim, setAnim] = useState<string>(SHOWREEL);
   const [ready, setReady] = useState(false);
   const [near, setNear] = useState(false);
-  const [foot, setFoot] = useState<Foot | null>(null);
   const [lift, setLift] = useState(0);
 
   const stageRef = useRef<HTMLDivElement>(null);
@@ -184,7 +185,6 @@ function MonsterStage({
         setNear(e.isIntersecting);
         if (!e.isIntersecting) {
           setReady(false);
-          setFoot(null);
           playerRef.current = null;
         }
       },
@@ -204,14 +204,13 @@ function MonsterStage({
     const H = box.clientHeight;
     frameBody(p, body, W, H);
     const f = footOf(p, body, W, H);
-    setFoot(f);
     // Tâm sàn của ảnh nền sau object-cover (neo mép trên) → toạ độ sân khấu.
     const img = bgRef.current;
     const aspect = img?.naturalWidth ? img.naturalWidth / img.naturalHeight : 1.5;
     const SW = stage.clientWidth;
     const SH = stage.clientHeight;
     const drawnH = Math.max(SH, SW / aspect);
-    const ground = groundY * drawnH;
+    const ground = groundY * drawnH + DROP * SH;
     setLift(f ? ground - box.offsetTop - f.y : 0);
   }, [groundY]);
 
@@ -229,7 +228,6 @@ function MonsterStage({
     const next = monster.tiers.find((t) => t.key === key);
     if (anim !== SHOWREEL && !next?.animations.includes(anim)) setAnim(SHOWREEL);
     setReady(false);
-    setFoot(null);
   }
 
   const glow = tier.highlight ? theme.accentSoft : theme.accent;
@@ -305,30 +303,15 @@ function MonsterStage({
         />
         <Embers color={glow} />
 
-        {/* Nhân vật (+ bóng elip dưới chân, cùng khung để dịch chung) */}
+        {/* Nhân vật */}
         <div
           ref={boxRef}
           className="absolute inset-x-0 bottom-0 top-[6%] transition-opacity duration-500"
           style={{
             opacity: ready ? 1 : 0,
             transform: `translateY(${lift}px)`,
-            filter: "drop-shadow(0 10px 10px rgba(10,2,4,0.5))",
           }}
         >
-          {foot && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-[50%]"
-              style={{
-                left: foot.x,
-                top: foot.y,
-                width: foot.w * 0.85,
-                height: foot.w * 0.85 * 0.16,
-                background:
-                  "radial-gradient(closest-side, rgba(8,1,3,0.9), rgba(8,1,3,0.5) 55%, transparent)",
-              }}
-            />
-          )}
           {near && (
             <SpineCharacter
               key={tier.base}

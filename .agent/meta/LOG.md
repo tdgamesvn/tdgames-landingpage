@@ -5947,7 +5947,7 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - scripts/upload-monster-legends.mjs: 11 quái / 21 skeleton (base _1, evolved _3, awakened) → R2 landing/portfolio/monster-legends-fire/spine/<id>/<tier>.{json,atlas,webp}. Atlas PNG→WebP q90 alpha lossless (7.9MB→1.5MB), tổng 25.5MB. + logo.webp, splash.jpg.
   - scripts/gen-monster-legends-bg.mjs: nền đấu trường lava TRỐNG (AI, SplashArt làm ref style) → arena.webp. Nhân vật luôn là Spine thật.
   - SpineCharacter: đổi animation không dựng lại player (ref + effect riêng), onSuccess(player). Trang chủ đã kiểm vẫn chạy.
-  - SpineStage (module variant `spineStage`): 1 player/lúc, lazy theo viewport; khung camera theo idle (FX tràn ra ngoài), gốc skeleton kéo về mặt sàn nền, bóng elip + drop-shadow; nền tối+blur nhẹ để quái lửa không chìm; chọn bậc / animation (Showreel bỏ "prone") / dàn quái có thumb.
+  - SpineStage (module variant `spineStage`): 1 player/lúc, lazy theo viewport; khung camera theo idle (FX tràn ra ngoài), gốc skeleton kéo về mặt sàn nền, (bóng đã bỏ 2026-10-18); nền tối+blur nhẹ để quái lửa không chìm; chọn bậc / animation (Showreel bỏ "prone") / dàn quái có thumb.
   - Thumbs chụp bằng Playwright từ chính sân khấu (omitBackground) → thumbs/<id>.webp?v=2.
   - Page src/app/portfolio/monster-legends-fire + sitemap.
 - Result: tsc sạch; eslint chỉ còn lỗi cũ (any trong spine-character, showcase). Desktop + mobile OK.
@@ -5962,3 +5962,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Asset cũ không dùng nữa trên R2: monster-legends-fire/spine/, arena.webp, thumbs/ → cho vào trash khi tiện.
 - Trang vẫn ẨN (chưa row projects, chưa sitemap) chờ sếp duyệt.
 - Update 2026-10-18 (sếp: 'mấy nhân vật bị bé', ảnh Akira): Akira có slot fx-sword_fx blend thường, alpha 0 ở idle, dài gấp đôi thân → khung thân phình. Đo thân giờ bỏ thêm attachment 'fx/…' + slot alpha≈0 (kiểm bằng spine-core node trên 21 skeleton: Akira −586..1131 → −77..857). Nền neo mép trên (sàn ~75% trên desktop) + FILL 0.5→0.62. Đã chụp kiểm 11 con desktop + mobile.
+- Update 2026-10-18 (sếp): bỏ bóng (elip + drop-shadow — không khớp dáng/animation), FILL 0.62→0.57 (~8% nhỏ hơn), hạ chân thêm 3% chiều cao sân khấu (DROP).
