@@ -99,6 +99,8 @@ export type SpineTier = {
   animations: readonly string[];
   /** Bậc cao nhất — sân khấu đổi glow mạnh hơn + badge. */
   highlight?: boolean;
+  /** Phóng thêm khi tự đo cỡ vẫn lệch mắt (vd cánh rộng làm thân trông nhỏ). Mặc định 1. */
+  scale?: number;
 };
 
 export type SpineMonster = {

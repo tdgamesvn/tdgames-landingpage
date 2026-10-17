@@ -29,6 +29,48 @@ const FILL = 0.57;
 const DROP = 0.03;
 
 type Box = { x: number; y: number; width: number; height: number };
+/** Thân + "cỡ" dùng để chuẩn hoá (có thể nhỏ hơn height khi có cánh/vũ khí giơ cao). */
+type Body = Box & { size: number };
+
+/** Tỉ lệ thân-đặc / chiều cao toàn bộ của một quái "thường" (đo 21 skeleton Fire: 0.80–0.86). */
+const CORE_RATIO = 0.82;
+
+/**
+ * Chiều cao phần THÂN ĐẶC: từ chân lên tới mức chứa 90% diện tích hình. Cánh, trượng,
+ * kiếm giơ cao chiếm ít diện tích nhưng kéo chiều cao lên nhiều — chuẩn hoá theo chiều cao
+ * toàn bộ làm Kaih/Kennix (Awakened) bé hơn hẳn các con khác (sếp bắt 2026-10-18).
+ * Duck-typing attachment vì bundle production đổi tên class.
+ */
+function coreHeight(sk: Player, bottom: number): number | null {
+  const pts: [number, number][] = [];
+  let total = 0;
+  for (const slot of sk.drawOrder) {
+    const a = slot.getAttachment();
+    if (!a || !slot.bone.active) continue;
+    let v: number[];
+    let tris: ArrayLike<number>;
+    if (a.triangles && a.worldVerticesLength) {
+      v = new Array(a.worldVerticesLength);
+      a.computeWorldVertices(slot, 0, a.worldVerticesLength, v, 0, 2);
+      tris = a.triangles;
+    } else if (a.offset?.length === 8) {
+      v = new Array(8);
+      a.computeWorldVertices(slot, v, 0, 2);
+      tris = [0, 1, 2, 2, 3, 0];
+    } else continue;
+    for (let t = 0; t < tris.length; t += 3) {
+      const [i, j, k] = [tris[t] * 2, tris[t + 1] * 2, tris[t + 2] * 2];
+      const area = Math.abs((v[j] - v[i]) * (v[k + 1] - v[i + 1]) - (v[k] - v[i]) * (v[j + 1] - v[i + 1])) / 2;
+      pts.push([(v[i + 1] + v[j + 1] + v[k + 1]) / 3, area]);
+      total += area;
+    }
+  }
+  if (!(total > 0)) return null;
+  pts.sort((p, q) => p[0] - q[0]);
+  let acc = 0;
+  for (const [y, w] of pts) if ((acc += w) >= total * 0.9) return y - bottom;
+  return null;
+}
 type Foot = { x: number; y: number; w: number };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,7 +81,7 @@ type Player = any;
  * bung rộng tuỳ con) trả về "không có attachment" trong lúc player đo, rồi trả lại.
  * ponytail: chạm internal spine-player (calculateAnimationViewport) + Slot.getAttachment.
  */
-function bodyBounds(player: Player, idle: string): Box | null {
+function bodyBounds(player: Player, idle: string): Body | null {
   const sk = player.skeleton;
   const anim = sk?.data?.findAnimation?.(idle) ?? sk?.data?.animations?.[0];
   if (!anim) return null;
@@ -58,15 +100,19 @@ function bodyBounds(player: Player, idle: string): Box | null {
   try {
     const v = { x: 0, y: 0, width: 0, height: 0 };
     player.calculateAnimationViewport(anim, v);
-    return v.width > 0 && v.height > 0 ? v : null;
+    if (!(v.width > 0 && v.height > 0)) return null;
+    // Đo thân đặc trên pose cuối của idle (calculateAnimationViewport để skeleton ở đó).
+    const core = coreHeight(sk, v.y);
+    const size = core ? Math.min(v.height, core / CORE_RATIO) : v.height;
+    return { ...v, size };
   } finally {
     for (const s of sk.slots) delete s.getAttachment;
   }
 }
 
-/** Đặt camera để thân cao FILL × khung, đáy thân nằm sát đáy khung, căn giữa ngang. */
-function frameBody(player: Player, body: Box, W: number, H: number) {
-  let vh = body.height / FILL;
+/** Đặt camera để "cỡ" thân (Body.size) cao FILL × khung, đáy thân nằm sát đáy khung, căn giữa ngang. */
+function frameBody(player: Player, body: Body, W: number, H: number, scale = 1) {
+  let vh = body.size / (FILL * scale);
   let vw = (vh * W) / H;
   // Con quá bè (vd Torog trên mobile) → bám theo chiều ngang thay vì chiều cao.
   if (body.width > vw * 0.9) {
@@ -170,7 +216,7 @@ function MonsterStage({
   const boxRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLImageElement>(null);
   const playerRef = useRef<Player>(null);
-  const bodyRef = useRef<Box | null>(null);
+  const bodyRef = useRef<Body | null>(null);
 
   const anims = useMemo(() => sortAnims(tier.animations), [tier]);
   // Showreel (sếp chốt 2026-10-18): idle xen giữa mọi lần đổi animation, walk lặp 3 lần.
@@ -213,7 +259,7 @@ function MonsterStage({
     if (!box || !stage || !p || !body) return;
     const W = box.clientWidth;
     const H = box.clientHeight;
-    frameBody(p, body, W, H);
+    frameBody(p, body, W, H, tier.scale);
     const f = footOf(p, body, W, H);
     // Tâm sàn của ảnh nền sau object-cover (neo mép trên) → toạ độ sân khấu.
     const img = bgRef.current;
@@ -223,7 +269,7 @@ function MonsterStage({
     const drawnH = Math.max(SH, SW / aspect);
     const ground = groundY * drawnH + DROP * SH;
     setLift(f ? ground - box.offsetTop - f.y : 0);
-  }, [groundY]);
+  }, [groundY, tier.scale]);
 
   useEffect(() => {
     const box = boxRef.current;

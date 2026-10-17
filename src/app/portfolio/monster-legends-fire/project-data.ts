@@ -29,16 +29,19 @@ const monster = (
   name: string,
   rank: string,
   tiers: readonly (keyof typeof TIER)[],
+  // Phóng riêng từng bậc khi tự đo cỡ vẫn lệch mắt (xem SpineTier.scale).
+  scale: Partial<Record<keyof typeof TIER, number>> = {},
 ): SpineMonster => ({
   id,
   name,
   rank,
-  tiers: tiers.map((t) => ({ ...TIER[t], base: `${SPINE}/${id}/${t}` })),
+  tiers: tiers.map((t) => ({ ...TIER[t], base: `${SPINE}/${id}/${t}`, scale: scale[t] })),
 });
 
 // Thứ tự: con 3 bậc + Awakened lên đầu (khoe nhiều nhất), Mythic theo sau.
 const ROSTER: readonly SpineMonster[] = [
-  monster("kennix-solaris", "Kennix Solaris", "Architect", ["stage1", "stage3", "awakened"]),
+  // Cánh lửa Awakened rộng + nhiều diện tích → thân trông nhỏ hơn các con khác (sếp 2026-10-18).
+  monster("kennix-solaris", "Kennix Solaris", "Architect", ["stage1", "stage3", "awakened"], { awakened: 1.2 }),
   monster("kaih-the-pyrenaut", "Kaih the Pyrenaut", "Architect", ["stage1", "stage3", "awakened"]),
   monster("shallinar-emberglow", "Shallinar Emberglow", "Architect", ["awakened"]),
   monster("torog-moltenthroat", "Torog Moltenthroat", "Ancestor", ["awakened"]),
