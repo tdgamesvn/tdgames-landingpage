@@ -5963,3 +5963,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Trang vẫn ẨN (chưa row projects, chưa sitemap) chờ sếp duyệt.
 - Update 2026-10-18 (sếp: 'mấy nhân vật bị bé', ảnh Akira): Akira có slot fx-sword_fx blend thường, alpha 0 ở idle, dài gấp đôi thân → khung thân phình. Đo thân giờ bỏ thêm attachment 'fx/…' + slot alpha≈0 (kiểm bằng spine-core node trên 21 skeleton: Akira −586..1131 → −77..857). Nền neo mép trên (sàn ~75% trên desktop) + FILL 0.5→0.62. Đã chụp kiểm 11 con desktop + mobile.
 - Update 2026-10-18 (sếp): bỏ bóng (elip + drop-shadow — không khớp dáng/animation), FILL 0.62→0.57 (~8% nhỏ hơn), hạ chân thêm 3% chiều cao sân khấu (DROP).
+- Update 2026-10-18 (sếp): Showreel = idle xen giữa mọi animation, walk ×3, bỏ prone; lặp từ idle. Đã đo trên dev: breathe → walk×3 → breathe → attack → breathe → attack_skill → breathe → special1 → breathe → levelup → (breathe…).

@@ -22,6 +22,7 @@ import { hexToRgba } from "./portfolio-color-utils";
 /** Thứ tự showreel + nhãn mặc định; key lạ vẫn hiện bằng tên gốc. */
 const ORDER = ["breathe", "walk", "attack", "attack_skill", "special1", "levelup", "prone"];
 const SHOWREEL = "__showreel";
+const IDLE = "breathe";
 /** Chiều cao thân (dáng idle) so với chiều cao khung nhân vật. */
 const FILL = 0.57;
 /** Hạ chân quái thấp hơn tâm sàn ảnh một chút (tỉ lệ chiều cao sân khấu). */
@@ -172,8 +173,18 @@ function MonsterStage({
   const bodyRef = useRef<Box | null>(null);
 
   const anims = useMemo(() => sortAnims(tier.animations), [tier]);
-  // Showreel bỏ "prone" (ngã gục) — nằm giữa chuỗi trông như lỗi.
-  const showreel = useMemo(() => anims.filter((a) => a !== "prone"), [anims]);
+  // Showreel (sếp chốt 2026-10-18): idle xen giữa mọi lần đổi animation, walk lặp 3 lần.
+  // Bỏ "prone" (ngã gục) — nằm giữa chuỗi trông như lỗi. Chuỗi lặp lại từ idle đầu.
+  const showreel = useMemo(() => {
+    const idle = anims.includes(IDLE) ? IDLE : null;
+    const seq: string[] = [];
+    for (const a of anims) {
+      if (a === IDLE || a === "prone") continue;
+      if (idle) seq.push(idle);
+      for (let i = 0; i < (a === "walk" ? 3 : 1); i++) seq.push(a);
+    }
+    return seq.length ? seq : anims.slice(0, 1);
+  }, [anims]);
   const playing = useMemo(() => (anim === SHOWREEL ? showreel : [anim]), [anim, showreel]);
 
   // Dựng khi gần vào màn hình, huỷ khi ra xa (giữ số WebGL context thấp).
