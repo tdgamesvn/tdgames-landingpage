@@ -25,6 +25,8 @@ const SHOWREEL = "__showreel";
 const IDLE = "breathe";
 /** Chiều cao thân (dáng idle) so với chiều cao khung nhân vật. */
 const FILL = 0.57;
+/** Trần theo chiều rộng khung cho "cỡ" thân (xem frameBody). */
+const MAX_W = 0.6;
 /** Hạ chân quái thấp hơn tâm sàn ảnh một chút (tỉ lệ chiều cao sân khấu). */
 const DROP = 0.03;
 
@@ -34,6 +36,8 @@ type Body = Box & { size: number };
 
 /** Tỉ lệ thân-đặc / chiều cao toàn bộ của một quái "thường" (đo 21 skeleton Fire: 0.80–0.86). */
 const CORE_RATIO = 0.82;
+/** Trung vị √diện tích / cỡ-theo-chiều-cao trên 21 skeleton Fire (dải 0.77–1.54). */
+const AREA_RATIO = 1.17;
 
 /**
  * Chiều cao phần THÂN ĐẶC: từ chân lên tới mức chứa 90% diện tích hình. Cánh, trượng,
@@ -41,7 +45,7 @@ const CORE_RATIO = 0.82;
  * toàn bộ làm Kaih/Kennix (Awakened) bé hơn hẳn các con khác (sếp bắt 2026-10-18).
  * Duck-typing attachment vì bundle production đổi tên class.
  */
-function coreHeight(sk: Player, bottom: number): number | null {
+function coreHeight(sk: Player, bottom: number): { core: number; area: number } | null {
   const pts: [number, number][] = [];
   let total = 0;
   for (const slot of sk.drawOrder) {
@@ -68,7 +72,7 @@ function coreHeight(sk: Player, bottom: number): number | null {
   if (!(total > 0)) return null;
   pts.sort((p, q) => p[0] - q[0]);
   let acc = 0;
-  for (const [y, w] of pts) if ((acc += w) >= total * 0.9) return y - bottom;
+  for (const [y, w] of pts) if ((acc += w) >= total * 0.9) return { core: y - bottom, area: total };
   return null;
 }
 type Foot = { x: number; y: number; w: number };
@@ -102,23 +106,35 @@ function bodyBounds(player: Player, idle: string): Body | null {
     player.calculateAnimationViewport(anim, v);
     if (!(v.width > 0 && v.height > 0)) return null;
     // Đo thân đặc trên pose cuối của idle (calculateAnimationViewport để skeleton ở đó).
-    const core = coreHeight(sk, v.y);
-    const size = core ? Math.min(v.height, core / CORE_RATIO) : v.height;
-    return { ...v, size };
+    const m = coreHeight(sk, v.y);
+    if (!m) return { ...v, size: v.height };
+    const tall = Math.min(v.height, m.core / CORE_RATIO);
+    // Cùng chiều cao thì con mảnh (Ember, Shallinar) trông nhỏ, con bè (Aquatorum) trông to
+    // → trộn thêm "độ đầy": hệ số theo căn diện tích / chiều cao, so với mức trung vị.
+    const fullness = Math.sqrt(m.area) / tall / AREA_RATIO;
+    const adjust = Math.min(1.15, Math.max(0.85, fullness ** 0.35));
+    return { ...v, size: tall * adjust };
   } finally {
     for (const s of sk.slots) delete s.getAttachment;
   }
 }
 
-/** Đặt camera để "cỡ" thân (Body.size) cao FILL × khung, đáy thân nằm sát đáy khung, căn giữa ngang. */
+/**
+ * Đặt camera: "cỡ" thân (Body.size) cao min(FILL × khung cao, MAX_W × khung rộng) — một
+ * con số chung cho mọi quái trong cùng khung. Trước đây con bè chạm mép bị thu nhỏ riêng
+ * → trên mobile (khung hẹp) mỗi con một cỡ (sếp bắt 2026-10-18). MAX_W chọn sao cho con
+ * bè nhất (Aquatorum, rộng ≈ 1.55 × cỡ) vẫn lọt khung.
+ */
 function frameBody(player: Player, body: Body, W: number, H: number, scale = 1) {
-  let vh = body.size / (FILL * scale);
-  let vw = (vh * W) / H;
-  // Con quá bè (vd Torog trên mobile) → bám theo chiều ngang thay vì chiều cao.
-  if (body.width > vw * 0.9) {
-    vw = body.width / 0.9;
-    vh = (vw * H) / W;
+  let px = Math.min(FILL * H, MAX_W * W) * scale; // chiều cao (px) của "cỡ" thân
+  let s = px / body.size; // px trên mỗi đơn vị world
+  // Chốt an toàn: không để thân tràn ngang khỏi khung.
+  if (body.width * s > 0.96 * W) {
+    s = (0.96 * W) / body.width;
+    px = s * body.size;
   }
+  const vw = W / s;
+  const vh = H / s;
   const padX = (vw - body.width) / 2;
   const padBottom = (vh - body.height) * 0.06;
   player.currentViewport = {
@@ -335,7 +351,7 @@ function MonsterStage({
       <div
         ref={stageRef}
         data-spine-stage
-        className="relative isolate aspect-[4/5] w-full overflow-hidden rounded-[22px] bg-[#1a0f12] sm:aspect-[4/3] lg:aspect-[16/9]"
+        className="relative isolate aspect-square w-full overflow-hidden rounded-[22px] bg-[#1a0f12] sm:aspect-[4/3] lg:aspect-[16/9]"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

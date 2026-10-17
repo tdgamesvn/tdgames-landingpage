@@ -44,7 +44,7 @@ const ROSTER: readonly SpineMonster[] = [
   monster("kennix-solaris", "Kennix Solaris", "Architect", ["stage1", "stage3", "awakened"], { awakened: 1.2 }),
   monster("kaih-the-pyrenaut", "Kaih the Pyrenaut", "Architect", ["stage1", "stage3", "awakened"]),
   monster("shallinar-emberglow", "Shallinar Emberglow", "Architect", ["awakened"]),
-  monster("torog-moltenthroat", "Torog Moltenthroat", "Ancestor", ["awakened"]),
+  monster("torog-moltenthroat", "Torog Moltenthroat", "Ancestor", ["awakened"], { awakened: 1.1 }),
   monster("akira-karioka", "Akira Karioka", "Ancestor", ["awakened"]),
   monster("ember", "Ember", "Mythic", ["stage1", "stage3"]),
   monster("calida", "Calida", "Mythic", ["stage1", "stage3"]),
