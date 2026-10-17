@@ -305,3 +305,6 @@ một request text rẻ tiền.
   → không xoá, không đổi kind. Key không bao giờ đổi qua API, chỉ đổi label.
 - `kind`: open (đang xử lý, có thể nhắc), won (tính Won % trong KPI), lost (cuối board, không tính active).
 - Màu lưu key palette (`status-palette.ts`), không lưu class Tailwind (Tailwind cần class tĩnh).
+
+## 2026-10-15 — Không dùng ảnh AI-gen cho case study UI/UX
+Pawtrol Tactics (UI gen 100% bằng image model) bị sếp chê lộ AI. Case study UI/UX phải có UI vector thật (Figma/code), design system nhất quán, breakdown + motion. Image model chỉ được dùng cho art nhân vật/nền.

@@ -5930,3 +5930,12 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - Prod DB: row projects 'Pawtrol Tactics | Mobile Game UI/UX', category mới 'UI/UX Design', cover = key-art.jpg.
 - Result: tsc + eslint sạch, detect_changes risk low. Dev: trang + /portfolio card OK, mọi ảnh load. Commit + push → CI deploy.
 - Next Step: cover list chưa chạy qua gen-portfolio-covers (đang dùng thẳng key art). Board ~1MB/ảnh — giảm nếu cần tốc độ.
+- Update 2026-10-15 (feedback sếp): "nhìn rõ AI gen quá" + showreel UI game thật không trông như vậy. Lý do: UI là ảnh vẽ (không vector, nút/icon/font/số liệu lệch giữa các màn, nền nhồi nhân vật), không có breakdown/grid/motion. Bài học: AI image KHÔNG làm được UI showcase — UI phải dựng vector (code/Figma), AI chỉ dùng cho art nền/nhân vật.
+  - CHƯA làm gì thêm: case study vẫn đang LIVE trên prod (trang + row projects + sitemap). Đã đề xuất gỡ ngay (xoá row projects slug=pawtrol-tactics, xoá src/app/portfolio/pawtrol-tactics, bỏ khỏi sitemap; ảnh R2 giữ) — chờ sếp đồng ý.
+  - Hướng tiếp (chờ sếp chọn): dùng dự án UI thật của studio / dựng UI thật bằng HTML-CSS + quay motion bằng Playwright, AI chỉ cho art / bỏ hẳn.
+  - AGENTS.md + CLAUDE.md dirty chỉ là số liệu GitNexus, không liên quan.
+- Update 2026-10-15 (sếp: "Thôi gỡ đi"): đã `git rm` src/app/portfolio/pawtrol-tactics + scripts/gen-pawtrol-ui.mjs, bỏ "pawtrol-tactics" khỏi sitemap.ts (staged, CHƯA commit/push). tsc sạch (trừ cache .next/dev cũ trỏ tới page đã xoá — tự hết khi dev/build lại), eslint OK.
+  - CHƯA xong: lệnh xoá row projects id 21feb40c-0051-4aa1-bf35-6a50ca52f56b (slug pawtrol-tactics, category 'UI/UX Design' chỉ có mỗi row này) bị huỷ ở bước xác nhận → row vẫn còn trên prod. Không push code trước khi xoá row, nếu không card /portfolio sẽ trỏ vào trang 404.
+  - Next: xoá row → commit + push → kiểm tra /portfolio và /portfolio/pawtrol-tactics (phải 404). Ảnh R2 giữ nguyên.
+- Update 2026-10-17: sếp nhắn "Duyệt" → chạy lại DELETE row projects pawtrol-tactics qua Supabase MCP, lại bị huỷ ở bước xác nhận (lần 2). Row vẫn còn, code chưa commit/push.
+- Update 2026-10-17 (sau): sếp tự xoá row projects pawtrol-tactics trên Supabase (đã verify: query trả rỗng). Commit + push gỡ trang/script/sitemap → CI deploy.
