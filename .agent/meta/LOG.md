@@ -5939,3 +5939,16 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - Next: xoá row → commit + push → kiểm tra /portfolio và /portfolio/pawtrol-tactics (phải 404). Ảnh R2 giữ nguyên.
 - Update 2026-10-17: sếp nhắn "Duyệt" → chạy lại DELETE row projects pawtrol-tactics qua Supabase MCP, lại bị huỷ ở bước xác nhận (lần 2). Row vẫn còn, code chưa commit/push.
 - Update 2026-10-17 (sau): sếp tự xoá row projects pawtrol-tactics trên Supabase (đã verify: query trả rỗng). Commit + push gỡ trang/script/sitemap → CI deploy.
+- Update 2026-10-17 (R2): sếp bảo cho vào rác → chuyển 21 file (10.6 MB) landing/portfolio/pawtrol-tactics/ sang trash/2026-10-17/ (copy + kiểm size + xoá gốc). Prefix gốc còn 0 object. Xoá hẳn trash/ khi tiện (cùng trash/2026-08-01/ cũ).
+
+## 2026-10-18 — Portfolio: Monster Legends — Fire (Spine chạy trực tiếp trên trang)
+- Task: sếp muốn show nhân vật Spine thật (JSON export) trên trang case study, nền đẹp + shadow. Dự án Monster Legends, khách Social Point; mỗi hệ 1 bài, làm Fire trước. Bỏ fx_ultimate + avatar, chỉ nhân vật. Awakened = bậc cao nhất.
+- Work Done:
+  - scripts/upload-monster-legends.mjs: 11 quái / 21 skeleton (base _1, evolved _3, awakened) → R2 landing/portfolio/monster-legends-fire/spine/<id>/<tier>.{json,atlas,webp}. Atlas PNG→WebP q90 alpha lossless (7.9MB→1.5MB), tổng 25.5MB. + logo.webp, splash.jpg.
+  - scripts/gen-monster-legends-bg.mjs: nền đấu trường lava TRỐNG (AI, SplashArt làm ref style) → arena.webp. Nhân vật luôn là Spine thật.
+  - SpineCharacter: đổi animation không dựng lại player (ref + effect riêng), onSuccess(player). Trang chủ đã kiểm vẫn chạy.
+  - SpineStage (module variant `spineStage`): 1 player/lúc, lazy theo viewport; khung camera theo idle (FX tràn ra ngoài), gốc skeleton kéo về mặt sàn nền, bóng elip + drop-shadow; nền tối+blur nhẹ để quái lửa không chìm; chọn bậc / animation (Showreel bỏ "prone") / dàn quái có thumb.
+  - Thumbs chụp bằng Playwright từ chính sân khấu (omitBackground) → thumbs/<id>.webp?v=2.
+  - Page src/app/portfolio/monster-legends-fire + sitemap.
+- Result: tsc sạch; eslint chỉ còn lỗi cũ (any trong spine-character, showcase). Desktop + mobile OK.
+- Next Step: trang deploy dạng ẨN (chưa có row projects, chưa vào sitemap) để sếp duyệt; duyệt xong mới thêm row + sitemap. Sếp cần xác nhận scope studio (mặc định ghi: Spine 2D animation) + copy. Các hệ khác theo TASKS.

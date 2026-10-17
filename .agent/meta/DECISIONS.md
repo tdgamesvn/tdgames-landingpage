@@ -308,3 +308,9 @@ một request text rẻ tiền.
 
 ## 2026-10-15 — Không dùng ảnh AI-gen cho case study UI/UX
 Pawtrol Tactics (UI gen 100% bằng image model) bị sếp chê lộ AI. Case study UI/UX phải có UI vector thật (Figma/code), design system nhất quán, breakdown + motion. Image model chỉ được dùng cho art nhân vật/nền.
+
+## 2026-10-18 — Spine chạy trực tiếp trong case study (SpineStage)
+- Show nhân vật Spine thật bằng spine-player trên trang, không render video. 1 WebGL context mỗi trang (đổi quái = remount), chỉ dựng khi vào viewport.
+- Atlas lên R2 dạng WebP q90 + alpha lossless (texture PMA); nếu thấy viền sáng ở mép mờ → chuyển lossless.
+- Khung camera theo idle (FILL ~58% khung), không theo bounds mọi animation (FX level-up/special làm quái bé tí).
+- Nền AI chỉ là môi trường trống; nhân vật luôn là Spine của khách.

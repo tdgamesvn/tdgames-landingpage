@@ -90,6 +90,27 @@ export type CutsceneItem = {
   kicker?: string;
 };
 
+export type SpineTier = {
+  /** "stage1" | "stage3" | "awakened" … — key ổn định, dùng làm path trên CDN. */
+  key: string;
+  label: string;
+  /** URL tới skeleton, KHÔNG có đuôi: `${base}.json` + `${base}.atlas`. */
+  base: string;
+  animations: readonly string[];
+  /** Bậc cao nhất — sân khấu đổi glow mạnh hơn + badge. */
+  highlight?: boolean;
+};
+
+export type SpineMonster = {
+  id: string;
+  name: string;
+  /** Hạng hiển thị, vd "Mythic", "Architect". */
+  rank: string;
+  tiers: readonly SpineTier[];
+  /** Ảnh nhỏ cho dãy chọn (nền trong suốt). */
+  thumb?: string;
+};
+
 export type ShowcaseModule =
   | { id: string; variant: "banner"; src: string }
   | { id: string; variant: "full"; src: string }
@@ -114,6 +135,17 @@ export type ShowcaseModule =
     }
   | { id: string; variant: "videoEmbed"; src: string; aspect: number }
   | { id: string; variant: "sectionLabel"; label: string }
+  | {
+      id: string;
+      variant: "spineStage";
+      /** Nhân vật Spine chạy trực tiếp, người xem chọn con / bậc / animation. */
+      roster: readonly SpineMonster[];
+      /** Ảnh nền sân khấu (sàn đấu trống). */
+      background: string;
+      logo?: string;
+      /** Tên hiển thị cho từng animation key, vd { breathe: "Idle" }. */
+      animationLabels?: Readonly<Record<string, string>>;
+    }
   | {
       id: string;
       variant: "cutsceneGrid";

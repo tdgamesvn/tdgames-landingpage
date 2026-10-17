@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 
 import { AutoLoopMedia } from "./auto-loop-media";
 import { CutsceneGrid } from "./cutscene-grid";
 import type { ProjectTheme, ShowcaseModule } from "./case-study-types";
 import { hexToRgba } from "./portfolio-color-utils";
+
+// Spine runtime (~300KB) chỉ tải trên trang có sân khấu Spine.
+const SpineStage = dynamic(() => import("./spine-stage"), { ssr: false });
 
 /** Tiền tố localStorage — mỗi URL case study có key riêng (tránh Lưu ở trang A ghi đè màu/grid trang B). */
 const STORAGE_KEY_PREFIX = "tdg-case-study-showcase-ui-v1";
@@ -632,6 +636,19 @@ function ShowcaseRenderer({
                 />
               </div>
             </div>
+          );
+        }
+
+        if (module.variant === "spineStage") {
+          return (
+            <SpineStage
+              key={module.id}
+              roster={module.roster}
+              background={module.background}
+              logo={module.logo}
+              animationLabels={module.animationLabels}
+              theme={theme}
+            />
           );
         }
 

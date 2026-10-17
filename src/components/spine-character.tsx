@@ -75,11 +75,28 @@ export type SpineCharacterProps = {
    * 0 = hard cut (không mix). 0.2 = blend mượt 200ms. Default: 0.
    */
   mixDuration?: number;
-  /** Callback khi load thành công */
-  onSuccess?: () => void;
+  /** Callback khi load thành công — nhận SpinePlayer instance */
+  onSuccess?: (player: unknown) => void;
   /** Callback khi load lỗi */
   onError?: (msg: string) => void;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function playSequence(state: any, anims: string[], mix: number) {
+  // Set crossfade duration between animations
+  if (mix > 0 && state.data) {
+    state.data.defaultMix = mix;
+    // Cùng tên nối tiếp chính nó (breathe → breathe) thì hard cut:
+    // crossfade một animation với bản lệch pha của nó trông rất kỳ.
+    for (const name of new Set(anims)) state.data.setMix(name, name, 0);
+  }
+  if (anims.length === 1) {
+    state.setAnimation(0, anims[0], true);
+    return;
+  }
+  state.setAnimation(0, anims[0], false);
+  for (let i = 1; i < anims.length; i++) state.addAnimation(0, anims[i], false, 0);
+}
 
 export function SpineCharacter({
   jsonUrl,
@@ -102,6 +119,23 @@ export function SpineCharacter({
   // Giữ ref để dispose đúng cách khi unmount
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
+
+  const anims =
+    animations && animations.length > 0 ? animations : animation ? [animation] : ["idle"];
+  const animKey = anims.join("|");
+  // Listener "hết chuỗi thì chạy lại" của player đọc ref này, nên đổi animation chỉ cần
+  // đặt lại track — không dựng lại player (dựng lại = tải + parse lại skeleton).
+  const animsRef = useRef(anims);
+  const mixRef = useRef(mixDuration);
+  useEffect(() => {
+    animsRef.current = anims;
+    mixRef.current = mixDuration;
+  });
+
+  useEffect(() => {
+    const state = playerRef.current?.animationState;
+    if (state) playSequence(state, animsRef.current, mixRef.current);
+  }, [animKey]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -138,49 +172,26 @@ export function SpineCharacter({
 
         // Callbacks
         success: (_player) => {
-          const anims =
-            animations && animations.length > 0
-              ? animations
-              : animation
-              ? [animation]
-              : ["idle"];
-
           const state = (_player as any).animationState;
           if (!state) {
-            onSuccess?.();
+            onSuccess?.(_player);
             return;
           }
 
-          // Set crossfade duration between animations
-          if (mixDuration > 0 && state.data) {
-            state.data.defaultMix = mixDuration;
-            // Cùng tên nối tiếp chính nó (breathe → breathe) thì hard cut:
-            // crossfade một animation với bản lệch pha của nó trông rất kỳ.
-            for (const name of new Set(anims)) state.data.setMix(name, name, 0);
-          }
-
-          if (anims.length === 1) {
-            state.setAnimation(0, anims[0], true);
-          } else {
-            state.setAnimation(0, anims[0], false);
-            for (let i = 1; i < anims.length; i++) {
-              state.addAnimation(0, anims[i], false, 0);
-            }
-            state.addListener({
-              complete: (entry: any) => {
-                // Dùng entry.next === null thay vì so tên animation,
-                // để hỗ trợ duplicate animations trong sequence.
-                // entry.next === null nghĩa là không còn animation nào
-                // được queue phía sau → đây thực sự là animation cuối.
-                if (entry.trackIndex === 0 && entry.next === null) {
-                  state.setAnimation(0, anims[0], false);
-                  for (let i = 1; i < anims.length; i++) {
-                    state.addAnimation(0, anims[i], false, 0);
-                  }
-                }
-              },
-            });
-          }
+          playSequence(state, animsRef.current, mixRef.current);
+          state.addListener({
+            complete: (entry: any) => {
+              // Dùng entry.next === null thay vì so tên animation,
+              // để hỗ trợ duplicate animations trong sequence.
+              // entry.next === null nghĩa là không còn animation nào
+              // được queue phía sau → đây thực sự là animation cuối.
+              // Chuỗi 1 animation đã loop sẵn → không đụng vào.
+              const seq = animsRef.current;
+              if (seq.length > 1 && entry.trackIndex === 0 && entry.next === null) {
+                playSequence(state, seq, mixRef.current);
+              }
+            },
+          });
           // Camera: mình gọi state.setAnimation() thẳng nên player.setViewport()
           // không bao giờ chạy → khung hình khoá theo animation đầu (breathe), các
           // animation vươn xa hơn (attack: kiếm + lửa) bị cắt mất phần thò ra.
@@ -191,7 +202,7 @@ export function SpineCharacter({
           try {
             const p = _player as any;
             let box: { x: number; y: number; width: number; height: number } | null = null;
-            for (const name of new Set(anims)) {
+            for (const name of new Set(animsRef.current)) {
               const anim = p.skeleton?.data?.findAnimation?.(name);
               if (!anim) continue;
               const v = { x: 0, y: 0, width: 0, height: 0 };
@@ -222,7 +233,8 @@ export function SpineCharacter({
             // giữ nguyên khung mặc định của player
           }
 
-          onSuccess?.();
+          playerRef.current = _player;
+          onSuccess?.(_player);
         },
         error: onError ? (_player: unknown, msg: string) => onError(msg) : undefined,
       });
@@ -238,7 +250,7 @@ export function SpineCharacter({
       playerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jsonUrl, binaryUrl, atlasUrl, animation, animations, skin, premultipliedAlpha]);
+  }, [jsonUrl, binaryUrl, atlasUrl, skin, premultipliedAlpha]);
 
   // Tính transform string từ scale + offset
   const transformParts: string[] = [];
