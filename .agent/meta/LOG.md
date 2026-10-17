@@ -5952,3 +5952,12 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - Page src/app/portfolio/monster-legends-fire + sitemap.
 - Result: tsc sạch; eslint chỉ còn lỗi cũ (any trong spine-character, showcase). Desktop + mobile OK.
 - Next Step: trang deploy dạng ẨN (chưa có row projects, chưa vào sitemap) để sếp duyệt; duyệt xong mới thêm row + sitemap. Sếp cần xác nhận scope studio (mặc định ghi: Spine 2D animation) + copy. Các hệ khác theo TASKS.
+
+## 2026-10-18 — Monster Legends Fire: sửa 5 điểm sếp feedback
+- (1) Texture vỡ/răng cưa: debug bằng PNG gốc vs WebP → do WebP LOSSY (PMA + chroma 4:2:0). Chuyển WebP lossless exact → R2 spine-v2/ (key mới để né cache CDN 1 ngày). 42.4MB tổng, khách chỉ tải con đang xem.
+- (2) Additive ra nền đen: runtime blend additive cộng cả alpha (ONE,ONE,ONE,ONE) → texture FX nền đen alpha 1 thành đen đục trên canvas trong suốt. Bật skeletonRenderer.pmaAdditiveBatching trong SpineCharacter (dùng chung, trang chủ đã kiểm OK).
+- (3) Cỡ không đều: khung camera theo bounds THÂN ở idle, bỏ slot additive (FX/aura) khi đo → thân luôn cao 50% khung.
+- (4) Nền nổi quá: gen lại arena-v2 (dịu, ít chi tiết, sàn rộng). Chân quái đặt vào tâm sàn ảnh (groundY 0.63, tính theo object-cover).
+- (5) Bỏ chọn quái: mỗi quái 1 sân khấu xếp dọc, lướt là xem; chỉ dựng WebGL khi gần màn hình, huỷ + loseContext khi ra xa (đo: 3 canvas sống / 11 quái).
+- Asset cũ không dùng nữa trên R2: monster-legends-fire/spine/, arena.webp, thumbs/ → cho vào trash khi tiện.
+- Trang vẫn ẨN (chưa row projects, chưa sitemap) chờ sếp duyệt.

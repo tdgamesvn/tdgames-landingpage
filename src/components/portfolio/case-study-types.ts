@@ -142,6 +142,8 @@ export type ShowcaseModule =
       roster: readonly SpineMonster[];
       /** Ảnh nền sân khấu (sàn đấu trống). */
       background: string;
+      /** Tâm sàn trong ảnh nền theo tỉ lệ chiều cao ảnh (0–1) — chân quái đặt vào đây. */
+      groundY?: number;
       logo?: string;
       /** Tên hiển thị cho từng animation key, vd { breathe: "Idle" }. */
       animationLabels?: Readonly<Record<string, string>>;

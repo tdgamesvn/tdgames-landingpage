@@ -172,6 +172,12 @@ export function SpineCharacter({
 
         // Callbacks
         success: (_player) => {
+          // Slot blend additive: mặc định runtime cộng cả alpha vào canvas → texture FX nền
+          // đen (alpha 1) hiện thành mảng đen trên canvas trong suốt (trong game có nền đục nên
+          // không lộ). Cờ này vẽ additive với alpha 0: chỉ cộng màu, giữ nguyên độ trong suốt.
+          const sr = (_player as any).sceneRenderer?.skeletonRenderer;
+          if (sr) sr.pmaAdditiveBatching = true;
+
           const state = (_player as any).animationState;
           if (!state) {
             onSuccess?.(_player);
@@ -243,7 +249,11 @@ export function SpineCharacter({
     return () => {
       cancelled = true;
       try {
+        // Trả context WebGL ngay (trình duyệt chỉ cho ~16 cái) — trang nhiều nhân vật
+        // mount/unmount theo cuộn, đợi GC thì context cũ dồn lại.
+        const gl = playerRef.current?.context?.gl;
         playerRef.current?.dispose?.();
+        gl?.getExtension("WEBGL_lose_context")?.loseContext();
       } catch {
         // ignore errors during cleanup
       }

@@ -4,13 +4,15 @@
 //   node --env-file=.env.local scripts/upload-monster-legends.mjs Fire            # dry-run
 //   node --env-file=.env.local scripts/upload-monster-legends.mjs Fire --apply    # upload
 //
-// → landing/portfolio/monster-legends-<hệ>/spine/<quái>/<bậc>.{json,atlas,webp}
+// → landing/portfolio/monster-legends-<hệ>/spine-v2/<quái>/<bậc>.{json,atlas,webp}
 //   + logo.webp, splash.jpg ở gốc prefix. In manifest (quái → bậc → animations) ra stdout.
 //
 // Sếp chốt 2026-10-17: bỏ fx_ultimate + avatar, chỉ show nhân vật. Bậc: _1 → stage1,
 // _3 → stage3, thư mục con bắt đầu bằng "awakened" → awakened (bậc cao nhất).
-// ponytail: atlas PNG → WebP q90 + alpha lossless — 7.9MB còn 1.5MB. Texture là PMA,
-// nén lossy kênh màu có thể làm viền sáng nhẹ ở mép mờ; nếu thấy thì chuyển lossless (~3.9MB).
+// ponytail: atlas PNG → WebP LOSSLESS (giống PNG từng pixel, ~½ dung lượng). KHÔNG dùng
+// lossy: texture PMA + chroma 4:2:0 → viền sáng + mép răng cưa (sếp bắt lỗi 2026-10-18, v1).
+// Đổi encode thì tăng SPINE_DIR (v3…) — CDN cache 1 ngày, ghi đè cùng key không ăn ngay.
+const SPINE_DIR = "spine-v2";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
@@ -77,7 +79,7 @@ for (const monster of (await readdir(SRC)).sort()) {
     if (!json || !atlas || !png) throw new Error(`Thiếu file trong ${dir}`);
 
     const { id, tier } = parse(sub);
-    const base = `spine/${id}/${tier}`;
+    const base = `${SPINE_DIR}/${id}/${tier}`;
     const jsonBuf = await readFile(path.join(dir, json));
     const anims = Object.keys(JSON.parse(jsonBuf).animations ?? {});
     // Atlas 1 trang (đã kiểm), dòng đầu là tên texture → trỏ sang file webp mới.
@@ -86,7 +88,7 @@ for (const monster of (await readdir(SRC)).sort()) {
       `${tier}.webp`,
     );
     const webp = await sharp(path.join(dir, png))
-      .webp({ quality: 90, alphaQuality: 100, effort: 6 })
+      .webp({ lossless: true, exact: true, effort: 4 })
       .toBuffer();
 
     await put(`${base}.json`, jsonBuf, "application/json");

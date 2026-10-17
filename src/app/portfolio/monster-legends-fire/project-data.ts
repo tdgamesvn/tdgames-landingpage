@@ -9,7 +9,7 @@ import { relatedProjects as epicRelated } from "../epic-card/project-data";
 
 const CDN = "https://cdn.tdgamestudio.com/landing/portfolio/monster-legends-fire";
 // SpinePlayer tải qua proxy cùng origin (né CORS), như Spine ở trang chủ.
-const SPINE = "/api/cdn-proxy/landing/portfolio/monster-legends-fire/spine";
+const SPINE = "/api/cdn-proxy/landing/portfolio/monster-legends-fire/spine-v2";
 
 // Nguồn: media-inbox/Monster Legend/Fire (2026-10-17), upload bằng
 // scripts/upload-monster-legends.mjs Fire. Sếp chốt: chỉ show nhân vật, bỏ fx_ultimate +
@@ -34,7 +34,6 @@ const monster = (
   name,
   rank,
   tiers: tiers.map((t) => ({ ...TIER[t], base: `${SPINE}/${id}/${t}` })),
-  thumb: `${CDN}/thumbs/${id}.webp?v=2`,
 });
 
 // Thứ tự: con 3 bậc + Awakened lên đầu (khoe nhiều nhất), Mythic theo sau.
@@ -127,7 +126,9 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     id: "stage",
     variant: "spineStage",
     roster: ROSTER,
-    background: `${CDN}/arena.webp`,
+    background: `${CDN}/arena-v2.webp`,
+    // Đo trên ảnh arena-v2 (tâm vùng sáng của sàn).
+    groundY: 0.63,
     logo: `${CDN}/logo.webp`,
     animationLabels: {
       breathe: "Idle",

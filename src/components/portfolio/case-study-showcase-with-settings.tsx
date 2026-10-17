@@ -645,6 +645,7 @@ function ShowcaseRenderer({
               key={module.id}
               roster={module.roster}
               background={module.background}
+              groundY={module.groundY}
               logo={module.logo}
               animationLabels={module.animationLabels}
               theme={theme}

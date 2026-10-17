@@ -17,14 +17,17 @@ if (!BASE || !KEY) throw new Error("AI_BASE_URL / AI_API_KEY chưa có trong .en
 
 const [element, ...flags] = process.argv.slice(2);
 const SCENES = {
-  Fire: "a volcanic battle arena: a wide cracked dark basalt rock platform filling the lower third, glowing orange lava seeping through the cracks and pooling at the edges, a distant erupting volcano and jagged floating rock islands, a sky melting from deep magenta-purple at the top into hot orange at the horizon, drifting embers and ash",
+  Fire: "a quiet volcanic plateau at dusk: one large, flat, round platform of dark cracked basalt fills the lower half, with only thin faint glowing ember lines in its cracks; far behind, low desaturated volcano silhouettes fade into haze; a dim smoky plum-to-ember sky; very little lava, no waterfalls, no floating rocks, no bright hotspots",
 };
 if (!SCENES[element]) throw new Error(`Chưa có scene cho hệ "${element}". Có: ${Object.keys(SCENES)}`);
 
-const PROMPT = `Use the reference image ONLY for its art style: painterly stylised 3D mobile game art with soft glowing light, saturated colours and smooth hand-painted textures (Monster Legends look). Paint a completely EMPTY background environment — ${SCENES[element]}. Absolutely NO monsters, NO creatures, NO characters, NO people, NO text, NO logo, NO UI. Wide 3:2 shot from a low camera, horizon at about 45% height. The centre of the platform is open, flat and uncluttered because a monster will be composited standing there; keep the brightest glow softly behind that centre spot so a dark silhouette reads clearly against it, and keep the left and right edges darker. Full-bleed, no borders, no vignette frame.`;
+const PROMPT = `Use the reference image ONLY for its art style: painterly stylised 3D mobile game art with soft glowing light, saturated colours and smooth hand-painted textures (Monster Legends look). Paint a completely EMPTY background environment — ${SCENES[element]}. Absolutely NO monsters, NO creatures, NO characters, NO people, NO text, NO logo, NO UI. Calm, low-contrast and low-detail: this is a backdrop that must stay BEHIND a character, never compete with it — muted, slightly dark, soft focus in the distance, no busy texture. Wide 3:2 shot from a slightly raised camera, horizon at about 42% height. The platform's flat open centre spot sits exactly at 50% width and 72% height of the image — a monster will be composited standing on that spot, so keep it empty, flat and a little lighter than its surroundings, like a soft pool of warm light on the ground. Edges darker. Full-bleed, no borders.`;
+// Tâm sàn trong ảnh (tỉ lệ chiều cao) — SpineStage đặt chân quái vào đúng điểm này.
+// Gen lại nền thì đo lại và sửa groundY ở project-data.
+const VERSION = "v2";
 
 const OUT = "scripts/.out/monster-legends";
-const file = `${OUT}/${element.toLowerCase()}-arena.png`;
+const file = `${OUT}/${element.toLowerCase()}-arena-${VERSION}.png`;
 
 async function gen() {
   const ref = await sharp("media-inbox/Monster Legend/Logo/SplashArt.jpg")
@@ -55,7 +58,7 @@ async function gen() {
 if (!flags.includes("--upload")) await gen();
 else {
   const webp = await sharp(await readFile(file)).webp({ quality: 84 }).toBuffer();
-  const Key = `landing/portfolio/monster-legends-${element.toLowerCase()}/arena.webp`;
+  const Key = `landing/portfolio/monster-legends-${element.toLowerCase()}/arena-${VERSION}.webp`;
   await new S3Client({
     region: "auto",
     endpoint: process.env.R2_ENDPOINT,

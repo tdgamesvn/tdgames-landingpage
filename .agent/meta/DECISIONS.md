@@ -314,3 +314,4 @@ Pawtrol Tactics (UI gen 100% bằng image model) bị sếp chê lộ AI. Case s
 - Atlas lên R2 dạng WebP q90 + alpha lossless (texture PMA); nếu thấy viền sáng ở mép mờ → chuyển lossless.
 - Khung camera theo idle (FILL ~58% khung), không theo bounds mọi animation (FX level-up/special làm quái bé tí).
 - Nền AI chỉ là môi trường trống; nhân vật luôn là Spine của khách.
+- (2026-10-18, sửa) Atlas Spine lên web: WebP LOSSLESS (exact), KHÔNG lossy — lossy làm viền sáng + răng cưa trên texture PMA. Slot additive cần pmaAdditiveBatching (đã bật trong SpineCharacter). Khung camera đo theo thân, bỏ slot additive.
