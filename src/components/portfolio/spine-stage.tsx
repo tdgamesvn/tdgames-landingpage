@@ -284,7 +284,12 @@ function MonsterStage({
     const SH = stage.clientHeight;
     const drawnH = Math.max(SH, SW / aspect);
     const ground = groundY * drawnH + DROP * SH;
-    setLift(f ? ground - box.offsetTop - f.y : 0);
+    // Khung hẹp (mobile vuông): sàn ảnh ở ~66% → con cao chạm mép trên (sếp 2026-10-18).
+    // Chân lấy điểm THẤP hơn giữa mặt sàn và vị trí để quái cân giữa khung theo chiều dọc;
+    // phần sàn đá kéo tới đáy ảnh nên chân vẫn trên sàn. Desktop gần như không đổi.
+    const heightPx = f ? (f.w / body.width) * body.height : 0;
+    const centred = Math.min(0.92 * SH, (SH + heightPx) / 2);
+    setLift(f ? Math.max(ground, centred) - box.offsetTop - f.y : 0);
   }, [groundY, tier.scale]);
 
   useEffect(() => {
