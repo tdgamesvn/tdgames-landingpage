@@ -46,7 +46,7 @@
 ## To do
 
 - [ ] Monster Legends (Social Point) — các hệ còn lại (Dark, Light, …), mỗi hệ 1 trang (2026-10-18).
-      Fire + Water đã dựng (ẩn, chờ duyệt). Phần chung: src/app/portfolio/_monster-legends/shared.ts.
+      Fire + Water live (có card + sitemap). Dark dựng xong (ẩn, chờ duyệt). Phần chung: src/app/portfolio/_monster-legends/shared.ts.
       **Làm theo quy chuẩn `.agent/meta/MONSTER-LEGENDS.md`** (sếp chốt 2026-10-18). Hệ mới: `scripts/upload-monster-legends.mjs <Hệ> --apply`,
       thêm scene vào `scripts/gen-monster-legends-bg.mjs`, copy project-data đổi theme + roster, chụp thumbs.
 

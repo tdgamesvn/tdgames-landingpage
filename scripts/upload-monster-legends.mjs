@@ -75,7 +75,8 @@ const manifest = {};
 for (const monster of (await readdir(SRC)).sort()) {
   if (monster.startsWith(".") || !(await stat(path.join(SRC, monster))).isDirectory()) continue;
   for (const sub of (await readdir(path.join(SRC, monster))).sort()) {
-    if (SKIP.has(sub)) continue;
+    // avatar đôi khi đặt tên lệch chuẩn (vd "avatar_awakened" ở hệ Dark) → bỏ theo tiền tố.
+    if (SKIP.has(sub) || sub.toLowerCase().startsWith("avatar")) continue;
     const dir = path.join(SRC, monster, sub);
     if (!(await stat(dir)).isDirectory()) continue;
     const files = await readdir(dir);

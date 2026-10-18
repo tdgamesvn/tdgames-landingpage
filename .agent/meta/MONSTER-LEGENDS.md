@@ -69,7 +69,9 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
   truyền `dir` cho quái đó (tham số thứ 6 của `monster(...)`, vd Iceblood).
 - Ảnh nền / splash mới: tăng VERSION trong script (key mới), đổi URL trong project-data.
 
-## Còn chờ sếp
+## Trạng thái
 
-- Duyệt để thêm row `projects` + sitemap cho các trang hệ.
-- R2 còn asset cũ không dùng (spine/ v1, arena.webp, arena-v2.webp, thumbs/, splash-ai-v1) → trash.
+- Fire, Water: live (row `projects` + sitemap, 2026-10-18). R2 asset cũ đã chuyển trash/2026-10-18/.
+- Dark: dựng xong, ẩn — chờ sếp duyệt rồi thêm row `projects` (Character Animation, subtitle
+  "Spine 2D Animation", image = splash-ai-v2.jpg) + slug vào `src/app/sitemap.ts`.
+- Lưu ý source: thư mục avatar có thể đặt tên lệch (`avatar_awakened`) — script đã bỏ theo tiền tố.

@@ -32,6 +32,12 @@ const SPLASH = {
     scene:
       "an erupting volcanic battlefield at dusk — rivers of glowing lava, exploding embers, a towering volcano spewing fire behind, molten-orange and magenta sky",
   },
+  Dark: {
+    cast: ["Don Obscurione", "Voreth Voidspawn", "Wilfred Razorstorm", "Anwir Paincraver", "Soulblast"],
+    hero: "Don Obscurione",
+    scene:
+      "a haunted shadow realm under a huge pale moon — twisted dead trees, crooked gothic spires, swirling violet mist and glowing purple runes, deep indigo and violet sky",
+  },
   Water: {
     cast: ["Hounen Zennomusuko", "Kirk Moonwalker", "Crabsair", "Iceblood", "Crocark"],
     hero: "Kirk Moonwalker",
