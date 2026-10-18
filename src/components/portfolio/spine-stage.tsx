@@ -147,6 +147,42 @@ function frameBody(player: Player, body: Body, W: number, H: number, scale = 1) 
   player.previousViewport = null;
 }
 
+type Viewport = Box & { padLeft: number; padRight: number; padTop: number; padBottom: number };
+
+/** Lề an toàn khi lùi camera (tỉ lệ khoảng trống phía trên/hai bên). */
+const FIT_MARGIN = 0.05;
+/** Thời gian camera lùi ra / zoom về (giây). */
+const CAMERA_TRANSITION = 0.3;
+
+/**
+ * Camera lùi ra cho animation có thân vượt khung (nhảy cao, vung rộng) — sếp 2026-10-18:
+ * Iceblood nhảy bị cắt mất người. Giữ nguyên vị trí chân trên màn hình (zoom quanh chân)
+ * nên nền + mặt sàn không lệch. Trả null nếu animation đã lọt khung chuẩn.
+ */
+function fitViewport(base: Viewport, body: Box, anim: Box, topCut = 0): Viewport | null {
+  const left = base.x - base.padLeft;
+  const bottom = base.y - base.padBottom;
+  const vw = base.width + base.padLeft + base.padRight;
+  const vh = base.height + base.padTop + base.padBottom;
+  const fx = body.x + body.width / 2;
+  const fy = body.y;
+  const rx = (fx - left) / vw; // vị trí chân trong khung (0–1)
+  const ry = (fy - bottom) / vh;
+  const keep = 1 - FIT_MARGIN;
+  const ratios = [
+    // topCut: phần đầu canvas bị sân khấu che (canvas được kéo lên quá mép trên để chân
+    // đúng mặt sàn) — tính khoảng trống theo mép trên NHÌN THẤY, không theo mép canvas.
+    ((1 - ry - topCut) * vh * keep) / (anim.y + anim.height - fy), // phía trên chân
+    (rx * vw * keep) / (fx - anim.x), // bên trái
+    ((1 - rx) * vw * keep) / (anim.x + anim.width - fx), // bên phải
+  ].filter((r) => Number.isFinite(r) && r > 0);
+  const k = Math.min(1, ...ratios);
+  if (k >= 0.995) return null;
+  const w = vw / k;
+  const h = vh / k;
+  return { x: fx - rx * w, y: fy - ry * h, width: w, height: h, padLeft: 0, padRight: 0, padTop: 0, padBottom: 0 };
+}
+
 /** Điểm chân (đáy giữa của thân) trong toạ độ khung — tái hiện phép chiếu của player. */
 function footOf(player: Player, body: Box, W: number, H: number): Foot | null {
   const v = player?.currentViewport;
@@ -232,6 +268,11 @@ function MonsterStage({
   const bgRef = useRef<HTMLImageElement>(null);
   const playerRef = useRef<Player>(null);
   const bodyRef = useRef<Body | null>(null);
+  // Khung thân từng animation (đo 1 lần lúc tải) + khung camera chuẩn (dáng idle).
+  const animBoxRef = useRef<Map<string, Box>>(new Map());
+  const baseVpRef = useRef<Viewport | null>(null);
+  /** Tỉ lệ chiều cao canvas bị che phía trên (xem fitViewport). */
+  const topCutRef = useRef(0);
 
   const anims = useMemo(() => sortAnims(tier.animations), [tier]);
   // Showreel (sếp chốt 2026-10-18): idle xen giữa mọi lần đổi animation, walk lặp 2 lần.
@@ -276,6 +317,7 @@ function MonsterStage({
     const H = box.clientHeight;
     frameBody(p, body, W, H, tier.scale);
     const f = footOf(p, body, W, H);
+    baseVpRef.current = { ...p.currentViewport };
     // Tâm sàn của ảnh nền sau object-cover (neo mép trên) → toạ độ sân khấu.
     const img = bgRef.current;
     const aspect = img?.naturalWidth ? img.naturalWidth / img.naturalHeight : 1.5;
@@ -292,7 +334,14 @@ function MonsterStage({
     // sếp đã duyệt (chân đúng mặt sàn, nền cố định — đồng đều giữa các sân khấu).
     const narrow = SW / SH < 1.2;
     const feet = narrow ? Math.max(ground, centred) : ground;
-    setLift(f ? feet - box.offsetTop - f.y : 0);
+    const liftPx = f ? feet - box.offsetTop - f.y : 0;
+    setLift(liftPx);
+    topCutRef.current = Math.max(0, -(box.offsetTop + liftPx)) / H;
+    // Đang chạy animation vượt khung lúc resize → giữ khung đã lùi (không transition).
+    const cur = p.animationState?.getCurrent(0)?.animation?.name;
+    const curBox = cur ? animBoxRef.current.get(cur) : undefined;
+    const fit = curBox ? fitViewport(baseVpRef.current!, body, curBox, topCutRef.current) : null;
+    if (fit) p.currentViewport = fit;
     // Nền đi theo chân (sếp 2026-10-18: mobile chân lệch khỏi vùng sàn sáng): phóng ảnh
     // vừa đủ để tâm sàn (groundY) nằm đúng `feet` mà vẫn phủ kín khung.
     if (!narrow) return setBg(null);
@@ -413,9 +462,31 @@ function MonsterStage({
               animations={playing}
               mixDuration={0.25} // sếp chốt 2026-10-18 (0.18 giật khi đổi dáng xa)
               className="relative h-full w-full"
-              onSuccess={(p) => {
+              onSuccess={(player) => {
+                const p = player as Player;
                 playerRef.current = p;
                 bodyRef.current = bodyBounds(p, "breathe");
+                const boxes = new Map<string, Box>();
+                for (const a of anims) {
+                  const b = bodyBounds(p, a);
+                  if (b) boxes.set(a, b);
+                }
+                animBoxRef.current = boxes;
+                p.config.viewport.transitionTime = CAMERA_TRANSITION;
+                p.animationState?.addListener({
+                  start: (entry: Player) => {
+                    const base = baseVpRef.current;
+                    const body = bodyRef.current;
+                    if (entry.trackIndex !== 0 || !base || !body) return;
+                    const b = animBoxRef.current.get(entry.animation?.name);
+                    const target = (b && fitViewport(base, body, b, topCutRef.current)) || base;
+                    // Xuất phát từ khung đang vẽ (có thể đang giữa transition) → không giật.
+                    const v = p.viewport;
+                    p.previousViewport = { x: v.x, y: v.y, width: v.width, height: v.height, padLeft: 0, padRight: 0, padTop: 0, padBottom: 0 };
+                    p.currentViewport = target;
+                    p.viewportTransitionStart = performance.now();
+                  },
+                });
                 layout();
                 setReady(true);
               }}
