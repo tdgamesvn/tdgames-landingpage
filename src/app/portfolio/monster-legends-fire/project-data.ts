@@ -71,7 +71,7 @@ export const projectMeta: ProjectMeta = {
   madeForLabel: "Social Point",
   madeForUrl: "https://www.socialpoint.es",
   // Splash AI riêng hệ Fire (scripts/gen-monster-legends-splash.mjs), ref = render Spine trong bài.
-  coverImage: `${CDN}/splash-ai-v1.jpg`,
+  coverImage: `${CDN}/splash-ai-v2.jpg`,
   coverPosition: "center",
   tools: ["Spine 2D"],
   fields: ["Character Animation", "Spine 2D"],

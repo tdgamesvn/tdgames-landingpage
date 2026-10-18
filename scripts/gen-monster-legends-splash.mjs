@@ -22,7 +22,7 @@ if (!BASE || !KEY) throw new Error("AI_BASE_URL / AI_API_KEY chưa có trong .en
 
 const [element, ...flags] = process.argv.slice(2);
 const OUT = "scripts/.out/monster-legends";
-const VERSION = "v1";
+const VERSION = "v2";
 
 // cast: tên theo đúng thứ tự file ref-<hệ>-0..n; hero = con đứng giữa, to nhất.
 const SPLASH = {
@@ -75,12 +75,14 @@ async function characterSheet() {
     .toBuffer();
 }
 
+// v2 (sếp 2026-10-18): v1 "real và chi tiết quá" → bám đúng nét SplashArt gốc của game:
+// cartoon sạch, khối lớn, ít chi tiết vụn. Giữ bố cục động kiểu splash, bỏ render kỹ.
 const PROMPT = () =>
-  `Create an epic cinematic splash-art illustration with the polish of Riot Games' League of Legends champion splash art: a dramatic, dynamic composition with strong depth (foreground, midground, background), heroic low camera angle, powerful rim lighting, volumetric light shafts, flying particles and energy, rich painterly rendering and high detail. ` +
-  `The ART STYLE must match the second reference (Monster Legends key art): stylised cartoon creatures with chunky exaggerated proportions, vibrant saturated colours, hand-painted shading — NOT photorealistic. ` +
+  `Create a key-art splash illustration drawn in EXACTLY the same art style as the second reference image (the official Monster Legends splash art): a clean stylised CARTOON look — big simple readable shapes, bold silhouettes, smooth soft cel-like shading with only 2–3 tones per surface, clean edges, bright saturated colours, minimal texture and minimal fine detail. It must NOT look realistic or highly rendered: no gritty texture, no photographic water or fire, no dense particle noise, no heavy detail, no hyper-real lighting. ` +
+  `Composition like a game splash: dynamic, with clear foreground and background depth and a heroic camera angle, but uncluttered and easy to read — generous simple background shapes like the reference. ` +
   `Feature EXACTLY these ${cfg.cast.length} monsters from the first reference (a character sheet with their names), and keep every design faithful — same body shape, colours, armour, horns, weapons and accessories: ${cfg.cast.join(", ")}. ` +
-  `${cfg.hero} is the hero: largest, centred in the foreground in a powerful action pose; the others charge in around and behind in dynamic battle poses at varied depths, all clearly readable. ` +
-  `Setting: ${cfg.scene}. Wide landscape composition, full-bleed. No text, no logo, no watermark, no UI, no frame.`;
+  `${cfg.hero} is the hero: largest, centred in the foreground in a powerful action pose; the others are arranged around and behind in dynamic poses at varied depths, all clearly readable. ` +
+  `Setting: ${cfg.scene}, painted with the same simple cartoon shapes as the reference. Wide landscape composition, full-bleed. No text, no logo, no watermark, no UI, no frame.`;
 
 /**
  * POST multipart không giới hạn chờ header. ponytail: fetch của Node (undici) cắt ở 300s

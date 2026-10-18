@@ -5985,3 +5985,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - project-data 2 hệ: background arena-v3, coverImage splash-ai-v1.jpg.
 - Result: tsc/eslint sạch; chụp kiểm hero + sân khấu desktop 1440 / mobile 390 cả 2 hệ.
 - Asset R2 cũ không dùng: arena.webp, arena-v2.webp, spine/ (v1), thumbs/, splash.jpg (Water/Fire) → trash khi tiện.
+- Update 2026-10-18 (sếp: banner 'real và chi tiết quá'): splash prompt v2 bám đúng nét SplashArt gốc (cartoon sạch, khối lớn, 2–3 tông/bề mặt, ít chi tiết vụn) → splash-ai-v2.jpg cả 2 hệ, đã soát thiết kế quái giữ đúng. v1 còn trên R2, không dùng.
