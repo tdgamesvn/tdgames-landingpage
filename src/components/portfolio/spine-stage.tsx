@@ -414,7 +414,7 @@ function MonsterStage({
               jsonUrl={`${tier.base}.json`}
               atlasUrl={`${tier.base}.atlas`}
               animations={playing}
-              mixDuration={0.18}
+              mixDuration={0.25} // sếp chốt 2026-10-18 (0.18 giật khi đổi dáng xa)
               className="relative h-full w-full"
               onSuccess={(p) => {
                 playerRef.current = p;
