@@ -12,7 +12,7 @@
 // ponytail: atlas PNG → WebP LOSSLESS (giống PNG từng pixel, ~½ dung lượng). KHÔNG dùng
 // lossy: texture PMA + chroma 4:2:0 → viền sáng + mép răng cưa (sếp bắt lỗi 2026-10-18, v1).
 // Đổi encode thì tăng SPINE_DIR (v3…) — CDN cache 1 ngày, ghi đè cùng key không ăn ngay.
-const SPINE_DIR = "spine-v2";
+
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
@@ -21,6 +21,11 @@ import sharp from "sharp";
 const [element, ...flags] = process.argv.slice(2);
 if (!element) throw new Error("Thiếu tên hệ, vd: Fire");
 const APPLY = flags.includes("--apply");
+// --dir=spine-v3 --only=iceblood: upload lại riêng 1 quái vào thư mục mới (né cache CDN);
+// nhớ trỏ quái đó sang thư mục mới trong project-data (tham số `dir` của monsterFactory).
+const flag = (k) => flags.find((f) => f.startsWith(`--${k}=`))?.split("=")[1];
+const SPINE_DIR = flag("dir") ?? "spine-v2";
+const ONLY = flag("only");
 const ROOT = "media-inbox/Monster Legend";
 const SRC = path.join(ROOT, element);
 const PREFIX = `landing/portfolio/monster-legends-${element.toLowerCase()}`;
@@ -79,6 +84,7 @@ for (const monster of (await readdir(SRC)).sort()) {
     if (!json || !atlas || !png) throw new Error(`Thiếu file trong ${dir}`);
 
     const { id, tier } = parse(sub);
+    if (ONLY && id !== ONLY) continue;
     const base = `${SPINE_DIR}/${id}/${tier}`;
     const jsonBuf = await readFile(path.join(dir, json));
     const anims = Object.keys(JSON.parse(jsonBuf).animations ?? {});
@@ -98,6 +104,7 @@ for (const monster of (await readdir(SRC)).sort()) {
   }
 }
 
+if (!ONLY) {
 const logo = await sharp(path.join(ROOT, "Logo/logo.png"))
   .resize({ width: 1200 })
   .webp({ quality: 90, alphaQuality: 100 })
@@ -107,6 +114,7 @@ const splash = await sharp(path.join(ROOT, "Logo/SplashArt.jpg"))
   .jpeg({ quality: 86, mozjpeg: true })
   .toBuffer();
 await put("splash.jpg", splash, "image/jpeg");
+}
 
 console.error(`\n${(bytes / 1e6).toFixed(1)}MB ${APPLY ? "đã upload" : "(dry-run)"} → ${PREFIX}/`);
 console.log(JSON.stringify(manifest, null, 2));

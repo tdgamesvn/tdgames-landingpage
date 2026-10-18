@@ -11,6 +11,7 @@ import {
   cdnFor,
   monsterFactory,
   rosterStats,
+  summaryFor,
 } from "../_monster-legends/shared";
 
 // Nguồn: media-inbox/Monster Legend/Water (2026-10-18) — 6 quái / 10 skeleton.
@@ -22,7 +23,8 @@ const ROSTER: readonly SpineMonster[] = [
   monster("hounen-zennomusuko", "Hounen Zennomusuko", "Ancestor", ["awakened"]),
   monster("kirk-moonwalker", "Kirk Moonwalker", "Ancestor", ["awakened"]),
   monster("crabsair", "Crabsair", "Mythic", ["stage1", "stage3"]),
-  monster("iceblood", "Iceblood", "Mythic", ["stage1", "stage3"]),
+  // Sếp sửa lại file ở local 2026-10-18 → upload riêng sang spine-v3 (cache CDN giữ bản cũ ở v2).
+  monster("iceblood", "Iceblood", "Mythic", ["stage1", "stage3"], {}, "spine-v3"),
   monster("crocark", "Crocark", "Mythic", ["stage1", "stage3"]),
   monster("bayworker-hulk", "Bayworker Hulk", "Mythic", ["stage1", "stage3"]),
 ];
@@ -32,7 +34,7 @@ const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 export const projectMeta: ProjectMeta = {
   title: "Monster Legends — Water Monsters | Spine 2D Animation",
   eyebrow: "Case study · Social Point",
-  summary: `${ROSTER.length} Water-element monsters from Social Point's Monster Legends, animated in Spine 2D across their evolution stages — up to the Awakened forms. Every one below is running live in your browser.`,
+  summary: summaryFor("Water"),
   heroTitle: {
     primary: [{ text: "Monster Legends", color: "white" }],
     subtitle: [
@@ -90,7 +92,7 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "label-roster", variant: "sectionLabel", label: "Water monsters · live Spine" },
+  { id: "label-roster", variant: "sectionLabel", label: "Water monsters · Animation Spine" },
   {
     id: "stage",
     variant: "spineStage",

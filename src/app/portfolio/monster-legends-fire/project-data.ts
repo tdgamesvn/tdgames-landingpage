@@ -11,6 +11,7 @@ import {
   cdnFor,
   monsterFactory,
   rosterStats,
+  summaryFor,
 } from "../_monster-legends/shared";
 
 const CDN = cdnFor("fire");
@@ -37,7 +38,7 @@ const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 export const projectMeta: ProjectMeta = {
   title: "Monster Legends — Fire Monsters | Spine 2D Animation",
   eyebrow: "Case study · Social Point",
-  summary: `${ROSTER.length} Fire-element monsters from Social Point's Monster Legends, animated in Spine 2D across every evolution stage — from the base form to the Awakened. Every one below is running live in your browser.`,
+  summary: summaryFor("Fire"),
   heroTitle: {
     primary: [
       { text: "Monster Legends", color: "white" },
@@ -97,7 +98,7 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "label-roster", variant: "sectionLabel", label: "Fire monsters · live Spine" },
+  { id: "label-roster", variant: "sectionLabel", label: "Fire monsters · Animation Spine" },
   {
     id: "stage",
     variant: "spineStage",

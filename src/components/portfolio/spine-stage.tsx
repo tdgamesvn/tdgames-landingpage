@@ -190,12 +190,9 @@ export default function SpineStage({
     <div className="px-3 pb-8 pt-4 md:px-6 md:pb-12">
       {logo && (
         <div className="mb-8 flex flex-col items-center gap-3 text-center md:mb-12">
+          {/* Logo to hơn 50% + bỏ dòng mô tả dưới logo (sếp 2026-10-18). */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo} alt="Monster Legends" className="w-[200px] md:w-[280px]" />
-          <p className="max-w-[46ch] text-[14px] leading-relaxed text-white/60">
-            {roster.length} monsters, each running live in Spine. Switch evolution stage or
-            animation on any of them.
-          </p>
+          <img src={logo} alt="Monster Legends" className="w-[300px] md:w-[420px]" />
         </div>
       )}
       <div className="flex flex-col gap-12 md:gap-20">
