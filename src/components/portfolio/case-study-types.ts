@@ -146,6 +146,8 @@ export type ShowcaseModule =
       background: string;
       /** Tâm sàn trong ảnh nền theo tỉ lệ chiều cao ảnh (0–1) — chân quái đặt vào đây. */
       groundY?: number;
+      /** Ảnh nền rộng hơn phần hiển thị ×N (outpaint) để camera lùi được; groundY tính theo phần giữa. */
+      backgroundRoom?: number;
       logo?: string;
       /** Tên hiển thị cho từng animation key, vd { breathe: "Idle" }. */
       animationLabels?: Readonly<Record<string, string>>;

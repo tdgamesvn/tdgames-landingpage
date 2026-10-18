@@ -98,8 +98,11 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     variant: "spineStage",
     roster: ROSTER,
     background: `${CDN}/arena-v3.webp`,
-    // Đo trên ảnh arena-v3 (nền cartoon, tâm vùng sáng của sàn).
-    groundY: 0.60,
+    // arena-v3 là ảnh ĐẦY ĐỦ; lúc thường chỉ hiện phần giữa (1/1.5) để camera lùi ra tối đa
+    // ×1.5 thì nền thu nhỏ theo mà vẫn phủ kín (sếp 2026-10-18). groundY tính theo phần giữa:
+    // (groundY_ảnh − 1/6) × 1.5.
+    groundY: 0.65,
+    backgroundRoom: 1.5,
     logo: `${CDN}/logo.webp`,
     animationLabels: ANIMATION_LABELS,
   },

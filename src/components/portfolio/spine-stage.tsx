@@ -125,8 +125,8 @@ function bodyBounds(player: Player, idle: string): Body | null {
  * → trên mobile (khung hẹp) mỗi con một cỡ (sếp bắt 2026-10-18). MAX_W chọn sao cho con
  * bè nhất (Aquatorum, rộng ≈ 1.55 × cỡ) vẫn lọt khung.
  */
-function frameBody(player: Player, body: Body, W: number, H: number, scale = 1) {
-  let px = Math.min(FILL * H, MAX_W * W) * scale; // chiều cao (px) của "cỡ" thân
+function frameBody(player: Player, body: Body, W: number, H: number, scale = 1, sizeH = H) {
+  let px = Math.min(FILL * sizeH, MAX_W * W) * scale; // chiều cao (px) của "cỡ" thân
   let s = px / body.size; // px trên mỗi đơn vị world
   // Chốt an toàn: không để thân tràn ngang khỏi khung.
   if (body.width * s > 0.96 * W) {
@@ -136,7 +136,9 @@ function frameBody(player: Player, body: Body, W: number, H: number, scale = 1) 
   const vw = W / s;
   const vh = H / s;
   const padX = (vw - body.width) / 2;
-  const padBottom = (vh - body.height) * 0.06;
+  // Chân cách đáy canvas 30%: canvas kéo dài quá mép dưới sân khấu nên FX dưới chân (vòng
+  // phép, bụi, nước) không bị cắt ngang ở đáy canvas (sếp 2026-10-18, Crabsair).
+  const padBottom = vh * 0.3;
   player.currentViewport = {
     ...body,
     padLeft: padX,
@@ -151,6 +153,8 @@ type Viewport = Box & { padLeft: number; padRight: number; padTop: number; padBo
 
 /** Lề an toàn khi lùi camera (tỉ lệ khoảng trống phía trên/hai bên). */
 const FIT_MARGIN = 0.05;
+/** Camera lùi tối đa ×1.5 (sếp 2026-10-18) — khớp phần nền dư của arena-v4; cần hơn thì chịu cắt. */
+const MAX_PULLBACK = 1.5;
 /** Thời gian camera lùi ra / zoom về (giây). */
 const CAMERA_TRANSITION = 0.3;
 
@@ -176,12 +180,14 @@ function fitViewport(base: Viewport, body: Box, anim: Box, topCut = 0): Viewport
     (rx * vw * keep) / (fx - anim.x), // bên trái
     ((1 - rx) * vw * keep) / (anim.x + anim.width - fx), // bên phải
   ].filter((r) => Number.isFinite(r) && r > 0);
-  const k = Math.min(1, ...ratios);
+  const k = Math.max(1 / MAX_PULLBACK, Math.min(1, ...ratios));
   if (k >= 0.995) return null;
   const w = vw / k;
   const h = vh / k;
   return { x: fx - rx * w, y: fy - ry * h, width: w, height: h, padLeft: 0, padRight: 0, padTop: 0, padBottom: 0 };
 }
+
+const vpWidth = (v: Viewport) => v.width + v.padLeft + v.padRight;
 
 /** Điểm chân (đáy giữa của thân) trong toạ độ khung — tái hiện phép chiếu của player. */
 function footOf(player: Player, body: Box, W: number, H: number): Foot | null {
@@ -206,6 +212,8 @@ type StageProps = {
   background: string;
   /** Tâm sàn trong ảnh nền, tính theo tỉ lệ chiều cao ảnh (0–1). */
   groundY: number;
+  /** Ảnh nền rộng hơn phần hiển thị bao nhiêu lần (outpaint) — chỗ cho camera lùi. */
+  backgroundRoom: number;
   animationLabels: Readonly<Record<string, string>>;
   theme: ProjectTheme;
 };
@@ -215,12 +223,14 @@ export default function SpineStage({
   logo,
   animationLabels = {},
   groundY = 0.7,
+  backgroundRoom = 1,
   ...rest
-}: Omit<StageProps, "animationLabels" | "groundY"> & {
+}: Omit<StageProps, "animationLabels" | "groundY" | "backgroundRoom"> & {
   roster: readonly SpineMonster[];
   logo?: string;
   animationLabels?: Readonly<Record<string, string>>;
   groundY?: number;
+  backgroundRoom?: number;
 }) {
   return (
     <div className="px-3 pb-8 pt-4 md:px-6 md:pb-12">
@@ -238,6 +248,7 @@ export default function SpineStage({
             monster={m}
             animationLabels={animationLabels}
             groundY={groundY}
+            backgroundRoom={backgroundRoom}
             {...rest}
           />
         ))}
@@ -250,6 +261,7 @@ function MonsterStage({
   monster,
   background,
   groundY,
+  backgroundRoom,
   animationLabels,
   theme,
 }: StageProps & { monster: SpineMonster }) {
@@ -261,7 +273,7 @@ function MonsterStage({
   const [near, setNear] = useState(false);
   const [lift, setLift] = useState(0);
   // Vị trí ảnh nền (px) để tâm sàn trùng chân quái; null = object-cover mặc định.
-  const [bg, setBg] = useState<{ top: number; height: number } | null>(null);
+  const [bg, setBg] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -273,6 +285,11 @@ function MonsterStage({
   const baseVpRef = useRef<Viewport | null>(null);
   /** Tỉ lệ chiều cao canvas bị che phía trên (xem fitViewport). */
   const topCutRef = useRef(0);
+  // Nền thu/phóng cùng camera, tâm = chân quái (toạ độ sân khấu).
+  const [zoom, setZoom] = useState({ k: 1, ox: 0, oy: 0 });
+  const originRef = useRef({ ox: 0, oy: 0 });
+  /** Nền không được thu nhỏ quá mức này (sẽ hở mép sân khấu) — tính theo hình học khung. */
+  const minBgKRef = useRef(1);
 
   const anims = useMemo(() => sortAnims(tier.animations), [tier]);
   // Showreel (sếp chốt 2026-10-18): idle xen giữa mọi lần đổi animation, walk lặp 2 lần.
@@ -315,14 +332,17 @@ function MonsterStage({
     if (!box || !stage || !p || !body) return;
     const W = box.clientWidth;
     const H = box.clientHeight;
-    frameBody(p, body, W, H, tier.scale);
+    const SW0 = stage.clientWidth;
+    const SH0 = stage.clientHeight;
+    // Cỡ quái tính theo chiều cao khung cũ (94% sân khấu), không theo canvas đã kéo dài.
+    frameBody(p, body, W, H, tier.scale, SH0 * 0.94);
     const f = footOf(p, body, W, H);
     baseVpRef.current = { ...p.currentViewport };
     // Tâm sàn của ảnh nền sau object-cover (neo mép trên) → toạ độ sân khấu.
     const img = bgRef.current;
     const aspect = img?.naturalWidth ? img.naturalWidth / img.naturalHeight : 1.5;
-    const SW = stage.clientWidth;
-    const SH = stage.clientHeight;
+    const SW = SW0;
+    const SH = SH0;
     const drawnH = Math.max(SH, SW / aspect);
     const ground = groundY * drawnH + DROP * SH;
     // Khung hẹp (mobile vuông): sàn ảnh ở ~66% → con cao chạm mép trên (sếp 2026-10-18).
@@ -342,12 +362,44 @@ function MonsterStage({
     const curBox = cur ? animBoxRef.current.get(cur) : undefined;
     const fit = curBox ? fitViewport(baseVpRef.current!, body, curBox, topCutRef.current) : null;
     if (fit) p.currentViewport = fit;
+    originRef.current = { ox: box.offsetLeft + (f?.x ?? W / 2), oy: feet };
+    setZoom({ k: fit ? vpWidth(baseVpRef.current!) / vpWidth(fit) : 1, ...originRef.current });
     // Nền đi theo chân (sếp 2026-10-18: mobile chân lệch khỏi vùng sàn sáng): phóng ảnh
     // vừa đủ để tâm sàn (groundY) nằm đúng `feet` mà vẫn phủ kín khung.
-    if (!narrow) return setBg(null);
-    const h = Math.max(drawnH, (feet - DROP * SH) / groundY, (SH - feet + DROP * SH) / (1 - groundY));
-    setBg({ top: feet - DROP * SH - groundY * h, height: h });
-  }, [groundY, tier.scale]);
+    // Khung ảnh "trong" (phần trông thấy lúc bình thường): khung ngang neo mép trên như bản
+    // đã duyệt; khung hẹp phóng để tâm sàn trùng chân. Ảnh thật rộng hơn ×backgroundRoom
+    // (arena-v4 outpaint) — phần dư chỉ lộ khi camera lùi.
+    let innerH = drawnH;
+    let innerTop = 0;
+    if (narrow) {
+      innerH = Math.max(drawnH, (feet - DROP * SH) / groundY, (SH - feet + DROP * SH) / (1 - groundY));
+      innerTop = feet - DROP * SH - groundY * innerH;
+    }
+    const innerW = innerH * aspect;
+    const fullW = innerW * backgroundRoom;
+    const fullH = innerH * backgroundRoom;
+    const rect = {
+      left: (SW - innerW) / 2 - (fullW - innerW) / 2,
+      top: innerTop - (fullH - innerH) / 2,
+      width: fullW,
+      height: fullH,
+    };
+    setBg(rect);
+    // Thu nhỏ quanh chân (ox, oy) mà vẫn phủ kín sân khấu → k tối thiểu theo từng mép. Chân
+    // nằm thấp nên phía trên cần nhiều nền dư hơn; camera lùi xa nhất thì nền dừng sớm vài %
+    // thay vì hở dải tối ở mép trên.
+    const { ox, oy } = originRef.current;
+    minBgKRef.current = Math.min(
+      1,
+      Math.max(
+        ox / (ox - rect.left),
+        (SW - ox) / (rect.left + rect.width - ox),
+        oy / (oy - rect.top),
+        (SH - oy) / (rect.top + rect.height - oy),
+      ),
+    );
+    setZoom((z) => ({ ...z, k: Math.max(z.k, minBgKRef.current) }));
+  }, [groundY, tier.scale, backgroundRoom]);
 
   useEffect(() => {
     const box = boxRef.current;
@@ -415,26 +467,32 @@ function MonsterStage({
         data-spine-stage
         className="relative isolate aspect-square w-full overflow-hidden rounded-[22px] bg-[#1a0f12] sm:aspect-[4/3] lg:aspect-[16/9]"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          ref={bgRef}
-          src={background}
-          alt=""
+        {/* Nền thu/phóng cùng camera quanh chân quái — khớp transition tuyến tính của player. */}
+        <div
           aria-hidden
-          loading="lazy"
-          onLoad={layout}
-          className={
-            bg
-              ? "absolute left-1/2 -z-20 max-w-none -translate-x-1/2"
-              : "absolute inset-0 -z-20 h-full w-full object-cover"
-          }
-          // Chưa đo: neo mép trên (sàn ~75% trên khung ngang). Đã đo: đặt theo chân quái.
-          style={
-            bg
-              ? { filter: "brightness(0.82)", top: bg.top, height: bg.height, width: "auto" }
-              : { filter: "brightness(0.82)", objectPosition: "50% 0%" }
-          }
-        />
+          className="absolute inset-0 -z-20"
+          style={{
+            transform: `scale(${zoom.k})`,
+            transformOrigin: `${zoom.ox}px ${zoom.oy}px`,
+            transition: `transform ${CAMERA_TRANSITION}s linear`,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={bgRef}
+            src={background}
+            alt=""
+            loading="lazy"
+            onLoad={layout}
+            className={bg ? "absolute max-w-none" : "absolute inset-0 h-full w-full object-cover"}
+            // Chưa đo: neo mép trên. Đã đo: đặt theo khung tính trong layout().
+            style={
+              bg
+                ? { filter: "brightness(0.82)", left: bg.left, top: bg.top, width: bg.width, height: bg.height }
+                : { filter: "brightness(0.82)", objectPosition: "50% 0%" }
+            }
+          />
+        </div>
         <div
           aria-hidden
           className="absolute inset-0 -z-10"
@@ -448,7 +506,7 @@ function MonsterStage({
         {/* Nhân vật */}
         <div
           ref={boxRef}
-          className="absolute inset-x-0 bottom-0 top-[6%] transition-opacity duration-500"
+          className="absolute inset-x-0 -bottom-[24%] -top-[24%] transition-opacity duration-500"
           style={{
             opacity: ready ? 1 : 0,
             transform: `translateY(${lift}px)`,
@@ -485,6 +543,10 @@ function MonsterStage({
                     p.previousViewport = { x: v.x, y: v.y, width: v.width, height: v.height, padLeft: 0, padRight: 0, padTop: 0, padBottom: 0 };
                     p.currentViewport = target;
                     p.viewportTransitionStart = performance.now();
+                    setZoom({
+                      k: Math.max(minBgKRef.current, vpWidth(base) / vpWidth(target)),
+                      ...originRef.current,
+                    });
                   },
                 });
                 layout();
