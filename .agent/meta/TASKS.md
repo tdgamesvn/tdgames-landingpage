@@ -45,8 +45,8 @@
 
 ## To do
 
-- [ ] Monster Legends (Social Point) — các hệ còn lại (Water, Light, …), mỗi hệ 1 trang (2026-10-18).
-      Fire đã xong (/portfolio/monster-legends-fire). Hệ mới: `scripts/upload-monster-legends.mjs <Hệ> --apply`,
+- [ ] Monster Legends (Social Point) — các hệ còn lại (Dark, Light, …), mỗi hệ 1 trang (2026-10-18).
+      Fire + Water đã dựng (ẩn, chờ duyệt). Phần chung: src/app/portfolio/_monster-legends/shared.ts. Hệ mới: `scripts/upload-monster-legends.mjs <Hệ> --apply`,
       thêm scene vào `scripts/gen-monster-legends-bg.mjs`, copy project-data đổi theme + roster, chụp thumbs.
 
 - [ ] **Marketing Google — chờ sếp:** (2026-10-01: GA4 `G-2M5ZNY433F` ĐÃ BẬT; 2026-10-05: Ads AW-18473620402 + conversion ĐÃ BẬT; 2026-10-05: sếp CHỐT giữ GA `G-2M5ZNY433F`, bỏ `G-84PCN1R6HE`; còn verification) code GA4/Ads/verification đã deploy (2026-09-24) nhưng

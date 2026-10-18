@@ -5969,3 +5969,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Update 2026-10-18 (sếp: mobile nhân vật sát mép trên): chân = max(mặt sàn ảnh, vị trí cân giữa khung theo chiều dọc), trần 92% cao. Mobile vuông giờ quái cân giữa; desktop gần như không đổi. Đã chụp kiểm 11 con mobile + desktop.
 - Update 2026-10-18 (sếp: mobile nhân vật không đứng giữa vùng đất nền; walk 3→2): khung hẹp (rộng/cao < 1.2) → nền phóng + dời để tâm sàn (groundY) trùng chân quái (vẫn phủ kín khung); khung ngang giữ nguyên bản đã duyệt. Walk ×2. Ghi chú: dev local từng trả 404 cho /api/cdn-proxy do cache .next/dev hỏng — rm -rf .next/dev rồi chạy lại là hết.
 - Update 2026-10-18 (sếp): mix giữa animation 0.18s → 0.25s (cùng tên nối nhau vẫn 0).
+
+## 2026-10-18 — Portfolio: Monster Legends — Water (ẩn, chờ duyệt)
+- Task: sếp "check và triển khai hệ Water".
+- Work Done: source Water = 6 quái / 10 skeleton (Hounen Zennomusuko + Kirk Moonwalker chỉ Awakened; Crabsair, Iceblood, Crocark, Bayworker Hulk base+evolved), Spine 4.2.43, atlas 1 trang PMA, quy ước basic/ + fx/ như Fire. Upload spine-v2 lossless (14.6MB) + logo/splash. Nền AI arena-v2 hệ Water (vũng triều, sàn đá ướt), groundY 0.61. Tách phần chung sang src/app/portfolio/_monster-legends/shared.ts (TIER, monsterFactory, rosterStats, ANIMATION_LABELS, WORKFLOW) — Fire chuyển sang dùng, nội dung không đổi. Trang /portfolio/monster-legends-water, theme xanh biển (#2fb8e8, Awakened #8ff0ff).
+- Result: tsc + eslint sạch, detect_changes low. Chụp kiểm 6 con desktop 1280 + mobile 390: cỡ đều, chân trên sàn sáng, FX additive OK, 0 lỗi trang. Fire kiểm lại: 11 sân khấu, 0 lỗi.
+- Next Step: sếp duyệt Fire + Water → thêm row projects + sitemap cho cả 2. Hệ Dark đã có trong media-inbox.

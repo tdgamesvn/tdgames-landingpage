@@ -3,40 +3,18 @@ import type {
   RelatedProject,
   ShowcaseModule,
   SpineMonster,
-  SpineTier,
 } from "@/components/portfolio/case-study-types";
 import { relatedProjects as epicRelated } from "../epic-card/project-data";
+import {
+  ANIMATION_LABELS,
+  WORKFLOW,
+  cdnFor,
+  monsterFactory,
+  rosterStats,
+} from "../_monster-legends/shared";
 
-const CDN = "https://cdn.tdgamestudio.com/landing/portfolio/monster-legends-fire";
-// SpinePlayer tải qua proxy cùng origin (né CORS), như Spine ở trang chủ.
-const SPINE = "/api/cdn-proxy/landing/portfolio/monster-legends-fire/spine-v2";
-
-// Nguồn: media-inbox/Monster Legend/Fire (2026-10-17), upload bằng
-// scripts/upload-monster-legends.mjs Fire. Sếp chốt: chỉ show nhân vật, bỏ fx_ultimate +
-// avatar. Bậc: base (_1) → evolved (_3) → awakened (cao nhất). Mỗi hệ một trang riêng —
-// hệ sau copy file này, đổi CDN/SPINE/ROSTER/theme + nền scripts/gen-monster-legends-bg.mjs.
-const BASE_ANIMS = ["breathe", "walk", "special1", "levelup"] as const;
-const FULL_ANIMS = ["breathe", "walk", "attack", "attack_skill", "special1", "levelup", "prone"] as const;
-
-const TIER: Record<"stage1" | "stage3" | "awakened", Omit<SpineTier, "base">> = {
-  stage1: { key: "stage1", label: "Base", animations: BASE_ANIMS },
-  stage3: { key: "stage3", label: "Evolved", animations: FULL_ANIMS },
-  awakened: { key: "awakened", label: "Awakened", animations: FULL_ANIMS, highlight: true },
-};
-
-const monster = (
-  id: string,
-  name: string,
-  rank: string,
-  tiers: readonly (keyof typeof TIER)[],
-  // Phóng riêng từng bậc khi tự đo cỡ vẫn lệch mắt (xem SpineTier.scale).
-  scale: Partial<Record<keyof typeof TIER, number>> = {},
-): SpineMonster => ({
-  id,
-  name,
-  rank,
-  tiers: tiers.map((t) => ({ ...TIER[t], base: `${SPINE}/${id}/${t}`, scale: scale[t] })),
-});
+const CDN = cdnFor("fire");
+const monster = monsterFactory("fire");
 
 // Thứ tự: con 3 bậc + Awakened lên đầu (khoe nhiều nhất), Mythic theo sau.
 const ROSTER: readonly SpineMonster[] = [
@@ -54,8 +32,7 @@ const ROSTER: readonly SpineMonster[] = [
   monster("the-cometstorm", "The Cometstorm", "Mythic", ["stage1", "stage3"]),
 ];
 
-const RIGS = ROSTER.reduce((n, m) => n + m.tiers.length, 0);
-const ANIMS = ROSTER.reduce((n, m) => n + m.tiers.reduce((k, t) => k + t.animations.length, 0), 0);
+const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 
 export const projectMeta: ProjectMeta = {
   title: "Monster Legends — Fire Monsters | Spine 2D Animation",
@@ -115,12 +92,7 @@ export const projectMeta: ProjectMeta = {
     showcasePanelBg: "#1d0e15",
     sectionLabelBg: "#160a10",
   },
-  workflow: [
-    { n: "01", t: "Art Breakdown", sub: "Cut client art into parts" },
-    { n: "02", t: "Rigging", sub: "One skeleton per evolution" },
-    { n: "03", t: "Animation", sub: "Full battle set" },
-    { n: "04", t: "In-Game Check", sub: "Scale, timing, export" },
-  ],
+  workflow: WORKFLOW,
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
@@ -133,15 +105,7 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     // Đo trên ảnh arena-v2 (tâm vùng sáng của sàn).
     groundY: 0.63,
     logo: `${CDN}/logo.webp`,
-    animationLabels: {
-      breathe: "Idle",
-      walk: "Walk",
-      attack: "Attack",
-      attack_skill: "Skill",
-      special1: "Special",
-      levelup: "Level up",
-      prone: "Knocked out",
-    },
+    animationLabels: ANIMATION_LABELS,
   },
   {
     id: "closing",

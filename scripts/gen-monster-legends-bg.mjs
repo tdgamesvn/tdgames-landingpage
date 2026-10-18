@@ -17,6 +17,7 @@ if (!BASE || !KEY) throw new Error("AI_BASE_URL / AI_API_KEY chưa có trong .en
 
 const [element, ...flags] = process.argv.slice(2);
 const SCENES = {
+  Water: "a calm tidal lagoon at twilight: one large, flat, round platform of smooth wet blue-grey stone fills the lower half, a thin film of shallow water in its cracks catching soft teal reflections; far behind, misty sea stacks and low cliffs fade into haze over still water; a dim deep-blue to teal sky with soft clouds; no crashing waves, no boats, no bright hotspots",
   Fire: "a quiet volcanic plateau at dusk: one large, flat, round platform of dark cracked basalt fills the lower half, with only thin faint glowing ember lines in its cracks; far behind, low desaturated volcano silhouettes fade into haze; a dim smoky plum-to-ember sky; very little lava, no waterfalls, no floating rocks, no bright hotspots",
 };
 if (!SCENES[element]) throw new Error(`Chưa có scene cho hệ "${element}". Có: ${Object.keys(SCENES)}`);
