@@ -315,3 +315,7 @@ Pawtrol Tactics (UI gen 100% bằng image model) bị sếp chê lộ AI. Case s
 - Khung camera theo idle (FILL ~58% khung), không theo bounds mọi animation (FX level-up/special làm quái bé tí).
 - Nền AI chỉ là môi trường trống; nhân vật luôn là Spine của khách.
 - (2026-10-18, sửa) Atlas Spine lên web: WebP LOSSLESS (exact), KHÔNG lossy — lossy làm viền sáng + răng cưa trên texture PMA. Slot additive cần pmaAdditiveBatching (đã bật trong SpineCharacter). Khung camera đo theo thân, bỏ slot additive.
+
+## 2026-10-18 — Monster Legends: quy chuẩn trang từng hệ
+Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau → `.agent/meta/MONSTER-LEGENDS.md`
+(nội dung, sân khấu, các bước upload / nền / splash / kiểm / deploy). Hệ mới làm đúng chuẩn đó.

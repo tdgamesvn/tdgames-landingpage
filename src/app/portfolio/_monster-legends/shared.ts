@@ -1,5 +1,6 @@
 import type { SpineMonster, SpineTier } from "@/components/portfolio/case-study-types";
 
+// QUY CHUẨN làm hệ mới: .agent/meta/MONSTER-LEGENDS.md (sếp chốt 2026-10-18).
 // Dùng chung cho mọi trang Monster Legends (khách Social Point) — mỗi hệ một trang:
 // monster-legends-fire, monster-legends-water, … Asset upload bằng
 // scripts/upload-monster-legends.mjs <Hệ>, nền bằng scripts/gen-monster-legends-bg.mjs <Hệ>.
