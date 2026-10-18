@@ -155,6 +155,14 @@ type Viewport = Box & { padLeft: number; padRight: number; padTop: number; padBo
 const FIT_MARGIN = 0.05;
 /** Camera lùi tối đa ×1.5 (sếp 2026-10-18) — khớp phần nền dư của arena-v4; cần hơn thì chịu cắt. */
 const MAX_PULLBACK = 1.5;
+/**
+ * Bóng đổ theo dáng (sếp 2026-10-18 — không phải elip tròn): mỗi khung hình chép chính
+ * canvas nhân vật sang canvas bóng (½ độ phân giải), ép dẹt + xiên quanh đường chân như
+ * nguồn sáng chiếu chéo từ trước-trái, rồi CSS tô đen + làm mềm. Đúng dáng, cử động theo
+ * animation; FX additive (alpha 0) không đổ bóng.
+ */
+const SHADOW = { squash: 0.3, skew: 0.75, res: 0.5, blur: 3, opacity: 0.42 };
+
 /** Thời gian camera lùi ra / zoom về (giây). */
 const CAMERA_TRANSITION = 0.3;
 
@@ -290,6 +298,9 @@ function MonsterStage({
   const originRef = useRef({ ox: 0, oy: 0 });
   /** Nền không được thu nhỏ quá mức này (sẽ hở mép sân khấu) — tính theo hình học khung. */
   const minBgKRef = useRef(1);
+  const shadowRef = useRef<HTMLCanvasElement>(null);
+  /** Điểm chân trong toạ độ canvas (px CSS) — trục ép/xiên của bóng. */
+  const footRef = useRef<Foot | null>(null);
 
   const anims = useMemo(() => sortAnims(tier.animations), [tier]);
   // Showreel (sếp chốt 2026-10-18): idle xen giữa mọi lần đổi animation, walk lặp 2 lần.
@@ -337,6 +348,7 @@ function MonsterStage({
     // Cỡ quái tính theo chiều cao khung cũ (94% sân khấu), không theo canvas đã kéo dài.
     frameBody(p, body, W, H, tier.scale, SH0 * 0.94);
     const f = footOf(p, body, W, H);
+    footRef.current = f;
     baseVpRef.current = { ...p.currentViewport };
     // Tâm sàn của ảnh nền sau object-cover (neo mép trên) → toạ độ sân khấu.
     const img = bgRef.current;
@@ -512,6 +524,12 @@ function MonsterStage({
             transform: `translateY(${lift}px)`,
           }}
         >
+          <canvas
+            ref={shadowRef}
+            aria-hidden
+            className="pointer-events-none absolute inset-0 h-full w-full"
+            style={{ filter: `brightness(0) blur(${SHADOW.blur}px)`, opacity: SHADOW.opacity }}
+          />
           {near && (
             <SpineCharacter
               key={tier.base}
@@ -531,6 +549,33 @@ function MonsterStage({
                 }
                 animBoxRef.current = boxes;
                 p.config.viewport.transitionTime = CAMERA_TRANSITION;
+                // Vẽ bóng ngay sau mỗi khung hình của player (cùng task → canvas WebGL còn nội
+                // dung dù không preserveDrawingBuffer).
+                const draw = p.drawFrame.bind(p);
+                p.drawFrame = (next?: boolean) => {
+                  draw(next);
+                  const sc = shadowRef.current;
+                  const foot = footRef.current;
+                  const src = p.canvas as HTMLCanvasElement | undefined;
+                  // Player vừa bị huỷ (cuộn qua / đổi bậc) vẫn có thể chạy thêm 1 nhịp với
+                  // canvas 0×0 → drawImage ném lỗi.
+                  if (!sc || !foot || !src || !src.isConnected || !src.width || !src.height) return;
+                  const w = Math.round(src.clientWidth * SHADOW.res);
+                  const h = Math.round(src.clientHeight * SHADOW.res);
+                  if (sc.width !== w || sc.height !== h) {
+                    sc.width = w;
+                    sc.height = h;
+                  }
+                  const ctx = sc.getContext("2d");
+                  if (!ctx) return;
+                  const r = SHADOW.res;
+                  const { squash, skew } = SHADOW;
+                  ctx.setTransform(1, 0, 0, 1, 0, 0);
+                  ctx.clearRect(0, 0, w, h);
+                  // (x, y) → (x + skew·(fy − y), fy + squash·(y − fy)), rồi thu ×res.
+                  ctx.setTransform(r, 0, -skew * r, squash * r, skew * foot.y * r, (1 - squash) * foot.y * r);
+                  ctx.drawImage(src, 0, 0, src.clientWidth, src.clientHeight);
+                };
                 p.animationState?.addListener({
                   start: (entry: Player) => {
                     const base = baseVpRef.current;
