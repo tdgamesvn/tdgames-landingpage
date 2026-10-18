@@ -5975,3 +5975,13 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Work Done: source Water = 6 quái / 10 skeleton (Hounen Zennomusuko + Kirk Moonwalker chỉ Awakened; Crabsair, Iceblood, Crocark, Bayworker Hulk base+evolved), Spine 4.2.43, atlas 1 trang PMA, quy ước basic/ + fx/ như Fire. Upload spine-v2 lossless (14.6MB) + logo/splash. Nền AI arena-v2 hệ Water (vũng triều, sàn đá ướt), groundY 0.61. Tách phần chung sang src/app/portfolio/_monster-legends/shared.ts (TIER, monsterFactory, rosterStats, ANIMATION_LABELS, WORKFLOW) — Fire chuyển sang dùng, nội dung không đổi. Trang /portfolio/monster-legends-water, theme xanh biển (#2fb8e8, Awakened #8ff0ff).
 - Result: tsc + eslint sạch, detect_changes low. Chụp kiểm 6 con desktop 1280 + mobile 390: cỡ đều, chân trên sàn sáng, FX additive OK, 0 lỗi trang. Fire kiểm lại: 11 sân khấu, 0 lỗi.
 - Next Step: sếp duyệt Fire + Water → thêm row projects + sitemap cho cả 2. Hệ Dark đã có trong media-inbox.
+
+## 2026-10-18 — Monster Legends Fire + Water: nền cartoon v3 + splash AI riêng từng hệ
+- Task: sếp: nền AI v2 "real quá", không hợp style hero → render lại cartoon; banner hero tạo bằng AI, ref = nhân vật trong bài, chất lượng kiểu splash LoL (Riot).
+- Work Done:
+  - gen-monster-legends-bg.mjs v3: prompt ép cartoon (khối chunky, nét vẽ tay, không photoreal) → arena-v3.webp cả 2 hệ; groundY đo lại: Fire 0.56, Water 0.60.
+  - Script mới scripts/gen-monster-legends-splash.mjs <Hệ> [--upload]: ghép render Spine thật (ref-<hệ>-i.png, chụp Playwright nền trong suốt) thành character sheet có tên + SplashArt gốc làm ref style → /images/edits (image[] 2 ảnh) → splash-ai-v1.jpg. Fire: Kennix (hero), Kaih, Shallinar, Torog, Akira. Water: Kirk (hero), Hounen, Crabsair, Iceblood, Crocark. Đã soát mắt: thiết kế giữ đúng.
+  - ponytail: server ảnh trả splash Fire sau >300s → fetch (undici) timeout header; script dùng http(s).request tự đóng multipart, timeout 15 phút. AI_BASE_URL là http.
+  - project-data 2 hệ: background arena-v3, coverImage splash-ai-v1.jpg.
+- Result: tsc/eslint sạch; chụp kiểm hero + sân khấu desktop 1440 / mobile 390 cả 2 hệ.
+- Asset R2 cũ không dùng: arena.webp, arena-v2.webp, spine/ (v1), thumbs/, splash.jpg (Water/Fire) → trash khi tiện.

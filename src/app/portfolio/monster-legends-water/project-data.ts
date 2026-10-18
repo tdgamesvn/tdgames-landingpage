@@ -63,7 +63,8 @@ export const projectMeta: ProjectMeta = {
   behanceUrl: "",
   madeForLabel: "Social Point",
   madeForUrl: "https://www.socialpoint.es",
-  coverImage: `${CDN}/splash.jpg`,
+  // Splash AI riêng hệ Water (scripts/gen-monster-legends-splash.mjs), ref = render Spine trong bài.
+  coverImage: `${CDN}/splash-ai-v1.jpg`,
   coverPosition: "center",
   tools: ["Spine 2D"],
   fields: ["Character Animation", "Spine 2D"],
@@ -94,9 +95,9 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     id: "stage",
     variant: "spineStage",
     roster: ROSTER,
-    background: `${CDN}/arena-v2.webp`,
-    // Đo trên ảnh water arena-v2 (tâm vùng sáng của sàn).
-    groundY: 0.61,
+    background: `${CDN}/arena-v3.webp`,
+    // Đo trên ảnh arena-v3 (nền cartoon, tâm vùng sáng của sàn).
+    groundY: 0.60,
     logo: `${CDN}/logo.webp`,
     animationLabels: ANIMATION_LABELS,
   },

@@ -22,10 +22,11 @@ const SCENES = {
 };
 if (!SCENES[element]) throw new Error(`Chưa có scene cho hệ "${element}". Có: ${Object.keys(SCENES)}`);
 
-const PROMPT = `Use the reference image ONLY for its art style: painterly stylised 3D mobile game art with soft glowing light, saturated colours and smooth hand-painted textures (Monster Legends look). Paint a completely EMPTY background environment — ${SCENES[element]}. Absolutely NO monsters, NO creatures, NO characters, NO people, NO text, NO logo, NO UI. Calm, low-contrast and low-detail: this is a backdrop that must stay BEHIND a character, never compete with it — muted, slightly dark, soft focus in the distance, no busy texture. Wide 3:2 shot from a slightly raised camera, horizon at about 42% height. The platform's flat open centre spot sits exactly at 50% width and 72% height of the image — a monster will be composited standing on that spot, so keep it empty, flat and a little lighter than its surroundings, like a soft pool of warm light on the ground. Edges darker. Full-bleed, no borders.`;
+// v3 (sếp 2026-10-18): v2 trông "real" quá, lệch style hero → ép hẳn sang cartoon.
+const PROMPT = `Match the reference image's ART STYLE exactly: Monster Legends mobile-game cartoon environment art — stylised, hand-painted 2D illustration with simplified chunky shapes, bold readable silhouettes, rounded exaggerated rock forms, clean soft gradients and crisp painted edges, saturated harmonious colours. It must read clearly as a cartoon game background, NOT a photo: no photorealism, no realistic rock or water textures, no fine noise or grain, no realistic lighting, no 3D render look. Paint a completely EMPTY background environment — ${SCENES[element]}. Absolutely NO monsters, NO creatures, NO characters, NO people, NO text, NO logo, NO UI. Keep it calm and low-detail so it stays BEHIND a character: slightly darker and less saturated than the reference, soft simple shapes in the distance. Wide 3:2 shot from a slightly raised camera, horizon at about 42% height. The platform's flat open centre spot sits at 50% width and 68% height of the image — a monster will be composited standing there, so keep it empty, flat and a little lighter, like a soft pool of light on the ground. Edges darker. Full-bleed, no borders.`;
 // Tâm sàn trong ảnh (tỉ lệ chiều cao) — SpineStage đặt chân quái vào đúng điểm này.
 // Gen lại nền thì đo lại và sửa groundY ở project-data.
-const VERSION = "v2";
+const VERSION = "v3";
 
 const OUT = "scripts/.out/monster-legends";
 const file = `${OUT}/${element.toLowerCase()}-arena-${VERSION}.png`;
