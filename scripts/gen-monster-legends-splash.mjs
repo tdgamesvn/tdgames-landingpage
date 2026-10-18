@@ -32,6 +32,30 @@ const SPLASH = {
     scene:
       "an erupting volcanic battlefield at dusk — rivers of glowing lava, exploding embers, a towering volcano spewing fire behind, molten-orange and magenta sky",
   },
+  Metal: {
+    cast: ["Exarch Quor", "Primerion Unimate", "Droitler", "Ion V2", "Mollugh"],
+    hero: "Exarch Quor",
+    scene:
+      "a futuristic steel foundry city at dusk — giant gears, pipes and glowing furnaces, sparks flying, cyan energy beams, steel-blue and orange sky",
+  },
+  Nature: {
+    cast: ["Florian Malsang", "Goblarzd", "Gonzo", "Onikapa", "Wootr"],
+    hero: "Florian Malsang",
+    scene:
+      "an ancient enchanted jungle — giant twisted trees, vines and huge leaves, glowing spores and falling petals, soft green-gold light shafts",
+  },
+  Thunder: {
+    cast: ["Tyr Stormbringer", "V-Kid", "Godfather Imigbo", "Lightning Star", "Proud Lionell"],
+    hero: "Tyr Stormbringer",
+    scene:
+      "a stormy mountain summit at night — jagged peaks, swirling storm clouds, huge forks of lightning, crackling electric energy, navy and teal sky",
+  },
+  Special: {
+    cast: ["Nebotus Evil Lord", "Cakelius the Tenth", "Idolator"],
+    hero: "Nebotus Evil Lord",
+    scene:
+      "a whimsical floating carnival island at twilight — candy-coloured spires, hot-air balloons, fireworks and confetti, violet and peach sky",
+  },
   Light: {
     cast: ["Jestin Justice", "Maximus Astrum", "Graciel Choirmaster", "Layth Maximus", "Master Shannara"],
     hero: "Jestin Justice",

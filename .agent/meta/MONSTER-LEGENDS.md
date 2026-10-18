@@ -74,7 +74,8 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
 - Fire, Water: live (row `projects` + sitemap, 2026-10-18). R2 asset cũ đã chuyển trash/2026-10-18/.
 - Dark: dựng xong, ẩn — chờ sếp duyệt rồi thêm row `projects` (Character Animation, subtitle
   "Spine 2D Animation", image = splash-ai-v2.jpg) + slug vào `src/app/sitemap.ts`.
-- Light, Earth, Magic: dựng xong 2026-10-19, ẩn chờ duyệt (cùng Dark).
+- Light, Earth, Magic, Metal, Nature, Thunder, Special: dựng xong 2026-10-19, ẩn chờ duyệt (cùng Dark).
+  Đủ 10 hệ.
 - Lệch chuẩn source đã gặp (code đã tự xử lý): thư mục `avatar_awakened` / `fx_ultimate_awakend`
-  (bỏ theo tiền tố); attachment FX tên `VFX/…`; hạng `rare`. Gặp kiểu lệch mới → sửa script/stage
+  (bỏ theo tiền tố); attachment FX tên `VFX/…`; hạng `rare`, `common`; quái thiếu bậc giữa (Tyr: Baby + Awakened). Gặp kiểu lệch mới → sửa script/stage
   rồi ghi thêm vào đây. Bước kiểm bắt buộc: đối chiếu roster trong project-data với manifest upload.

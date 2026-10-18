@@ -67,8 +67,8 @@ function parse(dir) {
   const id = name
     .replace(/_\d+$/, "")
     .replace(/^(concept-)?(awakened-)?/, "")
-    // Hạng: mythic/architect/ancestor là chính; có cả rare (Magic – Dommeath), phòng epic/legendary.
-    .replace(new RegExp(`^(mythic|architect|ancestor|rare|epic|legendary)-${element.toLowerCase()}-`), "");
+    // Hạng: mythic/architect/ancestor là chính; có cả rare (Magic – Dommeath), common (Thunder Eagle).
+    .replace(new RegExp(`^(mythic|architect|ancestor|common|uncommon|rare|epic|legendary)-${element.toLowerCase()}-`), "");
   return { id, tier };
 }
 

@@ -6005,3 +6005,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Lệch chuẩn source đã xử lý: (1) Master Shannara dùng attachment "VFX/…" thay "fx/…" → bodyBounds nhận /^v?fx\//i; (2) Magic có hạng "rare" (Dommeath) → script parse thêm rare/epic/legendary; (3) thư mục "fx_ultimate_awakend" (Mater Geneza) lọt upload → script bỏ mọi thư mục bắt đầu avatar|fx_ultimate, 3 file thừa → trash/2026-10-19/. Thư mục SplashArt trong media-inbox trống (bỏ qua).
 - Result: chụp 27 con desktop 1280 + mobile 390, 0 lỗi trang; tsc/eslint sạch, detect_changes low.
 - Next Step: sếp duyệt Dark/Light/Earth/Magic → row projects + sitemap. Còn Metal, Nature, Thunder, Special trong media-inbox.
+
+## 2026-10-19 — Portfolio: Monster Legends — Metal, Nature, Thunder, Special (theo quy chuẩn, ẩn chờ duyệt)
+- Task: sếp "làm nốt mấy hệ còn lại".
+- Work Done: Metal 5 quái/10 rig (15.8MB), Nature 6/11 (12.2MB), Thunder 12/23 (29.2MB), Special 3/5 (8.4MB); roster đối chiếu manifest khớp 100%. Nền cartoon: Metal xưởng thép (groundY 0.65), Nature rừng cổ (0.62), Thunder đỉnh núi bão (0.68), Special đảo lễ hội (0.68). Splash v2 hero: Exarch Quor / Florian Malsang / Tyr Stormbringer / Nebotus Evil Lord — soát thiết kế đúng.
+- Lệch chuẩn mới: hạng "common" (Thunder Eagle) → script nhận common/uncommon. Tyr Stormbringer chỉ có Baby + Awakened (không Adult) — sân khấu xử lý được.
+- Result: chụp 26 con desktop 1280 + mobile 390, 0 lỗi trang (ảnh Tyr desktop lần đầu trống do chụp sớm — kiểm lại hiện đúng cả 2 bậc). tsc/eslint sạch.
+- Next Step: sếp duyệt 8 hệ ẩn (Dark, Light, Earth, Magic, Metal, Nature, Thunder, Special) → row projects + sitemap. Đã hết hệ trong media-inbox.
