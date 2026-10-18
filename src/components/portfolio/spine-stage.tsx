@@ -97,7 +97,8 @@ function bodyBounds(player: Player, idle: string): Body | null {
     s.getAttachment = function () {
       const a = own.call(this);
       if (!a || this.data.blendMode === 1 || this.color.a < 0.05) return null;
-      if (a.name?.startsWith("fx/") || (a.color && a.color.a < 0.05)) return null;
+      // "fx/…" là chuẩn; vài rig đặt "VFX/…" (Light – Master Shannara) → so không phân biệt hoa thường.
+      if (/^v?fx\//i.test(a.name ?? "") || (a.color && a.color.a < 0.05)) return null;
       return a;
     };
   }

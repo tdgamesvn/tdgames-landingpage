@@ -67,7 +67,8 @@ function parse(dir) {
   const id = name
     .replace(/_\d+$/, "")
     .replace(/^(concept-)?(awakened-)?/, "")
-    .replace(new RegExp(`^(mythic|architect|ancestor)-${element.toLowerCase()}-`), "");
+    // Hạng: mythic/architect/ancestor là chính; có cả rare (Magic – Dommeath), phòng epic/legendary.
+    .replace(new RegExp(`^(mythic|architect|ancestor|rare|epic|legendary)-${element.toLowerCase()}-`), "");
   return { id, tier };
 }
 
@@ -75,8 +76,9 @@ const manifest = {};
 for (const monster of (await readdir(SRC)).sort()) {
   if (monster.startsWith(".") || !(await stat(path.join(SRC, monster))).isDirectory()) continue;
   for (const sub of (await readdir(path.join(SRC, monster))).sort()) {
-    // avatar đôi khi đặt tên lệch chuẩn (vd "avatar_awakened" ở hệ Dark) → bỏ theo tiền tố.
-    if (SKIP.has(sub) || sub.toLowerCase().startsWith("avatar")) continue;
+    // avatar / fx_ultimate đôi khi đặt tên lệch ("avatar_awakened" ở Dark, "fx_ultimate_awakend" ở
+    // Magic) → bỏ theo tiền tố, không chỉ khớp đúng tên.
+    if (SKIP.has(sub) || /^(avatar|fx_ultimate)/i.test(sub)) continue;
     const dir = path.join(SRC, monster, sub);
     if (!(await stat(dir)).isDirectory()) continue;
     const files = await readdir(dir);

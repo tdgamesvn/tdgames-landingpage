@@ -32,6 +32,24 @@ const SPLASH = {
     scene:
       "an erupting volcanic battlefield at dusk — rivers of glowing lava, exploding embers, a towering volcano spewing fire behind, molten-orange and magenta sky",
   },
+  Light: {
+    cast: ["Jestin Justice", "Maximus Astrum", "Graciel Choirmaster", "Layth Maximus", "Master Shannara"],
+    hero: "Jestin Justice",
+    scene:
+      "a radiant celestial sanctuary above the clouds — white marble and gold temples, floating islands, golden god-rays bursting through the clouds, warm gold and soft blue sky",
+  },
+  Earth: {
+    cast: ["Miss Qylara Watson", "President Canine", "Eternal Basthet", "Ishigaki", "Turtle Murtle"],
+    hero: "Miss Qylara Watson",
+    scene:
+      "a rocky red canyon at sunset — towering mesas, boulders cracking and flying, dust clouds, warm amber and orange sky",
+  },
+  Magic: {
+    cast: ["Xandrite Spellbound", "Baba Basheer", "Mater Geneza", "Octomancer", "Dr. Bloom"],
+    hero: "Xandrite Spellbound",
+    scene:
+      "an arcane observatory under a swirling teal-and-magenta nebula — floating crystals, glowing magic circles and spell sigils, spiral towers, starry night sky",
+  },
   Dark: {
     cast: ["Don Obscurione", "Voreth Voidspawn", "Wilfred Razorstorm", "Anwir Paincraver", "Soulblast"],
     hero: "Don Obscurione",

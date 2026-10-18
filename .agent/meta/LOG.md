@@ -5998,3 +5998,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Work Done (đúng 7 bước .agent/meta/MONSTER-LEGENDS.md): source 11 quái / 25 skeleton chuẩn (4.2.43, skin basic, 1 trang PMA, basic/+fx/). Upload 41.7MB spine-v2. Phát hiện thư mục avatar đặt tên lệch "avatar_awakened" (Voreth, Don) lọt vào upload → script giờ bỏ mọi thư mục bắt đầu "avatar"; 3 file thừa chuyển trash. Nền cartoon Dark (cõi u tối tím, trăng, cây khô, tháp gothic) arena-v3, gy 0.60 → groundY 0.65, backgroundRoom 1.5. Splash v2: Don Obscurione (hero), Voreth, Wilfred, Anwir, Soulblast — soát thiết kế đúng. Trang /portfolio/monster-legends-dark, theme tím #a46bff / Awakened #f0a8ff.
 - Result: chụp 11 con desktop 1280 + mobile 390: cỡ đều, chân trên sàn, bóng đúng, 0 lỗi trang. tsc/eslint sạch, detect_changes low.
 - Next Step: sếp duyệt Dark → row projects + sitemap.
+
+## 2026-10-19 — Portfolio: Monster Legends — Light, Earth, Magic (theo quy chuẩn, ẩn chờ duyệt)
+- Task: sếp "triển khai tiếp 3 hệ Light, Earth, Magic".
+- Work Done: Light 8 quái/16 rig (21MB), Earth 8/14 (17.5MB), Magic 11/24 (30.4MB) — upload spine-v2, roster đối chiếu manifest khớp 100%. Nền cartoon: Light thánh đường mây vàng (groundY 0.69), Earth hẻm núi đá đỏ (0.65), Magic đài thiên văn tinh vân (0.70); backgroundRoom 1.5. Splash v2: Light hero Jestin Justice; Earth hero Miss Qylara Watson; Magic hero Xandrite Spellbound — soát thiết kế đúng. Theme: Light #f2c14e/#fff1a8, Earth #d9965b/#ffe08a, Magic #e15cff/#6ff2ff.
+- Lệch chuẩn source đã xử lý: (1) Master Shannara dùng attachment "VFX/…" thay "fx/…" → bodyBounds nhận /^v?fx\//i; (2) Magic có hạng "rare" (Dommeath) → script parse thêm rare/epic/legendary; (3) thư mục "fx_ultimate_awakend" (Mater Geneza) lọt upload → script bỏ mọi thư mục bắt đầu avatar|fx_ultimate, 3 file thừa → trash/2026-10-19/. Thư mục SplashArt trong media-inbox trống (bỏ qua).
+- Result: chụp 27 con desktop 1280 + mobile 390, 0 lỗi trang; tsc/eslint sạch, detect_changes low.
+- Next Step: sếp duyệt Dark/Light/Earth/Magic → row projects + sitemap. Còn Metal, Nature, Thunder, Special trong media-inbox.
