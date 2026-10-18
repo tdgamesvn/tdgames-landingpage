@@ -227,6 +227,8 @@ function MonsterStage({
   const [ready, setReady] = useState(false);
   const [near, setNear] = useState(false);
   const [lift, setLift] = useState(0);
+  // Vị trí ảnh nền (px) để tâm sàn trùng chân quái; null = object-cover mặc định.
+  const [bg, setBg] = useState<{ top: number; height: number } | null>(null);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -235,7 +237,7 @@ function MonsterStage({
   const bodyRef = useRef<Body | null>(null);
 
   const anims = useMemo(() => sortAnims(tier.animations), [tier]);
-  // Showreel (sếp chốt 2026-10-18): idle xen giữa mọi lần đổi animation, walk lặp 3 lần.
+  // Showreel (sếp chốt 2026-10-18): idle xen giữa mọi lần đổi animation, walk lặp 2 lần.
   // Bỏ "prone" (ngã gục) — nằm giữa chuỗi trông như lỗi. Chuỗi lặp lại từ idle đầu.
   const showreel = useMemo(() => {
     const idle = anims.includes(IDLE) ? IDLE : null;
@@ -243,7 +245,7 @@ function MonsterStage({
     for (const a of anims) {
       if (a === IDLE || a === "prone") continue;
       if (idle) seq.push(idle);
-      for (let i = 0; i < (a === "walk" ? 3 : 1); i++) seq.push(a);
+      for (let i = 0; i < (a === "walk" ? 2 : 1); i++) seq.push(a);
     }
     return seq.length ? seq : anims.slice(0, 1);
   }, [anims]);
@@ -289,7 +291,16 @@ function MonsterStage({
     // phần sàn đá kéo tới đáy ảnh nên chân vẫn trên sàn. Desktop gần như không đổi.
     const heightPx = f ? (f.w / body.width) * body.height : 0;
     const centred = Math.min(0.92 * SH, (SH + heightPx) / 2);
-    setLift(f ? Math.max(ground, centred) - box.offsetTop - f.y : 0);
+    // Chỉ khung hẹp (mobile vuông) mới căn giữa + dời nền; khung ngang giữ nguyên bản
+    // sếp đã duyệt (chân đúng mặt sàn, nền cố định — đồng đều giữa các sân khấu).
+    const narrow = SW / SH < 1.2;
+    const feet = narrow ? Math.max(ground, centred) : ground;
+    setLift(f ? feet - box.offsetTop - f.y : 0);
+    // Nền đi theo chân (sếp 2026-10-18: mobile chân lệch khỏi vùng sàn sáng): phóng ảnh
+    // vừa đủ để tâm sàn (groundY) nằm đúng `feet` mà vẫn phủ kín khung.
+    if (!narrow) return setBg(null);
+    const h = Math.max(drawnH, (feet - DROP * SH) / groundY, (SH - feet + DROP * SH) / (1 - groundY));
+    setBg({ top: feet - DROP * SH - groundY * h, height: h });
   }, [groundY, tier.scale]);
 
   useEffect(() => {
@@ -366,10 +377,17 @@ function MonsterStage({
           aria-hidden
           loading="lazy"
           onLoad={layout}
-          className="absolute inset-0 -z-20 h-full w-full object-cover"
-          // Neo mép trên: trên khung ngang ảnh bị cắt phần đáy thay vì đều hai đầu → sàn
-          // hạ thấp (~75% thay vì ~65%), phía trên đủ chỗ cho quái to.
-          style={{ filter: "brightness(0.82)", objectPosition: "50% 0%" }}
+          className={
+            bg
+              ? "absolute left-1/2 -z-20 max-w-none -translate-x-1/2"
+              : "absolute inset-0 -z-20 h-full w-full object-cover"
+          }
+          // Chưa đo: neo mép trên (sàn ~75% trên khung ngang). Đã đo: đặt theo chân quái.
+          style={
+            bg
+              ? { filter: "brightness(0.82)", top: bg.top, height: bg.height, width: "auto" }
+              : { filter: "brightness(0.82)", objectPosition: "50% 0%" }
+          }
         />
         <div
           aria-hidden
