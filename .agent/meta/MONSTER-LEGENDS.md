@@ -85,3 +85,5 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
 - Lệch chuẩn source đã gặp (code đã tự xử lý): thư mục `avatar_awakened` / `fx_ultimate_awakend`
   (bỏ theo tiền tố); attachment FX tên `VFX/…`; hạng `rare`, `common`; quái thiếu bậc giữa (Tyr: Baby + Awakened). Gặp kiểu lệch mới → sửa script/stage
   rồi ghi thêm vào đây. Bước kiểm bắt buộc: đối chiếu roster trong project-data với manifest upload.
+
+- 2026-10-19: sếp duyệt → publish đủ 10 hệ (row `projects` + sitemap).
