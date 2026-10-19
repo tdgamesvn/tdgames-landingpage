@@ -1,0 +1,26 @@
+name: 🗓 HR Interview Reminder
+
+on:
+  schedule:
+    # Mỗi 15 phút, 07:00–21:45 giờ VN (00:00–14:45 UTC), cả tuần.
+    # Endpoint chỉ nhắc vòng PV có giờ hẹn trong 60 phút tới, mỗi vòng 1 lần.
+    - cron: "*/15 0-14 * * *"
+  workflow_dispatch:
+
+jobs:
+  remind:
+    name: Remind upcoming interviews on Discord
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🗓 Trigger interview remind endpoint
+        run: |
+          STATUS=$(curl -s -o /tmp/remind_body.txt -w "%{http_code}" \
+            -X GET \
+            -H "x-hr-key: ${{ secrets.HR_SECRET }}" \
+            "https://tdgamestudio.com/api/hr/interviews/remind")
+          echo "HTTP $STATUS"
+          cat /tmp/remind_body.txt
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Interview remind endpoint returned $STATUS"
+            exit 1
+          fi

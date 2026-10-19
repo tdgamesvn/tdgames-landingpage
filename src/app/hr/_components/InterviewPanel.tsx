@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { InterviewSession } from "@/app/admin/_lib/types";
+import { formatInterviewTime, isMeetUrl } from "@/lib/interview-schedule";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
 const CARD = "rounded-lg border border-white/10 bg-white/[0.03] p-3";
@@ -48,6 +49,211 @@ function questionsToText(s: InterviewSession) {
     lines.push("");
   }
   return lines.join("\n");
+}
+
+/** ISO → giá trị cho <input type="datetime-local"> theo giờ máy HR. */
+function toLocalInput(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Lịch PV của một vòng: giờ hẹn + offline/online (online bắt buộc link Meet). */
+function ScheduleBlock({
+  session,
+  hrKey,
+  onChange,
+}: {
+  session: InterviewSession;
+  hrKey: string;
+  onChange: (s: InterviewSession) => void;
+}) {
+  const [editing, setEditing] = useState(!session.scheduled_at);
+  const [when, setWhen] = useState(toLocalInput(session.scheduled_at));
+  const [mode, setMode] = useState<"offline" | "online">(session.mode ?? "offline");
+  const [meet, setMeet] = useState(session.meet_url ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Mốc "bây giờ" chốt lúc mở modal — đủ để phân biệt lịch đã qua.
+  const [now] = useState(() => Date.now());
+
+  const meetOk = mode === "offline" || isMeetUrl(meet);
+  const canSave = Boolean(when) && meetOk && !busy;
+
+  async function save(payload: Record<string, unknown>) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/hr/interviews/${session.id}`, {
+        method: "PATCH",
+        headers: { "x-hr-key": hrKey, "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      onChange(data.session);
+      return data.session as InterviewSession;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Lưu lịch thất bại");
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startEdit() {
+    setWhen(toLocalInput(session.scheduled_at));
+    setMode(session.mode ?? "offline");
+    setMeet(session.meet_url ?? "");
+    setError(null);
+    setEditing(true);
+  }
+
+  async function submit() {
+    const s = await save({
+      scheduled_at: new Date(when).toISOString(),
+      mode,
+      meet_url: mode === "online" ? meet.trim() : null,
+    });
+    if (s) setEditing(false);
+  }
+
+  async function clear() {
+    if (!confirm("Huỷ lịch PV của vòng này?")) return;
+    const s = await save({ scheduled_at: null, mode: null, meet_url: null });
+    if (s) {
+      setWhen("");
+      setMode("offline");
+      setMeet("");
+      setEditing(true);
+    }
+  }
+
+  const past = session.scheduled_at ? new Date(session.scheduled_at).getTime() < now : false;
+
+  return (
+    <div className="space-y-1.5 border-t border-white/8 pt-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className={LABEL}>Lịch phỏng vấn</span>
+        {!editing && (
+          <div className="flex gap-1.5">
+            {session.mode === "offline" && (
+              <button
+                onClick={() => {
+                  startEdit();
+                  setMode("online");
+                }}
+                className={BTN_PLAIN}
+                disabled={busy}
+              >
+                → Chuyển online
+              </button>
+            )}
+            <button onClick={startEdit} className={BTN_PLAIN} disabled={busy}>
+              Sửa
+            </button>
+            <button onClick={clear} className={BTN_RED} disabled={busy}>
+              Huỷ lịch
+            </button>
+          </div>
+        )}
+      </div>
+
+      {error && <p className={ERR}>{error}</p>}
+
+      {!editing && session.scheduled_at && (
+        <div className="flex flex-wrap items-center gap-2 text-[12px]">
+          <span className={`font-bold ${past ? "text-white/45" : "text-amber-300"}`}>
+            🗓 {formatInterviewTime(session.scheduled_at)}
+          </span>
+          {session.mode === "online" ? (
+            <>
+              <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-300">
+                Online
+              </span>
+              {session.meet_url && (
+                <a
+                  href={session.meet_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-blue-300 underline-offset-2 hover:underline"
+                >
+                  {session.meet_url.replace(/^https:\/\//, "")} ↗
+                </a>
+              )}
+            </>
+          ) : (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+              Offline
+            </span>
+          )}
+          {past && <span className="text-[10px] text-white/35">(đã qua)</span>}
+          {!past && session.reminded_at && <span className="text-[10px] text-white/35">· đã nhắc Discord</span>}
+        </div>
+      )}
+
+      {editing && (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="datetime-local"
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+              className="rounded border border-white/15 bg-white/5 px-2 py-1 text-xs text-white [color-scheme:dark] focus:outline-none"
+            />
+            <div className="flex overflow-hidden rounded border border-white/15">
+              {(["offline", "online"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                    mode === m
+                      ? m === "online"
+                        ? "bg-blue-500/20 text-blue-300"
+                        : "bg-amber-500/20 text-amber-300"
+                      : "text-white/50 hover:bg-white/5"
+                  }`}
+                >
+                  {m === "online" ? "Online" : "Offline"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {mode === "online" && (
+            <div className="space-y-1">
+              <input
+                type="url"
+                value={meet}
+                onChange={(e) => setMeet(e.target.value)}
+                placeholder="https://meet.google.com/abc-defg-hij"
+                className={TEXTAREA}
+              />
+              {meet.trim() && !isMeetUrl(meet) && (
+                <p className={ERR}>Phải là link Google Meet (https://meet.google.com/…)</p>
+              )}
+              {!meet.trim() && <p className="text-[10px] text-white/35">PV online bắt buộc có link Google Meet.</p>}
+            </div>
+          )}
+
+          <div className="flex gap-1.5">
+            <button onClick={submit} className={BTN_AMBER} disabled={!canSave}>
+              {busy ? "Đang lưu…" : "Lưu lịch"}
+            </button>
+            {session.scheduled_at && (
+              <button onClick={() => setEditing(false)} className={BTN_PLAIN} disabled={busy}>
+                Thôi
+              </button>
+            )}
+          </div>
+          <p className="text-[10px] text-white/35">
+            Lưu lịch sẽ báo kênh HR trên Discord và nhắc lại khoảng 1 tiếng trước giờ PV.
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function SessionCard({
@@ -190,6 +396,8 @@ function SessionCard({
       </div>
 
       {error && <p className={ERR}>{error}</p>}
+
+      <ScheduleBlock session={session} hrKey={hrKey} onChange={onChange} />
 
       {/* ── Câu hỏi PV ── */}
       <div className="space-y-1.5 border-t border-white/8 pt-3">
@@ -374,9 +582,12 @@ function SessionCard({
 export default function InterviewPanel({
   appId,
   hrKey,
+  onSessionsChange,
 }: {
   appId: string;
   hrKey: string;
+  /** Báo ra ngoài để card ở kanban cập nhật chip lịch PV mà không cần tải lại. */
+  onSessionsChange?: (sessions: InterviewSession[]) => void;
 }) {
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -403,6 +614,15 @@ export default function InterviewPanel({
       alive = false;
     };
   }, [appId, hrKey]);
+
+  // Callback của cha đổi identity mỗi render → giữ trong ref, chỉ báo khi sessions đổi.
+  const notifyRef = useRef(onSessionsChange);
+  useEffect(() => {
+    notifyRef.current = onSessionsChange;
+  });
+  useEffect(() => {
+    if (!loading) notifyRef.current?.(sessions);
+  }, [sessions, loading]);
 
   async function addRound() {
     setCreating(true);

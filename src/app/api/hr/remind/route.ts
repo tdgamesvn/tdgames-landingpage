@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
 import { discordNotify, getDiscordUrl } from "@/lib/discord-notify";
+import { formatInterviewTime, modeLabel, vnDateKey } from "@/lib/interview-schedule";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,8 +56,18 @@ export async function GET(request: Request) {
   const total = apps.length;
   const staleCount = groups.reduce((n, g) => n + g.stale.length, 0);
 
-  // Skip Discord if nothing is stale
-  if (staleCount === 0) {
+  // Lịch PV trong ngày (giờ VN) — để cả team biết hôm nay gặp ai, ở đâu.
+  const today = vnDateKey(new Date());
+  const { data: upcoming } = await supabase
+    .from("interview_sessions")
+    .select("scheduled_at, mode, meet_url, round, title, applications(full_name)")
+    .gte("scheduled_at", new Date(Date.now() - 12 * 3_600_000).toISOString())
+    .lte("scheduled_at", new Date(Date.now() + 36 * 3_600_000).toISOString())
+    .order("scheduled_at", { ascending: true });
+  const todays = (upcoming ?? []).filter((s) => vnDateKey(new Date(s.scheduled_at!)) === today);
+
+  // Skip Discord if nothing is stale and no interview today
+  if (staleCount === 0 && todays.length === 0) {
     return NextResponse.json({ sent: false, reason: "No stale applications", total });
   }
 
@@ -69,6 +80,20 @@ export async function GET(request: Request) {
     value: g.stale.map(formatApp).join("\n").slice(0, 1024),
   }));
 
+  if (todays.length > 0) {
+    fields.unshift({
+      name: `🗓 PV hôm nay (${todays.length})`,
+      value: todays
+        .map((s) => {
+          const app = Array.isArray(s.applications) ? s.applications[0] : s.applications;
+          const name = (app as { full_name: string } | null)?.full_name ?? "?";
+          return `• ${formatInterviewTime(s.scheduled_at!).split(" ")[0]} ${name} (${s.title ?? `Vòng ${s.round}`}) — ${modeLabel(s.mode, s.meet_url)}`;
+        })
+        .join("\n")
+        .slice(0, 1024),
+    });
+  }
+
   fields.push({
     name: "📊 Pipeline total",
     value: `${total} active application${total !== 1 ? "s" : ""}`,
@@ -76,7 +101,12 @@ export async function GET(request: Request) {
   });
 
   await discordNotify("hr", {
-    content: `@everyone ⏰ **Daily HR Reminder** — ${staleCount} application${staleCount !== 1 ? "s" : ""} need attention`,
+    content: `@everyone ⏰ **Daily HR Reminder** — ${[
+      staleCount > 0 && `${staleCount} application${staleCount !== 1 ? "s" : ""} need attention`,
+      todays.length > 0 && `${todays.length} PV hôm nay`,
+    ]
+      .filter(Boolean)
+      .join(" · ")}`,
     embeds: [
       {
         title: "Recruitment Pipeline — Follow-up",

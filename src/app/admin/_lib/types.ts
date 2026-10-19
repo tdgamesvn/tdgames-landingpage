@@ -189,6 +189,8 @@ export type Application = {
   referred_by: string | null;
   created_at: string;
   jobs?: { title: string; slug: string };
+  /** Chỉ phần lịch của các vòng PV — /api/hr/applications join sẵn để card hiện lịch. */
+  interview_sessions?: Pick<InterviewSession, "id" | "round" | "title" | "scheduled_at" | "mode" | "meet_url">[];
 };
 
 export type ApplicationComment = {
@@ -249,6 +251,11 @@ export type InterviewSession = {
   transcript_source: string | null;
   evaluation: InterviewEvaluation | null;
   score: number | null;
+  /** Lịch PV — online bắt buộc có meet_url (Google Meet). */
+  scheduled_at: string | null;
+  mode: "offline" | "online" | null;
+  meet_url: string | null;
+  reminded_at: string | null;
   created_at: string;
   updated_at: string;
 };

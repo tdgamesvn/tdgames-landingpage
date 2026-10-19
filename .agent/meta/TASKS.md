@@ -2,6 +2,9 @@
 
 ## Doing
 
+- [x] HR lịch PV (offline/online + link Meet) + nhắc lịch Discord (2026-10-19) — LOG 2026-10-19
+  - [ ] Xoá vòng test "TEST lịch (xoá)" ở hồ sơ Nguyễn Hương Giang
+
 - [x] HR bài test theo job + bài làm ứng viên (2026-10-11) — đã commit + push (LOG 2026-10-11)
 
 - [ ] HR pipeline custom status (2026-09-25)

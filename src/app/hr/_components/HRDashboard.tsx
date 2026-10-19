@@ -6,6 +6,7 @@ import InterviewPanel from "./InterviewPanel";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import { STATUS_PALETTE } from "./status-palette";
+import { formatInterviewTime } from "@/lib/interview-schedule";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -639,7 +640,17 @@ function CandidateModal({
 
             <SubmissionsPanel appId={app.id} hrKey={hrKey} />
 
-            <InterviewPanel appId={app.id} hrKey={hrKey} />
+            <InterviewPanel
+              appId={app.id}
+              hrKey={hrKey}
+              onSessionsChange={(list) =>
+                onPatch({
+                  interview_sessions: list.map(({ id, round, title, scheduled_at, mode, meet_url }) => ({
+                    id, round, title, scheduled_at, mode, meet_url,
+                  })),
+                })
+              }
+            />
 
             {/* Note */}
             <div className="space-y-1 border-t border-white/8 pt-3">
@@ -747,6 +758,11 @@ function AppCard({
   }
 
   const nextStatus = S.next(app.status);
+  // Vòng PV sắp tới gần nhất (giữ hiển thị tới 2 tiếng sau giờ hẹn — đang PV dở).
+  const [now] = useState(() => Date.now());
+  const nextInterview = (app.interview_sessions ?? [])
+    .filter((s) => s.scheduled_at && new Date(s.scheduled_at).getTime() > now - 2 * 3_600_000)
+    .sort((a, b) => a.scheduled_at!.localeCompare(b.scheduled_at!))[0];
   const [dragging, setDragging] = useState(false);
   // Modal/note editor là DOM con của card — tắt draggable khi chúng mở, kẻo
   // bôi đen text trong textarea bị trình duyệt hiểu thành kéo cả card.
@@ -783,6 +799,18 @@ function AppCard({
 
       {/* Tags row */}
       <div className="flex flex-wrap gap-1.5">
+        {nextInterview && (
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+              nextInterview.mode === "online"
+                ? "border-blue-500/40 bg-blue-500/10 text-blue-300"
+                : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+            }`}
+            title={nextInterview.meet_url ?? (nextInterview.title ?? `Vòng ${nextInterview.round}`)}
+          >
+            🗓 {formatInterviewTime(nextInterview.scheduled_at!)} · {nextInterview.mode === "online" ? "Online" : "Offline"}
+          </span>
+        )}
         {app.ai_score != null && (
           <span
             className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${scoreColor(app.ai_score)}`}
