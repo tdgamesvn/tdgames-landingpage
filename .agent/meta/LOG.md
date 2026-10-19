@@ -6013,3 +6013,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Result: chụp 26 con desktop 1280 + mobile 390, 0 lỗi trang (ảnh Tyr desktop lần đầu trống do chụp sớm — kiểm lại hiện đúng cả 2 bậc). tsc/eslint sạch.
 - Next Step: sếp duyệt 8 hệ ẩn (Dark, Light, Earth, Magic, Metal, Nature, Thunder, Special) → row projects + sitemap. Đã hết hệ trong media-inbox.
 - Update 2026-10-19 (sếp): con có Awakened + Baby/Adult tách 2 view (Baby/Adult, Awakened riêng) — splitAwakened() trong shared.ts, bọc ROSTER cả 10 hệ. 10 con bị tách: Kennix, Kaih (Fire), Don, Voreth, Wilfred (Dark), Jestin (Light), Baba, Mater (Magic), Exarch (Metal), Tyr (Thunder, Baby+Awakened). Kiểm Metal + Fire desktop/mobile, 0 lỗi.
+- Update 2026-10-19 (sếp: Nebotus Evil Lord bé hơn các con khác): scale awakened 1.3 trong project-data Special.

@@ -22,7 +22,8 @@ const monster = monsterFactory("special");
 
 // Thứ tự: con có Awakened lên đầu, Ancestor/Architect rồi Mythic.
 const ROSTER: readonly SpineMonster[] = splitAwakened([
-  monster("nebotus-evil-lord", "Nebotus Evil Lord", "Ancestor", ["awakened"]),
+  // Cánh + hào quang lửa xanh rộng → thân trông nhỏ hơn các con khác (sếp 2026-10-19).
+  monster("nebotus-evil-lord", "Nebotus Evil Lord", "Ancestor", ["awakened"], { awakened: 1.3 }),
   monster("cakelius-the-tenth", "Cakelius the Tenth", "Mythic", ["stage1", "stage3"]),
   monster("idolator", "Idolator", "Mythic", ["stage1", "stage3"]),
 ]);
