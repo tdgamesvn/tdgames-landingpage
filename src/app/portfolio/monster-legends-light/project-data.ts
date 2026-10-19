@@ -23,8 +23,7 @@ const monster = monsterFactory("light");
 
 // Thứ tự: con có Awakened lên đầu, Ancestor/Architect rồi Mythic.
 const ROSTER: readonly SpineMonster[] = splitAwakened([
-  // Sếp sửa Awakened 2026-10-19 → upload lại riêng vào spine-v4 (spine-v3 là bản lỗi thiếu fx/flash_10).
-  monster("jestin-justice", "Jestin Justice", "Ancestor", ["stage1", "stage3", "awakened"], {}, "spine-v4"),
+  monster("jestin-justice", "Jestin Justice", "Ancestor", ["stage1", "stage3", "awakened"]),
   monster("maximus-astrum", "Maximus Astrum", "Ancestor", ["awakened"]),
   monster("graciel-choirmaster", "Graciel Choirmaster", "Ancestor", ["awakened"]),
   monster("layth-maximus", "Layth Maximus", "Architect", ["stage1", "stage3"]),

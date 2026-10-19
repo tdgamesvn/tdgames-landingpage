@@ -25,8 +25,7 @@ const ROSTER: readonly SpineMonster[] = splitAwakened([
   monster("hounen-zennomusuko", "Hounen Zennomusuko", "Ancestor", ["awakened"]),
   monster("kirk-moonwalker", "Kirk Moonwalker", "Ancestor", ["awakened"]),
   monster("crabsair", "Crabsair", "Mythic", ["stage1", "stage3"]),
-  // Sếp sửa lại file ở local 2026-10-18 → upload riêng sang spine-v3 (cache CDN giữ bản cũ ở v2).
-  monster("iceblood", "Iceblood", "Mythic", ["stage1", "stage3"], {}, "spine-v3"),
+  monster("iceblood", "Iceblood", "Mythic", ["stage1", "stage3"]),
   monster("crocark", "Crocark", "Mythic", ["stage1", "stage3"]),
   monster("bayworker-hulk", "Bayworker Hulk", "Mythic", ["stage1", "stage3"]),
 ]);

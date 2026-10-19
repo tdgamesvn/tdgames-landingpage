@@ -22,7 +22,8 @@ export const cdnFor = (element: string) =>
 
 /** Hàm tạo quái cho một hệ. SpinePlayer tải qua proxy cùng origin (né CORS). */
 export function monsterFactory(element: string) {
-  const spine = `/api/cdn-proxy/landing/portfolio/monster-legends-${element}/spine-v2`;
+  // spine-v5 = bản export lại toàn bộ của sếp (media-inbox/…/export_new, 2026-10-19).
+  const spine = `/api/cdn-proxy/landing/portfolio/monster-legends-${element}/spine-v5`;
   return (
     id: string,
     name: string,
@@ -30,7 +31,7 @@ export function monsterFactory(element: string) {
     tiers: readonly TierKey[],
     // Phóng riêng từng bậc khi tự đo cỡ vẫn lệch mắt (xem SpineTier.scale).
     scale: Partial<Record<TierKey, number>> = {},
-    // Thư mục khác "spine-v2" khi upload lại riêng con này (né cache CDN), vd "spine-v3".
+    // Thư mục khác "spine-v5" khi upload lại riêng con này (né cache CDN), vd "spine-v6".
     dir?: string,
   ): SpineMonster => ({
     id,
@@ -38,7 +39,7 @@ export function monsterFactory(element: string) {
     rank,
     tiers: tiers.map((t) => ({
       ...TIER[t],
-      base: `${dir ? spine.replace(/spine-v2$/, dir) : spine}/${id}/${t}`,
+      base: `${dir ? spine.replace(/spine-v5$/, dir) : spine}/${id}/${t}`,
       scale: scale[t],
     })),
   });

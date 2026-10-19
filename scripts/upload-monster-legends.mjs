@@ -27,7 +27,8 @@ const flag = (k) => flags.find((f) => f.startsWith(`--${k}=`))?.split("=")[1];
 const SPINE_DIR = flag("dir") ?? "spine-v2";
 const ONLY = flag("only");
 const ROOT = "media-inbox/Monster Legend";
-const SRC = path.join(ROOT, element);
+// --src=export_new: đọc bản export lại nằm trong thư mục con của ROOT (sếp 2026-10-19).
+const SRC = path.join(ROOT, flag("src") ?? "", element);
 const PREFIX = `landing/portfolio/monster-legends-${element.toLowerCase()}`;
 const SKIP = new Set(["avatar", "fx_ultimate"]);
 
@@ -106,6 +107,9 @@ for (const monster of (await readdir(SRC)).sort()) {
     // avatar / fx_ultimate đôi khi đặt tên lệch ("avatar_awakened" ở Dark, "fx_ultimate_awakend" ở
     // Magic) → bỏ theo tiền tố, không chỉ khớp đúng tên.
     if (SKIP.has(sub) || /^(avatar|fx_ultimate)/i.test(sub)) continue;
+    // Chỉ thư mục bậc "<tên>_<số>"; thư mục phụ khác (vd "additional baby for Ultimate" trong
+    // Scrappy — file Cutejunk cho ultimate) bỏ qua.
+    if (!/_\d+$/.test(sub)) continue;
     const dir = path.join(SRC, monster, sub);
     if (!(await stat(dir)).isDirectory()) continue;
     const files = await readdir(dir);

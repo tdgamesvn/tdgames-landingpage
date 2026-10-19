@@ -70,6 +70,10 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
 
 ## Sửa asset sau khi đã upload
 
+- Bản đang dùng (2026-10-19): **spine-v5** = export lại toàn bộ của sếp, nguồn `media-inbox/Monster Legend/export_new`
+  (`upload-monster-legends.mjs <Hệ> --src=export_new --dir=spine-v5 --apply`). Meowrel (Dark) + Matriarch Lyra
+  (Water) đã có trên R2, chờ sếp bảo mới thêm vào roster.
+
 - CDN cache 1 ngày: **không ghi đè cùng key**. Upload lại riêng 1 quái vào thư mục mới:
   `upload-monster-legends.mjs <Hệ> --only=<id> --dir=spine-v3 --apply`, rồi trong project-data
   truyền `dir` cho quái đó (tham số thứ 6 của `monster(...)`, vd Iceblood).
