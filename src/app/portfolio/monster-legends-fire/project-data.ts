@@ -11,6 +11,7 @@ import {
   cdnFor,
   monsterFactory,
   rosterStats,
+  splitAwakened,
   summaryFor,
 } from "../_monster-legends/shared";
 
@@ -18,7 +19,7 @@ const CDN = cdnFor("fire");
 const monster = monsterFactory("fire");
 
 // Thứ tự: con 3 bậc + Awakened lên đầu (khoe nhiều nhất), Mythic theo sau.
-const ROSTER: readonly SpineMonster[] = [
+const ROSTER: readonly SpineMonster[] = splitAwakened([
   // Cánh lửa Awakened rộng + nhiều diện tích → thân trông nhỏ hơn các con khác (sếp 2026-10-18).
   monster("kennix-solaris", "Kennix Solaris", "Architect", ["stage1", "stage3", "awakened"], { awakened: 1.2 }),
   monster("kaih-the-pyrenaut", "Kaih the Pyrenaut", "Architect", ["stage1", "stage3", "awakened"]),
@@ -31,7 +32,7 @@ const ROSTER: readonly SpineMonster[] = [
   monster("aquatorum", "Aquatorum", "Mythic", ["stage1", "stage3"]),
   monster("scrappy", "Scrappy", "Mythic", ["stage1", "stage3"]),
   monster("the-cometstorm", "The Cometstorm", "Mythic", ["stage1", "stage3"]),
-];
+]);
 
 const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 

@@ -44,6 +44,22 @@ export function monsterFactory(element: string) {
   });
 }
 
+/**
+ * Con có Awakened + bậc thường (Baby/Adult) → tách 2 sân khấu liền nhau: Baby/Adult, rồi
+ * Awakened riêng (sếp chốt 2026-10-19 — áp cho mọi hệ). Con chỉ có Awakened giữ nguyên.
+ */
+export function splitAwakened(roster: readonly SpineMonster[]): SpineMonster[] {
+  return roster.flatMap((m) => {
+    const awakened = m.tiers.filter((t) => t.key === "awakened");
+    const normal = m.tiers.filter((t) => t.key !== "awakened");
+    if (!awakened.length || !normal.length) return [m];
+    return [
+      { ...m, tiers: normal },
+      { ...m, id: `${m.id}-awakened`, tiers: awakened },
+    ];
+  });
+}
+
 export function rosterStats(roster: readonly SpineMonster[]) {
   return {
     monsters: roster.length,

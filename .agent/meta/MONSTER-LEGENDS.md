@@ -13,6 +13,8 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
 - **Bậc**: `_1` = **Baby**, `_3` = **Adult**, thư mục bắt đầu `awakened` = **Awakened** (cao nhất,
   màu accentSoft). Mặc định mở bậc cao nhất.
 - **Mỗi quái 1 sân khấu xếp dọc** (khách lướt là xem), không có dãy chọn quái.
+- Con có Awakened **và** Baby/Adult → **tách 2 sân khấu liền nhau**: Baby/Adult, rồi Awakened riêng
+  (sếp chốt 2026-10-19). Tự động qua `splitAwakened(...)` bọc ROSTER trong project-data.
 - Nhãn mục: `"<Hệ> monsters · Animation Spine"`.
 - Summary: `summaryFor("<Hệ>")` — vai trò studio = Spine 2D animation các dạng baby/adult/awakened +
   hướng dẫn bấm dạng/animation. **Không nêu số lượng nhân vật.**

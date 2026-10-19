@@ -11,6 +11,7 @@ import {
   cdnFor,
   monsterFactory,
   rosterStats,
+  splitAwakened,
   summaryFor,
 } from "../_monster-legends/shared";
 
@@ -20,7 +21,7 @@ const CDN = cdnFor("dark");
 const monster = monsterFactory("dark");
 
 // Thứ tự: con có Awakened lên đầu, Ancestor/Architect rồi Mythic.
-const ROSTER: readonly SpineMonster[] = [
+const ROSTER: readonly SpineMonster[] = splitAwakened([
   monster("don-obscurione", "Don Obscurione", "Ancestor", ["stage1", "stage3", "awakened"]),
   monster("voreth-voidspawn", "Voreth Voidspawn", "Architect", ["stage1", "stage3", "awakened"]),
   monster("wilfred-razorstorm", "Wilfred Razorstorm", "Architect", ["stage1", "stage3", "awakened"]),
@@ -32,7 +33,7 @@ const ROSTER: readonly SpineMonster[] = [
   monster("wizerth", "Wizerth", "Mythic", ["stage1", "stage3"]),
   monster("bruzard", "Bruzard", "Mythic", ["stage1", "stage3"]),
   monster("zerozone", "Zerozone", "Mythic", ["stage1", "stage3"]),
-];
+]);
 
 const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 

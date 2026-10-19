@@ -11,6 +11,7 @@ import {
   cdnFor,
   monsterFactory,
   rosterStats,
+  splitAwakened,
   summaryFor,
 } from "../_monster-legends/shared";
 
@@ -19,7 +20,7 @@ const CDN = cdnFor("water");
 const monster = monsterFactory("water");
 
 // Thứ tự: Awakened (Ancestor) lên đầu, Mythic theo sau.
-const ROSTER: readonly SpineMonster[] = [
+const ROSTER: readonly SpineMonster[] = splitAwakened([
   monster("hounen-zennomusuko", "Hounen Zennomusuko", "Ancestor", ["awakened"]),
   monster("kirk-moonwalker", "Kirk Moonwalker", "Ancestor", ["awakened"]),
   monster("crabsair", "Crabsair", "Mythic", ["stage1", "stage3"]),
@@ -27,7 +28,7 @@ const ROSTER: readonly SpineMonster[] = [
   monster("iceblood", "Iceblood", "Mythic", ["stage1", "stage3"], {}, "spine-v3"),
   monster("crocark", "Crocark", "Mythic", ["stage1", "stage3"]),
   monster("bayworker-hulk", "Bayworker Hulk", "Mythic", ["stage1", "stage3"]),
-];
+]);
 
 const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 

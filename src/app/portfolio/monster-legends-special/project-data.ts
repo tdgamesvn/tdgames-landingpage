@@ -11,6 +11,7 @@ import {
   cdnFor,
   monsterFactory,
   rosterStats,
+  splitAwakened,
   summaryFor,
 } from "../_monster-legends/shared";
 
@@ -20,11 +21,11 @@ const CDN = cdnFor("special");
 const monster = monsterFactory("special");
 
 // Thứ tự: con có Awakened lên đầu, Ancestor/Architect rồi Mythic.
-const ROSTER: readonly SpineMonster[] = [
+const ROSTER: readonly SpineMonster[] = splitAwakened([
   monster("nebotus-evil-lord", "Nebotus Evil Lord", "Ancestor", ["awakened"]),
   monster("cakelius-the-tenth", "Cakelius the Tenth", "Mythic", ["stage1", "stage3"]),
   monster("idolator", "Idolator", "Mythic", ["stage1", "stage3"]),
-];
+]);
 
 const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 

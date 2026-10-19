@@ -11,6 +11,7 @@ import {
   cdnFor,
   monsterFactory,
   rosterStats,
+  splitAwakened,
   summaryFor,
 } from "../_monster-legends/shared";
 
@@ -20,7 +21,7 @@ const CDN = cdnFor("thunder");
 const monster = monsterFactory("thunder");
 
 // Thứ tự: con có Awakened lên đầu, Ancestor/Architect rồi Mythic.
-const ROSTER: readonly SpineMonster[] = [
+const ROSTER: readonly SpineMonster[] = splitAwakened([
   monster("tyr-stormbringer", "Tyr Stormbringer", "Ancestor", ["stage1", "awakened"]),
   monster("v-kid", "V-Kid", "Architect", ["awakened"]),
   monster("godfather-imigbo", "Godfather Imigbo", "Mythic", ["stage1", "stage3"]),
@@ -33,7 +34,7 @@ const ROSTER: readonly SpineMonster[] = [
   monster("dolores", "Dolores", "Mythic", ["stage1", "stage3"]),
   monster("folgorg", "Folgorg", "Mythic", ["stage1", "stage3"]),
   monster("thunder-eagle", "Thunder Eagle", "Common", ["stage1", "stage3"]),
-];
+]);
 
 const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 
