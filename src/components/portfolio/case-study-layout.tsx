@@ -273,7 +273,11 @@ export default function CaseStudyLayout({
       <main className="bg-[#080808] text-white">
         {/* ─── VERTICAL HERO: text left-aligned top, image fills bottom ─── */}
         <section
-          className="relative h-[100svh] min-h-[640px] overflow-hidden border-b border-white/10"
+          className={
+            meta.coverAspectMobile
+              ? "relative overflow-hidden border-b border-white/10 lg:h-[100svh] lg:min-h-[640px]"
+              : "relative h-[100svh] min-h-[640px] overflow-hidden border-b border-white/10"
+          }
           style={{ background: heroBg }}
         >
           <div
@@ -370,8 +374,14 @@ export default function CaseStudyLayout({
             </div>
 
             {/* BOTTOM — image fills remaining height */}
-            <div className="relative min-h-0 flex-1 overflow-hidden rounded-t-[20px] border border-b-0 border-white/10"
+            <div
+              className={
+                meta.coverAspectMobile
+                  ? "relative overflow-hidden rounded-t-[20px] border border-b-0 border-white/10 [aspect-ratio:var(--cover-ar)] lg:min-h-0 lg:flex-1 lg:[aspect-ratio:auto]"
+                  : "relative min-h-0 flex-1 overflow-hidden rounded-t-[20px] border border-b-0 border-white/10"
+              }
               style={{
+                ...(meta.coverAspectMobile ? { "--cover-ar": String(meta.coverAspectMobile) } : {}),
                 boxShadow: `0 -16px 48px -12px ${accentRing}`,
               }}
             >

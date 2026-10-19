@@ -22,65 +22,85 @@ if (!BASE || !KEY) throw new Error("AI_BASE_URL / AI_API_KEY chưa có trong .en
 
 const [element, ...flags] = process.argv.slice(2);
 const OUT = "scripts/.out/monster-legends";
-const VERSION = "v2";
+const VERSION = "v3";
 
 // cast: tên theo đúng thứ tự file ref-<hệ>-0..n; hero = con đứng giữa, to nhất.
 const SPLASH = {
   Fire: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Side-on charge from left to right: the whole squad sprints across a lava field in one diagonal line, Kennix Solaris leading at front-right with wings flared and trident thrust forward, the others strung out behind him; low tracking camera, motion streaks.",
     cast: ["Kennix Solaris", "Kaih the Pyrenaut", "Shallinar Emberglow", "Torog Moltenthroat", "Akira Karioka"],
     hero: "Kennix Solaris",
     scene:
       "an erupting volcanic battlefield at dusk — rivers of glowing lava, exploding embers, a towering volcano spewing fire behind, molten-orange and magenta sky",
   },
   Metal: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Symmetrical standoff seen from a high three-quarter angle: Exarch Quor stands calm and tall in the middle of a steel platform raising both hands as glowing machines power up, the robots flank him in a V formation facing the viewer.",
     cast: ["Exarch Quor", "Primerion Unimate", "Droitler", "Ion V2", "Mollugh"],
     hero: "Exarch Quor",
     scene:
       "a futuristic steel foundry city at dusk — giant gears, pipes and glowing furnaces, sparks flying, cyan energy beams, steel-blue and orange sky",
   },
   Nature: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Ambush from the canopy: Florian Malsang crashes down from above in a big leap toward the camera, the others burst out of the foliage from both sides and from behind giant leaves; dramatic top-down-ish angle.",
     cast: ["Florian Malsang", "Goblarzd", "Gonzo", "Onikapa", "Wootr"],
     hero: "Florian Malsang",
     scene:
       "an ancient enchanted jungle — giant twisted trees, vines and huge leaves, glowing spores and falling petals, soft green-gold light shafts",
   },
   Thunder: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Heroic low worm's-eye shot: Tyr Stormbringer stands on a peak raising his axe to the sky as a lightning bolt strikes it, the others pose on lower rocks at the left and right edges looking up, storm swirling overhead.",
     cast: ["Tyr Stormbringer", "V-Kid", "Godfather Imigbo", "Lightning Star", "Proud Lionell"],
     hero: "Tyr Stormbringer",
     scene:
       "a stormy mountain summit at night — jagged peaks, swirling storm clouds, huge forks of lightning, crackling electric energy, navy and teal sky",
   },
   Special: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Playful group photo-op: the three monsters pose together like a party poster — Nebotus Evil Lord looming behind with wings spread wide, Cakelius and Idolator in front striking cheeky poses, confetti and fireworks around them.",
     cast: ["Nebotus Evil Lord", "Cakelius the Tenth", "Idolator"],
     hero: "Nebotus Evil Lord",
     scene:
       "a whimsical floating carnival island at twilight — candy-coloured spires, hot-air balloons, fireworks and confetti, violet and peach sky",
   },
   Light: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Celestial descent: Jestin Justice floats down from the sky through a beam of light with arms open, the others kneel and rise on marble steps below him on both sides; vertical-ish heroic upward framing kept inside the wide image.",
     cast: ["Jestin Justice", "Maximus Astrum", "Graciel Choirmaster", "Layth Maximus", "Master Shannara"],
     hero: "Jestin Justice",
     scene:
       "a radiant celestial sanctuary above the clouds — white marble and gold temples, floating islands, golden god-rays bursting through the clouds, warm gold and soft blue sky",
   },
   Earth: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Head-on stampede toward the camera: all five charge straight at the viewer through a canyon, kicking up rocks and dust, Miss Qylara Watson front and centre with her shield, others close behind in a tight wedge.",
     cast: ["Miss Qylara Watson", "President Canine", "Eternal Basthet", "Ishigaki", "Turtle Murtle"],
     hero: "Miss Qylara Watson",
     scene:
       "a rocky red canyon at sunset — towering mesas, boulders cracking and flying, dust clouds, warm amber and orange sky",
   },
   Magic: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Duel of spells: the monsters stand in a circle around a giant glowing magic sigil on the floor, casting spells into its centre where Xandrite Spellbound hovers; slightly overhead camera looking down on the circle.",
     cast: ["Xandrite Spellbound", "Baba Basheer", "Mater Geneza", "Octomancer", "Dr. Bloom"],
     hero: "Xandrite Spellbound",
     scene:
       "an arcane observatory under a swirling teal-and-magenta nebula — floating crystals, glowing magic circles and spell sigils, spiral towers, starry night sky",
   },
   Dark: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Ominous silhouette shot: Don Obscurione stands in the foreground seen from behind and to the side, turning his head toward the viewer, cape billowing, facing his allies who emerge from violet mist below a huge full moon.",
     cast: ["Don Obscurione", "Voreth Voidspawn", "Wilfred Razorstorm", "Anwir Paincraver", "Soulblast"],
     hero: "Don Obscurione",
     scene:
       "a haunted shadow realm under a huge pale moon — twisted dead trees, crooked gothic spires, swirling violet mist and glowing purple runes, deep indigo and violet sky",
   },
   Water: {
+    // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
+    shot: "Surfing a giant wave: the squad rides and leaps off a huge curling wave from right to left, Kirk Moonwalker standing on the crest pointing his trident, others splashing out of the water around him; dynamic tilted camera.",
     cast: ["Hounen Zennomusuko", "Kirk Moonwalker", "Crabsair", "Iceblood", "Crocark"],
     hero: "Kirk Moonwalker",
     scene:
@@ -129,7 +149,9 @@ const PROMPT = () =>
   `Create a key-art splash illustration drawn in EXACTLY the same art style as the second reference image (the official Monster Legends splash art): a clean stylised CARTOON look — big simple readable shapes, bold silhouettes, smooth soft cel-like shading with only 2–3 tones per surface, clean edges, bright saturated colours, minimal texture and minimal fine detail. It must NOT look realistic or highly rendered: no gritty texture, no photographic water or fire, no dense particle noise, no heavy detail, no hyper-real lighting. ` +
   `Composition like a game splash: dynamic, with clear foreground and background depth and a heroic camera angle, but uncluttered and easy to read — generous simple background shapes like the reference. ` +
   `Feature EXACTLY these ${cfg.cast.length} monsters from the first reference (a character sheet with their names), and keep every design faithful — same body shape, colours, armour, horns, weapons and accessories: ${cfg.cast.join(", ")}. ` +
-  `${cfg.hero} is the hero: largest, centred in the foreground in a powerful action pose; the others are arranged around and behind in dynamic poses at varied depths, all clearly readable. ` +
+  `Composition for THIS image (follow it closely, it must differ from a generic line-up): ${cfg.shot} ${cfg.hero} is the clear focal hero. ` +
+  // Hero trang cắt ~25% trên/dưới trên desktop (khung ≈2.2:1) → mọi nhân vật nằm dải giữa.
+  `SAFE ZONE: every monster must be fully inside the central band between 15% and 85% of the image height and between 8% and 92% of the width — no character cut by any edge, keep sky and ground as margins. ` +
   `Setting: ${cfg.scene}, painted with the same simple cartoon shapes as the reference. Wide landscape composition, full-bleed. No text, no logo, no watermark, no UI, no frame.`;
 
 /**

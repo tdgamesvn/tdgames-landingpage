@@ -48,7 +48,11 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
    như SplashArt game, không "real") → `--upload` (arena-v3.webp).
    - Đo tâm vùng sàn sáng trên ảnh = `gy` (tỉ lệ chiều cao). Trong project-data đặt
      `groundY: (gy − 1/6) × 1.5` và `backgroundRoom: 1.5`.
-4. **Splash hero (AI)**: chụp render Spine nền trong suốt của ~5 con (Playwright, dáng idle) →
+4. **Splash hero (AI)** — mỗi hệ một `shot` (bố cục/góc máy) RIÊNG trong `SPLASH.<Hệ>`, không dùng
+   lại bố cục hệ khác (sếp 2026-10-19: các banner na ná pose). Prompt đã ép vùng an toàn (mọi nhân
+   vật trong 15–85% cao, 8–92% rộng) vì desktop cắt trên/dưới; mobile/tablet dùng
+   `coverAspectMobile: 16 / 9` để không cắt hai bên. Bản hiện tại: splash-ai-v3.jpg.
+    chụp render Spine nền trong suốt của ~5 con (Playwright, dáng idle) →
    `scripts/.out/monster-legends/ref-<hệ>-0..4.png`; thêm cấu hình `SPLASH.<Hệ>` (cast theo đúng thứ
    tự file, `hero` = con trung tâm, `scene`) trong `scripts/gen-monster-legends-splash.mjs` → gen
    → **soát từng con giữ đúng thiết kế** + style cartoon như SplashArt gốc → `--upload`.

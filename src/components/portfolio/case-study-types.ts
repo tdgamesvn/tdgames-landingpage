@@ -74,6 +74,11 @@ export type ProjectMeta = {
   coverVideo?: string;
   /** CSS object-position for the hero media (default "top"). */
   coverPosition?: string;
+  /**
+   * Dưới lg (điện thoại/tablet) khung hero theo đúng tỉ lệ ảnh thay vì phủ hết chiều cao màn
+   * hình → không cắt hai bên. Dùng cho splash nhiều nhân vật dàn ngang (Monster Legends).
+   */
+  coverAspectMobile?: number;
   credits?: readonly Credit[];
   tools: readonly string[];
   fields: readonly string[];
