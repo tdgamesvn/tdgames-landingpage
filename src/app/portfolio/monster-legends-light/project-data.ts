@@ -73,7 +73,7 @@ export const projectMeta: ProjectMeta = {
   madeForLabel: "Social Point",
   madeForUrl: "https://www.socialpoint.es",
   // Splash AI riêng hệ Light (scripts/gen-monster-legends-splash.mjs), ref = render Spine trong bài.
-  coverImage: `${CDN}/splash-ai-v4.jpg`,
+  coverImage: `${CDN}/splash-ai-v5.jpg`,
   coverPosition: "center",
   // Splash dàn ngang nhiều quái → mobile/tablet giữ nguyên tỉ lệ 16:9, không cắt hai bên.
   coverAspectMobile: 16 / 9,

@@ -22,7 +22,7 @@ if (!BASE || !KEY) throw new Error("AI_BASE_URL / AI_API_KEY chưa có trong .en
 
 const [element, ...flags] = process.argv.slice(2);
 const OUT = "scripts/.out/monster-legends";
-const VERSION = "v4";
+const VERSION = "v5";
 
 // cast: tên theo đúng thứ tự file ref-<hệ>-0..n; hero = con đứng giữa, to nhất.
 const SPLASH = {
@@ -79,6 +79,9 @@ const SPLASH = {
     shot: "Celestial descent: Jestin Justice floats down from the sky through a beam of light with arms open, the others kneel and rise on marble steps below him on both sides; vertical-ish heroic upward framing kept inside the wide image.",
     cast: ["Jestin Justice", "Maximus Astrum", "Graciel Choirmaster", "Layth Maximus", "Master Shannara"],
     hero: "Jestin Justice",
+    // v4 vẽ Layth thành 2 đầu sư tử (sếp 2026-10-19) → nói rõ thiết kế.
+    notes:
+      "Layth Maximus is ONE single lion king with ONE head (gold laurel crown, red cape, white-gold armour, golden sceptre) seated on a red-and-gold throne that walks on clawed legs — never two lions, never two heads.",
     scene:
       "a radiant celestial sanctuary above the clouds — white marble and gold temples, floating islands, golden god-rays bursting through the clouds, warm gold and soft blue sky",
   },
@@ -122,12 +125,15 @@ const file = `${OUT}/${element.toLowerCase()}-splash-${VERSION}.png`;
 /** Cắt sát nhân vật theo kênh alpha (bỏ pixel gần như trong suốt). */
 async function trim(path) {
   const { data, info } = await sharp(path).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  let x0 = info.width, y0 = info.height, x1 = 0, y1 = 0;
+  // Bỏ cột/hàng chỉ có vài pixel (đốm sparkle lẻ) — trước đây làm khung rộng, nhân vật bị thu
+  // nhỏ trong sheet → AI vẽ sai (Layth 2 đầu, sếp 2026-10-19).
+  const cols = new Array(info.width).fill(0), rows = new Array(info.height).fill(0);
   for (let y = 0; y < info.height; y++)
     for (let x = 0; x < info.width; x++)
-      if (data[(y * info.width + x) * 4 + 3] > 90) {
-        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-      }
+      if (data[(y * info.width + x) * 4 + 3] > 90) { cols[x]++; rows[y]++; }
+  const minC = info.height * 0.02, minR = info.width * 0.02;
+  const x0 = cols.findIndex((n) => n > minC), x1 = cols.findLastIndex((n) => n > minC);
+  const y0 = rows.findIndex((n) => n > minR), y1 = rows.findLastIndex((n) => n > minR);
   return sharp(path).extract({ left: x0, top: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 }).png().toBuffer();
 }
 
@@ -157,7 +163,7 @@ const PROMPT = () =>
   `Create a key-art splash illustration drawn in EXACTLY the same art style as the second reference image (the official Monster Legends splash art): a clean stylised CARTOON look — big simple readable shapes, bold silhouettes, smooth soft cel-like shading with only 2–3 tones per surface, clean edges, bright saturated colours, minimal texture and minimal fine detail. It must NOT look realistic or highly rendered: no gritty texture, no photographic water or fire, no dense particle noise, no heavy detail, no hyper-real lighting. ` +
   `Composition like a game splash: dynamic, with clear foreground and background depth and a heroic camera angle, but uncluttered and easy to read — generous simple background shapes like the reference. ` +
   `Feature EXACTLY these ${cfg.cast.length} monsters from the first reference (a character sheet with their names), and keep every design faithful — same body shape, colours, armour, horns, weapons and accessories: ${cfg.cast.join(", ")}. ` +
-  `Composition for THIS image (follow it closely, it must differ from a generic line-up): ${cfg.shot} ${cfg.hero} is the clear focal hero. ` +
+  `Composition for THIS image (follow it closely, it must differ from a generic line-up): ${cfg.shot} ${cfg.hero} is the clear focal hero. ${cfg.notes ?? ""} ` +
   // Hero trang cắt ~25% trên/dưới trên desktop (khung ≈2.2:1) → mọi nhân vật nằm dải giữa.
   `SAFE ZONE: every monster must be fully inside the central band between 15% and 85% of the image height and between 8% and 92% of the width — no character cut by any edge, keep sky and ground as margins. ` +
   `Setting: ${cfg.scene}, painted with the same simple cartoon shapes as the reference. Wide landscape composition, full-bleed. No text, no logo, no watermark, no UI, no frame.`;

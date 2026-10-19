@@ -98,7 +98,7 @@ export const ELEMENTS = [
   { slug: "earth", name: "Earth", accent: "#d9965b" },
   { slug: "thunder", name: "Thunder", accent: "#ffd23f" },
   { slug: "dark", name: "Dark", accent: "#a46bff" },
-  { slug: "light", name: "Light", accent: "#f2c14e", splash: "v4" },
+  { slug: "light", name: "Light", accent: "#f2c14e", splash: "v5" },
   { slug: "magic", name: "Magic", accent: "#e15cff" },
   { slug: "metal", name: "Metal", accent: "#8fb3c9" },
   { slug: "special", name: "Special", accent: "#ff7fb0" },
