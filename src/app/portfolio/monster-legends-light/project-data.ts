@@ -23,7 +23,8 @@ const monster = monsterFactory("light");
 
 // Thứ tự: con có Awakened lên đầu, Ancestor/Architect rồi Mythic.
 const ROSTER: readonly SpineMonster[] = splitAwakened([
-  monster("jestin-justice", "Jestin Justice", "Ancestor", ["stage1", "stage3", "awakened"]),
+  // Sếp sửa Awakened 2026-10-19 → upload lại riêng vào spine-v4 (spine-v3 là bản lỗi thiếu fx/flash_10).
+  monster("jestin-justice", "Jestin Justice", "Ancestor", ["stage1", "stage3", "awakened"], {}, "spine-v4"),
   monster("maximus-astrum", "Maximus Astrum", "Ancestor", ["awakened"]),
   monster("graciel-choirmaster", "Graciel Choirmaster", "Ancestor", ["awakened"]),
   monster("layth-maximus", "Layth Maximus", "Architect", ["stage1", "stage3"]),
@@ -72,7 +73,7 @@ export const projectMeta: ProjectMeta = {
   madeForLabel: "Social Point",
   madeForUrl: "https://www.socialpoint.es",
   // Splash AI riêng hệ Light (scripts/gen-monster-legends-splash.mjs), ref = render Spine trong bài.
-  coverImage: `${CDN}/splash-ai-v3.jpg`,
+  coverImage: `${CDN}/splash-ai-v4.jpg`,
   coverPosition: "center",
   // Splash dàn ngang nhiều quái → mobile/tablet giữ nguyên tỉ lệ 16:9, không cắt hai bên.
   coverAspectMobile: 16 / 9,

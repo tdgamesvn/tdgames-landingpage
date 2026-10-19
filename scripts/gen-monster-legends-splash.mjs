@@ -22,7 +22,7 @@ if (!BASE || !KEY) throw new Error("AI_BASE_URL / AI_API_KEY chưa có trong .en
 
 const [element, ...flags] = process.argv.slice(2);
 const OUT = "scripts/.out/monster-legends";
-const VERSION = "v3";
+const VERSION = "v4";
 
 // cast: tên theo đúng thứ tự file ref-<hệ>-0..n; hero = con đứng giữa, to nhất.
 const SPLASH = {

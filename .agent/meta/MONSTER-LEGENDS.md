@@ -74,6 +74,10 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
   `upload-monster-legends.mjs <Hệ> --only=<id> --dir=spine-v3 --apply`, rồi trong project-data
   truyền `dir` cho quái đó (tham số thứ 6 của `monster(...)`, vd Iceblood).
 - Ảnh nền / splash mới: tăng VERSION trong script (key mới), đổi URL trong project-data.
+- Sếp sửa nhân vật có trong splash → chụp lại ref-<hệ>-i (+ ref-all-i nếu con đó ở trang tổng), gen
+  splash version mới cho hệ đó (+ All), đổi coverImage, `splash` trong ELEMENTS, row `projects` hub.
+  Ví dụ: Jestin Justice 2026-10-19 → Light + All lên v4.
+- Export thiếu region trong atlas (vd `fx/flash_10`): script upload tự bỏ attachment đó + cảnh báo.
 
 ## Trạng thái
 

@@ -44,7 +44,7 @@ export const projectMeta: ProjectMeta = {
   behanceUrl: "",
   madeForLabel: "Social Point",
   madeForUrl: "https://www.socialpoint.es",
-  coverImage: `${CDN}/splash-ai-v3.jpg`,
+  coverImage: `${CDN}/splash-ai-v4.jpg`,
   coverPosition: "center",
   coverAspectMobile: 16 / 9,
   tools: ["Spine 2D"],

@@ -72,6 +72,33 @@ function parse(dir) {
   return { id, tier };
 }
 
+// Export lỗi: JSON gọi region không có trong atlas (Jestin Awakened 2026-10-19: fx/flash_10) →
+// SpinePlayer báo "Could not load skeleton data". Bỏ attachment đó (+ timeline deform của nó)
+// thay vì vỡ cả con; in cảnh báo để báo sếp export lại nếu cần.
+function dropMissingRegions(buf, atlasTxt, label) {
+  const regions = new Set(
+    atlasTxt.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.includes(":") && !/\.png$/i.test(l)),
+  );
+  const j = JSON.parse(buf);
+  const dropped = [];
+  for (const skin of j.skins ?? []) {
+    for (const [slot, atts] of Object.entries(skin.attachments ?? {})) {
+      for (const [name, a] of Object.entries(atts)) {
+        const type = a.type ?? "region";
+        if (!["region", "mesh", "linkedmesh"].includes(type) || a.sequence) continue;
+        const p = a.path ?? a.name ?? name;
+        if (regions.has(p)) continue;
+        delete atts[name];
+        dropped.push(`${slot}/${name}`);
+        for (const an of Object.values(j.animations ?? {})) delete an.attachments?.[skin.name]?.[slot]?.[name];
+      }
+    }
+  }
+  if (!dropped.length) return { buf, anims: Object.keys(j.animations ?? {}) };
+  console.error(`⚠ ${label}: bỏ attachment thiếu trong atlas: ${dropped.join(", ")}`);
+  return { buf: Buffer.from(JSON.stringify(j)), anims: Object.keys(j.animations ?? {}) };
+}
+
 const manifest = {};
 for (const monster of (await readdir(SRC)).sort()) {
   if (monster.startsWith(".") || !(await stat(path.join(SRC, monster))).isDirectory()) continue;
@@ -89,13 +116,10 @@ for (const monster of (await readdir(SRC)).sort()) {
     const { id, tier } = parse(sub);
     if (ONLY && id !== ONLY) continue;
     const base = `${SPINE_DIR}/${id}/${tier}`;
-    const jsonBuf = await readFile(path.join(dir, json));
-    const anims = Object.keys(JSON.parse(jsonBuf).animations ?? {});
+    const rawAtlas = await readFile(path.join(dir, atlas), "utf8");
+    const { buf: jsonBuf, anims } = dropMissingRegions(await readFile(path.join(dir, json)), rawAtlas, sub);
     // Atlas 1 trang (đã kiểm), dòng đầu là tên texture → trỏ sang file webp mới.
-    const atlasTxt = (await readFile(path.join(dir, atlas), "utf8")).replace(
-      /^.*\.png$/m,
-      `${tier}.webp`,
-    );
+    const atlasTxt = rawAtlas.replace(/^.*\.png$/m, `${tier}.webp`);
     const webp = await sharp(path.join(dir, png))
       .webp({ lossless: true, exact: true, effort: 4 })
       .toBuffer();
