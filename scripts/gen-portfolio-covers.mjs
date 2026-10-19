@@ -14,7 +14,7 @@ import sharp from "sharp";
 
 const BASE = (process.env.AI_BASE_URL ?? "").replace(/\/+$/, "");
 const KEY = process.env.AI_API_KEY;
-const MODEL = process.env.AI_IMAGE_MODEL || "gpt-image-2";
+const MODEL = process.env.AI_IMAGE_MODEL || "gpt-image-2.5-sunburst";
 if (!BASE || !KEY) throw new Error("AI_BASE_URL / AI_API_KEY chưa có trong .env.local");
 
 const OUT = `scripts/.out/portfolio-covers${process.env.VARIANT ? `/${process.env.VARIANT}` : ""}`;

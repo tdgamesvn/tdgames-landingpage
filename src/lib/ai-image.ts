@@ -47,7 +47,7 @@ export async function generateAiImage(
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: process.env.AI_IMAGE_MODEL || "gpt-image-2",
+        model: process.env.AI_IMAGE_MODEL || "gpt-image-2.5-sunburst",
         prompt: prompt + FRAMING_SUFFIX,
         n: 1,
         size: SIZES.has(size) ? size : "1536x1024",
