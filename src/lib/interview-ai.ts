@@ -31,6 +31,26 @@ export function getAiConfig() {
 }
 
 /**
+ * "AI backend error 400: unknown provider for model gpt-5.5" — kèm lý do từ
+ * cliproxyapi để HR/dev nhìn UI là biết hỏng ở đâu (vd. đổi model trên proxy).
+ */
+export async function aiBackendErrorMessage(res: Response) {
+  let detail = "";
+  try {
+    const body = await res.text();
+    try {
+      detail = JSON.parse(body)?.error?.message ?? body;
+    } catch {
+      detail = body;
+    }
+  } catch {
+    // body không đọc được — chỉ còn status
+  }
+  detail = String(detail).trim().slice(0, 200);
+  return `AI backend error ${res.status}${detail ? `: ${detail}` : ""}`;
+}
+
+/**
  * Gọi chat/completions và parse JSON từ câu trả lời.
  *
  * ponytail: vẫn dùng cách bóc `{...}` đầu tiên như route evaluate cũ thay vì
@@ -65,7 +85,7 @@ export async function callAiJson<T>(
     throw new AiError("AI backend unreachable (Mac tắt / cliproxyapi không chạy?)");
   }
 
-  if (!res.ok) throw new AiError(`AI backend error ${res.status}`);
+  if (!res.ok) throw new AiError(await aiBackendErrorMessage(res));
 
   const completion = await res.json();
   const text: string = completion?.choices?.[0]?.message?.content ?? "";

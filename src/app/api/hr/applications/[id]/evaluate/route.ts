@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
-import { extractCvText } from "@/lib/interview-ai";
+import { aiBackendErrorMessage, extractCvText } from "@/lib/interview-ai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,7 +92,7 @@ export async function POST(
   }
   if (!res.ok) {
     return NextResponse.json(
-      { error: `AI backend error ${res.status}` },
+      { error: await aiBackendErrorMessage(res) },
       { status: 502 }
     );
   }

@@ -32,3 +32,4 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
 - Result: tsc sạch, eslint không thêm lỗi mới (2 lỗi set-state-in-effect có sẵn). Test local (Discord tắt): validate 400 đúng, offline→online OK, remind tìm đúng vòng, list join OK; Playwright chụp modal OK, 0 lỗi trang.
 - Lưu ý: vòng test "TEST lịch (xoá)" (round 99) trên hồ sơ Nguyễn Hương Giang — DELETE qua MCP bị huỷ ở bước xác nhận; đã gỡ lịch. Sếp bấm "Xoá vòng" trên /hr hoặc chạy: DELETE FROM interview_sessions WHERE id='27e3ea47-bb24-4793-a69a-34b8b118be43';
 - Next Step: test trên prod. Sếp chốt: lịch/link CHỈ báo nội bộ (Discord HR), KHÔNG gửi cho ứng viên.
+- Update 2026-10-19: vòng test đã xoá — Supabase MCP DELETE bị huỷ lần 2 (bước xác nhận không trả lời được từ Telegram) → xoá qua DELETE /api/hr/interviews/[id] trên prod (200, kiểm DB không còn row). Mẹo: xoá dữ liệu prod thì đi qua API của app thay vì MCP execute_sql.
