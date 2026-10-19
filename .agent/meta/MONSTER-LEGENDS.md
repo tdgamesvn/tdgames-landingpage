@@ -86,7 +86,8 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
   (bỏ theo tiền tố); attachment FX tên `VFX/…`; hạng `rare`, `common`; quái thiếu bậc giữa (Tyr: Baby + Awakened). Gặp kiểu lệch mới → sửa script/stage
   rồi ghi thêm vào đây. Bước kiểm bắt buộc: đối chiếu roster trong project-data với manifest upload.
 
-- 2026-10-19: sếp duyệt → publish đủ 10 hệ (row `projects` + sitemap).
+- 2026-10-19: sếp duyệt → publish đủ 10 hệ (sitemap). Sau đó gom vào hub: DB `projects` chỉ còn
+  1 row `monster-legends` (10 row hệ đã xoá) → /portfolio 1 card.
 
 ## Trang tổng (hub) — sếp chốt 2026-10-19
 - `/portfolio/monster-legends` (kiểu ArtStation): splash tổng (6 con 6 hệ, `SPLASH.All`, ref-all-*), lưới
