@@ -87,3 +87,9 @@ Code: `src/components/portfolio/spine-stage.tsx` (sân khấu), `src/app/portfol
   rồi ghi thêm vào đây. Bước kiểm bắt buộc: đối chiếu roster trong project-data với manifest upload.
 
 - 2026-10-19: sếp duyệt → publish đủ 10 hệ (row `projects` + sitemap).
+
+## Trang tổng (hub) — sếp chốt 2026-10-19
+- `/portfolio/monster-legends` (kiểu ArtStation): splash tổng (6 con 6 hệ, `SPLASH.All`, ref-all-*), lưới
+  10 hệ (`elementCards()` từ `ELEMENTS` trong shared.ts). /portfolio chỉ còn **1 card** dẫn vào hub.
+- Mỗi trang hệ: nút "Back to Monster Legends" (`backHref: HUB_HREF`), cuối trang "Other elements"
+  (`otherElementsModules(hệ)`) thay Related Work. Hệ mới: thêm vào `ELEMENTS`, KHÔNG thêm row `projects`.

@@ -26,6 +26,14 @@ const VERSION = "v3";
 
 // cast: tên theo đúng thứ tự file ref-<hệ>-0..n; hero = con đứng giữa, to nhất.
 const SPLASH = {
+  // Trang tổng /portfolio/monster-legends — 6 con tiêu biểu của 6 hệ (ref-all-* copy từ ref các hệ).
+  All: {
+    cast: ["Kennix Solaris", "Kirk Moonwalker", "Don Obscurione", "Jestin Justice", "Tyr Stormbringer", "Xandrite Spellbound"],
+    hero: "Kennix Solaris",
+    shot: "Grand alliance poster: six champions of different elements stand together on a high cliff in a loose arc facing the viewer, each wrapped in its own element (fire, water, shadow, holy light, lightning, arcane), their energies swirling and meeting in the sky above them; slightly low heroic camera.",
+    scene:
+      "a legendary monster world at sunset — floating islands, distant volcano, ocean, gothic spires and crystal towers blending into one epic landscape, colourful dramatic sky",
+  },
   Fire: {
     // Bố cục riêng từng hệ (sếp 2026-10-19: các banner na ná pose như nhau).
     shot: "Side-on charge from left to right: the whole squad sprints across a lava field in one diagonal line, Kennix Solaris leading at front-right with wings flared and trident thrust forward, the others strung out behind him; low tracking camera, motion streaks.",

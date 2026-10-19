@@ -74,6 +74,9 @@ export type ProjectMeta = {
   coverVideo?: string;
   /** CSS object-position for the hero media (default "top"). */
   coverPosition?: string;
+  /** Nút quay lại ở đầu trang (mặc định "/portfolio" — "Back to Portfolio"). */
+  backHref?: string;
+  backLabel?: string;
   /**
    * Dưới lg (điện thoại/tablet) khung hero theo đúng tỉ lệ ảnh thay vì phủ hết chiều cao màn
    * hình → không cắt hai bên. Dùng cho splash nhiều nhân vật dàn ngang (Monster Legends).
@@ -142,6 +145,12 @@ export type ShowcaseModule =
     }
   | { id: string; variant: "videoEmbed"; src: string; aspect: number }
   | { id: string; variant: "sectionLabel"; label: string }
+  | {
+      id: string;
+      variant: "linkGrid";
+      /** Lưới thẻ dẫn sang trang khác (vd các hệ Monster Legends). */
+      items: readonly { title: string; subtitle?: string; href: string; image: string; accent: string }[];
+    }
   | {
       id: string;
       variant: "spineStage";

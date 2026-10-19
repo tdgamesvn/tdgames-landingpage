@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 
 import { AutoLoopMedia } from "./auto-loop-media";
 import { CutsceneGrid } from "./cutscene-grid";
+import { LinkGrid } from "./link-grid";
 import type { ProjectTheme, ShowcaseModule } from "./case-study-types";
 import { hexToRgba } from "./portfolio-color-utils";
 
@@ -637,6 +638,10 @@ function ShowcaseRenderer({
               </div>
             </div>
           );
+        }
+
+        if (module.variant === "linkGrid") {
+          return <LinkGrid key={module.id} items={module.items} />;
         }
 
         if (module.variant === "spineStage") {

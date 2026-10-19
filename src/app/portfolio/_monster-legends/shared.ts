@@ -1,4 +1,4 @@
-import type { SpineMonster, SpineTier } from "@/components/portfolio/case-study-types";
+import type { ShowcaseModule, SpineMonster, SpineTier } from "@/components/portfolio/case-study-types";
 
 // QUY CHUẨN làm hệ mới: .agent/meta/MONSTER-LEGENDS.md (sếp chốt 2026-10-18).
 // Dùng chung cho mọi trang Monster Legends (khách Social Point) — mỗi hệ một trang:
@@ -89,3 +89,33 @@ export const WORKFLOW = [
   { n: "03", t: "Animation", sub: "Full battle set" },
   { n: "04", t: "In-Game Check", sub: "Scale, timing, export" },
 ] as const;
+
+/** 10 hệ — dùng cho trang tổng /portfolio/monster-legends và dải "các hệ khác" cuối mỗi trang hệ. */
+export const ELEMENTS = [
+  { slug: "fire", name: "Fire", accent: "#ff7a1a" },
+  { slug: "water", name: "Water", accent: "#2fb8e8" },
+  { slug: "nature", name: "Nature", accent: "#6fcf5a" },
+  { slug: "earth", name: "Earth", accent: "#d9965b" },
+  { slug: "thunder", name: "Thunder", accent: "#ffd23f" },
+  { slug: "dark", name: "Dark", accent: "#a46bff" },
+  { slug: "light", name: "Light", accent: "#f2c14e" },
+  { slug: "magic", name: "Magic", accent: "#e15cff" },
+  { slug: "metal", name: "Metal", accent: "#8fb3c9" },
+  { slug: "special", name: "Special", accent: "#ff7fb0" },
+] as const;
+
+export const HUB_HREF = "/portfolio/monster-legends";
+
+export const elementCards = (exclude?: string) =>
+  ELEMENTS.filter((e) => e.slug !== exclude).map((e) => ({
+    title: `${e.name} Monsters`,
+    href: `/portfolio/monster-legends-${e.slug}`,
+    image: `${cdnFor(e.slug)}/splash-ai-v3.jpg`,
+    accent: e.accent,
+  }));
+
+/** Thay "Related Work" ở trang hệ: nhãn + lưới các hệ còn lại (sếp chốt 2026-10-19). */
+export const otherElementsModules = (current: string): ShowcaseModule[] => [
+  { id: "label-other-elements", variant: "sectionLabel", label: "Other elements" },
+  { id: "other-elements", variant: "linkGrid", items: elementCards(current) },
+];

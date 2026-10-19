@@ -4,13 +4,14 @@ import type {
   ShowcaseModule,
   SpineMonster,
 } from "@/components/portfolio/case-study-types";
-import { relatedProjects as epicRelated } from "../epic-card/project-data";
 import {
   ANIMATION_LABELS,
   WORKFLOW,
   cdnFor,
   monsterFactory,
   rosterStats,
+  otherElementsModules,
+  HUB_HREF,
   splitAwakened,
   summaryFor,
 } from "../_monster-legends/shared";
@@ -33,6 +34,8 @@ const { rigs: RIGS, animations: ANIMS } = rosterStats(ROSTER);
 export const projectMeta: ProjectMeta = {
   title: "Monster Legends — Special Monsters | Spine 2D Animation",
   eyebrow: "Case study · Social Point",
+  backHref: HUB_HREF,
+  backLabel: "Back to Monster Legends",
   summary: summaryFor("Special"),
   heroTitle: {
     primary: [{ text: "Monster Legends", color: "white" }],
@@ -107,6 +110,7 @@ export const showcaseModules: readonly ShowcaseModule[] = [
     logo: `${CDN}/logo.webp`,
     animationLabels: ANIMATION_LABELS,
   },
+  ...otherElementsModules("special"),
   {
     id: "closing",
     variant: "closing",
@@ -116,4 +120,5 @@ export const showcaseModules: readonly ShowcaseModule[] = [
   },
 ];
 
-export const relatedProjects: readonly RelatedProject[] = epicRelated;
+// "Related Work" thay bằng lưới các hệ khác (otherElementsModules).
+export const relatedProjects: readonly RelatedProject[] = [];

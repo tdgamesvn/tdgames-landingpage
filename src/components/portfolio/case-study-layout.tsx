@@ -288,11 +288,11 @@ export default function CaseStudyLayout({
             <div className="shrink-0 pt-[88px] pb-8 md:pt-[104px] md:pb-10">
               {/* ← Back */}
               <Link
-                href="/portfolio"
+                href={meta.backHref ?? "/portfolio"}
                 className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-white/55 transition-colors hover:text-white"
               >
                 <span aria-hidden>&larr;</span>
-                Back to Portfolio
+                {meta.backLabel ?? "Back to Portfolio"}
               </Link>
 
               {/* Row: left text + right buttons */}

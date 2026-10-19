@@ -18,6 +18,7 @@ const portfolioSlugs = [
   "epic-card",
   "stickman-legend",
   "chibi-heroes-pets",
+  "monster-legends",
   "monster-legends-fire",
   "monster-legends-water",
   "monster-legends-dark",
