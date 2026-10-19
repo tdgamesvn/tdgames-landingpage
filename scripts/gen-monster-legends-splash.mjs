@@ -39,6 +39,11 @@ const SPLASH = {
     shot: "Side-on charge from left to right: the whole squad sprints across a lava field in one diagonal line, Kennix Solaris leading at front-right with wings flared and trident thrust forward, the others strung out behind him; low tracking camera, motion streaks.",
     cast: ["Kennix Solaris", "Kaih the Pyrenaut", "Shallinar Emberglow", "Torog Moltenthroat", "Akira Karioka"],
     hero: "Kennix Solaris",
+    // v3 sai giải phẫu Kennix + Kaih (sếp 2026-10-19) → mô tả đúng thiết kế, giữ tỉ lệ in-game.
+    notes:
+      "Keep each monster's in-game body proportions and anatomy exactly as on the sheet — dynamic poses but no stretched or invented limbs. " +
+      "Kennix Solaris is a muscular phoenix-man: golden bird-head helmet with a beak, red muscular torso with a gold sun emblem on the chest, gold shoulder and hip armour, two big flame wings from the back, a fan of flame tail feathers from the hips, clawed hands, two short legs ending in red three-toed bird talons, holding one golden flame trident. " +
+      "Kaih the Pyrenaut is a short stocky chibi-proportioned knight: glowing molten-lava body showing through cracked black spiked armour, black horned helmet with a burning flame mane behind the head, red tattered cape, big round lava fists, short thick legs in black boots, wielding one huge broken black obsidian sword with glowing lava cracks.",
     scene:
       "an erupting volcanic battlefield at dusk — rivers of glowing lava, exploding embers, a towering volcano spewing fire behind, molten-orange and magenta sky",
   },

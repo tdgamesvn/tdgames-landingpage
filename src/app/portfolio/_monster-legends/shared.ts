@@ -92,7 +92,7 @@ export const WORKFLOW = [
 
 /** 10 hệ (`splash`: version splash-ai nếu khác v3 — gen lại khi sếp sửa nhân vật) — dùng cho trang tổng /portfolio/monster-legends và dải "các hệ khác" cuối mỗi trang hệ. */
 export const ELEMENTS = [
-  { slug: "fire", name: "Fire", accent: "#ff7a1a" },
+  { slug: "fire", name: "Fire", accent: "#ff7a1a", splash: "v5" },
   { slug: "water", name: "Water", accent: "#2fb8e8" },
   { slug: "nature", name: "Nature", accent: "#6fcf5a" },
   { slug: "earth", name: "Earth", accent: "#d9965b" },
