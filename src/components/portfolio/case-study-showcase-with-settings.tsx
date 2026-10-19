@@ -641,7 +641,7 @@ function ShowcaseRenderer({
         }
 
         if (module.variant === "linkGrid") {
-          return <LinkGrid key={module.id} items={module.items} />;
+          return <LinkGrid key={module.id} items={module.items} size={module.size} />;
         }
 
         if (module.variant === "spineStage") {

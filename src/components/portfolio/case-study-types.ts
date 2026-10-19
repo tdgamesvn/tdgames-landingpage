@@ -150,6 +150,8 @@ export type ShowcaseModule =
       variant: "linkGrid";
       /** Lưới thẻ dẫn sang trang khác (vd các hệ Monster Legends). */
       items: readonly { title: string; subtitle?: string; href: string; image: string; accent: string }[];
+      /** "large": thẻ to + nút CTA (trang tổng); "compact": lưới gọn (mặc định). */
+      size?: "large" | "compact";
     }
   | {
       id: string;

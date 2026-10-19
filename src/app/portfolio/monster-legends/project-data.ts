@@ -63,8 +63,8 @@ export const projectMeta: ProjectMeta = {
 };
 
 export const showcaseModules: readonly ShowcaseModule[] = [
-  { id: "label-elements", variant: "sectionLabel", label: "Choose an element" },
-  { id: "elements", variant: "linkGrid", items: elementCards() },
+  { id: "label-elements", variant: "sectionLabel", label: "Elements" },
+  { id: "elements", variant: "linkGrid", size: "large", items: elementCards() },
   {
     id: "closing",
     variant: "closing",
