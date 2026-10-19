@@ -225,6 +225,9 @@ export function SpineCharacter({
               box.width = right - box.x;
               box.height = top - box.y;
             }
+            // Đo xong trả skeleton về setup pose — không thì thuộc tính chỉ animation đo cuối
+            // key (vd scale bone) kẹt lại suốt các animation sau.
+            p.skeleton?.setToSetupPose();
             if (box) {
               p.currentViewport = {
                 ...box,

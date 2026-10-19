@@ -117,6 +117,10 @@ function bodyBounds(player: Player, idle: string): Body | null {
     return { ...v, size: tall * adjust };
   } finally {
     for (const s of sk.slots) delete s.getAttachment;
+    // calculateAnimationViewport để skeleton ở pose cuối animation vừa đo. Thuộc tính chỉ
+    // animation đó key (Kennix: "prone" thu bone cánh ×0.4) sẽ kẹt mãi vì animation khác
+    // không key lại → cánh bé (sếp 2026-10-19). Trả về setup pose.
+    sk.setToSetupPose();
   }
 }
 
