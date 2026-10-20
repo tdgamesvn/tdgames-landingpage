@@ -70,11 +70,16 @@ function pickImageUrls(url: string, html: string): string[] {
   };
 
   if (host.endsWith("behance.net")) {
-    // Ảnh bìa các project — đủ để thấy tay nghề + phong cách.
+    // Ảnh bìa các project — đủ để thấy tay nghề + phong cách. Cùng 1 project có
+    // nhiều cỡ (404, max_808…) → khử trùng theo mã project, mỗi project 1 ảnh.
+    const seen = new Set<string>();
     for (const m of html.matchAll(
-      /https:\/\/mir-s3-cdn-cf\.behance\.net\/projects\/(?:404|max_808)[^"'\s\\]+\.(?:jpe?g|png|webp)/gi,
-    ))
+      /https:\/\/mir-s3-cdn-cf\.behance\.net\/projects\/(?:404|max_808)[^/"'\s\\]*\/([0-9a-f]+)[^"'\s\\]*\.(?:jpe?g|png|webp)/gi,
+    )) {
+      if (seen.has(m[1])) continue;
+      seen.add(m[1]);
       push(m[0]);
+    }
     return out;
   }
 
