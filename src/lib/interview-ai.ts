@@ -141,6 +141,75 @@ export function candidateFacts(a: Record<string, unknown>) {
   };
 }
 
+/** Tải trang kết quả MBTI và bóc chữ. Trang JS-only (vd 16personalities) có thể ra rỗng → null. */
+async function fetchPageText(url: string | null): Promise<string | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(10_000),
+      headers: { "user-agent": "Mozilla/5.0 (TD Games HR bot)" },
+    });
+    if (!res.ok || !(res.headers.get("content-type") ?? "").includes("text")) return null;
+    const text = (await res.text())
+      .replace(/<(script|style|noscript)[\s\S]*?<\/\1>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;|&#160;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return text.length > 80 ? text.slice(0, 3000) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Tín hiệu nội bộ ngoài CV/form cho AI: MBTI (HR nhập), Note, comment của team,
+ * bài test đã nộp + đánh giá của Leader. Dùng chung cho evaluate / questions / analyze.
+ */
+export async function hrSignals(
+  supabase: ReturnType<typeof import("@/lib/supabase-admin").getSupabaseAdmin>,
+  a: Record<string, unknown>,
+) {
+  const id = String(a.id);
+  const [{ data: comments }, { data: subs }, mbtiPage] = await Promise.all([
+    supabase
+      .from("application_comments")
+      .select("author_name, content, created_at")
+      .eq("application_id", id)
+      .order("created_at", { ascending: true })
+      .limit(50),
+    supabase
+      .from("test_submissions")
+      .select("kind, url, file_name, note, submitted_by, created_at")
+      .eq("application_id", id)
+      .order("created_at", { ascending: true }),
+    fetchPageText((a.mbti_url as string | null) ?? null),
+  ]);
+
+  return {
+    mbti:
+      a.mbti_type || a.mbti_url
+        ? { type: a.mbti_type ?? null, url: a.mbti_url ?? null, page_text: mbtiPage }
+        : null,
+    hr_note: a.admin_notes || null,
+    team_comments: (comments ?? []).map((c) => ({
+      author: c.author_name,
+      at: c.created_at,
+      text: String(c.content).slice(0, 1000),
+    })),
+    test: {
+      submissions: subs ?? [],
+      leader_review: a.test_review ?? null,
+    },
+  };
+}
+
+/** Nguyên tắc chung khi AI đọc hr_signals — chèn vào system prompt của cả 3 route. */
+export const HR_SIGNALS_RULES = `Về "hr_signals":
+- CV, form, bài test là thông tin KHÁCH QUAN. "hr_note" và "team_comments" là Ý KIẾN NỘI BỘ: chỉ dùng như dữ kiện bổ sung (lịch hẹn, lương đã trao đổi, thái độ khi liên lạc…), không lặp lại cảm tính. Khi một ý kiến nội bộ mâu thuẫn với bằng chứng khách quan, ưu tiên bằng chứng và nêu rõ mâu thuẫn.
+- "test.leader_review" là đánh giá chuyên môn của Leader về bài test — tín hiệu nặng ký về tay nghề, nặng hơn lời tự giới thiệu trong CV.
+- "mbti" chỉ tham khảo phong cách làm việc/giao tiếp. KHÔNG được trừ hay cộng điểm năng lực vì loại MBTI; MBTI không dự đoán được năng lực công việc.`;
+
 export const JOB_SELECT =
   "jobs(title, level, type, summary, responsibilities, requirements, nice_to_have, skills)";
 

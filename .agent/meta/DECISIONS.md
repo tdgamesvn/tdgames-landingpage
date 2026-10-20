@@ -319,3 +319,9 @@ Pawtrol Tactics (UI gen 100% bằng image model) bị sếp chê lộ AI. Case s
 ## 2026-10-18 — Monster Legends: quy chuẩn trang từng hệ
 Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau → `.agent/meta/MONSTER-LEGENDS.md`
 (nội dung, sân khấu, các bước upload / nền / splash / kiểm / deploy). Hệ mới làm đúng chuẩn đó.
+
+## 2026-10-20 — AI tuyển dụng: MBTI không được ảnh hưởng điểm; ý kiến nội bộ chỉ là dữ kiện
+- AI (evaluate/questions/analyze) đọc thêm MBTI, Note, comment, bài test + Leader review qua `hrSignals()`.
+- MBTI chỉ tham khảo phong cách làm việc — prompt cấm cộng/trừ điểm năng lực theo MBTI (không có giá trị dự đoán năng lực).
+- Note/comment là ý kiến nội bộ: dùng như dữ kiện, không lặp cảm tính; mâu thuẫn với bằng chứng khách quan thì ưu tiên bằng chứng.
+- Leader review = một bản duy nhất trên applications.test_review (hiện 1 Leader); cần nhiều người chấm thì tách bảng riêng.

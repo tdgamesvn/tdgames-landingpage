@@ -7,6 +7,8 @@ import {
   STUDIO_CONTEXT,
   callAiJson,
   candidateFacts,
+  HR_SIGNALS_RULES,
+  hrSignals,
   extractCvText,
 } from "@/lib/interview-ai";
 
@@ -25,7 +27,9 @@ Nguyên tắc:
 
 Chỉ trả về JSON, không markdown, không lời dẫn:
 {"groups":[{"topic":"<tên nhóm>","questions":[{"q":"<câu hỏi>","why":"<1 câu: vì sao hỏi ứng viên NÀY>","green_flag":"<dấu hiệu trả lời tốt>","red_flag":"<dấu hiệu đáng lo>"}]}]}
-Toàn bộ nội dung viết bằng tiếng Việt.`;
+Toàn bộ nội dung viết bằng tiếng Việt.
+
+${HR_SIGNALS_RULES}`;
 
 export async function POST(
   request: Request,
@@ -66,6 +70,7 @@ export async function POST(
     job,
     cv_text: await extractCvText(a.cv_url),
     candidate: candidateFacts(a),
+    hr_signals: await hrSignals(supabase, a),
     prior_evaluation: a.ai_evaluation,
     interview_round: { round: session.round, title: session.title },
     previous_rounds: priorRounds ?? [],

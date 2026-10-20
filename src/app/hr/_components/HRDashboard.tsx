@@ -197,6 +197,115 @@ function DetailRow({ label, value, href }: { label: string; value?: string | num
   );
 }
 
+/** MBTI do HR nhập (loại + link kết quả). AI đọc khi chấm hồ sơ — chỉ tham khảo, không cộng/trừ điểm. */
+function MbtiField({
+  app,
+  hrKey,
+  onPatch,
+}: {
+  app: Application;
+  hrKey: string;
+  onPatch: (patch: Partial<Application>) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [type, setType] = useState(app.mbti_type ?? "");
+  const [url, setUrl] = useState(app.mbti_url ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/hr/applications/${app.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        body: JSON.stringify({ mbti_type: type, mbti_url: url }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+      onPatch({ mbti_type: j.application.mbti_type, mbti_url: j.application.mbti_url });
+      setEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Lưu thất bại");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex items-start gap-2 text-xs">
+        <span className="shrink-0 w-28 text-white/35 uppercase text-[10px] font-bold tracking-wider pt-0.5">MBTI</span>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {app.mbti_type && (
+            <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-300">
+              {app.mbti_type}
+            </span>
+          )}
+          {app.mbti_url && (
+            <a href={app.mbti_url} target="_blank" rel="noopener noreferrer" className="text-amber-400/80 hover:text-amber-300 break-all">
+              {app.mbti_url} ↗
+            </a>
+          )}
+          {!app.mbti_type && !app.mbti_url && <span className="text-white/30">Chưa có</span>}
+          <button
+            onClick={() => {
+              setType(app.mbti_type ?? "");
+              setUrl(app.mbti_url ?? "");
+              setError(null);
+              setEditing(true);
+            }}
+            className="rounded border border-white/20 px-2 py-0.5 text-[10px] text-white/60 hover:bg-white/10 transition-colors"
+          >
+            {app.mbti_type || app.mbti_url ? "Sửa" : "+ Thêm"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-2 text-xs">
+      <span className="shrink-0 w-28 text-white/35 uppercase text-[10px] font-bold tracking-wider pt-1.5">MBTI</span>
+      <div className="min-w-0 flex-1 space-y-1.5">
+        {error && <p className="text-[11px] text-red-400">{error}</p>}
+        <div className="flex gap-1.5">
+          <input
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            placeholder="INFJ-T"
+            maxLength={10}
+            className="w-24 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs uppercase text-white placeholder:normal-case placeholder:text-white/30 focus:outline-none"
+          />
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Link kết quả test (16personalities…)"
+            className="min-w-0 flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs text-white placeholder:text-white/30 focus:outline-none"
+          />
+        </div>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => void save()}
+            disabled={busy}
+            className="rounded border border-amber-500/30 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/10 disabled:opacity-40 transition-colors"
+          >
+            {busy ? "Đang lưu…" : "Lưu"}
+          </button>
+          <button
+            onClick={() => setEditing(false)}
+            disabled={busy}
+            className="rounded border border-white/20 px-2.5 py-1 text-[11px] text-white/60 hover:bg-white/10 transition-colors"
+          >
+            Thôi
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const COMMENT_AUTHOR_KEY = "tdg.hr.comment.author";
 
 function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string; hrKey: string; listMaxH?: string }) {
@@ -638,7 +747,14 @@ function CandidateModal({
 
             <AppDetail app={app} hrKey={hrKey} comments={false} />
 
-            <SubmissionsPanel appId={app.id} hrKey={hrKey} />
+            <MbtiField app={app} hrKey={hrKey} onPatch={onPatch} />
+
+            <SubmissionsPanel
+              appId={app.id}
+              hrKey={hrKey}
+              review={app.test_review}
+              onReview={(test_review) => onPatch({ test_review })}
+            />
 
             <InterviewPanel
               appId={app.id}
@@ -799,6 +915,24 @@ function AppCard({
 
       {/* Tags row */}
       <div className="flex flex-wrap gap-1.5">
+        {app.test_review ? (
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+              app.test_review.verdict === "pass"
+                ? "border-green-500/40 bg-green-500/10 text-green-300"
+                : app.test_review.verdict === "fail"
+                  ? "border-red-500/40 bg-red-500/10 text-red-300"
+                  : "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
+            }`}
+            title={`Leader: ${app.test_review.reviewer}`}
+          >
+            📝 Test {app.test_review.score}/10
+          </span>
+        ) : (app.test_submissions?.[0]?.count ?? 0) > 0 ? (
+          <span className="rounded-full border border-orange-500/40 bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold text-orange-300">
+            📝 Chờ chấm
+          </span>
+        ) : null}
         {nextInterview && (
           <span
             className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${

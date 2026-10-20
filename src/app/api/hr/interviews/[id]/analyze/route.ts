@@ -8,6 +8,8 @@ import {
   asStringArray,
   callAiJson,
   candidateFacts,
+  HR_SIGNALS_RULES,
+  hrSignals,
   clampScore,
   extractCvText,
 } from "@/lib/interview-ai";
@@ -32,7 +34,9 @@ Chỉ trả về JSON, không markdown:
 {"score":<0-100>,"verdict":"strong_yes"|"yes"|"maybe"|"no","fit_confirmed":<bool>,"confidence":"high"|"medium"|"low",
 "summary":"<2-3 câu kết luận>","score_delta_reason":"<vì sao điểm lệch so với chấm hồ sơ>",
 "evidence":["..."],"red_flags":["..."],"follow_ups":["<việc cần làm/hỏi tiếp>"]}
-Toàn bộ nội dung viết bằng tiếng Việt.`;
+Toàn bộ nội dung viết bằng tiếng Việt.
+
+${HR_SIGNALS_RULES}`;
 
 export async function POST(
   request: Request,
@@ -92,6 +96,7 @@ export async function POST(
     job,
     cv_text: await extractCvText(a.cv_url),
     candidate: candidateFacts(a),
+    hr_signals: await hrSignals(supabase, a),
     prior_evaluation: a.ai_evaluation,
     interview_round: { round: session.round, title: session.title },
     planned_questions: session.questions?.groups ?? null,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { JobTest, TestSubmission } from "@/app/admin/_lib/types";
+import type { JobTest, TestReview, TestSubmission } from "@/app/admin/_lib/types";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
 const INPUT =
@@ -228,7 +228,165 @@ export function JobTestsPanel({ jobId, hrKey }: { jobId: string; hrKey: string }
 }
 
 // ── Bài test + bài làm của ứng viên (Candidate modal) ─────────────────────────
-export function SubmissionsPanel({ appId, hrKey }: { appId: string; hrKey: string }) {
+const VERDICTS: { key: TestReview["verdict"]; label: string; cls: string }[] = [
+  { key: "pass", label: "Đạt", cls: "border-green-500/40 bg-green-500/15 text-green-300" },
+  { key: "consider", label: "Cân nhắc", cls: "border-yellow-500/40 bg-yellow-500/15 text-yellow-300" },
+  { key: "fail", label: "Không đạt", cls: "border-red-500/40 bg-red-500/15 text-red-300" },
+];
+
+/** Leader chấm bài test ngay trong /hr. Tên người chấm lấy theo tên đang dùng để comment. */
+function LeaderReview({
+  appId,
+  hrKey,
+  review,
+  onReview,
+}: {
+  appId: string;
+  hrKey: string;
+  review: TestReview | null;
+  onReview: (r: TestReview | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [verdict, setVerdict] = useState<TestReview["verdict"] | null>(review?.verdict ?? null);
+  const [score, setScore] = useState<number | null>(review?.score ?? null);
+  const [comment, setComment] = useState(review?.comment ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save(payload: Record<string, unknown> | null) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/hr/applications/${appId}`, {
+        method: "PATCH",
+        headers: { "x-hr-key": hrKey, "content-type": "application/json" },
+        body: JSON.stringify({ test_review: payload }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+      onReview(j.application?.test_review ?? null);
+      setEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Lưu thất bại");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startEdit() {
+    setVerdict(review?.verdict ?? null);
+    setScore(review?.score ?? null);
+    setComment(review?.comment ?? "");
+    setError(null);
+    setEditing(true);
+  }
+
+  const v = VERDICTS.find((x) => x.key === review?.verdict);
+
+  if (!editing) {
+    return (
+      <div className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className={LABEL}>Leader chấm bài</p>
+          <button onClick={startEdit} className={BTN_AMBER}>
+            {review ? "Sửa đánh giá" : "✍️ Chấm bài"}
+          </button>
+        </div>
+        {review ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              {v && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${v.cls}`}>{v.label}</span>}
+              <span className="text-sm font-bold text-white/90">{review.score}/10</span>
+              <span className="text-[10px] text-white/35">
+                {review.reviewer} · {new Date(review.reviewed_at).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+              </span>
+            </div>
+            {review.comment && <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-white/70">{review.comment}</p>}
+          </>
+        ) : (
+          <p className="text-[11px] text-white/35">Chưa chấm. AI sẽ dùng đánh giá này khi chấm lại hồ sơ.</p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border border-amber-500/25 bg-white/[0.03] p-2.5">
+      <p className={LABEL}>Leader chấm bài</p>
+      {error && <p className="text-[11px] text-red-400">{error}</p>}
+      <div className="flex flex-wrap gap-1.5">
+        {VERDICTS.map((x) => (
+          <button
+            key={x.key}
+            onClick={() => setVerdict(x.key)}
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors ${
+              verdict === x.key ? x.cls : "border-white/15 text-white/50 hover:bg-white/5"
+            }`}
+          >
+            {x.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="mr-1 text-[10px] text-white/40">Điểm</span>
+        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            onClick={() => setScore(n)}
+            className={`h-6 w-6 rounded text-[11px] font-bold transition-colors ${
+              score === n ? "bg-amber-500/80 text-black" : "bg-white/5 text-white/60 hover:bg-white/10"
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        rows={4}
+        placeholder="Nhận xét: điểm mạnh, điểm cần cải thiện, có hợp style dự án không…"
+        className={INPUT}
+      />
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => {
+            const reviewer = localStorage.getItem("tdg.hr.comment.author") ?? "";
+            void save({ verdict, score, comment, reviewer });
+          }}
+          disabled={busy || !verdict || !score}
+          className={BTN_AMBER}
+        >
+          {busy ? "Đang lưu…" : "Lưu đánh giá"}
+        </button>
+        <button onClick={() => setEditing(false)} disabled={busy} className={BTN_PLAIN}>
+          Thôi
+        </button>
+        {review && (
+          <button
+            onClick={() => confirm("Xoá đánh giá của Leader?") && void save(null)}
+            disabled={busy}
+            className="ml-auto text-[10px] text-red-400/70 hover:text-red-300"
+          >
+            Xoá đánh giá
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function SubmissionsPanel({
+  appId,
+  hrKey,
+  review = null,
+  onReview,
+}: {
+  appId: string;
+  hrKey: string;
+  review?: TestReview | null;
+  onReview?: (r: TestReview | null) => void;
+}) {
   const [subs, setSubs] = useState<TestSubmission[]>([]);
   const [tests, setTests] = useState<JobTest[]>([]);
   const [token, setToken] = useState<string | null>(null);
@@ -341,6 +499,10 @@ export function SubmissionsPanel({ appId, hrKey }: { appId: string; hrKey: strin
           onDelete={() => void remove(s)}
         />
       ))}
+
+      {(subs.length > 0 || review) && onReview && (
+        <LeaderReview appId={appId} hrKey={hrKey} review={review} onReview={onReview} />
+      )}
 
       {showAdd ? (
         <AddItemForm<TestSubmission>

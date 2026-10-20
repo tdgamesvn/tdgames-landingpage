@@ -35,6 +35,41 @@ export async function PATCH(
   if ("admin_notes" in body) allowed.admin_notes = body.admin_notes;
   if ("rejection_reason" in body) allowed.rejection_reason = body.rejection_reason;
 
+  // MBTI do HR nhập: loại viết hoa ("INFJ-T"), link phải là http(s).
+  if ("mbti_type" in body) {
+    const t = typeof body.mbti_type === "string" ? body.mbti_type.trim().toUpperCase() : "";
+    allowed.mbti_type = t ? t.slice(0, 10) : null;
+  }
+  if ("mbti_url" in body) {
+    const u = typeof body.mbti_url === "string" ? body.mbti_url.trim() : "";
+    if (u && !/^https?:\/\//i.test(u)) {
+      return NextResponse.json({ error: "Link MBTI phải bắt đầu bằng http(s)://" }, { status: 400 });
+    }
+    allowed.mbti_url = u || null;
+  }
+
+  // Leader chấm bài test. null = xoá đánh giá.
+  if ("test_review" in body) {
+    const r = body.test_review as Record<string, unknown> | null;
+    if (r === null) allowed.test_review = null;
+    else {
+      const score = Math.round(Number(r?.score));
+      if (!["pass", "consider", "fail"].includes(String(r?.verdict))) {
+        return NextResponse.json({ error: "Kết luận phải là Đạt / Cân nhắc / Không đạt" }, { status: 400 });
+      }
+      if (!(score >= 1 && score <= 10)) {
+        return NextResponse.json({ error: "Điểm bài test phải từ 1 đến 10" }, { status: 400 });
+      }
+      allowed.test_review = {
+        verdict: r!.verdict,
+        score,
+        comment: typeof r!.comment === "string" ? r!.comment.trim().slice(0, 4000) : "",
+        reviewer: typeof r!.reviewer === "string" && r!.reviewer.trim() ? r!.reviewer.trim().slice(0, 80) : "Leader",
+        reviewed_at: new Date().toISOString(),
+      };
+    }
+  }
+
   if (Object.keys(allowed).length === 0) {
     return NextResponse.json({ error: "No updatable fields" }, { status: 400 });
   }

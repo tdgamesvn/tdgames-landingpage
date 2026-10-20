@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
-import { aiBackendErrorMessage, extractCvText } from "@/lib/interview-ai";
+import { HR_SIGNALS_RULES, aiBackendErrorMessage, extractCvText, hrSignals } from "@/lib/interview-ai";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +12,9 @@ Evaluate the candidate below against the job description.
 If cv_text is provided it is the full text extracted from the candidate's CV — weigh it heavily.
 Reply with ONLY a JSON object, no markdown, no prose:
 {"score": <0-100 integer>, "verdict": "strong_yes"|"yes"|"maybe"|"no", "strengths": ["..."], "concerns": ["..."]}
-Keep strengths/concerns to 2-4 short bullet strings each, in Vietnamese.`;
+Keep strengths/concerns to 2-4 short bullet strings each, in Vietnamese.
+
+${HR_SIGNALS_RULES}`;
 
 export async function POST(
   request: Request,
@@ -45,8 +47,9 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { jobs: job, ...a } = app;
-  const cvText = await extractCvText(a.cv_url);
+  const [cvText, signals] = await Promise.all([extractCvText(a.cv_url), hrSignals(supabase, a)]);
   const userPrompt = JSON.stringify({
+    hr_signals: signals,
     today: new Date().toISOString().slice(0, 10),
     job,
     cv_text: cvText,

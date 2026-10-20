@@ -187,10 +187,25 @@ export type Application = {
   admin_notes: string | null;
   rejection_reason: string | null;
   referred_by: string | null;
+  /** HR nhập — AI đọc khi chấm. */
+  mbti_type: string | null;
+  mbti_url: string | null;
+  test_review: TestReview | null;
   created_at: string;
   jobs?: { title: string; slug: string };
+  /** /api/hr/applications join sẵn để card biết có bài nộp chờ Leader chấm. */
+  test_submissions?: { count: number }[];
   /** Chỉ phần lịch của các vòng PV — /api/hr/applications join sẵn để card hiện lịch. */
   interview_sessions?: Pick<InterviewSession, "id" | "round" | "title" | "scheduled_at" | "mode" | "meet_url">[];
+};
+
+/** Leader chấm bài test — một bản duy nhất, chấm lại thì ghi đè. */
+export type TestReview = {
+  verdict: "pass" | "consider" | "fail";
+  score: number; // 1-10
+  comment: string;
+  reviewer: string;
+  reviewed_at: string;
 };
 
 export type ApplicationComment = {

@@ -2,6 +2,8 @@
 
 ## Doing
 
+- [x] HR: MBTI (HR nhập) + AI đọc Note/comment/bài test + Leader chấm bài test (2026-10-20) — LOG 2026-10-20
+
 - [x] HR lịch PV (offline/online + link Meet) + nhắc lịch Discord (2026-10-19) — LOG 2026-10-19
   - [x] Xoá vòng test "TEST lịch (xoá)" ở hồ sơ Nguyễn Hương Giang (đã xoá qua API /hr)
 
