@@ -325,3 +325,7 @@ Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau 
 - MBTI chỉ tham khảo phong cách làm việc — prompt cấm cộng/trừ điểm năng lực theo MBTI (không có giá trị dự đoán năng lực).
 - Note/comment là ý kiến nội bộ: dùng như dữ kiện, không lặp cảm tính; mâu thuẫn với bằng chứng khách quan thì ưu tiên bằng chứng.
 - Leader review = một bản duy nhất trên applications.test_review (hiện 1 Leader); cần nhiều người chấm thì tách bảng riêng.
+
+## 2026-10-20 — AI chỉ xem sơ bộ portfolio; mọi URL người ngoài nhập phải qua safeFetch
+- Sếp chốt: portfolio có ảnh/video chỉ check sơ bộ (≤4 ảnh, 768px, detail low; video chỉ đếm) — tránh lâu + tốn token. Không mở LinkedIn (chặn bot/ToS).
+- Mọi fetch tới URL do ứng viên/HR nhập dùng `src/lib/safe-fetch.ts` (chặn SSRF vào Tailscale/localhost/metadata, cap byte). Không dùng fetch() trần cho URL bên ngoài.
