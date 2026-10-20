@@ -105,15 +105,13 @@ export async function callAiJson<T>(
 export async function extractCvText(cvUrl: string | null): Promise<string | null> {
   if (!cvUrl) return null;
   try {
-    const res = await fetch(cvUrl, { signal: AbortSignal.timeout(20_000) });
-    if (!res.ok) return null;
-    if (Number(res.headers.get("content-length") ?? 0) > 20 * 1024 * 1024) return null; // skip >20MB
-    const isPdf =
-      cvUrl.toLowerCase().includes(".pdf") ||
-      (res.headers.get("content-type") ?? "").includes("pdf");
+    // cv_url đến thẳng từ form công khai (POST /api/applications) → phải chặn SSRF.
+    const res = await safeFetch(cvUrl, { maxBytes: 20 * 1024 * 1024, timeoutMs: 20_000 });
+    if (!res.ok || res.truncated) return null; // skip >20MB
+    const isPdf = cvUrl.toLowerCase().includes(".pdf") || res.contentType.includes("pdf");
     if (!isPdf) return null; // ponytail: PDF only — docx/images can come later if HR needs it
     const { extractText } = await import("unpdf");
-    const { text } = await extractText(new Uint8Array(await res.arrayBuffer()), {
+    const { text } = await extractText(new Uint8Array(res.body), {
       mergePages: true,
     });
     const merged = (Array.isArray(text) ? text.join("\n") : text).trim();
