@@ -1,4 +1,5 @@
 import "server-only";
+import { safeFetch } from "@/lib/safe-fetch";
 
 /**
  * Tầng AI dùng chung cho tuyển dụng: chấm hồ sơ (evaluate), sinh câu hỏi PV
@@ -145,12 +146,14 @@ export function candidateFacts(a: Record<string, unknown>) {
 async function fetchPageText(url: string | null): Promise<string | null> {
   if (!url) return null;
   try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(10_000),
+    const res = await safeFetch(url, {
+      maxBytes: 2_000_000,
+      timeoutMs: 10_000,
       headers: { "user-agent": "Mozilla/5.0 (TD Games HR bot)" },
     });
-    if (!res.ok || !(res.headers.get("content-type") ?? "").includes("text")) return null;
-    const text = (await res.text())
+    if (!res.ok || !res.contentType.includes("text")) return null;
+    const text = res.body
+      .toString("utf8")
       .replace(/<(script|style|noscript)[\s\S]*?<\/\1>/gi, " ")
       .replace(/<[^>]+>/g, " ")
       .replace(/&nbsp;|&#160;/g, " ")
