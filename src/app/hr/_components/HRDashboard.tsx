@@ -741,6 +741,23 @@ function CandidateModal({
                       <li key={i}>− {c}</li>
                     ))}
                   </ul>
+                  {(app.ai_evaluation.portfolio_note || app.ai_evaluation.portfolio_links?.length) && (
+                    <div className="space-y-0.5 border-t border-white/8 pt-1.5 text-[11px]">
+                      {app.ai_evaluation.portfolio_note && (
+                        <p className="text-white/70">🖼 {app.ai_evaluation.portfolio_note}</p>
+                      )}
+                      <p className="text-[10px] text-white/35">
+                        {app.ai_evaluation.portfolio_links
+                          ?.map((l) => {
+                            const host = l.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
+                            return l.status === "ok"
+                              ? `${host}: xem ${l.images_seen} ảnh${l.videos_found ? `, ${l.videos_found} video (không xem)` : ""}`
+                              : `${host}: chưa xem — ${l.reason ?? l.status}`;
+                          })
+                          .join(" · ")}
+                      </p>
+                    </div>
+                  )}
                 </>
               )}
             </div>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
 import { HR_SIGNALS_RULES, aiBackendErrorMessage, extractCvText, hrSignals } from "@/lib/interview-ai";
+import { PORTFOLIO_RULES, portfolioPreview } from "@/lib/portfolio-preview";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,10 +12,12 @@ const SYSTEM_PROMPT = `You are a senior recruiter at TD Games Studio, a 2D art /
 Evaluate the candidate below against the job description.
 If cv_text is provided it is the full text extracted from the candidate's CV — weigh it heavily.
 Reply with ONLY a JSON object, no markdown, no prose:
-{"score": <0-100 integer>, "verdict": "strong_yes"|"yes"|"maybe"|"no", "strengths": ["..."], "concerns": ["..."]}
+{"score": <0-100 integer>, "verdict": "strong_yes"|"yes"|"maybe"|"no", "strengths": ["..."], "concerns": ["..."], "portfolio_note": "..."}
 Keep strengths/concerns to 2-4 short bullet strings each, in Vietnamese.
 
-${HR_SIGNALS_RULES}`;
+${HR_SIGNALS_RULES}
+
+${PORTFOLIO_RULES}`;
 
 export async function POST(
   request: Request,
@@ -47,9 +50,14 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { jobs: job, ...a } = app;
-  const [cvText, signals] = await Promise.all([extractCvText(a.cv_url), hrSignals(supabase, a)]);
+  const [cvText, signals, portfolio] = await Promise.all([
+    extractCvText(a.cv_url),
+    hrSignals(supabase, a),
+    portfolioPreview(a),
+  ]);
   const userPrompt = JSON.stringify({
     hr_signals: signals,
+    portfolio_check: portfolio.links,
     today: new Date().toISOString().slice(0, 10),
     job,
     cv_text: cvText,
@@ -82,7 +90,16 @@ export async function POST(
         model,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
+          {
+            role: "user",
+            // Có ảnh portfolio → gửi kèm (detail low: đủ xem sơ bộ, ít token).
+            content: portfolio.images.length
+              ? [
+                  { type: "text", text: userPrompt },
+                  ...portfolio.images.map((url) => ({ type: "image_url", image_url: { url, detail: "low" } })),
+                ]
+              : userPrompt,
+          },
         ],
       }),
       signal: AbortSignal.timeout(90_000),
@@ -109,6 +126,8 @@ export async function POST(
     verdict: string;
     strengths: string[];
     concerns: string[];
+    portfolio_note?: string;
+    portfolio_links?: { url: string; status: string; images_seen: number; videos_found: number; reason?: string }[];
   };
   try {
     const parsed = JSON.parse(match?.[0] ?? "");
@@ -119,6 +138,10 @@ export async function POST(
         : "maybe",
       strengths: Array.isArray(parsed.strengths) ? parsed.strengths.map(String) : [],
       concerns: Array.isArray(parsed.concerns) ? parsed.concerns.map(String) : [],
+      portfolio_note: parsed.portfolio_note ? String(parsed.portfolio_note).slice(0, 500) : undefined,
+      portfolio_links: portfolio.links.map(({ url, status, images_seen, videos_found, reason }) => ({
+        url, status, images_seen, videos_found, reason,
+      })),
     };
     if (Number.isNaN(evaluation.score)) throw new Error("bad score");
   } catch {

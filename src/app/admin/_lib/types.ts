@@ -161,6 +161,9 @@ export type AiEvaluation = {
   verdict: "strong_yes" | "yes" | "maybe" | "no";
   strengths: string[];
   concerns: string[];
+  /** Nhận xét sơ bộ từ ≤4 ảnh portfolio (evaluate từ 2026-10-20). */
+  portfolio_note?: string;
+  portfolio_links?: { url: string; status: string; images_seen: number; videos_found: number; reason?: string }[];
 };
 
 export type Application = {
