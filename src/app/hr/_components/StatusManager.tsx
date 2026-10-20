@@ -153,8 +153,9 @@ export default function StatusManager({
           <button onClick={close} className="text-white/40 hover:text-white">✕</button>
         </div>
 
-        <div className="flex-1 space-y-1.5 overflow-y-auto px-5 py-4">
-          <div className="grid grid-cols-[20px_1fr_110px_130px_80px_36px_28px] gap-2 px-1 text-[10px] uppercase tracking-wider text-white/30">
+        <div className="flex-1 space-y-1.5 overflow-y-auto px-3 py-4 sm:px-5">
+          {/* Mobile: mỗi dòng tách 2 hàng (tên | màu · loại · nhắc · xoá), ẩn hàng tiêu đề cột. */}
+          <div className="hidden grid-cols-[20px_1fr_110px_130px_80px_36px_28px] gap-2 px-1 text-[10px] uppercase tracking-wider text-white/30 sm:grid">
             <span />
             <span>Tên</span>
             <span>Màu</span>
@@ -174,12 +175,12 @@ export default function StatusManager({
                   if (dragKey) moveRow(dragKey, s.key);
                 }}
                 onDragEnd={() => setDragKey(null)}
-                className={`grid grid-cols-[20px_1fr_110px_130px_80px_36px_28px] items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-1 py-1.5 ${
+                className={`grid grid-cols-[20px_1fr_1fr_56px_28px] items-center gap-2 rounded-lg sm:grid-cols-[20px_1fr_110px_130px_80px_36px_28px] border border-white/10 bg-white/[0.02] px-1 py-1.5 ${
                   dragKey === s.key ? "opacity-50" : ""
                 }`}
               >
                 <span className="cursor-grab text-center text-white/30 active:cursor-grabbing">⋮⋮</span>
-                <div className="flex items-center gap-2">
+                <div className="col-span-4 flex items-center gap-2 sm:col-span-1">
                   <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase ${STATUS_PALETTE[s.color] ?? STATUS_PALETTE.slate}`}>
                     {s.label || "—"}
                   </span>
@@ -193,7 +194,7 @@ export default function StatusManager({
                 <select
                   value={s.color}
                   onChange={(e) => patchRow(s.key, { color: e.target.value })}
-                  className="rounded border border-white/10 bg-[#1c1c22] px-1.5 py-1 text-xs text-white"
+                  className="col-span-2 min-w-0 rounded border border-white/10 bg-[#1c1c22] px-1.5 py-1 text-xs text-white sm:col-span-1"
                 >
                   {Object.keys(STATUS_PALETTE).map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -201,7 +202,7 @@ export default function StatusManager({
                   value={s.kind}
                   disabled={s.is_system}
                   onChange={(e) => patchRow(s.key, { kind: e.target.value as StatusKind })}
-                  className="rounded border border-white/10 bg-[#1c1c22] px-1.5 py-1 text-xs text-white disabled:opacity-40"
+                  className="min-w-0 rounded border border-white/10 bg-[#1c1c22] px-1.5 py-1 text-xs text-white disabled:opacity-40"
                 >
                   {(Object.keys(KIND_LABEL) as StatusKind[]).map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
                 </select>
@@ -210,11 +211,12 @@ export default function StatusManager({
                   min={1}
                   value={s.remind_days ?? ""}
                   disabled={s.kind !== "open"}
-                  placeholder="—"
+                  placeholder="Nhắc"
+                  title="Nhắc sau (ngày)"
                   onChange={(e) => patchRow(s.key, { remind_days: e.target.value ? Math.max(1, Number(e.target.value)) : null })}
                   className="w-full rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-white disabled:opacity-30"
                 />
-                <span className="text-center text-xs text-white/50">{counts[s.key] ?? 0}</span>
+                <span className="hidden text-center text-xs text-white/50 sm:block">{counts[s.key] ?? 0}</span>
                 <button
                   onClick={() => askRemove(s)}
                   disabled={s.is_system || busy}

@@ -6070,3 +6070,15 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Result: prod — Behance profile 4 ảnh khác nhau, 15s, nhận xét hợp lý (nhận ra dấu hiệu AI art); Drive + Framer 4 ảnh + đếm 12 video, 23s; link 169.254.169.254 bị chặn đúng. 3 ứng viên tạm (A/B/C) đã xoá qua API.
 - Lưu ý: IP Mac bị Behance 429 (test local) — VPS thì 200.
 - Update 2026-10-20 (security review lần 2): safeFetch viết lại bằng node:http(s) + `lookup` tự kiểm IP → IP được kiểm = IP được kết nối (hết DNS rebinding); `net.BlockList` thay so chuỗi (bản cũ hở `[::ffff:7f00:1]` dạng hex). Bẫy: KHÔNG thêm `::ffff:0:0/96` vào BlockList — nó khớp mọi IPv4 (BlockList tự map ::ffff:x sang luật IPv4). Đếm byte sau giải nén (bom gzip), cấm user:pass trong URL. `extractCvText` cũng qua safeFetch (cv_url lấy thẳng từ form công khai — lỗ SSRF có từ trước). Test 20 case: mọi dạng nội bộ (hex/mapped/NAT64/decimal/nip.io/redirect) bị chặn, site thật + gzip/br OK. Prod: CV thật đọc được, Behance 4 ảnh, link metadata dạng IPv6 bị chặn; ứng viên tạm đã xoá.
+
+## 2026-10-20 — HR: tối ưu responsive mobile cho /hr
+- Task: sếp "app HR chưa tối ưu responsive trên mobile".
+- Chẩn đoán (Playwright iPhone 13, 390px): trang rộng 662px (header 1 hàng không wrap); modal ứng viên render TRONG card kanban → `fixed` bị khung cha giữ, bị cắt mép + cuộn trong ô ~400px; mở modal tự nhảy xuống giữa (CommentThread `scrollIntoView` cuộn cả khung cha); Jobs hàng nút tràn; Statuses hàng 7 cột bị cắt; KPI chip tên xuống dòng; DataView thiếu key (Fragment `<>`).
+- Work Done (HRDashboard.tsx, StatusManager.tsx — chỉ class/layout):
+  - Header: flex-wrap — mobile hàng 1 tiêu đề + nút icon (chữ ẩn dưới sm), hàng 2 tab full ngang; desktop như cũ.
+  - CandidateModal + RejectModal → `createPortal(document.body)`; mobile full màn hình (100dvh, 1 cột, cả thân cuộn chung), desktop giữ 2 cột 88vh.
+  - CommentThread: cuộn đúng khung list (`scrollTo`) thay `scrollIntoView`.
+  - Data: mobile = danh sách thẻ (tên/job/status/ngày/ref, bấm mở chi tiết — `renderDetail()` dùng chung với bảng), bảng chỉ từ sm; `Fragment key`.
+  - Kanban mobile: cột 85vw (≤320px) + snap-x; chiều cao theo 100dvh.
+  - Jobs: hàng nút flex-wrap. KPI: chip nowrap. Statuses: mobile mỗi dòng 2 hàng (tên | màu·loại·nhắc·xoá), ẩn hàng tiêu đề + cột #.
+- Result: tsc sạch, eslint không thêm lỗi. Playwright mobile + desktop 1400: scrollWidth = viewport mọi view, modal mở scrollTop 0, 0 lỗi console (hết warning key). Desktop không đổi.

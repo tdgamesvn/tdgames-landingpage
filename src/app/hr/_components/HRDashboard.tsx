@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Application, ApplicationComment, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
 import InterviewPanel from "./InterviewPanel";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
@@ -121,7 +122,7 @@ function RejectModal({
     "No response after follow-up",
   ];
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={onCancel}>
       <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[#141418] p-6 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
         <div>
@@ -175,7 +176,8 @@ function RejectModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -325,7 +327,7 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
   const [authorLocked, setAuthorLocked] = useState(
     () => typeof window !== "undefined" && !!localStorage.getItem(COMMENT_AUTHOR_KEY),
   );
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -355,8 +357,11 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
     void fetchComments();
   }, [fetchComments]);
 
+  // Chỉ cuộn khung danh sách comment — scrollIntoView cuộn cả mọi khung cha
+  // (trên mobile modal cuộn chung 1 khung → mở ra bị nhảy xuống giữa).
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [comments.length]);
 
   async function submit() {
@@ -399,7 +404,7 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
       </p>
 
       {/* Comment list */}
-      <div className={`${listMaxH} space-y-2 overflow-y-auto pr-1`}>
+      <div ref={listRef} className={`${listMaxH} space-y-2 overflow-y-auto pr-1`}>
         {loading && (
           <p className="text-xs text-white/30 italic">Loading...</p>
         )}
@@ -431,7 +436,6 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
             </p>
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
 
       {/* New comment form */}
@@ -598,17 +602,19 @@ function CandidateModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  // Portal ra body: modal được render bên trong card kanban — để tại chỗ thì
+  // `fixed` bị khung cha giữ lại (mobile bị cắt mép, cuộn trong ô ~400px).
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 py-6"
+      className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 backdrop-blur-sm md:items-center md:px-4 md:py-6"
       onClick={onClose}
     >
       <div
-        className="flex h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#141418] shadow-2xl"
+        className="flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden bg-[#141418] shadow-2xl md:h-[88vh] md:rounded-2xl md:border md:border-white/15"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-white/10 px-5 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3 md:px-5 md:py-4">
           <div className="min-w-0">
             <h3 className="text-lg font-bold leading-tight text-white">{app.full_name}</h3>
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -630,9 +636,10 @@ function CandidateModal({
         </div>
 
         {/* Body */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[1fr_340px]">
+        {/* Mobile: 1 cột, cả thân modal cuộn chung. Desktop: 2 cột cuộn riêng. */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[1fr_340px] md:overflow-hidden">
           {/* Left: actions + info + note */}
-          <div className="space-y-3 overflow-y-auto px-5 py-4">
+          <div className="min-w-0 space-y-3 px-4 py-4 md:overflow-y-auto md:px-5">
             {/* Actions */}
             {/* Status: chip bấm được cho từng bước pipeline — dropdown cũ bị HR tưởng là nhãn tĩnh. */}
             <div className="space-y-1.5">
@@ -811,7 +818,7 @@ function CandidateModal({
           </div>
 
           {/* Right: comments */}
-          <div className="overflow-y-auto border-t border-white/10 bg-white/[0.02] px-4 py-4 md:border-l md:border-t-0">
+          <div className="min-w-0 border-t border-white/10 bg-white/[0.02] px-4 py-4 md:overflow-y-auto md:border-l md:border-t-0">
             <CommentThread appId={app.id} hrKey={hrKey} listMaxH="max-h-[52vh]" />
           </div>
         </div>
@@ -828,7 +835,8 @@ function CandidateModal({
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -1188,7 +1196,7 @@ function PipelineView({
     )}
     {/* Kiểu ClickUp: 1 hàng ngang cuộn được, cột rộng cố định, mỗi cột tự cuộn dọc.
         Thêm bao nhiêu status cũng không rớt hàng. Cột có thể thu gọn thành dải hẹp. */}
-    <div className="-mx-1 flex h-[calc(100vh-180px)] min-h-[420px] gap-3 overflow-x-auto overflow-y-hidden px-1 pb-3">
+    <div className="-mx-1 flex h-[calc(100dvh-150px)] min-h-[420px] snap-x snap-mandatory scroll-px-1 gap-3 overflow-x-auto overflow-y-hidden px-1 pb-3 sm:h-[calc(100vh-180px)] sm:snap-none">
       {S.keys.map((status) => {
         const col = apps.filter((a) => a.status === status);
         const isCollapsed = collapsed.includes(status);
@@ -1215,7 +1223,7 @@ function PipelineView({
               {...dropProps}
               onClick={() => toggleCollapsed(status)}
               title={`Mở rộng ${S.label(status)}`}
-              className={`flex w-10 shrink-0 flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] py-3 transition-colors hover:bg-white/[0.05] ${ring}`}
+              className={`flex w-10 shrink-0 snap-start flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] py-3 transition-colors hover:bg-white/[0.05] ${ring}`}
             >
               <span className="text-xs font-bold text-white/50">{col.length}</span>
               <span
@@ -1231,7 +1239,7 @@ function PipelineView({
           <div
             key={status}
             {...dropProps}
-            className={`flex w-[272px] shrink-0 flex-col gap-2 rounded-xl p-1 transition-colors ${ring}`}
+            className={`flex w-[85vw] max-w-[320px] shrink-0 snap-start flex-col gap-2 rounded-xl p-1 transition-colors sm:w-[272px] ${ring}`}
           >
             {/* Column header */}
             <div className="flex items-center justify-between gap-2 px-1">
@@ -1352,7 +1360,7 @@ function KPIView({ apps }: { apps: Application[] }) {
                   {row.name === "(direct)" ? (
                     <span className="text-white/40 italic">{row.name}</span>
                   ) : (
-                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-bold text-amber-300">
+                    <span className="whitespace-nowrap rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-bold text-amber-300">
                       {row.name}
                     </span>
                   )}
@@ -1815,7 +1823,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
               </div>
 
               {/* Actions */}
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Toggle active */}
                 <button
                   onClick={() => void toggleActive(job)}
@@ -1957,6 +1965,38 @@ function DataView({
 
   const selectCls = "rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white focus:border-amber-500/50 focus:outline-none";
 
+  // Chi tiết + thao tác nhanh — dùng chung cho bảng (desktop) và thẻ (mobile).
+  const renderDetail = (app: Application) => (
+    <>
+      <AppDetail app={app} hrKey={hrKey} />
+      {/* Quick actions */}
+      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
+        {S.next(app.status) && (
+          <QuickAction app={app} hrKey={hrKey} targetStatus={S.next(app.status)!} onUpdate={onUpdate} />
+        )}
+        {app.status !== "rejected" && (
+          <QuickAction app={app} hrKey={hrKey} targetStatus="rejected" onUpdate={onUpdate} variant="reject" />
+        )}
+        {app.status === "rejected" && (
+          <QuickAction app={app} hrKey={hrKey} targetStatus="new" onUpdate={onUpdate} variant="reopen" />
+        )}
+        <button
+          onClick={async () => {
+            if (!confirm(`Delete application from "${app.full_name}"? This cannot be undone.`)) return;
+            const res = await fetch(`/api/hr/applications/${app.id}`, {
+              method: "DELETE",
+              headers: { "x-hr-key": hrKey },
+            });
+            if (res.ok) onDelete(app.id);
+          }}
+          className="rounded border border-white/10 px-3 py-1 text-[10px] font-bold text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors ml-auto"
+        >
+          🗑 Delete
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -1990,7 +2030,37 @@ function DataView({
       {filtered.length === 0 ? (
         <p className="py-10 text-center text-sm text-white/30">No applicants match your filters.</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-white/10">
+        <>
+        {/* Mobile: danh sách thẻ, bấm để mở chi tiết */}
+        <div className="space-y-2 sm:hidden">
+          {filtered.map((app) => (
+            <div key={app.id} className={`rounded-xl border p-3 ${expandedId === app.id ? "border-amber-500/30 bg-amber-500/5" : "border-white/10 bg-white/[0.03]"}`}>
+              <button
+                onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
+                className="flex w-full items-start justify-between gap-2 text-left"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">{app.full_name}</p>
+                  <p className="truncate text-xs text-white/50">{app.jobs?.title ?? "—"}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className={`whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-bold ${S.color(app.status)}`}>
+                    {S.label(app.status)}
+                  </span>
+                  <span className="text-[10px] text-white/35">{new Date(app.created_at).toLocaleDateString("vi-VN")}</span>
+                </div>
+              </button>
+              {app.referred_by && (
+                <span className="mt-2 inline-block rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                  via {app.referred_by}
+                </span>
+              )}
+              {expandedId === app.id && <div className="mt-2">{renderDetail(app)}</div>}
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto rounded-xl border border-white/10 sm:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/10 text-[10px] uppercase tracking-wider text-white/40">
@@ -2007,9 +2077,8 @@ function DataView({
             </thead>
             <tbody>
               {filtered.map((app, i) => (
-                <>
+                <Fragment key={app.id}>
                   <tr
-                    key={app.id}
                     onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
                     className={`border-b border-white/5 cursor-pointer transition-colors hover:bg-white/[0.04] ${
                       i % 2 === 0 ? "" : "bg-white/[0.015]"
@@ -2049,42 +2118,18 @@ function DataView({
                     </td>
                   </tr>
                   {expandedId === app.id && (
-                    <tr key={`${app.id}-detail`} className="bg-white/[0.02]">
+                    <tr className="bg-white/[0.02]">
                       <td colSpan={9} className="px-6 py-4">
-                        <AppDetail app={app} hrKey={hrKey} />
-                        {/* Quick actions */}
-                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
-                          {S.next(app.status) && (
-                            <QuickAction app={app} hrKey={hrKey} targetStatus={S.next(app.status)!} onUpdate={onUpdate} />
-                          )}
-                          {app.status !== "rejected" && (
-                            <QuickAction app={app} hrKey={hrKey} targetStatus="rejected" onUpdate={onUpdate} variant="reject" />
-                          )}
-                          {app.status === "rejected" && (
-                            <QuickAction app={app} hrKey={hrKey} targetStatus="new" onUpdate={onUpdate} variant="reopen" />
-                          )}
-                          <button
-                            onClick={async () => {
-                              if (!confirm(`Delete application from "${app.full_name}"? This cannot be undone.`)) return;
-                              const res = await fetch(`/api/hr/applications/${app.id}`, {
-                                method: "DELETE",
-                                headers: { "x-hr-key": hrKey },
-                              });
-                              if (res.ok) onDelete(app.id);
-                            }}
-                            className="rounded border border-white/10 px-3 py-1 text-[10px] font-bold text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors ml-auto"
-                          >
-                            🗑 Delete
-                          </button>
-                        </div>
+                        {renderDetail(app)}
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );
@@ -2299,7 +2344,8 @@ export default function HRDashboard() {
     <div className="min-h-screen bg-[#0a0a10] text-white">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-white/10 bg-[#0a0a10]/95 backdrop-blur px-4 py-3">
-        <div className="mx-auto flex max-w-screen-2xl items-center justify-between gap-4">
+        {/* Mobile: hàng 1 = tiêu đề + nút icon, hàng 2 = tab full ngang. Desktop: 1 hàng. */}
+        <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="flex items-center gap-3">
             <div>
               <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400">
@@ -2312,14 +2358,14 @@ export default function HRDashboard() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="contents md:flex md:items-center md:gap-2">
             {/* View tabs */}
-            <div className="flex rounded-lg border border-white/10 p-0.5">
+            <div className="order-last flex w-full rounded-lg border border-white/10 p-0.5 md:order-none md:w-auto">
               {(["pipeline", "data", "kpi", "jobs"] as View[]).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${
+                  className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-bold transition-colors md:flex-none ${
                     view === v ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
                   }`}
                 >
@@ -2328,13 +2374,14 @@ export default function HRDashboard() {
               ))}
             </div>
 
+            <div className="flex items-center gap-1.5 md:gap-2">
             {/* Custom statuses */}
             <button
               onClick={() => setShowStatusMgr(true)}
               title="Thêm / bớt / sửa status pipeline"
-              className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-bold text-white/60 hover:border-white/30 hover:text-white transition-colors"
+              className="rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-bold text-white/60 hover:border-white/30 hover:text-white transition-colors sm:px-3"
             >
-              ⚙ Statuses
+              ⚙<span className="hidden sm:inline"> Statuses</span>
             </button>
 
             {/* Remind button */}
@@ -2344,7 +2391,7 @@ export default function HRDashboard() {
               title="Send stale-application reminder to Discord now"
               className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-bold text-white/60 hover:border-white/30 hover:text-white disabled:opacity-40 transition-colors"
             >
-              {reminding ? "Sending…" : "⏰ Remind"}
+              {reminding ? "…" : <>⏰<span className="hidden sm:inline"> Remind</span></>}
             </button>
 
             {/* Refresh */}
@@ -2362,8 +2409,10 @@ export default function HRDashboard() {
               className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/30 hover:border-red-500/30 hover:text-red-400 transition-colors"
               title="Sign out"
             >
-              Sign out
+              <span className="sm:hidden">⎋</span>
+              <span className="hidden sm:inline">Sign out</span>
             </button>
+            </div>
           </div>
         </div>
 
@@ -2375,7 +2424,7 @@ export default function HRDashboard() {
       </header>
 
       {/* Body */}
-      <main className="mx-auto max-w-screen-2xl px-4 py-6">
+      <main className="mx-auto max-w-screen-2xl px-3 py-4 sm:px-4 sm:py-6">
         {loading && apps.length === 0 ? (
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
         ) : view === "pipeline" ? (
