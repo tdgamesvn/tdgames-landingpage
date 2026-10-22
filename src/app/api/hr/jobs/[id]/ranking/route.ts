@@ -15,6 +15,7 @@ import {
   hrCounts,
   jobHash,
   loadHrData,
+  loadRankingRules,
   pickRepresentatives,
   profileHash,
   scoreCandidates,
@@ -34,28 +35,31 @@ type Entry = {
   fingerprint: string;
   counts: HrCounts | null;
   scored_at: string;
+  blocked: boolean;
+  block_reason: string | null;
 };
 
 /** Job + mọi application + dữ liệu HR + điểm đã lưu. */
 async function loadPool(jobId: string) {
   const supabase = getSupabaseAdmin();
-  const [{ data: job }, { data: apps, error }, { data: entries }, { data: meta }] = await Promise.all([
+  const [{ data: job }, { data: apps, error }, { data: entries }, { data: meta }, rules] = await Promise.all([
     supabase.from("jobs").select(RANK_JOB_SELECT).eq("id", jobId).single(),
     supabase.from("applications").select(APP_SELECT),
     supabase.from("job_ranking_entries").select("*").eq("job_id", jobId),
     supabase.from("job_rankings").select("*").eq("job_id", jobId).maybeSingle(),
+    loadRankingRules(supabase),
   ]);
   if (error) throw new Error(error.message);
   if (!job) return null;
   const reps = pickRepresentatives((apps ?? []) as unknown as Row[]);
   const hr = await loadHrData(supabase, reps.map((r) => String(r.rep.id)));
-  const jh = jobHash(job);
+  const jh = jobHash(job, rules);
   const pool = reps.map(({ rep, appliedFor }) => {
     const d = hr.get(String(rep.id))!;
     return { a: rep, d, appliedFor, curP: profileHash(rep), curD: digestHash(rep, d) };
   });
   const entryMap = new Map(((entries ?? []) as Entry[]).map((e) => [e.application_id, e]));
-  return { supabase, job: job as Row, jh, pool, entryMap, meta: meta as Row | null };
+  return { supabase, job: job as Row, rules, jh, pool, entryMap, meta: meta as Row | null };
 }
 
 /** "+2 comment", "+1 PV"… — dữ liệu mới kể từ lần chấm trước. */
@@ -87,7 +91,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const ctx = await loadPool(id);
   if (!ctx) return NextResponse.json({ error: "Job not found" }, { status: 404 });
-  const { jh, pool, entryMap, meta } = ctx;
+  const { rules, jh, pool, entryMap, meta } = ctx;
 
   const rows = pool.map(({ a, d, appliedFor, curP, curD }) => {
     const e = entryMap.get(String(a.id));
@@ -103,19 +107,27 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       score: e?.score ?? null,
       tier: e?.tier ?? null,
       reason: e?.reason ?? null,
+      blocked: e?.blocked ?? false,
+      block_reason: e?.block_reason ?? null,
+      rejection_reason: a.rejection_reason || null,
       scored_at: e?.scored_at ?? null,
       basis: evidenceBasis(a, d),
-      profile: p ? { headline: p.headline, highlights: p.highlights, gaps: p.gaps, portfolio_note: p.portfolio_note, cv_read: p.cv_read } : null,
-      digest: dg ? { summary: dg.summary, positives: dg.positives, negatives: dg.negatives } : null,
+      profile: p
+        ? { headline: p.headline, highlights: p.highlights, gaps: p.gaps, portfolio_note: p.portfolio_note, cv_read: p.cv_read, location: p.location ?? null, nationality: p.nationality ?? null }
+        : null,
+      digest: dg ? { summary: dg.summary, positives: dg.positives, negatives: dg.negatives, verdicts: dg.verdicts ?? [] } : null,
       // JD đổi thì mọi người đều cần chấm lại — báo chung ở đầu bảng, không lặp từng dòng.
       changes: fresh ? [] : changesSince(e, curP, curD, hrCounts(a, d)),
       needs_profile: !a.ai_profile || a.ai_profile_hash !== curP || a.ai_digest_hash !== curD,
       needs_score: !fresh,
     };
   });
-  rows.sort((x, y) => (y.score ?? -1) - (x.score ?? -1));
+  // Đủ điều kiện (theo điểm) → bị loại cứng → chưa chấm.
+  const group = (r: (typeof rows)[number]) => (r.score == null ? 2 : r.blocked ? 1 : 0);
+  rows.sort((x, y) => group(x) - group(y) || (y.score ?? -1) - (x.score ?? -1));
 
   return NextResponse.json({
+    rules,
     ranked_at: meta?.ranked_at ?? null,
     job_changed: !!meta && meta.job_hash !== jh,
     rows,
@@ -141,7 +153,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const ctx = await loadPool(id);
   if (!ctx) return NextResponse.json({ error: "Job not found" }, { status: 404 });
-  const { supabase, job, jh, pool, entryMap } = ctx;
+  const { supabase, job, rules, jh, pool, entryMap } = ctx;
 
   try {
     if (body.step === "score") {
@@ -152,7 +164,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const skipped = items.filter((x) => !ready.includes(x)).map((x) => x.a.id);
       if (!ready.length) return NextResponse.json({ scored: 0, skipped });
 
-      const { results } = await scoreCandidates(job, ready.map((x) => ({ a: x.a, appliedFor: x.appliedFor })));
+      const { results } = await scoreCandidates(job, rules, ready.map((x) => ({ a: x.a, appliedFor: x.appliedFor })));
       const rows = ready.flatMap((x) => {
         const r = results.get(String(x.a.id));
         if (!r) return [];
@@ -162,6 +174,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           score: r.score,
           tier: tierOf(r.score),
           reason: r.reason,
+          blocked: r.blocked,
+          block_reason: r.block_reason,
           fingerprint: `${x.curP}.${x.curD}.${jh}`,
           counts: hrCounts(x.a, x.d),
           scored_at: new Date().toISOString(),
@@ -183,13 +197,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
 
       const top = pool
-        .filter((x) => entryMap.has(String(x.a.id)) && x.a.ai_profile)
+        .filter((x) => entryMap.has(String(x.a.id)) && !entryMap.get(String(x.a.id))!.blocked && x.a.ai_profile)
         .sort((x, y) => entryMap.get(String(y.a.id))!.score - entryMap.get(String(x.a.id))!.score)
         .slice(0, FINAL_TOP);
       let model: string | null = null;
       if (top.length >= 2) {
         const out = await scoreCandidates(
           job,
+          rules,
           top.map((x) => ({ a: x.a, appliedFor: x.appliedFor, extra: { prev_score: entryMap.get(String(x.a.id))!.score } })),
           true,
         );
@@ -199,7 +214,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             const r = out.results.get(String(x.a.id));
             if (!r) return [];
             return [supabase.from("job_ranking_entries")
-              .update({ score: r.score, tier: tierOf(r.score), reason: r.reason })
+              .update({ score: r.score, tier: tierOf(r.score), reason: r.reason, blocked: r.blocked, block_reason: r.block_reason })
               .eq("job_id", id).eq("application_id", x.a.id)];
           }),
         );

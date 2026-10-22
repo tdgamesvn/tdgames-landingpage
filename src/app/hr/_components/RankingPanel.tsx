@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 
 /**
  * Bảng xếp hạng ứng viên phù hợp nhất với 1 job (toàn bộ ứng viên trong DB,
@@ -17,16 +17,27 @@ type Row = {
   score: number | null;
   tier: string | null;
   reason: string | null;
+  blocked: boolean;
+  block_reason: string | null;
+  rejection_reason: string | null;
   scored_at: string | null;
   basis: "cv" | "test" | "interview";
-  profile: { headline: string; highlights: string[]; gaps: string[]; portfolio_note: string; cv_read: boolean } | null;
-  digest: { summary: string; positives: string[]; negatives: string[] } | null;
+  profile: {
+    headline: string; highlights: string[]; gaps: string[]; portfolio_note: string; cv_read: boolean;
+    location: string | null; nationality: string | null;
+  } | null;
+  digest: { summary: string; positives: string[]; negatives: string[]; verdicts: { type: string; text: string }[] } | null;
   changes: string[];
   needs_profile: boolean;
   needs_score: boolean;
 };
 
-type Ranking = { ranked_at: string | null; job_changed: boolean; rows: Row[] };
+type Ranking = { rules: string; ranked_at: string | null; job_changed: boolean; rows: Row[] };
+
+const VERDICT_LABEL: Record<string, string> = {
+  skill_negative: "Chuyên môn −", skill_positive: "Chuyên môn +", salary: "Lương", location: "Địa điểm",
+  nationality: "Quốc tịch", withdrawn: "UV rút", unreachable: "Không liên lạc được", attitude: "Thái độ", other: "Khác",
+};
 
 const PROFILE_CHUNK = 3; // khớp MAX_IDS của /api/hr/ranking/profiles
 const SCORE_CHUNK = 15; // khớp SCORE_BATCH
@@ -79,6 +90,23 @@ export default function RankingPanel({
   const [errors, setErrors] = useState<string[]>([]);
   const [hideLost, setHideLost] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [rulesDraft, setRulesDraft] = useState<string | null>(null);
+  const [savingRules, setSavingRules] = useState(false);
+
+  async function saveRules() {
+    if (rulesDraft == null) return;
+    setSavingRules(true);
+    try {
+      const res = await fetch("/api/hr/ranking/rules", {
+        method: "PUT",
+        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        body: JSON.stringify({ rules: rulesDraft }),
+      });
+      if (res.ok) { setRulesDraft(null); await load(); }
+    } finally {
+      setSavingRules(false);
+    }
+  }
 
   const load = useCallback(async () => {
     try {
@@ -169,7 +197,9 @@ export default function RankingPanel({
   const changed = data.rows.filter((r) => r.changes.length && r.score != null).length;
   const unscored = data.rows.filter((r) => r.score == null).length;
   const rows = hideLost ? data.rows.filter((r) => !isLost(r.status)) : data.rows;
-  const rankOf = new Map(rows.filter((r) => r.score != null).map((r, i) => [r.application_id, i + 1]));
+  const rankOf = new Map(rows.filter((r) => r.score != null && !r.blocked).map((r, i) => [r.application_id, i + 1]));
+  const firstBlocked = rows.find((r) => r.blocked && r.score != null)?.application_id;
+  const blockedCount = rows.filter((r) => r.blocked && r.score != null).length;
 
   return (
     <div className="space-y-3">
@@ -183,6 +213,13 @@ export default function RankingPanel({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setRulesDraft(rulesDraft == null ? data.rules : null)}
+            className="rounded-lg border border-white/15 px-3 py-1 text-[11px] text-white/60 hover:bg-white/5"
+            title="Tiêu chí loại cứng — áp cho mọi job"
+          >
+            ⛔ Tiêu chí loại
+          </button>
           <label className="flex items-center gap-1 text-[10px] text-white/50">
             <input type="checkbox" checked={hideLost} onChange={(e) => setHideLost(e.target.checked)} />
             Ẩn Rejected
@@ -205,6 +242,30 @@ export default function RankingPanel({
         </div>
       </div>
 
+      {/* Tiêu chí loại cứng */}
+      {rulesDraft != null && (
+        <div className="space-y-2 rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+          <p className="text-[11px] text-white/70">
+            Tiêu chí loại cứng — mỗi dòng 1 tiêu chí, áp cho <b>mọi job</b>. Ai vi phạm bị đẩy xuống cuối bảng kèm lý do.
+            Sửa xong cần bấm Tính lại.
+          </p>
+          <textarea
+            value={rulesDraft}
+            onChange={(e) => setRulesDraft(e.target.value)}
+            rows={4}
+            placeholder={"Không tuyển người nước ngoài\nPhải sống hoặc làm việc được tại Hà Nội (onsite)"}
+            className="w-full rounded-lg border border-white/15 bg-black/30 px-2.5 py-2 text-xs text-white focus:border-red-500/50 focus:outline-none"
+          />
+          <div className="flex gap-2">
+            <button onClick={() => void saveRules()} disabled={savingRules}
+              className="rounded-lg border border-red-500/50 px-3 py-1 text-[11px] font-bold text-red-300 hover:bg-red-500/10 disabled:opacity-40">
+              {savingRules ? "Đang lưu…" : "Lưu"}
+            </button>
+            <button onClick={() => setRulesDraft(null)} className="rounded-lg border border-white/15 px-3 py-1 text-[11px] text-white/50">Huỷ</button>
+          </div>
+        </div>
+      )}
+
       {/* Trạng thái */}
       {progress ? (
         <div className="space-y-1">
@@ -217,7 +278,7 @@ export default function RankingPanel({
         </div>
       ) : data.job_changed ? (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-300">
-          ✏️ JD đã sửa sau lần tính trước — bấm Tính lại để chấm lại cả bảng.
+          ✏️ JD / tiêu chí loại / cách chấm đã đổi sau lần tính trước — bấm Tính lại để chấm lại cả bảng.
         </p>
       ) : (changed > 0 || unscored > 0) && (
         <p className="rounded-lg border border-cyan-500/30 bg-cyan-500/5 px-3 py-2 text-[11px] text-cyan-300">
@@ -238,10 +299,16 @@ export default function RankingPanel({
           const open = expanded === r.application_id;
           const lost = isLost(r.status);
           return (
-            <div key={r.application_id} className={`px-3 py-2 ${lost ? "opacity-70" : ""}`}>
+            <Fragment key={r.application_id}>
+            {r.application_id === firstBlocked && (
+              <p className="bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-300">
+                ⛔ Không đạt tiêu chí loại cứng ({blockedCount}) — điểm chỉ để tham khảo năng lực
+              </p>
+            )}
+            <div className={`px-3 py-2 ${lost || r.blocked ? "opacity-70" : ""}`}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="w-6 text-right text-[11px] font-bold text-white/40">{rankOf.get(r.application_id) ?? "–"}</span>
-                <span className={`w-9 rounded-full border text-center text-xs font-bold ${r.score != null ? rankColor(r.score) : "border-white/10 text-white/30"}`}>
+                <span className={`w-9 rounded-full border text-center text-xs font-bold ${r.score != null && !r.blocked ? rankColor(r.score) : "border-white/10 text-white/30"}`}>
                   {r.score ?? "?"}
                 </span>
                 <button onClick={() => onOpen(r.application_id)} className="text-sm font-semibold text-white hover:text-amber-300 hover:underline">
@@ -254,6 +321,9 @@ export default function RankingPanel({
                 {r.applied_for.map((t) => (
                   <span key={t} className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/40">nộp: {t}</span>
                 ))}
+                {r.blocked && (
+                  <span className="rounded border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[10px] text-red-300">⛔ {r.block_reason || "Vi phạm tiêu chí loại"}</span>
+                )}
                 {r.changes.length > 0 && r.score != null && (
                   <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] text-cyan-300" title="Có dữ liệu mới kể từ lần chấm trước">
                     🔄 {r.changes.join(", ")}
@@ -264,11 +334,20 @@ export default function RankingPanel({
                 </button>
               </div>
               {r.reason && <p className="mt-1 pl-[4.25rem] text-[11px] text-white/60">{r.reason}</p>}
+              {r.rejection_reason && (
+                <p className="mt-0.5 pl-[4.25rem] text-[11px] text-red-300/70">Lý do reject: {r.rejection_reason}</p>
+              )}
               {open && (
                 <div className="mt-2 space-y-1 pl-[4.25rem] text-[11px] text-white/60">
                   {r.profile ? (
                     <>
                       <p className="text-white/80">{r.profile.headline}</p>
+                      {(r.profile.location || r.profile.nationality) && (
+                        <p className="text-white/50">
+                          📍 {r.profile.location ?? "không rõ"}
+                          {r.profile.nationality === "foreign" ? " · người nước ngoài" : r.profile.nationality === "vietnamese" ? " · người Việt" : ""}
+                        </p>
+                      )}
                       {!r.profile.cv_read && <p className="text-amber-400/80">⚠️ Không đọc được CV — tóm tắt chỉ từ form/portfolio</p>}
                       {r.profile.highlights.map((h, i) => <p key={`h${i}`} className="text-green-300/80">+ {h}</p>)}
                       {r.profile.gaps.map((g, i) => <p key={`g${i}`} className="text-red-300/80">− {g}</p>)}
@@ -280,6 +359,11 @@ export default function RankingPanel({
                   {r.digest && (
                     <div className="mt-1 border-t border-white/5 pt-1">
                       <p>🗂 HR: {r.digest.summary}</p>
+                      {r.digest.verdicts.map((v, i) => (
+                        <p key={`v${i}`} className={v.type === "skill_positive" ? "text-green-300/80" : "text-amber-300/80"}>
+                          [{VERDICT_LABEL[v.type] ?? v.type}] {v.text}
+                        </p>
+                      ))}
                       {r.digest.positives.map((h, i) => <p key={`p${i}`} className="text-green-300/80">+ {h}</p>)}
                       {r.digest.negatives.map((g, i) => <p key={`n${i}`} className="text-red-300/80">− {g}</p>)}
                     </div>
@@ -287,6 +371,7 @@ export default function RankingPanel({
                 </div>
               )}
             </div>
+            </Fragment>
           );
         })}
         {rows.length === 0 && <p className="px-3 py-6 text-center text-xs text-white/30">Chưa có ứng viên.</p>}
