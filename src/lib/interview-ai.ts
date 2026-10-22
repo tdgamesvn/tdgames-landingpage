@@ -61,7 +61,7 @@ export async function aiBackendErrorMessage(res: Response) {
 export async function callAiJson<T>(
   systemPrompt: string,
   userPrompt: string,
-  opts: { timeoutMs?: number } = {},
+  opts: { timeoutMs?: number; images?: string[] } = {},
 ): Promise<{ data: T; model: string }> {
   const { baseUrl, apiKey, model } = getAiConfig();
 
@@ -77,7 +77,16 @@ export async function callAiJson<T>(
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          {
+            role: "user",
+            // Ảnh (vd. portfolio) gửi detail low: đủ xem sơ bộ, ít token.
+            content: opts.images?.length
+              ? [
+                  { type: "text", text: userPrompt },
+                  ...opts.images.map((url) => ({ type: "image_url", image_url: { url, detail: "low" } })),
+                ]
+              : userPrompt,
+          },
         ],
       }),
       signal: AbortSignal.timeout(opts.timeoutMs ?? 90_000),

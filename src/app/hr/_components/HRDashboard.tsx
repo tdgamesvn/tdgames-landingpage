@@ -6,6 +6,7 @@ import type { Application, ApplicationComment, ApplicationStatus, Job, JobType, 
 import InterviewPanel from "./InterviewPanel";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
+import RankingPanel from "./RankingPanel";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
@@ -1121,6 +1122,72 @@ function AppCard({
   );
 }
 
+/** Mở CandidateModal ngoài pipeline (vd. từ bảng xếp hạng) — tự lo move / note / xoá. */
+function CandidateModalHost({
+  app,
+  hrKey,
+  onUpdate,
+  onDelete,
+  onClose,
+}: {
+  app: Application;
+  hrKey: string;
+  onUpdate: (id: string, patch: Partial<Application>) => void;
+  onDelete: (id: string) => void;
+  onClose: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  async function move(status: ApplicationStatus, rejection_reason?: string) {
+    if (status === app.status) return;
+    setSaving(true);
+    try {
+      if (await patchStatus(hrKey, app.id, status, rejection_reason))
+        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteApp() {
+    if (!confirm(`Delete application from "${app.full_name}"? This cannot be undone.`)) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/hr/applications/${app.id}`, { method: "DELETE", headers: { "x-hr-key": hrKey } });
+      if (res.ok) { onDelete(app.id); onClose(); }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveNote(newNote: string) {
+    setSaving(true);
+    try {
+      await fetch(`/api/hr/applications/${app.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        body: JSON.stringify({ admin_notes: newNote }),
+      });
+      onUpdate(app.id, { admin_notes: newNote });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <CandidateModal
+      app={app}
+      hrKey={hrKey}
+      saving={saving}
+      onMove={(status, reason) => void move(status, reason)}
+      onDeleteApp={() => void deleteApp()}
+      onSaveNote={(n) => void saveNote(n)}
+      onPatch={(patch) => onUpdate(app.id, patch)}
+      onClose={onClose}
+    />
+  );
+}
+
 // ── Pipeline view ─────────────────────────────────────────────────────────────
 
 function PipelineView({
@@ -1701,10 +1768,17 @@ function JobForm({
 const REFCODE_KEY = "tdg.hr.refcode";
 const BASE_URL = typeof window !== "undefined" ? window.location.origin : "https://www.tdgamestudio.com";
 
-function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
+function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDeleteApp }: {
   jobs: Job[]; hrKey: string;
   onUpdate: (j: Job) => void; onCreate: (j: Job) => void; onDelete: (id: string) => void;
+  apps: Application[];
+  onUpdateApp: (id: string, patch: Partial<Application>) => void;
+  onDeleteApp: (id: string) => void;
 }) {
+  const S = useStatuses();
+  const [rankingId, setRankingId] = useState<string | null>(null);
+  const [openAppId, setOpenAppId] = useState<string | null>(null);
+  const openApp = openAppId ? apps.find((a) => a.id === openAppId) : undefined;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -1860,6 +1934,17 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
                   {copiedId === job.id ? "✓ Copied!" : "📋 Copy Link"}
                 </button>
 
+                {/* Xếp hạng ứng viên phù hợp (AI) */}
+                <button
+                  onClick={() => setRankingId(rankingId === job.id ? null : job.id)}
+                  className={`rounded-lg border px-3 py-1 text-[10px] transition-colors ${
+                    rankingId === job.id
+                      ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                      : "border-white/15 text-white/60 hover:bg-white/5"
+                  }`}>
+                  🏆 Xếp hạng
+                </button>
+
                 {/* Bài test */}
                 <button
                   onClick={() => setTestsId(testsId === job.id ? null : job.id)}
@@ -1903,9 +1988,33 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
                 <JobTestsPanel jobId={job.id} hrKey={hrKey} />
               </div>
             )}
+
+            {/* Bảng xếp hạng */}
+            {rankingId === job.id && (
+              <div className="border-t border-white/10 px-3 py-4 sm:px-4">
+                <RankingPanel
+                  jobId={job.id}
+                  hrKey={hrKey}
+                  statusLabel={(k) => S.label(k as ApplicationStatus)}
+                  statusColor={(k) => S.color(k as ApplicationStatus)}
+                  isLost={(k) => S.list.find((st) => st.key === k)?.kind === "lost"}
+                  onOpen={setOpenAppId}
+                />
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      {openApp && (
+        <CandidateModalHost
+          app={openApp}
+          hrKey={hrKey}
+          onUpdate={onUpdateApp}
+          onDelete={onDeleteApp}
+          onClose={() => setOpenAppId(null)}
+        />
+      )}
     </div>
   );
 }
@@ -2441,6 +2550,9 @@ export default function HRDashboard() {
             onUpdate={(j) => setJobs((prev) => prev.map((x) => x.id === j.id ? j : x))}
             onCreate={(j) => setJobs((prev) => [j, ...prev])}
             onDelete={(id) => setJobs((prev) => prev.filter((x) => x.id !== id))}
+            apps={apps}
+            onUpdateApp={updateApp}
+            onDeleteApp={deleteApp}
           />
         )}
       </main>

@@ -6099,3 +6099,15 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - HR `JobsView.copyLink` → `/careers?job=<slug>[&ref=]`.
 - Lưu ý: /careers giờ render động (generateMetadata đọc searchParams) — `revalidate = 60` không còn tác dụng; mỗi request thêm 1 query jobs khi có ?job.
 - Result: tsc sạch, eslint không thêm lỗi (7 lỗi có sẵn). Dev + Playwright: ?job= mở đúng panel, Copy link ra đúng URL kèm ref, đóng panel bỏ job giữ ref, Apply → /apply/<slug>?ref=. Metadata OK cho /careers?job, /apply, /careers, slug sai. Đã commit + push (deploy CI).
+
+## 2026-10-22 — HR: AI xếp hạng ứng viên phù hợp theo job
+- Task: sếp muốn vào Job thấy bảng xếp hạng ứng viên phù hợp nhất (toàn bộ DB, kể cả reject), bấm tính lại được, tiết kiệm token. Chốt: xếp cả người nộp job khác, có xem ảnh portfolio, dữ liệu mới chỉ đánh dấu 🔄 chờ bấm.
+- Work Done:
+  - Migration `20261022000000_candidate_ranking`: applications + `ai_profile/_hash`, `ai_digest/_hash`; bảng `job_rankings` (meta) + `job_ranking_entries` (điểm, lý do, fingerprint, counts). Đã apply prod.
+  - `src/lib/candidate-ranking.ts`: hồ sơ AI 2 phần (CV+portfolio / dữ liệu HR), hash để biết phần nào cũ; 1 người 1 dòng theo email (ưu tiên hồ sơ nộp job này); chấm 15 người/lượt + lượt chốt top 15; basis 📄 CV / 📝 Test / 🎤 PV; "+2 comment, +1 PV…" so với lúc chấm.
+  - API: `GET/POST /api/hr/jobs/[id]/ranking` (step score|final), `POST /api/hr/ranking/profiles` (≤3 id). `callAiJson` thêm opts.images.
+  - UI: `RankingPanel.tsx` — nút 🏆 Xếp hạng ở mỗi job (tab Jobs): Tính lại (chỉ phần mới) / Tính lại toàn bộ, thanh tiến độ, Ẩn Rejected, Chi tiết (tóm tắt hồ sơ + HR), bấm tên mở CandidateModal (`CandidateModalHost` mới).
+- Sự cố: migration đầu có FK job_id→jobs ở bảng entries → PostgREST báo "more than one relationship" cho mọi embed `jobs(...)` (cả prod) ~3 phút; đã drop FK + reload schema, /api/jobs prod 200.
+- Result: tsc sạch, eslint file mới sạch. Dev test thật 3 ứng viên Spine: hồ sơ 27s (3 song song), chấm 9s, chốt 9s; điểm 81/67/54 lý do hợp lý. UI Playwright OK.
+- Token ước tính: lần đầu ~106 hồ sơ × ~5k; sau đó mỗi job ~6 lượt × ~7k + chốt ~6k; dữ liệu mới chỉ tốn phần digest (text) của người đó.
+- Next: chạy lần đầu trên prod (từ VPS — Behance chặn IP Mac nên KHÔNG chạy hồ sơ từ local).

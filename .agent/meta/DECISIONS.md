@@ -329,3 +329,9 @@ Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau 
 ## 2026-10-20 — AI chỉ xem sơ bộ portfolio; mọi URL người ngoài nhập phải qua safeFetch
 - Sếp chốt: portfolio có ảnh/video chỉ check sơ bộ (≤4 ảnh, 768px, detail low; video chỉ đếm) — tránh lâu + tốn token. Không mở LinkedIn (chặn bot/ToS).
 - Mọi fetch tới URL do ứng viên/HR nhập dùng `src/lib/safe-fetch.ts` (chặn SSRF vào Tailscale/localhost/metadata, cap byte). Không dùng fetch() trần cho URL bên ngoài.
+
+## 2026-10-22 — Xếp hạng ứng viên: cache 2 tầng, client điều phối
+- Hồ sơ AI mỗi application chia 2 phần, cache theo hash: `ai_profile` (CV + portfolio ảnh + form — đắt, chỉ làm lại khi CV/link/form đổi) và `ai_digest` (Note/comment/test/PV/lý do reject — rải rác theo thời gian, chỉ text, rẻ). Chấm theo job dùng bản tóm tắt (~15 người/lượt) + 1 lượt chốt so sánh top 15. Đổi prompt → tăng `*_VERSION` trong `src/lib/candidate-ranking.ts`.
+- Có dữ liệu mới chỉ đánh dấu 🔄, KHÔNG tự tính lại — HR bấm Tính lại (sếp chốt).
+- Client điều phối từng bước (mỗi request ≤ 1 lượt AI) để khỏi timeout proxy và tiến độ lưu dần.
+- Bẫy PostgREST: bảng nối có FK tới CẢ `applications` và `jobs` làm mọi embed `jobs(...)` từ applications lỗi "more than one relationship". `job_ranking_entries.job_id` cố ý KHÔNG có FK. Bảng mới kiểu này phải bỏ 1 FK hoặc dùng `jobs!applications_job_id_fkey(...)`.

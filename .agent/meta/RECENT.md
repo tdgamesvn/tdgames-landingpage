@@ -5,16 +5,19 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
 
 ---
 
-## 2026-10-20 — Khảo sát: AI mở link portfolio/LinkedIn để chấm được không (chưa code)
-- Dữ liệu thật (95 hồ sơ): LinkedIn 34, Google Drive 34, Behance 32, còn lại linktr.ee, Canva, Wix, Framer, myportfolio, Figma, Netlify (lẻ tẻ).
-- Fetch thường từ VPS: Behance 200, bóc được ~150 URL ảnh dự án (mir-s3-cdn-cf.behance.net). Site cá nhân (Netlify/Framer) 200, có ảnh. LinkedIn 999 — chặn bot, KHÔNG làm (vi phạm ToS). myportfolio có mật khẩu → không. Drive folder public: bóc được ID file từ HTML; thumbnail `drive.google.com/thumbnail?id=…&sz=w1200` ra ảnh với file ảnh (1/4), 404 với thư mục con/file khác → muốn chắc phải dùng Drive API key.
-- Vision: gpt-5.6-sol (và gpt-6-sol) nhận image_url qua cliproxyapi, mô tả đúng ảnh Behance, ~4s/ảnh.
-- Kết luận: làm được cho Behance + site cá nhân + Drive (một phần, đủ khi có API key). Chờ sếp quyết.
+## 2026-10-22 — HR: Leader chấm bài test → báo Discord
+- Task: sếp "Leader chấm điểm xong không có thông báo về discord à".
+- Nguyên nhân: `notifyApplicationUpdate` (src/lib/hr-notify.ts) chỉ báo khi đổi status / admin_notes; `test_review` lưu được nhưng bị bỏ qua.
+- Work Done: thêm nhánh `test_review` (khác null) → Discord kênh hr: @everyone + embed Kết luận (✅ Đạt / 🤔 Cân nhắc / ❌ Không đạt, màu tương ứng), Điểm x/10, Người chấm, Position, Nhận xét (≤1000 ký tự). Xoá đánh giá (null) thì không báo. `onReview` → `updateApp` chỉ là state local → không gửi trùng.
+- Result: tsc + eslint sạch. Impact LOW (2 PATCH route hr/admin). Đã commit + push (deploy CI).
+- Update 2026-10-22: gửi tay thông báo đánh giá của Leader cho Đỗ Danh Huy (Toan Dang, ❌ Không đạt 4/10, 2D Game Artist) lên Discord HR — webhook 204.
 
-## 2026-10-20 — HR: AI xem SƠ BỘ portfolio khi chấm hồ sơ
-- Task: sếp "trang portfolio có ảnh/video thì check sơ bộ thôi, đừng check hết — lâu + tốn token".
-- Work Done: `src/lib/portfolio-preview.ts` — portfolio_url + website_url (≤2 link): tối đa **4 ảnh** tổng (Behance: 1 ảnh/project, khử trùng các cỡ; Drive folder public: thumbnail file ảnh; site cá nhân: og:image + <img> bỏ logo/icon), thu 768px JPEG q70, gửi vision `detail: low`; video chỉ đếm, không xem; chỉ lấy title/og:description. LinkedIn, trang Behance project (/gallery/ → 403 với máy chủ, 14/33 link Behance), trang có mật khẩu → ghi "chưa xem" + lý do, prompt cấm trừ điểm vì chưa xem được. Chỉ evaluate dùng (questions/analyze không). ai_evaluation thêm `portfolio_note` + `portfolio_links`; UI hiện dòng 🖼 + trạng thái từng link dưới AI Evaluation.
-- Bảo mật (security review tự động bắt): `src/lib/safe-fetch.ts` — link do ứng viên nhập → chặn SSRF (chỉ http(s) cổng 80/443, chặn IP private/loopback/link-local/CGNAT 100.64/10 Tailscale/metadata, kiểm từng hop redirect), đọc stream có giới hạn byte; sharp limitInputPixels; regex Behance có chặn độ dài (ReDoS: chuỗi 3MB 1ms); prompt: nội dung portfolio là dữ liệu ứng viên kiểm soát, không phải chỉ dẫn. MBTI fetch cũng qua safeFetch. Còn hở DNS rebinding (không pin IP) — chấp nhận, kết quả chỉ vào prompt AI.
-- Result: prod — Behance profile 4 ảnh khác nhau, 15s, nhận xét hợp lý (nhận ra dấu hiệu AI art); Drive + Framer 4 ảnh + đếm 12 video, 23s; link 169.254.169.254 bị chặn đúng. 3 ứng viên tạm (A/B/C) đã xoá qua API.
-- Lưu ý: IP Mac bị Behance 429 (test local) — VPS thì 200.
-- Update 2026-10-20 (security review lần 2): safeFetch viết lại bằng node:http(s) + `lookup` tự kiểm IP → IP được kiểm = IP được kết nối (hết DNS rebinding); `net.BlockList` thay so chuỗi (bản cũ hở `[::ffff:7f00:1]` dạng hex). Bẫy: KHÔNG thêm `::ffff:0:0/96` vào BlockList — nó khớp mọi IPv4 (BlockList tự map ::ffff:x sang luật IPv4). Đếm byte sau giải nén (bom gzip), cấm user:pass trong URL. `extractCvText` cũng qua safeFetch (cv_url lấy thẳng từ form công khai — lỗ SSRF có từ trước). Test 20 case: mọi dạng nội bộ (hex/mapped/NAT64/decimal/nip.io/redirect) bị chặn, site thật + gzip/br OK. Prod: CV thật đọc được, Behance 4 ảnh, link metadata dạng IPv6 bị chặn; ứng viên tạm đã xoá.
+## 2026-10-22 — Careers: link riêng cho từng job
+- Task: sếp "các job chưa có url riêng nên gửi link job cho UV apply khó". Chốt hướng A: link mở trang Careers với panel job bật sẵn.
+- Hiện trạng: `/apply/<slug>` đã có từ trước (mô tả + form), HR tab Jobs đã có "📋 Copy Link" (+ ?ref=) trỏ /apply; nhưng preview link (Zalo/FB/LinkedIn) chỉ hiện tiêu đề chung của site, panel /careers không đổi URL.
+- Work Done:
+  - `careers-client.tsx`: mở/đóng panel → `history.replaceState` ?job=<slug> (giữ ?ref=); vào `/careers?job=<slug>` → panel tự mở sau khi load jobs; nút "Copy link" ở header panel; Apply Now chuyển tiếp ?ref= sang /apply.
+  - `src/lib/job-metadata.ts` (mới): title/description (lương · tóm tắt)/og:image = image_url của job; dùng ở `generateMetadata` của `/careers` (khi có ?job) và `/apply/[slug]`. Slug sai/job đóng → metadata mặc định.
+  - HR `JobsView.copyLink` → `/careers?job=<slug>[&ref=]`.
+- Lưu ý: /careers giờ render động (generateMetadata đọc searchParams) — `revalidate = 60` không còn tác dụng; mỗi request thêm 1 query jobs khi có ?job.
+- Result: tsc sạch, eslint không thêm lỗi (7 lỗi có sẵn). Dev + Playwright: ?job= mở đúng panel, Copy link ra đúng URL kèm ref, đóng panel bỏ job giữ ref, Apply → /apply/<slug>?ref=. Metadata OK cho /careers?job, /apply, /careers, slug sai. Đã commit + push (deploy CI).
