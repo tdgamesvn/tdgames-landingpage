@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
+import { jobMetadata } from "@/lib/job-metadata";
 import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { Job } from "@/app/admin/_lib/types";
@@ -9,6 +11,11 @@ export const dynamic = "force-dynamic";
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  return (await jobMetadata(slug, `https://tdgamestudio.com/apply/${slug}`)) ?? {};
+}
 
 export default async function ApplyPage({ params }: Props) {
   const { slug } = await params;

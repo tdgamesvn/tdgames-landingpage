@@ -302,10 +302,27 @@ export default function CareersClient({
   useEffect(() => {
     fetch("/api/jobs", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => setJobs(d.jobs ?? []))
+      .then((d) => {
+        const list: Job[] = d.jobs ?? [];
+        setJobs(list);
+        // Link chia sẻ /careers?job=<slug> → mở sẵn panel job đó.
+        const slug = new URLSearchParams(window.location.search).get("job");
+        const match = slug ? list.find((j) => j.slug === slug) : undefined;
+        if (match) setSelectedRole(match);
+      })
       .catch(() => {})
       .finally(() => setLoadingJobs(false));
   }, []);
+
+  // Mở/đóng panel thì URL đổi theo (?job=<slug>) để copy gửi ứng viên được.
+  // Giữ nguyên các param khác (vd ?ref=).
+  function openRole(job: Job | null) {
+    setSelectedRole(job);
+    const url = new URL(window.location.href);
+    if (job) url.searchParams.set("job", job.slug);
+    else url.searchParams.delete("job");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
 
   const filteredRoles = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -536,7 +553,7 @@ export default function CareersClient({
                             {/* Action button */}
                             <button
                               type="button"
-                              onClick={() => setSelectedRole(job)}
+                              onClick={() => openRole(job)}
                               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-[#f59e0b]/50 px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.15em] text-[#f59e0b] transition-all hover:bg-[#f59e0b] hover:text-black"
                             >
                               View Details
@@ -751,7 +768,7 @@ export default function CareersClient({
       {/* Slide-in Job Detail Panel */}
       <RoleDetailPanel
         role={selectedRole}
-        onClose={() => setSelectedRole(null)}
+        onClose={() => openRole(null)}
       />
     </>
   );
@@ -767,6 +784,23 @@ type RoleDetailPanelProps = {
 function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
   const isOpen = role !== null;
   const router = useRouter();
+  const [copied, setCopied] = useState(false);
+
+  // ?ref= (mã người giới thiệu) đi theo cả link chia sẻ lẫn sang trang apply.
+  function withRef(path: string) {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (!ref) return path;
+    return `${path}${path.includes("?") ? "&" : "?"}ref=${encodeURIComponent(ref)}`;
+  }
+
+  function copyLink() {
+    if (!role) return;
+    const url = window.location.origin + withRef(`/careers?job=${encodeURIComponent(role.slug)}`);
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <>
@@ -799,16 +833,28 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
                 </svg>
                 Back
               </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-                aria-label="Close"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  className="flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-white/70 transition-colors hover:border-[#f59e0b]/60 hover:text-[#f59e0b]"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  {copied ? "Copied!" : "Copy link"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                  aria-label="Close"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <>
@@ -944,7 +990,7 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => { onClose(); router.push(`/apply/${role.slug}`); }}
+                      onClick={() => { const href = withRef(`/apply/${role.slug}`); onClose(); router.push(href); }}
                       className="inline-flex items-center gap-2 rounded-lg bg-[#f59e0b] px-6 py-2.5 text-xs font-black uppercase tracking-[0.15em] text-black transition-colors hover:bg-[#ffb366]"
                     >
                       Apply Now

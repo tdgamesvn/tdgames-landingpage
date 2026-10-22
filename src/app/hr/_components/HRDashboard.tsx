@@ -1723,10 +1723,11 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete }: {
   }
 
   function copyLink(job: Job) {
-    const slug = `/apply/${job.slug}`;
+    // Link mở trang Careers với panel job bật sẵn; ?ref= đi tiếp sang /apply.
+    const path = `/careers?job=${encodeURIComponent(job.slug)}`;
     const url = refCode
-      ? `${BASE_URL}${slug}?ref=${encodeURIComponent(refCode)}`
-      : `${BASE_URL}${slug}`;
+      ? `${BASE_URL}${path}&ref=${encodeURIComponent(refCode)}`
+      : `${BASE_URL}${path}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedId(job.id);
       setTimeout(() => setCopiedId(null), 2000);
