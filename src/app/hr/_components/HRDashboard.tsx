@@ -7,6 +7,7 @@ import InterviewPanel from "./InterviewPanel";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import RankingPanel from "./RankingPanel";
+import CandidateSearch from "./CandidateSearch";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
@@ -2336,6 +2337,8 @@ export default function HRDashboard() {
   const [statuses, setStatuses] = useState<StatusDef[]>(DEFAULT_STATUSES);
   const statusApi = useMemo(() => buildStatusApi(statuses), [statuses]);
   const [showStatusMgr, setShowStatusMgr] = useState(false);
+  const [searchOpenId, setSearchOpenId] = useState<string | null>(null);
+  const searchOpenApp = searchOpenId ? apps.find((a) => a.id === searchOpenId) : undefined;
 
   async function loadData(key: string) {
     const [appsRes, jobsRes, stRes] = await Promise.all([
@@ -2535,6 +2538,12 @@ export default function HRDashboard() {
 
       {/* Body */}
       <main className="mx-auto max-w-screen-2xl px-3 py-4 sm:px-4 sm:py-6">
+        <CandidateSearch
+          hrKey={hrKey}
+          statusLabel={(k) => statusApi.label(k as ApplicationStatus)}
+          statusColor={(k) => statusApi.color(k as ApplicationStatus)}
+          onOpen={setSearchOpenId}
+        />
         {loading && apps.length === 0 ? (
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
         ) : view === "pipeline" ? (
@@ -2556,6 +2565,15 @@ export default function HRDashboard() {
           />
         )}
       </main>
+      {searchOpenApp && (
+        <CandidateModalHost
+          app={searchOpenApp}
+          hrKey={hrKey}
+          onUpdate={updateApp}
+          onDelete={deleteApp}
+          onClose={() => setSearchOpenId(null)}
+        />
+      )}
       {showStatusMgr && (
         <StatusManager
           hrKey={hrKey}

@@ -5,16 +5,6 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
 
 ---
 
-## 2026-10-22 — Careers: link riêng cho từng job
-- Task: sếp "các job chưa có url riêng nên gửi link job cho UV apply khó". Chốt hướng A: link mở trang Careers với panel job bật sẵn.
-- Hiện trạng: `/apply/<slug>` đã có từ trước (mô tả + form), HR tab Jobs đã có "📋 Copy Link" (+ ?ref=) trỏ /apply; nhưng preview link (Zalo/FB/LinkedIn) chỉ hiện tiêu đề chung của site, panel /careers không đổi URL.
-- Work Done:
-  - `careers-client.tsx`: mở/đóng panel → `history.replaceState` ?job=<slug> (giữ ?ref=); vào `/careers?job=<slug>` → panel tự mở sau khi load jobs; nút "Copy link" ở header panel; Apply Now chuyển tiếp ?ref= sang /apply.
-  - `src/lib/job-metadata.ts` (mới): title/description (lương · tóm tắt)/og:image = image_url của job; dùng ở `generateMetadata` của `/careers` (khi có ?job) và `/apply/[slug]`. Slug sai/job đóng → metadata mặc định.
-  - HR `JobsView.copyLink` → `/careers?job=<slug>[&ref=]`.
-- Lưu ý: /careers giờ render động (generateMetadata đọc searchParams) — `revalidate = 60` không còn tác dụng; mỗi request thêm 1 query jobs khi có ?job.
-- Result: tsc sạch, eslint không thêm lỗi (7 lỗi có sẵn). Dev + Playwright: ?job= mở đúng panel, Copy link ra đúng URL kèm ref, đóng panel bỏ job giữ ref, Apply → /apply/<slug>?ref=. Metadata OK cho /careers?job, /apply, /careers, slug sai. Đã commit + push (deploy CI).
-
 ## 2026-10-22 — HR: AI xếp hạng ứng viên phù hợp theo job
 - Task: sếp muốn vào Job thấy bảng xếp hạng ứng viên phù hợp nhất (toàn bộ DB, kể cả reject), bấm tính lại được, tiết kiệm token. Chốt: xếp cả người nộp job khác, có xem ảnh portfolio, dữ liệu mới chỉ đánh dấu 🔄 chờ bấm.
 - Work Done:
@@ -27,3 +17,9 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
 - Token ước tính: lần đầu ~106 hồ sơ × ~5k; sau đó mỗi job ~6 lượt × ~7k + chốt ~6k; dữ liệu mới chỉ tốn phần digest (text) của người đó.
 - Next: chạy lần đầu trên prod (từ VPS — Behance chặn IP Mac nên KHÔNG chạy hồ sơ từ local).
 - Update 2026-10-22: chạy lần đầu trên prod qua API (server VPS tải portfolio): 108 hồ sơ AI mới, 0 lỗi, ~10 phút (2 request × 3 hồ sơ song song); chấm cả 7 job (111 người/job), mỗi job ~2,5 phút. Lưu ý: chạy lại lượt chốt làm điểm top dao động vài điểm (VFX 82→80).
+
+## 2026-10-22 — Ranking v2: sếp báo xếp hạng sai (feedback tệ vẫn cao, người nước ngoài #1)
+- Nguyên nhân (lỗi prompt của em): RANK_RULES bảo "không xét reject, ý kiến nội bộ chỉ bổ sung, ưu tiên khách quan" → AI tin CV tự khai hơn kết luận của team; digest còn tự thêm "chưa có dữ liệu khách quan" làm nhẹ đi; không có khái niệm tiêu chí loại cứng; hồ sơ AI không có nơi ở/quốc tịch.
+- Sửa (sếp OK): tiêu chí loại cứng ở app_settings `hr_ranking_rules` (mặc định: không người nước ngoài; phải ở/làm onsite Hà Nội), sửa được qua nút "⛔ Tiêu chí loại" (PUT /api/hr/ranking/rules), vào jobHash → đổi là cần chấm lại; entries thêm `blocked/block_reason` (migration 20261022010000), bị block xếp cuối bảng. Kết luận team > CV: skill_negative → tối đa 55; withdrawn/unreachable không trừ; lương vượt trừ 5-15. Digest d2 phân loại `verdicts` (skill_negative/positive, salary, location, nationality, withdrawn, unreachable, attitude), giữ nguyên mức độ. Profile p2 thêm location/nationality. UI hiện lý do reject từng dòng, ⛔ lý do block, chi tiết có nơi ở + verdicts.
+- Chạy lại prod: 113 hồ sơ đọc lại + 7 job. 10 người bị block đúng (Nacho, Bobrov, Karol ×2, Diego, Rosana — nước ngoài; Lê Nhựt Ái Linh, Lê Thị Kim Chi, Trần Công Đại, Tran Van Linh — TP.HCM). Ca feedback xấu: Thùy Linh 73→41, Phan Trần Đức 81→54, Nguyễn Đình Nghĩa ~35-41, Lực Lưu ~37.
+- Bẫy: Cloudflare cắt request >100s (524) → profiles 1 hồ sơ/request, 3 song song.
