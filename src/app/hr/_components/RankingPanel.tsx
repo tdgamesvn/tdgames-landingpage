@@ -39,7 +39,9 @@ const VERDICT_LABEL: Record<string, string> = {
   nationality: "Quốc tịch", withdrawn: "UV rút", unreachable: "Không liên lạc được", attitude: "Thái độ", other: "Khác",
 };
 
-const PROFILE_CHUNK = 3; // khớp MAX_IDS của /api/hr/ranking/profiles
+// 1 hồ sơ / request: đọc CV + ảnh có thể ~40s, 3 hồ sơ/request từng vượt 100s → Cloudflare 524.
+const PROFILE_CHUNK = 1;
+const PROFILE_PARALLEL = 3;
 const SCORE_CHUNK = 15; // khớp SCORE_BATCH
 const PARALLEL = 2;
 
@@ -145,7 +147,7 @@ export default function RankingPanel({
       const needProfile = data.rows.filter((r) => r.needs_profile).map((r) => r.application_id);
       let done = 0;
       setProgress({ phase: "Đọc hồ sơ", done, total: needProfile.length });
-      await runPool(chunk(needProfile, PROFILE_CHUNK), PARALLEL, async (ids) => {
+      await runPool(chunk(needProfile, PROFILE_CHUNK), PROFILE_PARALLEL, async (ids) => {
         try {
           const json = await post("/api/hr/ranking/profiles", { ids });
           for (const r of json.results ?? []) if (!r.ok) errs.push(`${name.get(r.id) ?? r.id}: ${r.error}`);
