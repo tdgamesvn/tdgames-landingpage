@@ -335,3 +335,4 @@ Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau 
 - Có dữ liệu mới chỉ đánh dấu 🔄, KHÔNG tự tính lại — HR bấm Tính lại (sếp chốt).
 - Client điều phối từng bước (mỗi request ≤ 1 lượt AI) để khỏi timeout proxy và tiến độ lưu dần.
 - Bẫy PostgREST: bảng nối có FK tới CẢ `applications` và `jobs` làm mọi embed `jobs(...)` từ applications lỗi "more than one relationship". `job_ranking_entries.job_id` cố ý KHÔNG có FK. Bảng mới kiểu này phải bỏ 1 FK hoặc dùng `jobs!applications_job_id_fkey(...)`.
+- (2026-10-22, v2) Khi chấm phù hợp: kết luận của team (lý do reject, comment, Leader chấm, PV) NẶNG HƠN CV tự khai — đừng viết prompt kiểu "ý kiến nội bộ chỉ tham khảo". Tiêu chí loại cứng (app_settings `hr_ranking_rules`) → blocked, không chỉ trừ điểm.
