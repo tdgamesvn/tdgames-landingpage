@@ -132,21 +132,14 @@ export function evidenceBasis(a: Row, d: HrData): "cv" | "test" | "interview" {
 }
 
 /**
- * Mỗi người (theo email) chỉ xếp 1 lần. Ưu tiên hồ sơ nộp đúng job này, không
- * có thì lấy hồ sơ mới nhất. Kèm danh sách các job người đó đã nộp.
+ * Mỗi application 1 dòng. KHÔNG gộp theo email: email chưa xác minh, ai cũng
+ * nộp form được → gộp thì người lạ dùng email của ứng viên thật để che họ khỏi bảng.
  */
-export function pickRepresentatives(apps: Row[], jobId: string) {
-  const groups = new Map<string, Row[]>();
-  for (const a of apps) {
-    const key = String(a.email ?? a.id).trim().toLowerCase();
-    groups.set(key, [...(groups.get(key) ?? []), a]);
-  }
-  return [...groups.values()].map((list) => {
-    const sorted = [...list].sort((x, y) => String(y.created_at).localeCompare(String(x.created_at)));
-    const rep = sorted.find((x) => x.job_id === jobId) ?? sorted[0];
-    const appliedFor = sorted.map((x) => (x.jobs as { title?: string } | null)?.title ?? "?");
-    return { rep, appliedFor: [...new Set(appliedFor)] };
-  });
+export function pickRepresentatives(apps: Row[]) {
+  return apps.map((rep) => ({
+    rep,
+    appliedFor: [(rep.jobs as { title?: string } | null)?.title ?? "?"],
+  }));
 }
 
 // ── Tầng 1: hồ sơ AI ────────────────────────────────────────────────────────

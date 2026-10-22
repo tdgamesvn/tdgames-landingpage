@@ -36,7 +36,7 @@ type Entry = {
   scored_at: string;
 };
 
-/** Job + mọi ứng viên (1 người 1 dòng) + dữ liệu HR + điểm đã lưu. */
+/** Job + mọi application + dữ liệu HR + điểm đã lưu. */
 async function loadPool(jobId: string) {
   const supabase = getSupabaseAdmin();
   const [{ data: job }, { data: apps, error }, { data: entries }, { data: meta }] = await Promise.all([
@@ -47,7 +47,7 @@ async function loadPool(jobId: string) {
   ]);
   if (error) throw new Error(error.message);
   if (!job) return null;
-  const reps = pickRepresentatives((apps ?? []) as unknown as Row[], jobId);
+  const reps = pickRepresentatives((apps ?? []) as unknown as Row[]);
   const hr = await loadHrData(supabase, reps.map((r) => String(r.rep.id)));
   const jh = jobHash(job);
   const pool = reps.map(({ rep, appliedFor }) => {
@@ -176,7 +176,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     if (body.step === "final") {
       const repIds = new Set(pool.map((x) => String(x.a.id)));
-      // Hồ sơ trùng người (không còn là đại diện) → bỏ khỏi bảng.
+      // Dọn điểm mồ côi (application đã xoá thì FK cascade lo; đây chỉ phòng hờ).
       const stale = [...entryMap.keys()].filter((k) => !repIds.has(k));
       if (stale.length) {
         await supabase.from("job_ranking_entries").delete().eq("job_id", id).in("application_id", stale);
