@@ -150,4 +150,48 @@ export async function notifyApplicationUpdate(
       });
     }
   }
+
+  // ── Leader chấm bài test ───────────────────────────────────
+  const review = updates.test_review as
+    | { verdict: string; score: number; comment: string; reviewer: string }
+    | null
+    | undefined;
+  if (review) {
+    const verdicts: Record<string, { label: string; emoji: string; color: number }> = {
+      pass: { label: "Đạt", emoji: "✅", color: 0x22c55e },
+      consider: { label: "Cân nhắc", emoji: "🤔", color: 0xf59e0b },
+      fail: { label: "Không đạt", emoji: "❌", color: 0xef4444 },
+    };
+    const v = verdicts[review.verdict] ?? verdicts.consider;
+
+    const fields: { name: string; value: string; inline?: boolean }[] = [
+      { name: "Kết luận", value: `${v.emoji} ${v.label}`, inline: true },
+      { name: "Điểm", value: `${review.score}/10`, inline: true },
+      { name: "Người chấm", value: review.reviewer, inline: true },
+    ];
+    if (jobTitle)
+      fields.push({ name: "Position", value: jobTitle, inline: true });
+    if (review.comment)
+      fields.push({
+        name: "Nhận xét",
+        value:
+          review.comment.length > 1000
+            ? review.comment.slice(0, 997) + "..."
+            : review.comment,
+        inline: false,
+      });
+
+    await discordNotify("hr", {
+      content: `@everyone 📝 **${name}** — ${review.reviewer} đã chấm bài test: ${v.emoji} ${v.label} (${review.score}/10)`,
+      embeds: [
+        {
+          title: `📝 Chấm bài test — ${name}`,
+          color: v.color,
+          fields,
+          timestamp: new Date().toISOString(),
+          footer: { text: "HR Dashboard" },
+        },
+      ],
+    });
+  }
 }

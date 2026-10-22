@@ -6082,3 +6082,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - Kanban mobile: cột 85vw (≤320px) + snap-x; chiều cao theo 100dvh.
   - Jobs: hàng nút flex-wrap. KPI: chip nowrap. Statuses: mobile mỗi dòng 2 hàng (tên | màu·loại·nhắc·xoá), ẩn hàng tiêu đề + cột #.
 - Result: tsc sạch, eslint không thêm lỗi. Playwright mobile + desktop 1400: scrollWidth = viewport mọi view, modal mở scrollTop 0, 0 lỗi console (hết warning key). Desktop không đổi.
+
+## 2026-10-22 — HR: Leader chấm bài test → báo Discord
+- Task: sếp "Leader chấm điểm xong không có thông báo về discord à".
+- Nguyên nhân: `notifyApplicationUpdate` (src/lib/hr-notify.ts) chỉ báo khi đổi status / admin_notes; `test_review` lưu được nhưng bị bỏ qua.
+- Work Done: thêm nhánh `test_review` (khác null) → Discord kênh hr: @everyone + embed Kết luận (✅ Đạt / 🤔 Cân nhắc / ❌ Không đạt, màu tương ứng), Điểm x/10, Người chấm, Position, Nhận xét (≤1000 ký tự). Xoá đánh giá (null) thì không báo. `onReview` → `updateApp` chỉ là state local → không gửi trùng.
+- Result: tsc + eslint sạch. Impact LOW (2 PATCH route hr/admin). Đã commit + push (deploy CI).
+- Update 2026-10-22: gửi tay thông báo đánh giá của Leader cho Đỗ Danh Huy (Toan Dang, ❌ Không đạt 4/10, 2D Game Artist) lên Discord HR — webhook 204.
