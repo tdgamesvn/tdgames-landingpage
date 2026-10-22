@@ -3,7 +3,7 @@
 ## Doing
 
 - [x] HR: AI xếp hạng ứng viên phù hợp theo job (2026-10-22) — LOG 2026-10-22
-  - [ ] Chạy lần đầu trên prod (đọc hồ sơ ~106 người, ~15-20 phút) — bấm 🏆 Xếp hạng → Tính lại
+  - [x] Chạy lần đầu trên prod (2026-10-22): 111 hồ sơ, 7 job
 
 - [x] HR: MBTI (HR nhập) + AI đọc Note/comment/bài test + Leader chấm bài test (2026-10-20) — LOG 2026-10-20
 

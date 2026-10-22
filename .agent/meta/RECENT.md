@@ -5,13 +5,6 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
 
 ---
 
-## 2026-10-22 — HR: Leader chấm bài test → báo Discord
-- Task: sếp "Leader chấm điểm xong không có thông báo về discord à".
-- Nguyên nhân: `notifyApplicationUpdate` (src/lib/hr-notify.ts) chỉ báo khi đổi status / admin_notes; `test_review` lưu được nhưng bị bỏ qua.
-- Work Done: thêm nhánh `test_review` (khác null) → Discord kênh hr: @everyone + embed Kết luận (✅ Đạt / 🤔 Cân nhắc / ❌ Không đạt, màu tương ứng), Điểm x/10, Người chấm, Position, Nhận xét (≤1000 ký tự). Xoá đánh giá (null) thì không báo. `onReview` → `updateApp` chỉ là state local → không gửi trùng.
-- Result: tsc + eslint sạch. Impact LOW (2 PATCH route hr/admin). Đã commit + push (deploy CI).
-- Update 2026-10-22: gửi tay thông báo đánh giá của Leader cho Đỗ Danh Huy (Toan Dang, ❌ Không đạt 4/10, 2D Game Artist) lên Discord HR — webhook 204.
-
 ## 2026-10-22 — Careers: link riêng cho từng job
 - Task: sếp "các job chưa có url riêng nên gửi link job cho UV apply khó". Chốt hướng A: link mở trang Careers với panel job bật sẵn.
 - Hiện trạng: `/apply/<slug>` đã có từ trước (mô tả + form), HR tab Jobs đã có "📋 Copy Link" (+ ?ref=) trỏ /apply; nhưng preview link (Zalo/FB/LinkedIn) chỉ hiện tiêu đề chung của site, panel /careers không đổi URL.
@@ -21,3 +14,15 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
   - HR `JobsView.copyLink` → `/careers?job=<slug>[&ref=]`.
 - Lưu ý: /careers giờ render động (generateMetadata đọc searchParams) — `revalidate = 60` không còn tác dụng; mỗi request thêm 1 query jobs khi có ?job.
 - Result: tsc sạch, eslint không thêm lỗi (7 lỗi có sẵn). Dev + Playwright: ?job= mở đúng panel, Copy link ra đúng URL kèm ref, đóng panel bỏ job giữ ref, Apply → /apply/<slug>?ref=. Metadata OK cho /careers?job, /apply, /careers, slug sai. Đã commit + push (deploy CI).
+
+## 2026-10-22 — HR: AI xếp hạng ứng viên phù hợp theo job
+- Task: sếp muốn vào Job thấy bảng xếp hạng ứng viên phù hợp nhất (toàn bộ DB, kể cả reject), bấm tính lại được, tiết kiệm token. Chốt: xếp cả người nộp job khác, có xem ảnh portfolio, dữ liệu mới chỉ đánh dấu 🔄 chờ bấm.
+- Work Done:
+  - Migration `20261022000000_candidate_ranking`: applications + `ai_profile/_hash`, `ai_digest/_hash`; bảng `job_rankings` (meta) + `job_ranking_entries` (điểm, lý do, fingerprint, counts). Đã apply prod.
+  - `src/lib/candidate-ranking.ts`: hồ sơ AI 2 phần (CV+portfolio / dữ liệu HR), hash để biết phần nào cũ; mỗi application 1 dòng (KHÔNG gộp theo email — email chưa xác minh, người lạ có thể dùng để che ứng viên thật; security review bắt); chấm 15 người/lượt + lượt chốt top 15; basis 📄 CV / 📝 Test / 🎤 PV; "+2 comment, +1 PV…" so với lúc chấm.
+  - API: `GET/POST /api/hr/jobs/[id]/ranking` (step score|final), `POST /api/hr/ranking/profiles` (≤3 id). `callAiJson` thêm opts.images.
+  - UI: `RankingPanel.tsx` — nút 🏆 Xếp hạng ở mỗi job (tab Jobs): Tính lại (chỉ phần mới) / Tính lại toàn bộ, thanh tiến độ, Ẩn Rejected, Chi tiết (tóm tắt hồ sơ + HR), bấm tên mở CandidateModal (`CandidateModalHost` mới).
+- Sự cố: migration đầu có FK job_id→jobs ở bảng entries → PostgREST báo "more than one relationship" cho mọi embed `jobs(...)` (cả prod) ~3 phút; đã drop FK + reload schema, /api/jobs prod 200.
+- Result: tsc sạch, eslint file mới sạch. Dev test thật 3 ứng viên Spine: hồ sơ 27s (3 song song), chấm 9s, chốt 9s; điểm 81/67/54 lý do hợp lý. UI Playwright OK.
+- Token ước tính: lần đầu ~106 hồ sơ × ~5k; sau đó mỗi job ~6 lượt × ~7k + chốt ~6k; dữ liệu mới chỉ tốn phần digest (text) của người đó.
+- Next: chạy lần đầu trên prod (từ VPS — Behance chặn IP Mac nên KHÔNG chạy hồ sơ từ local).

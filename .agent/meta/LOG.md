@@ -6111,3 +6111,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Result: tsc sạch, eslint file mới sạch. Dev test thật 3 ứng viên Spine: hồ sơ 27s (3 song song), chấm 9s, chốt 9s; điểm 81/67/54 lý do hợp lý. UI Playwright OK.
 - Token ước tính: lần đầu ~106 hồ sơ × ~5k; sau đó mỗi job ~6 lượt × ~7k + chốt ~6k; dữ liệu mới chỉ tốn phần digest (text) của người đó.
 - Next: chạy lần đầu trên prod (từ VPS — Behance chặn IP Mac nên KHÔNG chạy hồ sơ từ local).
+- Update 2026-10-22: chạy lần đầu trên prod qua API (server VPS tải portfolio): 108 hồ sơ AI mới, 0 lỗi, ~10 phút (2 request × 3 hồ sơ song song); chấm cả 7 job (111 người/job), mỗi job ~2,5 phút. Lưu ý: chạy lại lượt chốt làm điểm top dao động vài điểm (VFX 82→80).
