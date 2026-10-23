@@ -2582,14 +2582,17 @@ export default function HRDashboard() {
   // ── Dashboard ──────────────────────────────────────────────────────────────
   const lostKeys = new Set(statuses.filter((st) => st.kind === "lost").map((st) => st.key));
   const activeCount = apps.filter((a) => !lostKeys.has(a.status)).length;
+  // Mọi tab dùng hết chiều ngang (màn rộng không bị cắt cột Pipeline) — cùng một độ rộng để
+  // header/nội dung không nhảy khi đổi tab. Lề ngang do px-* ở header/main lo.
+  const pageWidth = "max-w-none";
 
   return (
     <StatusContext.Provider value={statusApi}>
     <div className="hr-app min-h-screen text-white">
       {/* Thanh công cụ kiểu macOS: tiêu đề trái, segmented control giữa, nút văn bản phải.
           Mobile: hàng 1 = tiêu đề + nút, hàng 2 = segmented full ngang. */}
-      <header className="hr-toolbar sticky top-0 z-10 px-4 py-2.5">
-        <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2.5">
+      <header className="hr-toolbar sticky top-0 z-10 px-4 py-2.5 sm:px-6 lg:px-10">
+        <div className={`mx-auto flex ${pageWidth} flex-wrap items-center justify-between gap-x-4 gap-y-2.5`}>
           <div className="flex items-baseline gap-2.5">
             <h1 className="text-[17px] font-semibold tracking-tight text-white">HR Dashboard</h1>
             <span className="text-[13px] text-white/50">{activeCount} đang xử lý</span>
@@ -2626,14 +2629,14 @@ export default function HRDashboard() {
         </div>
 
         {remindMsg && (
-          <div className="mx-auto max-w-screen-2xl mt-2">
+          <div className={`mx-auto ${pageWidth} mt-2`}>
             <p className="text-[13px] text-white/60">{remindMsg}</p>
           </div>
         )}
       </header>
 
       {/* Body */}
-      <main className="mx-auto max-w-screen-2xl px-3 py-4 sm:px-4 sm:py-6">
+      <main className={`mx-auto ${pageWidth} px-3 py-4 sm:px-6 sm:py-6 lg:px-10`}>
         <CandidateSearch
           hrKey={hrKey}
           statusLabel={(k) => statusApi.label(k as ApplicationStatus)}
