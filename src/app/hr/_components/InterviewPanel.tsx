@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { InterviewSession } from "@/app/admin/_lib/types";
 import { formatInterviewTime, isMeetUrl } from "@/lib/interview-schedule";
-import { CalendarDays, Check, RefreshCw, Sparkles } from "lucide-react";
+import { CalendarDays, Check, ChevronRight, RefreshCw, Sparkles } from "lucide-react";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
 const CARD = "rounded-lg border border-white/10 bg-white/[0.03] p-3";
@@ -136,7 +136,7 @@ function ScheduleBlock({
   return (
     <div className="space-y-1.5 border-t border-white/8 pt-3">
       <div className="flex items-center justify-between gap-2">
-        <span className={LABEL}>Lịch phỏng vấn</span>
+        <span className="text-[13px] font-semibold text-white/85">Lịch phỏng vấn</span>
         {!editing && (
           <div className="flex gap-1.5">
             {session.mode === "offline" && (
@@ -201,7 +201,7 @@ function ScheduleBlock({
               type="datetime-local"
               value={when}
               onChange={(e) => setWhen(e.target.value)}
-              className="rounded border border-white/15 bg-white/5 px-2 py-1 text-xs text-white [color-scheme:dark] focus:outline-none"
+              className="rounded border border-white/15 bg-white/5 px-2 py-1 text-xs text-white focus:outline-none"
             />
             <div className="flex overflow-hidden rounded border border-white/15">
               {(["offline", "online"] as const).map((m) => (
@@ -257,6 +257,33 @@ function ScheduleBlock({
   );
 }
 
+/** Khối gập/mở cho phần tuỳ chọn của một vòng PV (câu hỏi cho Lead, việc sau buổi PV) —
+ *  HR chỉ cần đặt lịch; phần còn lại ai cần thì mở. */
+function Fold({
+  title,
+  hint,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="border-t border-white/8 pt-3">
+      <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-1.5 text-left">
+        <ChevronRight className={`hr-ico-solo text-white/40 transition-transform ${open ? "rotate-90" : ""}`} />
+        <span className="text-[13px] font-semibold text-white/85">{title}</span>
+        {hint && <span className="truncate text-[12px] text-white/45">{hint}</span>}
+      </button>
+      {open && <div className="mt-2.5 space-y-3 pl-[22px]">{children}</div>}
+    </div>
+  );
+}
+
 function SessionCard({
   session,
   hrKey,
@@ -273,6 +300,9 @@ function SessionCard({
   const [transcript, setTranscript] = useState(session.transcript ?? "");
   const [showTranscript, setShowTranscript] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Câu hỏi PV là tuỳ chọn (Lead cần mới soạn) → mặc định gập. "Sau buổi PV" tự mở khi đã có dữ liệu.
+  const [showQuestions, setShowQuestions] = useState(false);
+  const [showAfter, setShowAfter] = useState(Boolean(session.audio_url || session.transcript || session.evaluation));
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Phân tích xong server trả transcript đã gỡ băng — đồng bộ lại ô soạn thảo.
@@ -374,6 +404,7 @@ function SessionCard({
 
   const ev = session.evaluation;
   const canAnalyze = Boolean(session.audio_url || transcript.trim());
+  const questionCount = session.questions?.groups.reduce((n, g) => n + g.questions.length, 0) ?? 0;
 
   return (
     <div className={`${CARD} space-y-3`}>
@@ -400,10 +431,14 @@ function SessionCard({
 
       <ScheduleBlock session={session} hrKey={hrKey} onChange={onChange} />
 
-      {/* ── Câu hỏi PV ── */}
-      <div className="space-y-1.5 border-t border-white/8 pt-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className={LABEL}>Câu hỏi phỏng vấn</span>
+      {/* ── Câu hỏi PV (tuỳ chọn, cho Lead) ── */}
+      <Fold
+        title="Câu hỏi PV cho Lead"
+        hint={questionCount > 0 ? `${questionCount} câu đã soạn` : "Tuỳ chọn, chỉ soạn khi Lead cần"}
+        open={showQuestions}
+        onToggle={() => setShowQuestions((v) => !v)}
+      >
+        <div className="flex flex-wrap items-center gap-1.5">
           <div className="flex gap-1.5">
             {session.questions && (
               <button onClick={copyQuestions} className={BTN_PLAIN} disabled={busy !== null}>
@@ -415,10 +450,15 @@ function SessionCard({
                 ? "Đang soạn…"
                 : session.questions
                   ? <><RefreshCw className="hr-ico" />Soạn lại</>
-                  : <><Sparkles className="hr-ico" />Sinh câu hỏi</>}
+                  : <><Sparkles className="hr-ico" />Soạn câu hỏi bằng AI</>}
             </button>
           </div>
         </div>
+        {!session.questions && busy !== "questions" && (
+          <p className="text-[12px] text-white/45">
+            AI soạn 8–14 câu riêng cho ứng viên này dựa trên JD, CV và kết quả chấm hồ sơ. Không bắt buộc.
+          </p>
+        )}
 
         {session.questions?.groups.map((g) => (
           <div key={g.topic} className="space-y-1 pt-1">
@@ -437,10 +477,16 @@ function SessionCard({
             </ol>
           </div>
         ))}
-      </div>
+      </Fold>
 
-      {/* ── Ghi âm ── */}
-      <div className="space-y-1.5 border-t border-white/8 pt-3">
+      {/* ── Sau buổi PV: ghi âm, transcript, phân tích (tuỳ chọn) ── */}
+      <Fold
+        title="Sau buổi PV"
+        hint={ev ? `Đã phân tích · ${ev.score} điểm` : "Ghi âm, transcript, AI phân tích"}
+        open={showAfter}
+        onToggle={() => setShowAfter((v) => !v)}
+      >
+      <div className="space-y-1.5">
         <span className={LABEL}>Ghi âm buổi PV</span>
 
         {session.audio_url ? (
@@ -576,6 +622,7 @@ function SessionCard({
           </div>
         )}
       </div>
+      </Fold>
     </div>
   );
 }
@@ -665,7 +712,7 @@ export default function InterviewPanel({
       <div className="flex items-center justify-between gap-2 px-1">
         <h4 className="hr-section-title">Phỏng vấn</h4>
         <button onClick={addRound} className={BTN_PLAIN} disabled={creating}>
-          {creating ? "Đang tạo…" : "+ Thêm vòng PV"}
+          {creating ? "Đang tạo…" : sessions.length === 0 ? "+ Đặt lịch PV" : "+ Thêm vòng PV"}
         </button>
       </div>
 
@@ -674,7 +721,7 @@ export default function InterviewPanel({
 
       {!loading && sessions.length === 0 && (
         <p className="hr-group px-4 py-3 text-[13px] text-white/50">
-          Chưa có vòng PV nào. Bấm “+ Thêm vòng PV” để AI soạn câu hỏi dựa trên JD và CV.
+          Chưa có lịch PV. Bấm “Đặt lịch PV” để hẹn giờ: hệ thống báo kênh HR trên Discord và nhắc trước khoảng 1 tiếng.
         </p>
       )}
 

@@ -6162,3 +6162,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Sếp: tab Jobs hẹp hơn các tab khác (header nhảy khi đổi tab) → bỏ ngoại lệ, mọi tab full width.
 - Sếp OK → commit + push 2026-10-23.
 - Deploy `0fb746d`: lần 1 CI fail — Turbopack trên VPS không tải được Google Fonts (Nunito Sans của site, "next/font/google queries have exactly one entry"), không liên quan code; prod vẫn chạy bản cũ (200). `gh run rerun` → attempt 2 success, prod /hr có `max-w-none`. Bẫy: lỗi font Google trên VPS là chập chờn mạng → cứ rerun trước khi sửa code.
+
+## 2026-10-23 — HR: tách "đặt lịch PV" (HR) khỏi "câu hỏi PV" (Lead, tuỳ chọn)
+- Task: sếp muốn HR chỉ setup lịch PV; câu hỏi PV không phải lúc nào cũng cần — Lead cần thì bấm.
+- Thực trạng: backend vốn đã tách (POST interviews chỉ tạo vòng, câu hỏi ở POST /interviews/[id]/questions khi bấm). Rối là do UI: nút "+ Thêm vòng PV để AI soạn câu hỏi", mỗi vòng bày sẵn lịch + câu hỏi + ghi âm + phân tích.
+- Work Done (InterviewPanel.tsx): nút đầu tiên "+ Đặt lịch PV" (vòng sau "+ Thêm vòng PV"), form lịch mở sẵn; empty state nói về lịch + Discord. Mỗi vòng: Lịch phỏng vấn hiện sẵn; `Fold` gập "Câu hỏi PV cho Lead" (gợi ý "Tuỳ chọn, chỉ soạn khi Lead cần" / "N câu đã soạn", nút "Soạn câu hỏi bằng AI"); `Fold` "Sau buổi PV" (ghi âm, transcript, phân tích) — tự mở nếu đã có dữ liệu. Bỏ [color-scheme:dark] ở ô ngày (sai ở chế độ Sáng).
+- Result: tsc sạch; Playwright: ứng viên có vòng (Nguyen Thao Nguyen, 13 câu đã soạn → gập), ứng viên chưa có (nút Đặt lịch PV). KHÔNG bấm tạo vòng (DB prod).
+- Sếp OK → commit + push 2026-10-23.
