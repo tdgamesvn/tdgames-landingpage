@@ -6161,3 +6161,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Sếp: 2 bên sát mép quá → lề ngang header + main: mobile giữ nguyên (12–16px), sm 24px, lg 40px.
 - Sếp: tab Jobs hẹp hơn các tab khác (header nhảy khi đổi tab) → bỏ ngoại lệ, mọi tab full width.
 - Sếp OK → commit + push 2026-10-23.
+- Deploy `0fb746d`: lần 1 CI fail — Turbopack trên VPS không tải được Google Fonts (Nunito Sans của site, "next/font/google queries have exactly one entry"), không liên quan code; prod vẫn chạy bản cũ (200). `gh run rerun` → attempt 2 success, prod /hr có `max-w-none`. Bẫy: lỗi font Google trên VPS là chập chờn mạng → cứ rerun trước khi sửa code.
