@@ -6169,3 +6169,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Work Done (InterviewPanel.tsx): nút đầu tiên "+ Đặt lịch PV" (vòng sau "+ Thêm vòng PV"), form lịch mở sẵn; empty state nói về lịch + Discord. Mỗi vòng: Lịch phỏng vấn hiện sẵn; `Fold` gập "Câu hỏi PV cho Lead" (gợi ý "Tuỳ chọn, chỉ soạn khi Lead cần" / "N câu đã soạn", nút "Soạn câu hỏi bằng AI"); `Fold` "Sau buổi PV" (ghi âm, transcript, phân tích) — tự mở nếu đã có dữ liệu. Bỏ [color-scheme:dark] ở ô ngày (sai ở chế độ Sáng).
 - Result: tsc sạch; Playwright: ứng viên có vòng (Nguyen Thao Nguyen, 13 câu đã soạn → gập), ứng viên chưa có (nút Đặt lịch PV). KHÔNG bấm tạo vòng (DB prod).
 - Sếp OK → commit + push 2026-10-23.
+- Deploy 89a8648 CI success, prod có chuỗi 'Soạn câu hỏi bằng AI'.
