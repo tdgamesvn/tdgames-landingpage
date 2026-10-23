@@ -6145,3 +6145,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Lưu ý: comment cũ ghi dropdown status từng bị HR tưởng là nhãn tĩnh → nút mới có chữ "Trạng thái", mũi tên, nền nút.
 - Result: tsc sạch, eslint không thêm lỗi; Playwright: popup Sáng/Tối, menu status, mobile 390px.
 - Next: sếp xem trên local → commit + push.
+
+## 2026-10-23 — Commit + push đợt giao diện HR mới
+- Task: sếp duyệt trên local → commit + push.
+- Work Done: commit `cfbf769` (styleguide v4 + Sáng/Tối + popup hồ sơ + status dropdown + lucide-react + .agent/ref). Build local OK trước khi push.
+- Result: CI deploy success; prod /hr 200, HTML có `--hr-font` Inter (bản mới đã live); trang chủ 200.
+- Chưa xong / để lại: AGENTS.md + CLAUDE.md modified chỉ do gitnexus analyze cập nhật số symbol — cố ý KHÔNG commit. Dev server local (localhost:3000, chạy detached) vẫn bật — tắt bằng `pkill -f "next dev"`. HR key đã lộ trong log Playwright → khuyên sếp đổi.
+- Next: chờ feedback team HR về giao diện mới.
