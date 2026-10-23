@@ -2,6 +2,8 @@
 
 ## Doing
 
+- [x] HR: giao diện theo styleguide TD Games Work v4 (cam, Inter, chấm trạng thái, icon Lucide, làn Board) + Sáng/Tối/Theo máy (2026-10-22→23) — LOG 2026-10-23. Code xong + build OK; + popup hồ sơ mới + status dropdown (2026-10-23). Sếp duyệt trên local → commit + push 2026-10-23.
+
 - [x] HR: AI xếp hạng ứng viên phù hợp theo job (2026-10-22) — LOG 2026-10-22
   - [x] Chạy lần đầu trên prod (2026-10-22): 111 hồ sơ, 7 job
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { StatusDef, StatusKind } from "@/app/admin/_lib/types";
 import { STATUS_PALETTE } from "./status-palette";
+import { Trash2, X } from "lucide-react";
 
 const KIND_LABEL: Record<StatusKind, string> = {
   open: "Đang xử lý",
@@ -11,7 +12,7 @@ const KIND_LABEL: Record<StatusKind, string> = {
 };
 
 /**
- * Modal ⚙ Statuses: thêm / đổi tên / màu / loại / ngưỡng nhắc / kéo đổi thứ tự / xoá.
+ * Modal Statuses: thêm / đổi tên / màu / loại / ngưỡng nhắc / kéo đổi thứ tự / xoá.
  * Thêm & xoá gọi API ngay; sửa & đổi thứ tự gom lại, bấm "Lưu" mới gửi PATCH.
  */
 export default function StatusManager({
@@ -140,7 +141,7 @@ export default function StatusManager({
       onClick={close}
     >
       <div
-        className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#141418] shadow-2xl"
+        className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/15 hr-sheet shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
@@ -150,7 +151,7 @@ export default function StatusManager({
               Kéo ⋮⋮ để đổi thứ tự cột. New / Rejected là status hệ thống — chỉ đổi tên &amp; màu.
             </p>
           </div>
-          <button onClick={close} className="text-white/40 hover:text-white">✕</button>
+          <button onClick={close} className="text-white/40 hover:text-white" aria-label="Đóng"><X className="hr-ico-solo" /></button>
         </div>
 
         <div className="flex-1 space-y-1.5 overflow-y-auto px-3 py-4 sm:px-5">
@@ -194,7 +195,7 @@ export default function StatusManager({
                 <select
                   value={s.color}
                   onChange={(e) => patchRow(s.key, { color: e.target.value })}
-                  className="col-span-2 min-w-0 rounded border border-white/10 bg-[#1c1c22] px-1.5 py-1 text-xs text-white sm:col-span-1"
+                  className="col-span-2 min-w-0 rounded border border-white/10 bg-white/5 px-1.5 py-1 text-xs text-white sm:col-span-1"
                 >
                   {Object.keys(STATUS_PALETTE).map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -202,7 +203,7 @@ export default function StatusManager({
                   value={s.kind}
                   disabled={s.is_system}
                   onChange={(e) => patchRow(s.key, { kind: e.target.value as StatusKind })}
-                  className="min-w-0 rounded border border-white/10 bg-[#1c1c22] px-1.5 py-1 text-xs text-white disabled:opacity-40"
+                  className="min-w-0 rounded border border-white/10 bg-white/5 px-1.5 py-1 text-xs text-white disabled:opacity-40"
                 >
                   {(Object.keys(KIND_LABEL) as StatusKind[]).map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
                 </select>
@@ -223,7 +224,7 @@ export default function StatusManager({
                   title={s.is_system ? "Status hệ thống — không xoá được" : "Xoá status"}
                   className="text-xs text-white/30 hover:text-red-400 disabled:opacity-20 disabled:hover:text-white/30"
                 >
-                  🗑
+                  <Trash2 className="hr-ico-solo" />
                 </button>
               </div>
 
@@ -233,7 +234,7 @@ export default function StatusManager({
                   <select
                     value={deleting.moveTo}
                     onChange={(e) => setDeleting({ key: s.key, moveTo: e.target.value })}
-                    className="rounded border border-white/10 bg-[#1c1c22] px-1.5 py-1 text-xs text-white"
+                    className="rounded border border-white/10 bg-white/5 px-1.5 py-1 text-xs text-white"
                   >
                     {draft.filter((d) => d.key !== s.key).map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
                   </select>
@@ -277,7 +278,7 @@ export default function StatusManager({
             <button
               onClick={() => void save()}
               disabled={!dirty || busy}
-              className="rounded-lg bg-[#f59e0b] px-4 py-2 text-xs font-black uppercase tracking-wider text-black hover:bg-amber-400 disabled:opacity-40"
+              className="hr-primary-btn px-4 py-2 text-[13px]"
             >
               {busy ? "Đang lưu…" : "Lưu"}
             </button>

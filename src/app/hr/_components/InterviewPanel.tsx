@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { InterviewSession } from "@/app/admin/_lib/types";
 import { formatInterviewTime, isMeetUrl } from "@/lib/interview-schedule";
+import { CalendarDays, Check, RefreshCw, Sparkles } from "lucide-react";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
 const CARD = "rounded-lg border border-white/10 bg-white/[0.03] p-3";
@@ -17,9 +18,9 @@ const TEXTAREA =
 const ERR = "text-[11px] text-red-400";
 
 function scoreColor(s: number) {
-  if (s >= 75) return "border-green-500/40 bg-green-500/10 text-green-400";
-  if (s >= 50) return "border-yellow-500/40 bg-yellow-500/10 text-yellow-400";
-  return "border-red-500/40 bg-red-500/10 text-red-400";
+  if (s >= 75) return "hr-tag hr-tag--status [--tag:var(--color-green-500)]";
+  if (s >= 50) return "hr-tag hr-tag--status [--tag:var(--color-yellow-500)]";
+  return "hr-tag hr-tag--status [--tag:var(--color-red-500)]";
 }
 
 const VERDICT_LABEL: Record<string, string> = {
@@ -165,7 +166,7 @@ function ScheduleBlock({
       {!editing && session.scheduled_at && (
         <div className="flex flex-wrap items-center gap-2 text-[12px]">
           <span className={`font-bold ${past ? "text-white/45" : "text-amber-300"}`}>
-            🗓 {formatInterviewTime(session.scheduled_at)}
+            <CalendarDays className="hr-ico" />{formatInterviewTime(session.scheduled_at)}
           </span>
           {session.mode === "online" ? (
             <>
@@ -406,15 +407,15 @@ function SessionCard({
           <div className="flex gap-1.5">
             {session.questions && (
               <button onClick={copyQuestions} className={BTN_PLAIN} disabled={busy !== null}>
-                {copied ? "✓ Đã copy" : "Copy"}
+                {copied ? <><Check className="hr-ico" />Đã copy</> : "Copy"}
               </button>
             )}
             <button onClick={genQuestions} className={BTN_AMBER} disabled={busy !== null}>
               {busy === "questions"
                 ? "Đang soạn…"
                 : session.questions
-                  ? "↻ Soạn lại"
-                  : "🎯 Sinh câu hỏi"}
+                  ? <><RefreshCw className="hr-ico" />Soạn lại</>
+                  : <><Sparkles className="hr-ico" />Sinh câu hỏi</>}
             </button>
           </div>
         </div>
@@ -506,8 +507,8 @@ function SessionCard({
             {busy === "analyze"
               ? "Đang phân tích…"
               : ev
-                ? "↻ Phân tích lại"
-                : "🔍 Phân tích"}
+                ? <><RefreshCw className="hr-ico" />Phân tích lại</>
+                : <><Sparkles className="hr-ico" />Phân tích</>}
           </button>
         </div>
 
@@ -660,9 +661,9 @@ export default function InterviewPanel({
   }
 
   return (
-    <div className="space-y-2 border-t border-white/8 pt-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className={LABEL}>Phỏng vấn</span>
+    <section className="space-y-2">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <h4 className="hr-section-title">Phỏng vấn</h4>
         <button onClick={addRound} className={BTN_PLAIN} disabled={creating}>
           {creating ? "Đang tạo…" : "+ Thêm vòng PV"}
         </button>
@@ -672,7 +673,7 @@ export default function InterviewPanel({
       {loading && <p className="text-[11px] text-white/35">Đang tải…</p>}
 
       {!loading && sessions.length === 0 && (
-        <p className="text-[11px] text-white/35">
+        <p className="hr-group px-4 py-3 text-[13px] text-white/50">
           Chưa có vòng PV nào. Bấm “+ Thêm vòng PV” để AI soạn câu hỏi dựa trên JD và CV.
         </p>
       )}
@@ -686,6 +687,6 @@ export default function InterviewPanel({
           onDelete={() => removeRound(s.id)}
         />
       ))}
-    </div>
+    </section>
   );
 }

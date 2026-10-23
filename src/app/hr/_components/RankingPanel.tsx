@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useState } from "react";
+import { Ban, FolderOpen, ImageIcon, MapPin, PenLine, RefreshCw, TriangleAlert, Trophy } from "lucide-react";
 
 /**
  * Bảng xếp hạng ứng viên phù hợp nhất với 1 job (toàn bộ ứng viên trong DB,
@@ -46,9 +47,9 @@ const SCORE_CHUNK = 15; // khớp SCORE_BATCH
 const PARALLEL = 2;
 
 const BASIS: Record<Row["basis"], { label: string; title: string }> = {
-  cv: { label: "📄 CV", title: "Chỉ dựa trên CV / portfolio / form" },
-  test: { label: "📝 Test", title: "Có bài test Leader đã chấm" },
-  interview: { label: "🎤 PV", title: "Đã phỏng vấn (có phân tích sau PV)" },
+  cv: { label: "CV", title: "Chỉ dựa trên CV / portfolio / form" },
+  test: { label: "Test", title: "Có bài test Leader đã chấm" },
+  interview: { label: "PV", title: "Đã phỏng vấn (có phân tích sau PV)" },
 };
 
 function rankColor(s: number) {
@@ -192,7 +193,7 @@ export default function RankingPanel({
     }
   }
 
-  if (loadError) return <p className="text-xs text-red-400">❌ {loadError}</p>;
+  if (loadError) return <p className="text-xs text-red-400">{loadError}</p>;
   if (!data) return <p className="text-xs text-white/40">Đang tải bảng xếp hạng…</p>;
 
   const pending = data.rows.filter((r) => r.needs_score || r.needs_profile).length;
@@ -208,7 +209,7 @@ export default function RankingPanel({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-bold text-white">🏆 Xếp hạng phù hợp</p>
+          <p className="text-sm font-bold text-white"><Trophy className="hr-ico" />Xếp hạng phù hợp</p>
           <p className="text-[10px] text-white/40">
             {data.rows.length} ứng viên trong DB (cả job khác, cả đã reject) ·{" "}
             {data.ranked_at ? `cập nhật ${new Date(data.ranked_at).toLocaleString("vi-VN")}` : "chưa tính lần nào"}
@@ -220,7 +221,7 @@ export default function RankingPanel({
             className="rounded-lg border border-white/15 px-3 py-1 text-[11px] text-white/60 hover:bg-white/5"
             title="Tiêu chí loại cứng — áp cho mọi job"
           >
-            ⛔ Tiêu chí loại
+            <Ban className="hr-ico" />Tiêu chí loại
           </button>
           <label className="flex items-center gap-1 text-[10px] text-white/50">
             <input type="checkbox" checked={hideLost} onChange={(e) => setHideLost(e.target.checked)} />
@@ -232,7 +233,7 @@ export default function RankingPanel({
             className="rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/20 disabled:opacity-40"
             title="Chỉ tính phần có dữ liệu mới"
           >
-            ↻ Tính lại{pending ? ` (${pending})` : ""}
+            <RefreshCw className="hr-ico" />Tính lại{pending ? ` (${pending})` : ""}
           </button>
           <button
             onClick={() => { if (confirm("Chấm lại toàn bộ ứng viên với job này? (hồ sơ AI vẫn dùng lại nếu không đổi)")) void run(true); }}
@@ -280,17 +281,17 @@ export default function RankingPanel({
         </div>
       ) : data.job_changed ? (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-300">
-          ✏️ JD / tiêu chí loại / cách chấm đã đổi sau lần tính trước — bấm Tính lại để chấm lại cả bảng.
+          <PenLine className="hr-ico" />JD / tiêu chí loại / cách chấm đã đổi sau lần tính trước — bấm Tính lại để chấm lại cả bảng.
         </p>
       ) : (changed > 0 || unscored > 0) && (
         <p className="rounded-lg border border-cyan-500/30 bg-cyan-500/5 px-3 py-2 text-[11px] text-cyan-300">
-          🔄 {changed > 0 && `${changed} hồ sơ có dữ liệu mới`}{changed > 0 && unscored > 0 && " · "}
+          <RefreshCw className="hr-ico" />{changed > 0 && `${changed} hồ sơ có dữ liệu mới`}{changed > 0 && unscored > 0 && " · "}
           {unscored > 0 && `${unscored} người chưa chấm`} — bấm Tính lại.
         </p>
       )}
       {errors.length > 0 && (
         <details className="text-[11px] text-red-400">
-          <summary>⚠️ {errors.length} lỗi ở lần tính vừa rồi (người lỗi sẽ được tính ở lần sau)</summary>
+          <summary><TriangleAlert className="hr-ico" />{errors.length} lỗi ở lần tính vừa rồi (người lỗi sẽ được tính ở lần sau)</summary>
           <ul className="mt-1 list-disc pl-5">{errors.slice(0, 20).map((e, i) => <li key={i}>{e}</li>)}</ul>
         </details>
       )}
@@ -304,7 +305,7 @@ export default function RankingPanel({
             <Fragment key={r.application_id}>
             {r.application_id === firstBlocked && (
               <p className="bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-300">
-                ⛔ Không đạt tiêu chí loại cứng ({blockedCount}) — điểm chỉ để tham khảo năng lực
+                <Ban className="hr-ico" />Không đạt tiêu chí loại cứng ({blockedCount}) — điểm chỉ để tham khảo năng lực
               </p>
             )}
             <div className={`px-3 py-2 ${lost || r.blocked ? "opacity-70" : ""}`}>
@@ -324,11 +325,11 @@ export default function RankingPanel({
                   <span key={t} className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/40">nộp: {t}</span>
                 ))}
                 {r.blocked && (
-                  <span className="rounded border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[10px] text-red-300">⛔ {r.block_reason || "Vi phạm tiêu chí loại"}</span>
+                  <span className="rounded border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[10px] text-red-300"><Ban className="hr-ico" />{r.block_reason || "Vi phạm tiêu chí loại"}</span>
                 )}
                 {r.changes.length > 0 && r.score != null && (
                   <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] text-cyan-300" title="Có dữ liệu mới kể từ lần chấm trước">
-                    🔄 {r.changes.join(", ")}
+                    <RefreshCw className="hr-ico" />{r.changes.join(", ")}
                   </span>
                 )}
                 <button onClick={() => setExpanded(open ? null : r.application_id)} className="ml-auto text-[10px] text-white/40 hover:text-white">
@@ -346,21 +347,21 @@ export default function RankingPanel({
                       <p className="text-white/80">{r.profile.headline}</p>
                       {(r.profile.location || r.profile.nationality) && (
                         <p className="text-white/50">
-                          📍 {r.profile.location ?? "không rõ"}
+                          <MapPin className="hr-ico" />{r.profile.location ?? "không rõ"}
                           {r.profile.nationality === "foreign" ? " · người nước ngoài" : r.profile.nationality === "vietnamese" ? " · người Việt" : ""}
                         </p>
                       )}
-                      {!r.profile.cv_read && <p className="text-amber-400/80">⚠️ Không đọc được CV — tóm tắt chỉ từ form/portfolio</p>}
+                      {!r.profile.cv_read && <p className="text-amber-400/80"><TriangleAlert className="hr-ico" />Không đọc được CV — tóm tắt chỉ từ form/portfolio</p>}
                       {r.profile.highlights.map((h, i) => <p key={`h${i}`} className="text-green-300/80">+ {h}</p>)}
                       {r.profile.gaps.map((g, i) => <p key={`g${i}`} className="text-red-300/80">− {g}</p>)}
-                      {r.profile.portfolio_note && <p>🖼 {r.profile.portfolio_note}</p>}
+                      {r.profile.portfolio_note && <p><ImageIcon className="hr-ico" />{r.profile.portfolio_note}</p>}
                     </>
                   ) : (
                     <p className="text-white/30">Chưa có hồ sơ AI — bấm Tính lại.</p>
                   )}
                   {r.digest && (
                     <div className="mt-1 border-t border-white/5 pt-1">
-                      <p>🗂 HR: {r.digest.summary}</p>
+                      <p><FolderOpen className="hr-ico" />HR: {r.digest.summary}</p>
                       {r.digest.verdicts.map((v, i) => (
                         <p key={`v${i}`} className={v.type === "skill_positive" ? "text-green-300/80" : "text-amber-300/80"}>
                           [{VERDICT_LABEL[v.type] ?? v.type}] {v.text}

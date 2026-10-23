@@ -1,0 +1,501 @@
+/*
+ * Giao diện /hr theo styleguide "TD Games Work" v4 (bản chép: .agent/ref/STYLEGUIDE.md —
+ * gốc ở tdgames-project-manager/docs/design/STYLEGUIDE.md). Khu làm việc: nền sáng mặc định,
+ * có Tối; ~95% trung tính, cam #FF9500 chỉ cho hành động chính / mục đang chọn / nhấn.
+ *
+ * Cách hoạt động: HRDashboard gắn `data-hr-theme="light|dark"` lên <html> (để cả modal
+ * render qua portal vào <body> cũng ăn theo) và gỡ ra khi rời trang. Component vẫn viết
+ * class Tailwind kiểu cũ (text-white/40, bg-white/5, border-amber-500/30…) — ở đây ta đổi
+ * nghĩa các biến màu Tailwind v4 trong phạm vi đó:
+ *   - --color-white  = màu chữ (--ink) → mọi lớp phủ /alpha tự đảo chiều đúng.
+ *   - amber (accent cũ) → cam thương hiệu; chữ cam dùng --orange-ink cho đủ tương phản.
+ *   - text-white/35…60 → --ink-2, /20…30 → --ink-3 (styleguide §11: chữ thông tin ≥4.5:1).
+ * Thêm UI mới trong /hr: cứ dùng class Tailwind như cũ, hoặc var(--hr-*) bên dưới.
+ * File này không có selector nào chạm ngoài /hr: hoặc nằm dưới html[data-hr-theme],
+ * hoặc là class .hr-* chỉ /hr dùng.
+ */
+
+html[data-hr-theme] {
+  font-family: var(--hr-font, "Inter"), -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-optical-sizing: auto;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --hr-ease: cubic-bezier(.32, .72, 0, 1);
+  --hr-orange: #ff9500;
+  --hr-orange-hi: #ffad33;
+  --hr-on-orange: #1f1300;
+}
+
+/* ── Sáng ────────────────────────────────────────────────────────────────── */
+html[data-hr-theme="light"] {
+  color-scheme: light;
+  --hr-canvas: #f5f5f7;
+  --hr-raised: #ffffff;
+  --hr-lane: #ebebef;
+  --hr-ink: #1d1d1f;
+  --hr-ink-2: #6e6e73;
+  --hr-ink-3: #a1a1a6;
+  --hr-hair: rgb(0 0 0 / 0.08);
+  --hr-fill: rgb(0 0 0 / 0.04);
+  --hr-fill-2: rgb(0 0 0 / 0.07);
+  --hr-orange-ink: #a35400;
+  --hr-danger-ink: #d70015;
+  --hr-scrim: rgb(0 0 0 / 0.28);
+  --hr-glass: rgb(255 255 255 / 0.66);
+  --hr-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 0 0 .5px rgb(0 0 0 / 0.06), 0 8px 32px -12px rgb(0 0 0 / 0.18);
+  --hr-surface-shadow: 0 0 0 .5px rgb(0 0 0 / 0.07), 0 1px 2px rgb(0 0 0 / 0.05), 0 2px 8px -4px rgb(0 0 0 / 0.06);
+  --hr-card-hover-shadow: 0 0 0 .5px rgb(0 0 0 / 0.09), 0 6px 18px -8px rgb(0 0 0 / 0.18);
+  --hr-segment-bg: rgb(0 0 0 / 0.05);
+  --hr-segment-on: #ffffff;
+
+  --color-white: #1d1d1f;
+  --color-black: #000000;
+
+  --color-amber-200: #a35400; --color-amber-300: #a35400; --color-amber-400: #ff9500;
+  --color-amber-500: #ff9500; --color-amber-600: #ff9500;
+  --color-orange-300: #a35400; --color-orange-500: #ff9500;
+  --color-red-200: #b0000f; --color-red-300: #d70015; --color-red-400: #d70015;
+  --color-red-500: #ff453a; --color-red-600: #ff3b30;
+  --color-green-300: #248a3d; --color-green-400: #248a3d; --color-green-500: #30d158;
+  --color-yellow-300: #8a6100; --color-yellow-400: #8a6100; --color-yellow-500: #ffcc00;
+  --color-blue-300: #0058c7; --color-blue-500: #0a84ff;
+  --color-sky-300: #0071a4; --color-sky-500: #32ade6;
+  --color-cyan-300: #0071a4; --color-cyan-500: #32ade6;
+  --color-teal-300: #0c817b; --color-teal-500: #30b0c7;
+  --color-lime-300: #4d7c0f; --color-lime-500: #84cc16;
+  --color-purple-300: #8944ab; --color-purple-400: #8944ab; --color-purple-500: #bf5af2; --color-purple-600: #af52de;
+  --color-pink-300: #d30f45; --color-pink-500: #ff2d55;
+  --color-indigo-300: #3634a3; --color-indigo-500: #5856d6;
+  --color-slate-300: #6e6e73; --color-slate-400: #98989d;
+}
+
+/* ── Tối ─────────────────────────────────────────────────────────────────── */
+html[data-hr-theme="dark"] {
+  color-scheme: dark;
+  --hr-canvas: #000000;
+  --hr-raised: #1c1c1e;
+  --hr-lane: #1c1c1e;
+  --hr-ink: #f5f5f7;
+  --hr-ink-2: #a1a1a6;
+  --hr-ink-3: #86868b;
+  --hr-hair: rgb(84 84 88 / 0.6);
+  --hr-fill: rgb(255 255 255 / 0.06);
+  --hr-fill-2: rgb(255 255 255 / 0.1);
+  --hr-orange-ink: #ffa733;
+  --hr-danger-ink: #ff6961;
+  --hr-scrim: rgb(0 0 0 / 0.6);
+  --hr-glass: rgb(28 28 30 / 0.72);
+  --hr-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), inset 0 0 0 .5px rgb(255 255 255 / 0.08), 0 12px 40px -12px rgb(0 0 0 / 0.6);
+  --hr-surface-shadow: none;
+  --hr-card-hover-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.7);
+  --hr-segment-bg: rgb(255 255 255 / 0.08);
+  --hr-segment-on: #636366;
+
+  --color-white: #f5f5f7;
+  --color-black: #000000;
+
+  --color-amber-200: #ffa733; --color-amber-300: #ffa733; --color-amber-400: #ff9500;
+  --color-amber-500: #ff9500; --color-amber-600: #ff9500;
+  --color-orange-300: #ffa733; --color-orange-500: #ff9500;
+  --color-red-200: #ff9f99; --color-red-300: #ff6961; --color-red-400: #ff6961;
+  --color-red-500: #ff453a; --color-red-600: #ff453a;
+  --color-green-300: #30d158; --color-green-400: #30d158; --color-green-500: #30d158;
+  --color-yellow-300: #ffd60a; --color-yellow-400: #ffd60a; --color-yellow-500: #ffd60a;
+  --color-blue-300: #409cff; --color-blue-500: #0a84ff;
+  --color-sky-300: #64d2ff; --color-sky-500: #64d2ff;
+  --color-cyan-300: #64d2ff; --color-cyan-500: #64d2ff;
+  --color-teal-300: #40c8e0; --color-teal-500: #40c8e0;
+  --color-lime-300: #a8e05f; --color-lime-500: #a8e05f;
+  --color-purple-300: #da8fff; --color-purple-400: #bf5af2; --color-purple-500: #bf5af2; --color-purple-600: #bf5af2;
+  --color-pink-300: #ff6482; --color-pink-500: #ff375f;
+  --color-indigo-300: #7d7aff; --color-indigo-500: #5e5ce6;
+  --color-slate-300: #aeaeb2; --color-slate-400: #98989d;
+}
+
+html[data-hr-theme] body {
+  background: var(--hr-canvas);
+  color: var(--hr-ink);
+  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
+}
+
+html[data-hr-theme="light"] select option { background: #ffffff; color: #1d1d1f; }
+html[data-hr-theme="dark"] select option { background: #2c2c2e; color: #f5f5f7; }
+
+/* Thanh cuộn kiểu macOS (ghi đè thanh cam của site trong globals.css). */
+html[data-hr-theme] ::-webkit-scrollbar { width: 10px; height: 10px; }
+html[data-hr-theme] ::-webkit-scrollbar-track { background: transparent; }
+html[data-hr-theme] ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--hr-ink) 28%, transparent);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+html[data-hr-theme] ::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--hr-ink) 45%, transparent); }
+
+/* ── Chữ (§3) ────────────────────────────────────────────────────────────── */
+html[data-hr-theme] .uppercase { text-transform: none; }
+html[data-hr-theme] .tracking-widest,
+html[data-hr-theme] .tracking-wider { letter-spacing: 0; }
+html[data-hr-theme] .font-black { font-weight: 700; }
+html[data-hr-theme] .font-bold { font-weight: 600; }
+/* Cỡ chữ cũ quá nhỏ — nâng theo thang khu làm việc (metadata 12, body 13). */
+html[data-hr-theme] .text-\[9px\] { font-size: 10.5px; }
+html[data-hr-theme] .text-\[10px\] { font-size: 11px; }
+html[data-hr-theme] .text-\[11px\] { font-size: 12px; }
+html[data-hr-theme] .text-xs { font-size: 12.5px; }
+/* Chữ phụ / mờ → token có tương phản chuẩn. */
+html[data-hr-theme] :is(.text-white\/35, .text-white\/40, .text-white\/45, .text-white\/50, .text-white\/55, .text-white\/60) { color: var(--hr-ink-2); }
+html[data-hr-theme] :is(.text-white\/20, .text-white\/25, .text-white\/30) { color: var(--hr-ink-3); }
+html[data-hr-theme] :is(.tabular-nums, td, th) { font-variant-numeric: tabular-nums; }
+
+/* ── Bề mặt ──────────────────────────────────────────────────────────────── */
+/* Card cấp trang = bề mặt nổi (--raised, bo 16, bóng surface); trong sheet giữ lớp phủ. */
+html[data-hr-theme] .hr-app :is(.bg-white\/\[0\.015\], .bg-white\/\[0\.02\], .bg-white\/\[0\.03\], .bg-white\/\[0\.04\]):not(.hr-sheet *) {
+  background-color: var(--hr-raised);
+  border-color: var(--hr-hair);
+  box-shadow: var(--hr-surface-shadow);
+}
+
+/* Board (§7): làn nền xám bo 18 padding 6 → thẻ trắng bo 12. */
+html[data-hr-theme] .hr-lane {
+  background-color: var(--hr-lane);
+  border-color: transparent;
+  border-radius: 18px;
+  padding: 6px;
+}
+html[data-hr-theme] .hr-app .hr-lane.hr-lane > .hr-card,
+html[data-hr-theme] .hr-app .hr-card.hr-card.hr-card {
+  background-color: var(--hr-raised);
+  border-color: transparent;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: var(--hr-surface-shadow);
+  transition: box-shadow .2s var(--hr-ease), transform .2s var(--hr-ease);
+}
+html[data-hr-theme="dark"] .hr-app .hr-card.hr-card.hr-card { background-color: #2c2c2e; }
+html[data-hr-theme] .hr-app .hr-card.hr-card.hr-card:hover {
+  box-shadow: var(--hr-card-hover-shadow);
+  transform: translateY(-1px);
+}
+html[data-hr-theme] .hr-lane-title { font-size: 13px; font-weight: 600; }
+
+/* Sheet / modal: bề mặt nổi, bo 24, bóng mềm. */
+html[data-hr-theme] .hr-sheet {
+  background-color: var(--hr-raised);
+  border-color: var(--hr-hair);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.22), 0 2px 8px rgb(0 0 0 / 0.08);
+}
+html[data-hr-theme] .bg-black\/60 { background-color: var(--hr-scrim); }
+
+/* ── Tag & trạng thái (§2, §7): không tô nền; trạng thái = chấm 7px + chữ ───────── */
+html[data-hr-theme] .hr-tag,
+html[data-hr-theme] span:is(.rounded, .rounded-md, .rounded-full)[class*="-500/1"] {
+  background: none;
+  border-color: transparent;
+  padding-inline: 0;
+  font-weight: 600;
+  box-shadow: none;
+}
+html[data-hr-theme] .hr-tag--status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--hr-ink);
+}
+html[data-hr-theme] .hr-tag--status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--tag, var(--hr-ink-3));
+}
+/* Nút đang chọn trong bộ chuyển status: viên thuốc nền fill. */
+html[data-hr-theme] button.hr-tag,
+html[data-hr-theme] .hr-tag.ring-1 {
+  padding-inline: 12px;
+  background: var(--hr-fill-2);
+  box-shadow: none;
+}
+
+/* ── Nút (§7): viên thuốc; nút phụ nền fill thay vì viền ───────────────────── */
+html[data-hr-theme] :is(button, a):is(.rounded, .rounded-md, .rounded-lg, .rounded-xl):not(.hr-keep-radius) {
+  border-radius: 999px;
+}
+html[data-hr-theme] button.border:not([class*=" bg-"]):not([class^="bg-"]):not(.hr-tag) {
+  border-color: transparent;
+  background-color: var(--hr-fill);
+  transition: background-color .15s var(--hr-ease), transform .2s var(--hr-ease);
+}
+html[data-hr-theme] button.border:not([class*=" bg-"]):not([class^="bg-"]):not(.hr-tag):hover:not(:disabled) {
+  background-color: var(--hr-fill-2);
+}
+html[data-hr-theme] button:active:not(:disabled) { transform: scale(.97); }
+
+/* Nút cam đặc (§7: chữ #1F1300). Nút đỏ/tím đặc giữ chữ trắng. */
+html[data-hr-theme] :is(.bg-amber-600, .bg-amber-500\/80, .bg-amber-400) {
+  color: var(--hr-on-orange);
+}
+html[data-hr-theme] :is(.bg-red-600, .bg-purple-600, .bg-red-500\/80) { color: #ffffff; }
+
+html[data-hr-theme] :focus-visible {
+  outline: 3px solid rgb(255 149 0 / 0.5);
+  outline-offset: 3px;
+}
+
+/* ── Icon (§8): nét mảnh 1.6, cỡ theo chữ ──────────────────────────────────── */
+.hr-ico, .hr-ico-solo {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  stroke-width: 1.8;
+  vertical-align: -0.2em;
+}
+.hr-ico { margin-right: 0.35em; }
+
+/* ── Thanh công cụ (kính sáng §6) + segmented control ───────────────────── */
+.hr-toolbar {
+  background: var(--hr-glass);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: var(--hr-glass-shadow);
+}
+
+.hr-segmented {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--hr-segment-bg);
+}
+.hr-segmented > button {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+  color: var(--hr-ink-2);
+  transition: background-color .2s var(--hr-ease), color .2s var(--hr-ease);
+}
+.hr-segmented > button[aria-pressed="true"] {
+  background: var(--hr-segment-on);
+  color: var(--hr-ink);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
+  font-weight: 600;
+}
+.hr-segmented.hr-segmented--icons > button { padding: 5px 9px; }
+
+.hr-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--hr-ink);
+  white-space: nowrap;
+  transition: background-color .15s var(--hr-ease);
+}
+.hr-toolbar-btn:hover { background: var(--hr-fill); }
+.hr-toolbar-btn:disabled { opacity: 0.4; }
+.hr-toolbar-btn--danger { color: var(--hr-danger-ink); }
+@media (max-width: 420px) {
+  .hr-toolbar-btn { padding: 0 8px; }
+}
+
+/* Nút chính (§7): viên thuốc cam, chữ #1F1300 500. */
+.hr-primary-btn {
+  border-radius: 999px;
+  background: var(--hr-orange);
+  color: var(--hr-on-orange);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background-color .15s var(--hr-ease), transform .2s var(--hr-ease);
+}
+.hr-primary-btn:hover:not(:disabled) { background: var(--hr-orange-hi); }
+.hr-primary-btn:active:not(:disabled) { transform: scale(.97); }
+.hr-primary-btn:disabled { opacity: 0.4; }
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-hr-theme] *, html[data-hr-theme] *::before { transition: none !important; }
+  html[data-hr-theme] button:active:not(:disabled),
+  html[data-hr-theme] .hr-app .hr-card.hr-card.hr-card:hover { transform: none; }
+}
+
+/* Chữ cam (link, lương, gợi ý) luôn dùng --orange-ink — #FF9500 trên nền sáng không đủ 4.5:1. */
+html[data-hr-theme] :is(.text-amber-400, .text-amber-400\/80, .text-amber-400\/70, .hover\:text-amber-400:hover) {
+  color: var(--hr-orange-ink);
+}
+
+/* ── Popup hồ sơ ứng viên (kiểu Inspector §7) ────────────────────────────── */
+html[data-hr-theme] .hr-sheet-body { background-color: var(--hr-canvas); }
+/* Thẻ con của các panel (Test, Phỏng vấn…) trong thân popup = nhóm trắng. */
+html[data-hr-theme] .hr-sheet-body :is(.bg-white\/\[0\.02\], .bg-white\/\[0\.03\], .bg-white\/\[0\.04\]) {
+  background-color: var(--hr-raised);
+  border-color: var(--hr-hair);
+  border-radius: 14px;
+}
+.hr-group {
+  background-color: var(--hr-raised);
+  border-radius: 14px;
+  box-shadow: var(--hr-surface-shadow);
+}
+html[data-hr-theme="dark"] .hr-group { box-shadow: inset 0 0 0 .5px var(--hr-hair); }
+.hr-facts { background-color: var(--hr-hair); }
+.hr-fact { flex: 1 1 150px; background-color: var(--hr-raised); padding: 12px 16px; min-width: 0; }
+.hr-section-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--hr-ink); }
+
+.hr-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 42px;
+  padding: 11px 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--hr-ink);
+}
+.hr-rows > .hr-row + .hr-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  height: .5px;
+  background: var(--hr-hair);
+}
+.hr-row-label { width: 128px; flex: none; color: var(--hr-ink-2); }
+@media (max-width: 480px) { .hr-row-label { width: 96px; } }
+
+.hr-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 999px;
+  background: #8e8e93;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hr-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--hr-ink-2);
+  transition: background-color .15s var(--hr-ease);
+}
+.hr-icon-btn:hover { background: var(--hr-fill-2); color: var(--hr-ink); }
+
+/* Nút phụ: viên thuốc nền fill (màu chữ để class text-* quyết định). */
+.hr-secondary-btn,
+.hr-status-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--hr-fill);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color .15s var(--hr-ease), transform .2s var(--hr-ease);
+}
+.hr-secondary-btn { gap: 0; }
+.hr-secondary-btn:hover:not(:disabled),
+.hr-status-trigger:hover:not(:disabled),
+.hr-status-trigger[aria-expanded="true"] { background: var(--hr-fill-2); }
+.hr-secondary-btn:disabled, .hr-status-trigger:disabled { opacity: .4; }
+.hr-secondary-btn--sm { height: 28px; padding: 0 12px; font-size: 12.5px; }
+.hr-status-trigger { padding-right: 10px; box-shadow: inset 0 0 0 .5px var(--hr-hair); }
+.hr-primary-btn--sm {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 16px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.hr-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 30;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--hr-raised);
+  box-shadow: 0 0 0 .5px var(--hr-hair), 0 12px 32px -8px rgb(0 0 0 / 0.25);
+  animation: hr-pop .18s var(--hr-ease);
+}
+html[data-hr-theme="dark"] .hr-menu { background: #2c2c2e; }
+.hr-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: left;
+}
+.hr-menu-item:hover:not(:disabled) { background: var(--hr-fill-2); }
+.hr-menu-item:disabled { opacity: .4; }
+.hr-menu-sep { height: .5px; margin: 6px 8px; background: var(--hr-hair); }
+@keyframes hr-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Bình luận: bong bóng + ô nhập viên thuốc + nút gửi tròn cam (§7 Inspector). */
+.hr-bubble {
+  display: inline-block;
+  max-width: 100%;
+  padding: 8px 12px;
+  border-radius: 4px 14px 14px 14px;
+  background: var(--hr-fill);
+}
+.hr-pill-input {
+  border-radius: 20px;
+  background: var(--hr-fill);
+  box-shadow: inset 0 0 0 .5px var(--hr-hair);
+}
+.hr-pill-input:focus-within { box-shadow: inset 0 0 0 .5px var(--hr-hair), 0 0 0 3px rgb(255 149 0 / 0.35); }
+html[data-hr-theme] .hr-bare-input { background: transparent; border: 0; outline: none; }
+html[data-hr-theme] .hr-bare-input:focus-visible,
+html[data-hr-theme] input.hr-pill-input:focus-visible { outline: none; }
+.hr-send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--hr-orange);
+  color: var(--hr-on-orange);
+  transition: transform .2s var(--hr-ease);
+}
+.hr-send-btn:disabled { opacity: .35; }
+.hr-send-btn .hr-ico-solo { stroke-width: 2.4; }
+
+@media (prefers-reduced-motion: reduce) { .hr-menu { animation: none; } }

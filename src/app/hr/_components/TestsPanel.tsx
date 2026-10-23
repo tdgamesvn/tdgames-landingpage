@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { JobTest, TestReview, TestSubmission } from "@/app/admin/_lib/types";
+import { Check, ClipboardCheck, Clock, Link2, Paperclip, PenLine, X } from "lucide-react";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
 const INPUT =
@@ -102,7 +103,7 @@ function AddItemForm<T>({
               mode === m ? "border-amber-500/50 bg-amber-500/10 text-amber-300" : "border-white/15 text-white/45"
             }`}
           >
-            {m === "file" ? "📎 File (≤50MB)" : "🔗 Link"}
+            {m === "file" ? <><Paperclip className="hr-ico" />File (≤50MB)</> : <><Link2 className="hr-ico" />Link</>}
           </button>
         ))}
       </div>
@@ -146,7 +147,7 @@ function ItemRow({
   note,
   onDelete,
 }: {
-  icon: string;
+  icon: ReactNode;
   title: string;
   url: string;
   sub: string;
@@ -158,17 +159,17 @@ function ItemRow({
     <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
       <div className="flex items-center gap-2">
         <a href={url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate text-xs font-semibold text-white hover:text-amber-300">
-          {icon} {title}
+          {icon}{title}
         </a>
         {sub && <span className="shrink-0 text-[10px] text-white/35">{sub}</span>}
         <button
           onClick={() => void copyText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); })}
           className={BTN_PLAIN}
         >
-          {copied ? "✓" : "Copy"}
+          {copied ? <Check className="hr-ico-solo" /> : "Copy"}
         </button>
         <button onClick={onDelete} className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400">
-          ✕
+          <X className="hr-ico-solo" />
         </button>
       </div>
       {note && <p className="mt-1 whitespace-pre-wrap text-[11px] text-white/50">{note}</p>}
@@ -202,14 +203,14 @@ export function JobTestsPanel({ jobId, hrKey }: { jobId: string; hrKey: string }
 
   return (
     <div className="space-y-2">
-      <p className={LABEL}>📝 Bài test của job</p>
+      <p className={LABEL}><ClipboardCheck className="hr-ico" />Bài test của job</p>
       {err && <p className="text-[11px] text-red-400">{err}</p>}
       {tests === null && !err && <p className="text-[11px] text-white/30">Đang tải…</p>}
       {tests?.length === 0 && <p className="text-[11px] text-white/30">Chưa có bài test.</p>}
       {tests?.map((t) => (
         <ItemRow
           key={t.id}
-          icon={t.kind === "file" ? "📎" : "🔗"}
+          icon={t.kind === "file" ? <Paperclip className="hr-ico" /> : <Link2 className="hr-ico" />}
           title={t.title}
           url={t.url}
           sub={fmtSize(t.file_size)}
@@ -289,7 +290,7 @@ function LeaderReview({
         <div className="flex items-center justify-between gap-2">
           <p className={LABEL}>Leader chấm bài</p>
           <button onClick={startEdit} className={BTN_AMBER}>
-            {review ? "Sửa đánh giá" : "✍️ Chấm bài"}
+            {review ? "Sửa đánh giá" : <><PenLine className="hr-ico" />Chấm bài</>}
           </button>
         </div>
         {review ? (
@@ -439,11 +440,11 @@ export function SubmissionsPanel({
   if (!loaded) return null;
 
   return (
-    <div className="space-y-2 border-t border-white/8 pt-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className={LABEL}>📝 Bài test {subs.length > 0 && `· ${subs.length} bài nộp`}</p>
+    <section className="space-y-2">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <h4 className="hr-section-title">Bài test {subs.length > 0 && <span className="font-normal text-white/50">{subs.length} bài nộp</span>}</h4>
         <button onClick={() => void copyTestLink()} className={BTN_AMBER} title="Link cho ứng viên xem đề + nộp bài">
-          {copied ? "✓ Đã copy" : "🔗 Copy link test"}
+          {copied ? <><Check className="hr-ico" />Đã copy</> : <><Link2 className="hr-ico" />Copy link test</>}
         </button>
       </div>
 
@@ -451,7 +452,7 @@ export function SubmissionsPanel({
         const candidateSubs = subs.filter((s) => s.submitted_by === "candidate");
         if (!eta) {
           return token && candidateSubs.length === 0 ? (
-            <p className="text-[11px] text-white/30">⏰ Ứng viên chưa hẹn thời gian nộp bài.</p>
+            <p className="text-[11px] text-white/30"><Clock className="hr-ico" />Ứng viên chưa hẹn thời gian nộp bài.</p>
           ) : null;
         }
         const due = new Date(eta.at);
@@ -461,7 +462,7 @@ export function SubmissionsPanel({
           d.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
         return (
           <p className="text-[11px] text-white/60">
-            ⏰ Hẹn nộp: <span className="font-semibold text-amber-300">{fmt(due)}</span>
+            <Clock className="hr-ico" />Hẹn nộp: <span className="font-semibold text-amber-300">{fmt(due)}</span>
             {late && (
               <span className="ml-1.5 rounded bg-red-500/20 px-1.5 py-0.5 text-red-300">
                 {firstSub ? "nộp trễ" : "quá hạn"}
@@ -491,7 +492,7 @@ export function SubmissionsPanel({
       {subs.map((s) => (
         <ItemRow
           key={s.id}
-          icon={s.kind === "file" ? "📎" : "🔗"}
+          icon={s.kind === "file" ? <Paperclip className="hr-ico" /> : <Link2 className="hr-ico" />}
           title={s.file_name ?? s.url}
           url={s.url}
           sub={`${s.submitted_by === "hr" ? "HR lưu" : "Ứng viên nộp"} · ${new Date(s.created_at).toLocaleDateString("vi-VN")}${s.file_size ? ` · ${fmtSize(s.file_size)}` : ""}`}
@@ -514,6 +515,6 @@ export function SubmissionsPanel({
       ) : (
         <button onClick={() => setShowAdd(true)} className={BTN_PLAIN}>+ HR lưu bài làm</button>
       )}
-    </div>
+    </section>
   );
 }

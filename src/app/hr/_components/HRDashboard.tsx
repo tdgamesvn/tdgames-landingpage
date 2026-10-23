@@ -8,8 +8,10 @@ import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
+import ThemeToggle, { useHrTheme } from "./ThemeToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
+import { ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -91,9 +93,9 @@ function timeAgo(d: string) {
 }
 
 function scoreColor(s: number) {
-  if (s >= 75) return "border-green-500/40 bg-green-500/10 text-green-300";
-  if (s >= 50) return "border-yellow-500/40 bg-yellow-500/10 text-yellow-300";
-  return "border-red-500/40 bg-red-500/10 text-red-300";
+  if (s >= 75) return "hr-tag hr-tag--status [--tag:var(--color-green-500)]";
+  if (s >= 50) return "hr-tag hr-tag--status [--tag:var(--color-yellow-500)]";
+  return "hr-tag hr-tag--status [--tag:var(--color-red-500)]";
 }
 
 const VERDICT_LABEL: Record<string, string> = {
@@ -126,7 +128,7 @@ function RejectModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={onCancel}>
-      <div className="w-full max-w-md rounded-2xl border border-white/15 bg-[#141418] p-6 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-2xl border border-white/15 hr-sheet p-6 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
         <div>
           <h3 className="text-base font-bold text-white">Reject Application</h3>
           <p className="mt-1 text-xs text-white/50">Rejecting <span className="font-semibold text-white/70">{appName}</span></p>
@@ -239,8 +241,8 @@ function MbtiField({
 
   if (!editing) {
     return (
-      <div className="flex items-start gap-2 text-xs">
-        <span className="shrink-0 w-28 text-white/35 uppercase text-[10px] font-bold tracking-wider pt-0.5">MBTI</span>
+      <div className="hr-row">
+        <span className="hr-row-label">MBTI</span>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {app.mbti_type && (
             <span className="rounded-full border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-300">
@@ -270,8 +272,8 @@ function MbtiField({
   }
 
   return (
-    <div className="flex items-start gap-2 text-xs">
-      <span className="shrink-0 w-28 text-white/35 uppercase text-[10px] font-bold tracking-wider pt-1.5">MBTI</span>
+    <div className="hr-row">
+      <span className="hr-row-label pt-1">MBTI</span>
       <div className="min-w-0 flex-1 space-y-1.5">
         {error && <p className="text-[11px] text-red-400">{error}</p>}
         <div className="flex gap-1.5">
@@ -400,31 +402,22 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-purple-400/70">
-        Comments ({comments.length})
-      </p>
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <h4 className="hr-section-title">
+        Bình luận <span className="font-normal text-white/50">{comments.length}</span>
+      </h4>
 
       {/* Comment list */}
-      <div ref={listRef} className={`${listMaxH} space-y-2 overflow-y-auto pr-1`}>
-        {loading && (
-          <p className="text-xs text-white/30 italic">Loading...</p>
-        )}
+      <div ref={listRef} className={`${listMaxH} min-h-0 space-y-3 overflow-y-auto pr-1`}>
+        {loading && <p className="text-[13px] text-white/50">Đang tải…</p>}
         {!loading && comments.length === 0 && (
-          <p className="text-xs text-white/25 italic">
-            No comments yet. Start the conversation.
-          </p>
+          <p className="text-[13px] text-white/50">Chưa có bình luận. Viết nhận xét đầu tiên cho team.</p>
         )}
         {comments.map((c) => (
-          <div
-            key={c.id}
-            className="rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 space-y-1"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-bold text-purple-300/90">
-                {c.author_name}
-              </span>
-              <span className="text-[9px] text-white/30">
+          <div key={c.id} className="space-y-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[13px] font-semibold text-white">{c.author_name}</span>
+              <span className="text-[12px] text-white/50">
                 {new Date(c.created_at).toLocaleString("vi-VN", {
                   day: "2-digit",
                   month: "2-digit",
@@ -433,43 +426,38 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
                 })}
               </span>
             </div>
-            <p className="text-xs text-white/65 whitespace-pre-wrap leading-relaxed">
-              {c.content}
-            </p>
+            <p className="hr-bubble whitespace-pre-wrap text-[13px] leading-relaxed text-white/85">{c.content}</p>
           </div>
         ))}
       </div>
 
       {/* New comment form */}
-      <div className="space-y-2 border-t border-white/8 pt-3">
+      <div className="space-y-2 border-t border-white/10 pt-3">
         {/* Author input (only until name is confirmed) */}
         {!authorLocked && (
           <input
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            placeholder="Your name..."
-            className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none"
+            placeholder="Tên của bạn"
+            className="hr-pill-input w-full px-4 py-2 text-[13px] text-white placeholder:text-white/30"
           />
         )}
         {authorLocked && (
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-white/40">
-              Commenting as{" "}
-              <span className="font-bold text-purple-300/70">{author}</span>
-            </span>
+          <p className="px-1 text-[12px] text-white/50">
+            Bình luận với tên <span className="font-semibold text-white/80">{author}</span>{" "}
             <button
               onClick={() => {
                 setAuthor("");
                 setAuthorLocked(false);
                 localStorage.removeItem(COMMENT_AUTHOR_KEY);
               }}
-              className="text-[9px] text-white/25 hover:text-white/50"
+              className="text-amber-400 hover:underline"
             >
-              (change)
+              Đổi tên
             </button>
-          </div>
+          </p>
         )}
-        <div className="flex gap-2 items-end">
+        <div className="hr-pill-input flex items-end gap-2 py-1.5 pl-4 pr-1.5">
           <textarea
             ref={contentRef}
             value={content}
@@ -480,16 +468,17 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
                 void submit();
               }
             }}
-            placeholder="Write a comment... (Shift+Enter xuống dòng)"
+            placeholder="Viết bình luận… (Shift+Enter xuống dòng)"
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-purple-500/50 focus:outline-none overflow-y-auto"
+            className="hr-bare-input min-w-0 flex-1 resize-none self-center overflow-y-auto py-1 text-[13px] text-white placeholder:text-white/30"
           />
           <button
             onClick={submit}
             disabled={sending || !content.trim() || !author.trim()}
-            className="shrink-0 rounded-lg bg-purple-600 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-purple-500 disabled:opacity-40 transition-colors"
+            aria-label="Gửi bình luận"
+            className="hr-send-btn"
           >
-            {sending ? "..." : "Send"}
+            <ArrowUp className="hr-ico-solo" />
           </button>
         </div>
       </div>
@@ -606,157 +595,145 @@ function CandidateModal({
 
   // Portal ra body: modal được render bên trong card kanban — để tại chỗ thì
   // `fixed` bị khung cha giữ lại (mobile bị cắt mép, cuộn trong ô ~400px).
+  // Bố cục theo "Inspector" của styleguide TD Games Work: header trắng (danh tính + trạng thái
+  // + hành động), thân nền canvas chia nhóm thẻ trắng, cột phải là bình luận.
+  const ev = app.ai_evaluation;
+  const next = app.status !== "rejected" ? S.next(app.status) : undefined;
+  const facts = ([
+    ["Kinh nghiệm", app.years_experience ? `${app.years_experience} năm` : null],
+    ["Lương mong muốn", app.expected_salary],
+    ["Hình thức", app.work_type],
+    ["Có thể bắt đầu", app.available_from],
+    ["Rate / giờ", app.rate_per_hour],
+    ["Giờ / tuần", app.available_hours_per_week],
+  ] as [string, string | null][]).filter((f): f is [string, string] => !!f[1]);
+  const appliedAt = new Date(app.created_at).toLocaleString("vi-VN", {
+    day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 backdrop-blur-sm md:items-center md:px-4 md:py-6"
       onClick={onClose}
     >
       <div
-        className="flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden bg-[#141418] shadow-2xl md:h-[88vh] md:rounded-2xl md:border md:border-white/15"
+        className="flex h-[100dvh] w-full max-w-5xl flex-col hr-sheet overflow-hidden shadow-2xl md:h-[90vh] md:rounded-2xl md:border md:border-white/15"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3 md:px-5 md:py-4">
-          <div className="min-w-0">
-            <h3 className="text-lg font-bold leading-tight text-white">{app.full_name}</h3>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              {app.jobs && <span className="text-xs text-white/55">{app.jobs.title}</span>}
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${S.color(app.status)}`}
-              >
-                {S.label(app.status)}
-              </span>
-              <span className="text-[10px] text-white/40">{timeAgo(app.created_at)}</span>
+        {/* Header: danh tính + trạng thái + hành động chính */}
+        <div className="border-b border-white/10 px-4 pb-3 pt-4 md:px-6 md:pt-5">
+          <div className="flex items-start gap-3">
+            <span className="hr-avatar" aria-hidden>{initials(app.full_name)}</span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-[21px] font-bold leading-tight tracking-tight text-white">{app.full_name}</h3>
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-white/50">
+                {app.jobs && <span className="text-white/80">{app.jobs.title}</span>}
+                <span>Nộp ngày {new Date(app.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })}</span>
+                {app.referred_by && <span className="font-semibold text-amber-400">via {app.referred_by}</span>}
+              </p>
             </div>
+            <button onClick={onClose} aria-label="Đóng" className="hr-icon-btn shrink-0">
+              <X className="hr-ico-solo" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 rounded-lg border border-white/15 px-2.5 py-1 text-xs text-white/50 hover:bg-white/5 transition-colors"
-          >
-            ✕
-          </button>
+
+          <div className="mt-3.5 flex flex-wrap items-center gap-2 md:pl-[52px]">
+            <StatusMenu
+              status={app.status}
+              saving={saving}
+              onMove={onMove}
+              onReject={() => setShowRejectModal(true)}
+            />
+            {next && (
+              <button onClick={() => onMove(next)} disabled={saving} className="hr-primary-btn hr-primary-btn--sm">
+                Chuyển sang {S.label(next)}
+              </button>
+            )}
+            {app.status !== "rejected" ? (
+              <button onClick={() => setShowRejectModal(true)} disabled={saving} className="hr-secondary-btn text-red-400">
+                <X className="hr-ico" />Reject
+              </button>
+            ) : (
+              <button onClick={() => onMove("new")} disabled={saving} className="hr-secondary-btn">
+                <RotateCcw className="hr-ico" />Mở lại hồ sơ
+              </button>
+            )}
+            <MoreMenu>
+              <button role="menuitem" onClick={onDeleteApp} disabled={saving} className="hr-menu-item text-red-400">
+                <Trash2 className="hr-ico" />Xoá hồ sơ
+              </button>
+            </MoreMenu>
+          </div>
         </div>
 
         {/* Body */}
         {/* Mobile: 1 cột, cả thân modal cuộn chung. Desktop: 2 cột cuộn riêng. */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[1fr_340px] md:overflow-hidden">
-          {/* Left: actions + info + note */}
-          <div className="min-w-0 space-y-3 px-4 py-4 md:overflow-y-auto md:px-5">
-            {/* Actions */}
-            {/* Status: chip bấm được cho từng bước pipeline — dropdown cũ bị HR tưởng là nhãn tĩnh. */}
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">
-                Status <span className="normal-case tracking-normal text-white/25">— bấm để chuyển</span>
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {S.keys.filter((s) => s !== "rejected").map((s) => {
-                  const active = s === app.status;
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => !active && onMove(s)}
-                      disabled={saving || active}
-                      className={`rounded-full border px-3 py-1 text-xs font-bold transition-colors disabled:cursor-default ${
-                        active
-                          ? `${S.color(s)} ring-1 ring-current`
-                          : "border-white/15 text-white/45 hover:border-white/40 hover:bg-white/5 hover:text-white disabled:opacity-40"
-                      }`}
-                    >
-                      {active ? "● " : ""}
-                      {S.label(s)}
-                    </button>
-                  );
-                })}
-                {app.status === "rejected" && (
-                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ring-1 ring-current ${S.color("rejected")}`}>
-                    ● Rejected
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5">
-              {app.status !== "rejected" && S.next(app.status) && (
-                <button
-                  onClick={() => onMove(S.next(app.status)!)}
-                  disabled={saving}
-                  className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/20 disabled:opacity-40 transition-colors"
-                >
-                  → {S.label(S.next(app.status)!)}
-                </button>
-              )}
-              {app.status !== "rejected" && (
-                <button
-                  onClick={() => setShowRejectModal(true)}
-                  disabled={saving}
-                  className="rounded border border-red-500/30 px-2.5 py-1 text-[11px] font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
-                >
-                  ✕ Reject
-                </button>
-              )}
-              {app.status === "rejected" && (
-                <button
-                  onClick={() => onMove("new")}
-                  disabled={saving}
-                  className="rounded border border-white/20 px-2.5 py-1 text-[11px] font-bold text-white/60 hover:bg-white/10 disabled:opacity-40"
-                >
-                  ↺ Reopen
-                </button>
-              )}
-              <button
-                onClick={onDeleteApp}
-                disabled={saving}
-                className="ml-auto rounded border border-white/10 px-2.5 py-1 text-[11px] text-white/30 hover:border-red-500/40 hover:text-red-400 disabled:opacity-40 transition-colors"
-                title="Delete application"
-              >
-                🗑 Delete
-              </button>
-            </div>
-
-            {/* AI Evaluation */}
-            <div className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">
-                  AI Evaluation
-                </p>
-                <button
-                  onClick={() => void evaluate()}
-                  disabled={evaluating}
-                  className="rounded border border-amber-500/30 px-2.5 py-1 text-[11px] font-bold text-amber-300 hover:bg-amber-500/10 disabled:opacity-40 transition-colors"
-                >
-                  {evaluating ? "Evaluating…" : app.ai_evaluation ? "↻ Re-evaluate" : "🤖 Evaluate"}
-                </button>
-              </div>
-              {aiError && <p className="text-[11px] text-red-400">{aiError}</p>}
-              {app.ai_evaluation && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded-full border px-2.5 py-0.5 text-sm font-bold ${scoreColor(app.ai_evaluation.score)}`}
-                    >
-                      {app.ai_evaluation.score}
-                    </span>
-                    <span className="text-xs font-bold text-white/70">
-                      {VERDICT_LABEL[app.ai_evaluation.verdict] ?? app.ai_evaluation.verdict}
-                    </span>
+        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[1fr_360px] md:overflow-hidden">
+          <div className="hr-sheet-body min-w-0 space-y-4 px-4 py-4 md:overflow-y-auto md:px-6 md:py-5">
+            {/* Số liệu chính — nhìn lướt là biết */}
+            {facts.length > 0 && (
+              <div className="hr-group hr-facts flex flex-wrap gap-px overflow-hidden">
+                {facts.map(([label, value]) => (
+                  <div key={label} className="hr-fact">
+                    <p className="text-[12px] text-white/50">{label}</p>
+                    <p className="mt-0.5 truncate text-[15px] font-semibold text-white" title={value}>{value}</p>
                   </div>
-                  <ul className="space-y-0.5 text-[11px] text-green-300/80">
-                    {app.ai_evaluation.strengths.map((s, i) => (
-                      <li key={i}>+ {s}</li>
-                    ))}
-                  </ul>
-                  <ul className="space-y-0.5 text-[11px] text-red-300/80">
-                    {app.ai_evaluation.concerns.map((c, i) => (
-                      <li key={i}>− {c}</li>
-                    ))}
-                  </ul>
-                  {(app.ai_evaluation.portfolio_note || app.ai_evaluation.portfolio_links?.length) && (
-                    <div className="space-y-0.5 border-t border-white/8 pt-1.5 text-[11px]">
-                      {app.ai_evaluation.portfolio_note && (
-                        <p className="text-white/70">🖼 {app.ai_evaluation.portfolio_note}</p>
+                ))}
+              </div>
+            )}
+
+            {app.rejection_reason && (
+              <section className="hr-group px-4 py-3">
+                <p className="hr-tag hr-tag--status [--tag:var(--color-red-500)] text-[13px]">Lý do reject</p>
+                <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-white/80">{app.rejection_reason}</p>
+              </section>
+            )}
+
+            {/* Đánh giá AI */}
+            <section className="space-y-2">
+              <div className="flex items-center justify-between gap-2 px-1">
+                <h4 className="hr-section-title">Đánh giá AI</h4>
+                <button onClick={() => void evaluate()} disabled={evaluating} className="hr-secondary-btn hr-secondary-btn--sm">
+                  {evaluating ? "Đang chấm…" : ev ? <><RefreshCw className="hr-ico" />Chấm lại</> : <><Sparkles className="hr-ico" />Chấm bằng AI</>}
+                </button>
+              </div>
+              {aiError && <p className="px-1 text-[12px] text-red-400">{aiError}</p>}
+              {ev ? (
+                <div className="hr-group px-4 py-3.5">
+                  <div className="flex items-baseline gap-2.5">
+                    <span className={`${scoreColor(ev.score)} text-[26px] font-bold tracking-tight`}>{ev.score}</span>
+                    <span className="text-[15px] font-semibold text-white/80">{VERDICT_LABEL[ev.verdict] ?? ev.verdict}</span>
+                  </div>
+                  {ev.strengths.length > 0 && (
+                    <ul className="mt-3 space-y-1.5">
+                      {ev.strengths.map((s, i) => (
+                        <li key={i} className="flex gap-2 text-[13px] leading-relaxed text-white/85">
+                          <CircleCheck className="hr-ico-solo mt-[3px] text-green-400" />
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {ev.concerns.length > 0 && (
+                    <ul className="mt-3 space-y-1.5">
+                      {ev.concerns.map((c, i) => (
+                        <li key={i} className="flex gap-2 text-[13px] leading-relaxed text-white/85">
+                          <CircleAlert className="hr-ico-solo mt-[3px] text-red-400" />
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {(ev.portfolio_note || ev.portfolio_links?.length) && (
+                    <div className="mt-3 space-y-1 border-t border-white/10 pt-3">
+                      {ev.portfolio_note && (
+                        <p className="flex gap-2 text-[13px] leading-relaxed text-white/75">
+                          <ImageIcon className="hr-ico-solo mt-[3px] text-white/50" />
+                          <span>{ev.portfolio_note}</span>
+                        </p>
                       )}
-                      <p className="text-[10px] text-white/35">
-                        {app.ai_evaluation.portfolio_links
+                      <p className="pl-[26px] text-[12px] text-white/50">
+                        {ev.portfolio_links
                           ?.map((l) => {
                             const host = l.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
                             return l.status === "ok"
@@ -767,13 +744,38 @@ function CandidateModal({
                       </p>
                     </div>
                   )}
-                </>
+                </div>
+              ) : (
+                <p className="hr-group px-4 py-3 text-[13px] text-white/50">Chưa chấm. Bấm “Chấm bằng AI” để AI đọc CV và portfolio.</p>
               )}
-            </div>
+            </section>
 
-            <AppDetail app={app} hrKey={hrKey} comments={false} />
-
-            <MbtiField app={app} hrKey={hrKey} onPatch={onPatch} />
+            {/* Ghi chú nội bộ */}
+            <section className="space-y-2">
+              <h4 className="hr-section-title px-1">Ghi chú</h4>
+              <div className="hr-group px-4 py-3">
+                {/* Tự giãn theo nội dung (tối đa 60vh rồi mới cuộn) — note dài bị bó 2 dòng rất khó đọc. */}
+                <textarea
+                  ref={noteRef}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={2}
+                  className="hr-bare-input w-full resize-none text-[14px] leading-relaxed text-white placeholder:text-white/30"
+                  style={{ maxHeight: "60vh" }}
+                  placeholder="Ghi chú cho team về ứng viên này…"
+                />
+                {note !== (app.admin_notes ?? "") && (
+                  <div className="mt-2 flex justify-end gap-2">
+                    <button onClick={() => setNote(app.admin_notes ?? "")} disabled={saving} className="hr-secondary-btn">
+                      Huỷ
+                    </button>
+                    <button onClick={() => onSaveNote(note)} disabled={saving} className="hr-primary-btn hr-primary-btn--sm">
+                      Lưu ghi chú
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
 
             <SubmissionsPanel
               appId={app.id}
@@ -794,34 +796,34 @@ function CandidateModal({
               }
             />
 
-            {/* Note */}
-            <div className="space-y-1 border-t border-white/8 pt-3">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Note</p>
-              {/* Tự giãn theo nội dung (tối đa 60vh rồi mới cuộn) — note dài bị bó 2 dòng rất khó đọc. */}
-              <textarea
-                ref={noteRef}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={3}
-                className="w-full resize-y rounded border border-white/15 bg-white/5 px-3 py-2 text-sm leading-relaxed text-white/90 placeholder:text-white/30 focus:border-white/30 focus:outline-none"
-                style={{ maxHeight: "60vh" }}
-                placeholder="Add a note…"
-              />
-              {note !== (app.admin_notes ?? "") && (
-                <button
-                  onClick={() => onSaveNote(note)}
-                  disabled={saving}
-                  className="rounded bg-amber-600 px-2.5 py-1 text-[10px] font-bold hover:bg-amber-500 disabled:opacity-40"
-                >
-                  Save note
-                </button>
-              )}
-            </div>
+            {/* Liên hệ & hồ sơ */}
+            <section className="space-y-2">
+              <h4 className="hr-section-title px-1">Liên hệ & hồ sơ</h4>
+              <div className="hr-group hr-rows">
+                <InfoRow label="Email"><InfoLink href={`mailto:${app.email}`}>{app.email}</InfoLink></InfoRow>
+                {app.phone && <InfoRow label="Điện thoại"><InfoLink href={`tel:${app.phone}`}>{app.phone}</InfoLink></InfoRow>}
+                {app.cv_url && <InfoRow label="CV"><InfoLink href={app.cv_url}>Mở CV</InfoLink></InfoRow>}
+                {app.portfolio_url && <InfoRow label="Portfolio"><InfoLink href={app.portfolio_url}>{app.portfolio_url}</InfoLink></InfoRow>}
+                {app.linkedin_url && <InfoRow label="LinkedIn"><InfoLink href={app.linkedin_url}>{app.linkedin_url}</InfoLink></InfoRow>}
+                {app.website_url && <InfoRow label="Website"><InfoLink href={app.website_url}>{app.website_url}</InfoLink></InfoRow>}
+                <MbtiField app={app} hrKey={hrKey} onPatch={onPatch} />
+                {app.source && <InfoRow label="Nguồn">{app.source}</InfoRow>}
+                {app.referred_by && <InfoRow label="Người giới thiệu">{app.referred_by}</InfoRow>}
+                <InfoRow label="Ngày nộp">{appliedAt}</InfoRow>
+              </div>
+            </section>
+
+            {app.message && (
+              <section className="space-y-2">
+                <h4 className="hr-section-title px-1">Lời nhắn của ứng viên</h4>
+                <p className="hr-group whitespace-pre-wrap px-4 py-3 text-[13px] leading-relaxed text-white/80">{app.message}</p>
+              </section>
+            )}
           </div>
 
           {/* Right: comments */}
-          <div className="min-w-0 border-t border-white/10 bg-white/[0.02] px-4 py-4 md:overflow-y-auto md:border-l md:border-t-0">
-            <CommentThread appId={app.id} hrKey={hrKey} listMaxH="max-h-[52vh]" />
+          <div className="flex min-w-0 flex-col border-t border-white/10 px-4 py-4 md:overflow-hidden md:border-l md:border-t-0 md:px-5">
+            <CommentThread appId={app.id} hrKey={hrKey} listMaxH="max-h-[52vh] md:max-h-none md:flex-1" />
           </div>
         </div>
 
@@ -839,6 +841,136 @@ function CandidateModal({
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** Chữ cái đầu cho avatar: tên tiếng Việt → 2 chữ cuối ("Nguyễn Phương Thảo" → "PT"). */
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(-2).map((p) => p[0]).join("").toUpperCase();
+}
+
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="hr-row">
+      <span className="hr-row-label">{label}</span>
+      <div className="min-w-0 flex-1 break-words">{children}</div>
+    </div>
+  );
+}
+
+function InfoLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="break-all text-amber-400 hover:underline">
+      {children}
+      <ArrowUpRight className="hr-ico-solo ml-0.5" />
+    </a>
+  );
+}
+
+/** Đóng popover khi bấm ra ngoài. */
+function useDismiss(open: boolean, close: () => void) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) close();
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open, close]);
+  return ref;
+}
+
+/** Dropdown trạng thái. Nút có nhãn "Trạng thái" + mũi tên để HR thấy rõ là bấm được
+ *  (dropdown cũ từng bị tưởng là nhãn tĩnh). */
+function StatusMenu({
+  status,
+  saving,
+  onMove,
+  onReject,
+}: {
+  status: ApplicationStatus;
+  saving: boolean;
+  onMove: (status: ApplicationStatus) => void;
+  onReject: () => void;
+}) {
+  const S = useStatuses();
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const ref = useDismiss(open, close);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={saving}
+        onClick={() => setOpen((v) => !v)}
+        className="hr-status-trigger"
+        title="Đổi trạng thái"
+      >
+        <span className="text-white/50">Trạng thái</span>
+        <span className={S.color(status)}>{S.label(status)}</span>
+        <ChevronDown className={`hr-ico-solo transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div role="menu" className="hr-menu left-0">
+          {S.keys.filter((s) => s !== "rejected").map((s) => (
+            <button
+              key={s}
+              role="menuitemradio"
+              aria-checked={s === status}
+              onClick={() => {
+                setOpen(false);
+                if (s !== status) onMove(s);
+              }}
+              className="hr-menu-item"
+            >
+              <span className={S.color(s)}>{S.label(s)}</span>
+              {s === status && <Check className="hr-ico-solo ml-auto text-amber-400" />}
+            </button>
+          ))}
+          <div className="hr-menu-sep" />
+          {status === "rejected" ? (
+            <button role="menuitem" onClick={() => { setOpen(false); onMove("new"); }} className="hr-menu-item">
+              <RotateCcw className="hr-ico" />Mở lại hồ sơ
+            </button>
+          ) : (
+            <button role="menuitem" onClick={() => { setOpen(false); onReject(); }} className="hr-menu-item text-red-400">
+              <X className="hr-ico" />Reject…
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Nút ⋯ chứa hành động ít dùng / nguy hiểm (xoá). */
+function MoreMenu({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const ref = useDismiss(open, close);
+  return (
+    <div ref={ref} className="relative ml-auto">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Thêm"
+        onClick={() => setOpen((v) => !v)}
+        className="hr-icon-btn"
+      >
+        <Ellipsis className="hr-ico-solo" />
+      </button>
+      {open && (
+        <div role="menu" className="hr-menu right-0" onClick={() => setOpen(false)}>
+          {children}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -920,7 +1052,7 @@ function AppCard({
         setDragging(true);
       }}
       onDragEnd={() => setDragging(false)}
-      className={`rounded-lg border border-white/10 bg-white/[0.04] p-3 space-y-2 hover:border-white/20 transition-colors ${
+      className={`hr-card rounded-lg border border-white/10 bg-white/[0.04] p-3 space-y-2 hover:border-white/20 transition-colors ${
         canDrag ? "cursor-grab active:cursor-grabbing" : ""
       } ${dragging ? "opacity-40" : ""} ${saving ? "opacity-60" : ""}`}
     >
@@ -953,11 +1085,11 @@ function AppCard({
             }`}
             title={`Leader: ${app.test_review.reviewer}`}
           >
-            📝 Test {app.test_review.score}/10
+            <ClipboardCheck className="hr-ico" />Test {app.test_review.score}/10
           </span>
         ) : (app.test_submissions?.[0]?.count ?? 0) > 0 ? (
           <span className="rounded-full border border-orange-500/40 bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold text-orange-300">
-            📝 Chờ chấm
+            <ClipboardCheck className="hr-ico" />Chờ chấm
           </span>
         ) : null}
         {nextInterview && (
@@ -969,7 +1101,7 @@ function AppCard({
             }`}
             title={nextInterview.meet_url ?? (nextInterview.title ?? `Vòng ${nextInterview.round}`)}
           >
-            🗓 {formatInterviewTime(nextInterview.scheduled_at!)} · {nextInterview.mode === "online" ? "Online" : "Offline"}
+            <CalendarDays className="hr-ico" />{formatInterviewTime(nextInterview.scheduled_at!)} · {nextInterview.mode === "online" ? "Online" : "Offline"}
           </span>
         )}
         {app.ai_score != null && (
@@ -977,7 +1109,7 @@ function AppCard({
             className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${scoreColor(app.ai_score)}`}
             title={app.ai_evaluation ? VERDICT_LABEL[app.ai_evaluation.verdict] : undefined}
           >
-            🤖 {app.ai_score}
+            AI {app.ai_score}
           </span>
         )}
         {app.referred_by && (
@@ -1010,14 +1142,14 @@ function AppCard({
       {/* Rejection reason preview */}
       {app.status === "rejected" && app.rejection_reason && (
         <p className="text-[11px] text-red-400/70 italic truncate">
-          ✕ {app.rejection_reason}
+          <X className="hr-ico" />{app.rejection_reason}
         </p>
       )}
 
       {/* Note preview */}
       {app.admin_notes && !showNote && (
         <p className="text-[11px] text-white/40 italic truncate">
-          💬 {app.admin_notes}
+          <MessageSquare className="hr-ico" />{app.admin_notes}
         </p>
       )}
 
@@ -1066,7 +1198,7 @@ function AppCard({
             disabled={saving}
             className="rounded border border-red-500/30 px-2 py-0.5 text-[10px] font-bold text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
           >
-            ✕ Reject
+            <X className="hr-ico" />Reject
           </button>
         )}
         {app.status === "rejected" && (
@@ -1075,14 +1207,14 @@ function AppCard({
             disabled={saving}
             className="rounded border border-white/20 px-2 py-0.5 text-[10px] font-bold text-white/60 hover:bg-white/10 disabled:opacity-40"
           >
-            ↺ Reopen
+            <RotateCcw className="hr-ico" />Reopen
           </button>
         )}
         <button
           onClick={() => setShowNote((v) => !v)}
           className="rounded border border-white/15 px-2 py-0.5 text-[10px] text-white/50 hover:bg-white/5"
         >
-          {showNote ? "✕" : "💬"}
+          {showNote ? <X className="hr-ico-solo" /> : <MessageSquare className="hr-ico-solo" />}
         </button>
         <button
           onClick={deleteApp}
@@ -1090,7 +1222,7 @@ function AppCard({
           className="rounded border border-white/10 px-2 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors disabled:opacity-40"
           title="Delete application"
         >
-          🗑
+          <Trash2 className="hr-ico-solo" />
         </button>
       </div>
 
@@ -1259,7 +1391,7 @@ function PipelineView({
     {error && (
       <div className="mb-3 flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
         <span>{error}</span>
-        <button onClick={() => setError(null)} className="text-red-300/70 hover:text-red-200">✕</button>
+        <button onClick={() => setError(null)} className="text-red-300/70 hover:text-red-200"><X className="hr-ico-solo" /></button>
       </div>
     )}
     {/* Kiểu ClickUp: 1 hàng ngang cuộn được, cột rộng cố định, mỗi cột tự cuộn dọc.
@@ -1291,7 +1423,7 @@ function PipelineView({
               {...dropProps}
               onClick={() => toggleCollapsed(status)}
               title={`Mở rộng ${S.label(status)}`}
-              className={`flex w-10 shrink-0 snap-start flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] py-3 transition-colors hover:bg-white/[0.05] ${ring}`}
+              className={`hr-lane flex w-10 shrink-0 snap-start flex-col items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] py-3 transition-colors hover:bg-white/[0.05] ${ring}`}
             >
               <span className="text-xs font-bold text-white/50">{col.length}</span>
               <span
@@ -1307,12 +1439,12 @@ function PipelineView({
           <div
             key={status}
             {...dropProps}
-            className={`flex w-[85vw] max-w-[320px] shrink-0 snap-start flex-col gap-2 rounded-xl p-1 transition-colors sm:w-[272px] ${ring}`}
+            className={`hr-lane flex w-[85vw] max-w-[320px] shrink-0 snap-start flex-col gap-2 rounded-xl p-1 transition-colors sm:w-[272px] ${ring}`}
           >
             {/* Column header */}
             <div className="flex items-center justify-between gap-2 px-1">
               <span
-                className={`truncate rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${S.color(status)}`}
+                className={`hr-lane-title truncate rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${S.color(status)}`}
               >
                 {S.label(status)}
               </span>
@@ -1324,7 +1456,7 @@ function PipelineView({
                   title="Thu gọn cột"
                   className="rounded px-1 text-xs text-white/30 hover:bg-white/10 hover:text-white/70"
                 >
-                  ⇤
+                  <ChevronsLeft className="hr-ico-solo" />
                 </button>
               </div>
             </div>
@@ -1850,7 +1982,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
 
       {/* Ref code banner */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-        <span className="text-xs font-bold text-amber-400/80">🔗 Your ref code:</span>
+        <span className="text-xs font-bold text-amber-400/80"><Link2 className="hr-ico" />Your ref code:</span>
         <input
           value={refCode}
           onChange={(e) => saveRefCode(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
@@ -1932,7 +2064,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
                         : "border-white/15 text-white/40 hover:bg-white/5"
                   }`}
                 >
-                  {copiedId === job.id ? "✓ Copied!" : "📋 Copy Link"}
+                  {copiedId === job.id ? <><Check className="hr-ico" />Copied!</> : <><Copy className="hr-ico" />Copy Link</>}
                 </button>
 
                 {/* Xếp hạng ứng viên phù hợp (AI) */}
@@ -1943,7 +2075,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
                       ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
                       : "border-white/15 text-white/60 hover:bg-white/5"
                   }`}>
-                  🏆 Xếp hạng
+                  <Trophy className="hr-ico" />Xếp hạng
                 </button>
 
                 {/* Bài test */}
@@ -1954,7 +2086,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
                       ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300"
                       : "border-white/15 text-white/60 hover:bg-white/5"
                   }`}>
-                  📝 Test
+                  <ClipboardCheck className="hr-ico" />Test
                 </button>
 
                 {/* Edit */}
@@ -1967,7 +2099,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
                 {/* Delete */}
                 <button onClick={() => void deleteJob(job.id)}
                   className="rounded-lg border border-white/10 px-2 py-1 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors">
-                  ✕
+                  <X className="hr-ico-solo" />
                 </button>
               </div>
             </div>
@@ -2102,7 +2234,7 @@ function DataView({
           }}
           className="rounded border border-white/10 px-3 py-1 text-[10px] font-bold text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors ml-auto"
         >
-          🗑 Delete
+          <Trash2 className="hr-ico" />Delete
         </button>
       </div>
     </>
@@ -2278,8 +2410,8 @@ function QuickAction({
       ? "border-white/20 text-white/60 hover:bg-white/10"
       : "border-white/20 text-white/80 hover:bg-white/10";
 
-  const label = variant === "reject" ? "✕ Reject"
-    : variant === "reopen" ? "↺ Reopen"
+  const label = variant === "reject" ? <><X className="hr-ico" />Reject</>
+    : variant === "reopen" ? <><RotateCcw className="hr-ico" />Reopen</>
     : `→ ${S.label(targetStatus)}`;
 
   return (
@@ -2321,6 +2453,7 @@ export default function HRDashboard() {
   const [loading, setLoading] = useState(false);
   const [reminding, setReminding] = useState(false);
   const [remindMsg, setRemindMsg] = useState("");
+  const [themePref, setThemePref] = useHrTheme();
 
   // Auto-login from localStorage on mount
   useEffect(() => {
@@ -2395,12 +2528,12 @@ export default function HRDashboard() {
       });
       const data = await res.json();
       if (data.sent) {
-        setRemindMsg(`✅ Sent — ${data.staleCount} stale application(s) reported to Discord`);
+        setRemindMsg(`Sent — ${data.staleCount} stale application(s) reported to Discord`);
       } else {
-        setRemindMsg(`ℹ️ ${data.reason ?? "Nothing to report"}`);
+        setRemindMsg(`${data.reason ?? "Nothing to report"}`);
       }
     } catch {
-      setRemindMsg("❌ Reminder failed");
+      setRemindMsg("Reminder failed");
     } finally {
       setReminding(false);
     }
@@ -2417,32 +2550,30 @@ export default function HRDashboard() {
   // ── Auth gate ──────────────────────────────────────────────────────────────
   if (!hrKey) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0a0a10] px-4">
-        <div className="w-full max-w-sm space-y-5 rounded-2xl border border-white/10 bg-white/[0.03] p-8">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
-              TD Games Studio
-            </p>
-            <h1 className="mt-1 text-2xl font-black text-white">HR Dashboard</h1>
-            <p className="mt-1 text-xs text-white/40">Enter your HR key to continue</p>
+      <div className="hr-app relative flex min-h-screen items-center justify-center px-4">
+        <div className="absolute right-4 top-4">
+          <ThemeToggle pref={themePref} onChange={setThemePref} />
+        </div>
+        <div className="w-full max-w-sm space-y-6 rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+          <div className="text-center">
+            <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-white">HR Dashboard</h1>
+            <p className="mt-1.5 text-[15px] text-white/50">TD Games Studio</p>
           </div>
-          <input
-            type="password"
-            value={inputKey}
-            onChange={(e) => setInputKey(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && inputKey) void signIn(); }}
-            placeholder="HR key"
-            autoFocus
-            className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none"
-          />
-          {authError && <p className="text-xs text-red-400">{authError}</p>}
-          <button
-            onClick={signIn}
-            disabled={!inputKey || loading}
-            className="w-full rounded-lg bg-[#f59e0b] py-2.5 text-xs font-black uppercase tracking-widest text-black transition-colors hover:bg-amber-400 disabled:opacity-40"
-          >
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
+          <div className="space-y-3">
+            <input
+              type="password"
+              value={inputKey}
+              onChange={(e) => setInputKey(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && inputKey) void signIn(); }}
+              placeholder="HR key"
+              autoFocus
+              className="w-full rounded-lg border border-white/15 bg-white/5 px-3.5 py-2.5 text-[15px] text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none"
+            />
+            {authError && <p className="text-[13px] text-red-400">{authError}</p>}
+            <button onClick={signIn} disabled={!inputKey || loading} className="hr-primary-btn w-full py-2.5">
+              {loading ? "Signing in…" : "Sign in"}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -2454,84 +2585,49 @@ export default function HRDashboard() {
 
   return (
     <StatusContext.Provider value={statusApi}>
-    <div className="min-h-screen bg-[#0a0a10] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-[#0a0a10]/95 backdrop-blur px-4 py-3">
-        {/* Mobile: hàng 1 = tiêu đề + nút icon, hàng 2 = tab full ngang. Desktop: 1 hàng. */}
-        <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400">
-                TD Games
-              </p>
-              <p className="text-sm font-black leading-tight text-white">HR Dashboard</p>
-            </div>
-            <span className="rounded-full border border-white/15 px-2.5 py-0.5 text-[10px] text-white/50">
-              {activeCount} active
-            </span>
+    <div className="hr-app min-h-screen text-white">
+      {/* Thanh công cụ kiểu macOS: tiêu đề trái, segmented control giữa, nút văn bản phải.
+          Mobile: hàng 1 = tiêu đề + nút, hàng 2 = segmented full ngang. */}
+      <header className="hr-toolbar sticky top-0 z-10 px-4 py-2.5">
+        <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2.5">
+          <div className="flex items-baseline gap-2.5">
+            <h1 className="text-[17px] font-semibold tracking-tight text-white">HR Dashboard</h1>
+            <span className="text-[13px] text-white/50">{activeCount} đang xử lý</span>
           </div>
 
-          <div className="contents md:flex md:items-center md:gap-2">
-            {/* View tabs */}
-            <div className="order-last flex w-full rounded-lg border border-white/10 p-0.5 md:order-none md:w-auto">
-              {(["pipeline", "data", "kpi", "jobs"] as View[]).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-bold transition-colors md:flex-none ${
-                    view === v ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
-                  }`}
-                >
-                  {v === "pipeline" ? "⬛ Pipeline" : v === "data" ? "📋 Data" : v === "kpi" ? "📊 KPI" : "💼 Jobs"}
-                </button>
-              ))}
+          <div className="hr-segmented order-last w-full md:order-none md:w-auto" role="group" aria-label="Chế độ xem">
+            {(["pipeline", "data", "kpi", "jobs"] as View[]).map((v) => (
+              <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}>
+                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : "Jobs"}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <button onClick={() => setShowStatusMgr(true)} title="Thêm / bớt / sửa status pipeline" className="hr-toolbar-btn">
+              Statuses
+            </button>
+            <button onClick={sendReminder} disabled={reminding} title="Send stale-application reminder to Discord now" className="hr-toolbar-btn">
+              {reminding ? "Đang gửi…" : "Remind"}
+            </button>
+            <button onClick={refresh} disabled={loading} title="Tải lại dữ liệu" aria-label="Tải lại dữ liệu" className="hr-toolbar-btn">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={loading ? "animate-spin" : undefined}>
+                <path d="M16.5 10a6.5 6.5 0 1 1-1.9-4.6" />
+                <path d="M16.5 3.5v3.6h-3.6" />
+              </svg>
+            </button>
+            <div className="mx-1 sm:mx-1.5">
+              <ThemeToggle pref={themePref} onChange={setThemePref} />
             </div>
-
-            <div className="flex items-center gap-1.5 md:gap-2">
-            {/* Custom statuses */}
-            <button
-              onClick={() => setShowStatusMgr(true)}
-              title="Thêm / bớt / sửa status pipeline"
-              className="rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-bold text-white/60 hover:border-white/30 hover:text-white transition-colors sm:px-3"
-            >
-              ⚙<span className="hidden sm:inline"> Statuses</span>
+            <button onClick={signOut} title="Sign out" className="hr-toolbar-btn hr-toolbar-btn--danger">
+              Sign out
             </button>
-
-            {/* Remind button */}
-            <button
-              onClick={sendReminder}
-              disabled={reminding}
-              title="Send stale-application reminder to Discord now"
-              className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-bold text-white/60 hover:border-white/30 hover:text-white disabled:opacity-40 transition-colors"
-            >
-              {reminding ? "…" : <>⏰<span className="hidden sm:inline"> Remind</span></>}
-            </button>
-
-            {/* Refresh */}
-            <button
-              onClick={refresh}
-              disabled={loading}
-              className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-white/50 hover:text-white/80 disabled:opacity-40 transition-colors"
-            >
-              {loading ? "…" : "↺"}
-            </button>
-
-            {/* Sign out */}
-            <button
-              onClick={signOut}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/30 hover:border-red-500/30 hover:text-red-400 transition-colors"
-              title="Sign out"
-            >
-              <span className="sm:hidden">⎋</span>
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
-            </div>
           </div>
         </div>
 
         {remindMsg && (
           <div className="mx-auto max-w-screen-2xl mt-2">
-            <p className="text-xs text-white/60">{remindMsg}</p>
+            <p className="text-[13px] text-white/60">{remindMsg}</p>
           </div>
         )}
       </header>

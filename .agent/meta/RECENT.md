@@ -5,21 +5,17 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
 
 ---
 
-## 2026-10-22 — HR: AI xếp hạng ứng viên phù hợp theo job
-- Task: sếp muốn vào Job thấy bảng xếp hạng ứng viên phù hợp nhất (toàn bộ DB, kể cả reject), bấm tính lại được, tiết kiệm token. Chốt: xếp cả người nộp job khác, có xem ảnh portfolio, dữ liệu mới chỉ đánh dấu 🔄 chờ bấm.
-- Work Done:
-  - Migration `20261022000000_candidate_ranking`: applications + `ai_profile/_hash`, `ai_digest/_hash`; bảng `job_rankings` (meta) + `job_ranking_entries` (điểm, lý do, fingerprint, counts). Đã apply prod.
-  - `src/lib/candidate-ranking.ts`: hồ sơ AI 2 phần (CV+portfolio / dữ liệu HR), hash để biết phần nào cũ; mỗi application 1 dòng (KHÔNG gộp theo email — email chưa xác minh, người lạ có thể dùng để che ứng viên thật; security review bắt); chấm 15 người/lượt + lượt chốt top 15; basis 📄 CV / 📝 Test / 🎤 PV; "+2 comment, +1 PV…" so với lúc chấm.
-  - API: `GET/POST /api/hr/jobs/[id]/ranking` (step score|final), `POST /api/hr/ranking/profiles` (≤3 id). `callAiJson` thêm opts.images.
-  - UI: `RankingPanel.tsx` — nút 🏆 Xếp hạng ở mỗi job (tab Jobs): Tính lại (chỉ phần mới) / Tính lại toàn bộ, thanh tiến độ, Ẩn Rejected, Chi tiết (tóm tắt hồ sơ + HR), bấm tên mở CandidateModal (`CandidateModalHost` mới).
-- Sự cố: migration đầu có FK job_id→jobs ở bảng entries → PostgREST báo "more than one relationship" cho mọi embed `jobs(...)` (cả prod) ~3 phút; đã drop FK + reload schema, /api/jobs prod 200.
-- Result: tsc sạch, eslint file mới sạch. Dev test thật 3 ứng viên Spine: hồ sơ 27s (3 song song), chấm 9s, chốt 9s; điểm 81/67/54 lý do hợp lý. UI Playwright OK.
-- Token ước tính: lần đầu ~106 hồ sơ × ~5k; sau đó mỗi job ~6 lượt × ~7k + chốt ~6k; dữ liệu mới chỉ tốn phần digest (text) của người đó.
-- Next: chạy lần đầu trên prod (từ VPS — Behance chặn IP Mac nên KHÔNG chạy hồ sơ từ local).
-- Update 2026-10-22: chạy lần đầu trên prod qua API (server VPS tải portfolio): 108 hồ sơ AI mới, 0 lỗi, ~10 phút (2 request × 3 hồ sơ song song); chấm cả 7 job (111 người/job), mỗi job ~2,5 phút. Lưu ý: chạy lại lượt chốt làm điểm top dao động vài điểm (VFX 82→80).
+## 2026-10-23 — HR: đồng bộ styleguide TD Games Work v4 (Mức 2)
+- Task: sếp muốn /hr theo style guide của tdgames-project-manager (sếp copy STYLEGUIDE.md + PRINCIPLES.md vào `.agent/ref/` vì bot không đọc được ngoài repo). Chọn Mức 2 (phần nhìn + thành phần).
+- Work Done: hr-theme.css viết lại theo token guide (canvas/raised/ink-2/ink-3/hair/fill, cam + orange-ink, kính sáng/tối, bóng surface/card, focus cam 3px, bo đồng tâm, nút viên thuốc, nút phụ nền fill, cỡ chữ nhỏ nâng lên). Inter (next/font, opsz, vietnamese) qua biến --hr-font trong page.tsx. Mặc định Sáng. Trạng thái + điểm AI/PV = chấm 7px + chữ (status-palette.ts, scoreColor ×2); mọi chip tô nền → chữ màu không nền (rule CSS chung `span.rounded*[class*="-500/1"]`). ~60 emoji → icon `lucide-react` (dep mới) ở 6 component. Pipeline: cột = làn (`hr-lane`), thẻ = `hr-card` trắng bo 12 + hover nhấc. Chữ cam trên nền sáng ép --orange-ink cho đủ tương phản.
+- Result: tsc sạch, eslint chỉ còn 2 lỗi cũ, `npm run build` OK. Playwright dev + DB prod: Pipeline/Data/KPI/Jobs + Xếp hạng/modal/đăng nhập, Sáng + Tối, mobile 390px.
+- detect-changes: "critical" vì chạm 24 flow — nhưng toàn bộ trong src/app/hr, thay đổi chỉ là trình bày (không đổi logic/API).
+- Lưu ý: AGENTS.md / CLAUDE.md đang modified do gitnexus analyze cập nhật số symbol, không phải em sửa tay.
+- Next: sếp duyệt ảnh → commit + push.
 
-## 2026-10-22 — Ranking v2: sếp báo xếp hạng sai (feedback tệ vẫn cao, người nước ngoài #1)
-- Nguyên nhân (lỗi prompt của em): RANK_RULES bảo "không xét reject, ý kiến nội bộ chỉ bổ sung, ưu tiên khách quan" → AI tin CV tự khai hơn kết luận của team; digest còn tự thêm "chưa có dữ liệu khách quan" làm nhẹ đi; không có khái niệm tiêu chí loại cứng; hồ sơ AI không có nơi ở/quốc tịch.
-- Sửa (sếp OK): tiêu chí loại cứng ở app_settings `hr_ranking_rules` (mặc định: không người nước ngoài; phải ở/làm onsite Hà Nội), sửa được qua nút "⛔ Tiêu chí loại" (PUT /api/hr/ranking/rules), vào jobHash → đổi là cần chấm lại; entries thêm `blocked/block_reason` (migration 20261022010000), bị block xếp cuối bảng. Kết luận team > CV: skill_negative → tối đa 55; withdrawn/unreachable không trừ; lương vượt trừ 5-15. Digest d2 phân loại `verdicts` (skill_negative/positive, salary, location, nationality, withdrawn, unreachable, attitude), giữ nguyên mức độ. Profile p2 thêm location/nationality. UI hiện lý do reject từng dòng, ⛔ lý do block, chi tiết có nơi ở + verdicts.
-- Chạy lại prod: 113 hồ sơ đọc lại + 7 job. 10 người bị block đúng (Nacho, Bobrov, Karol ×2, Diego, Rosana — nước ngoài; Lê Nhựt Ái Linh, Lê Thị Kim Chi, Trần Công Đại, Tran Van Linh — TP.HCM). Ca feedback xấu: Thùy Linh 73→41, Phan Trần Đức 81→54, Nguyễn Đình Nghĩa ~35-41, Lực Lưu ~37.
-- Bẫy: Cloudflare cắt request >100s (524) → profiles 1 hồ sơ/request, 3 song song.
+## 2026-10-23 — HR: làm lại popup hồ sơ ứng viên + status thành dropdown
+- Task: sếp gửi ảnh popup, muốn bố cục đẹp/dễ nhìn hơn, gom status thành 1 dropdown.
+- Work Done (CandidateModal trong HRDashboard.tsx, kiểu Inspector của styleguide): header = avatar chữ cái + tên 21/700 + job · ngày nộp · via; hàng hành động = `StatusMenu` (nút "Trạng thái ● New ▾", menu chấm+chữ, ✓ mục hiện tại, cuối menu Reject…/Mở lại) + nút cam "Chuyển sang <bước kế>" + Reject + `MoreMenu` ⋯ (Xoá hồ sơ). Thân nền canvas, nhóm thẻ trắng: số liệu chính (kinh nghiệm/lương/hình thức/bắt đầu…), lý do reject, Đánh giá AI (điểm lớn, ưu ✓ / lo ⚠ chữ thường thay vì cả khối chữ xanh/đỏ), Ghi chú (Lưu/Huỷ), Bài test, Phỏng vấn, Liên hệ & hồ sơ (hàng 42px kẻ thụt), Lời nhắn. Cột phải: bình luận bong bóng + ô nhập viên thuốc + nút gửi tròn cam. CommentThread đổi luôn (cũng dùng ở hàng mở rộng tab Data).
+- Lưu ý: comment cũ ghi dropdown status từng bị HR tưởng là nhãn tĩnh → nút mới có chữ "Trạng thái", mũi tên, nền nút.
+- Result: tsc sạch, eslint không thêm lỗi; Playwright: popup Sáng/Tối, menu status, mobile 390px.
+- Next: sếp xem trên local → commit + push.
