@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { discordNotify } from "@/lib/discord-notify";
+import { escapeTelegramHtml, sanitizeApplicationInput } from "@/lib/application-input";
+
+// CV hợp lệ = file đã upload qua /api/applications/upload-cv (R2 public base).
+function cvHost() {
+  try {
+    return new URL(process.env.R2_PUBLIC_BASE_URL ?? "").hostname;
+  } catch {
+    return "cdn.tdgamestudio.com";
+  }
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,18 +25,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { job_id, full_name, email, work_type } = body;
-
-  if (!job_id || !full_name || !email || !work_type) {
-    return NextResponse.json(
-      { error: "Missing required fields: job_id, full_name, email, work_type" },
-      { status: 400 }
-    );
-  }
+  // Chỉ nhận đúng các trường của form — không insert nguyên body (người ngoài tự đặt status, ai_score…).
+  const parsed = sanitizeApplicationInput(body, cvHost());
+  if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const input = parsed.data;
+  const { job_id, full_name, email, work_type } = input;
 
   const { data, error } = await supabase
     .from("applications")
-    .insert([body])
+    .insert([input])
     .select("id")
     .single();
 
@@ -48,30 +55,31 @@ export async function POST(request: Request) {
         .single();
 
       const jobTitle = job?.title ?? String(job_id);
-      const portfolioUrl = body.portfolio_url ? String(body.portfolio_url) : null;
-      const cvUrl = body.cv_url ? String(body.cv_url) : null;
-      const phone = body.phone ? String(body.phone) : null;
-      const yearsExp = body.years_experience != null ? String(body.years_experience) : null;
-      const salary = body.expected_salary ? String(body.expected_salary) : null;
-      const rate = body.rate_per_hour ? String(body.rate_per_hour) : null;
-      const referredBy = body.referred_by ? String(body.referred_by) : null;
+      const portfolioUrl = input.portfolio_url ? String(input.portfolio_url) : null;
+      const cvUrl = input.cv_url ? String(input.cv_url) : null;
+      const phone = input.phone ? String(input.phone) : null;
+      const yearsExp = input.years_experience != null ? String(input.years_experience) : null;
+      const salary = input.expected_salary ? String(input.expected_salary) : null;
+      const rate = input.rate_per_hour ? String(input.rate_per_hour) : null;
+      const referredBy = input.referred_by ? String(input.referred_by) : null;
+      const h = (v: unknown) => escapeTelegramHtml(String(v));
 
       // ── Telegram ──────────────────────────────────────────────────
       if (telegramToken && telegramChatId) {
         const lines = [
           `🎯 <b>New Application!</b>`,
           ``,
-          `📌 <b>Job:</b> ${jobTitle}`,
-          `👤 <b>Name:</b> ${String(full_name)}`,
-          `📧 <b>Email:</b> ${String(email)}`,
-          phone ? `📞 <b>Phone:</b> ${phone}` : null,
-          `🏷 <b>Type:</b> ${String(work_type)}`,
-          yearsExp ? `📅 <b>Experience:</b> ${yearsExp} yr(s)` : null,
-          salary ? `💰 <b>Expected salary:</b> ${salary}` : null,
-          rate ? `💰 <b>Rate/hr:</b> ${rate}` : null,
-          portfolioUrl ? `🎨 <b>Portfolio:</b> ${portfolioUrl}` : null,
-          cvUrl ? `📎 <b>CV:</b> ${cvUrl}` : null,
-          referredBy ? `👥 <b>Referred by:</b> ${referredBy}` : null,
+          `📌 <b>Job:</b> ${h(jobTitle)}`,
+          `👤 <b>Name:</b> ${h(full_name)}`,
+          `📧 <b>Email:</b> ${h(email)}`,
+          phone ? `📞 <b>Phone:</b> ${h(phone)}` : null,
+          `🏷 <b>Type:</b> ${h(work_type)}`,
+          yearsExp ? `📅 <b>Experience:</b> ${h(yearsExp)} yr(s)` : null,
+          salary ? `💰 <b>Expected salary:</b> ${h(salary)}` : null,
+          rate ? `💰 <b>Rate/hr:</b> ${h(rate)}` : null,
+          portfolioUrl ? `🎨 <b>Portfolio:</b> ${h(portfolioUrl)}` : null,
+          cvUrl ? `📎 <b>CV:</b> ${h(cvUrl)}` : null,
+          referredBy ? `👥 <b>Referred by:</b> ${h(referredBy)}` : null,
         ].filter(Boolean).join("\n");
 
         await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
