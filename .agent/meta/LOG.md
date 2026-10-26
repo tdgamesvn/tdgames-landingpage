@@ -6224,3 +6224,5 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Data: 121 CV, 117 PDF + 4 docx, tất cả trên cdn.tdgamestudio.com (content-type application/pdf, nhúng được).
 - Result: build OK, test lib 27/27; Playwright 1600px: 3 cột, CV vừa khung đọc được; 390px: 0 iframe, nút "Xem CV".
 - Deploy: lần 1 CI fail Google Fonts (VPS, lần thứ 3 trong ngày) → rerun success, /hr 200.
+- Tự rà soát bảo mật (security-review plugin lỗi 401): commit xem CV mở được `window.open(app.cv_url)` với link `javascript:` (React 19 chỉ chặn trong href, không chặn window.open) + iframe nhận cả tdgamestudio.com (cùng origin /hr, đọc được HR key trong localStorage). Fix: `safeExternalUrl` (chỉ http/https) + iframe chỉ cdn.tdgamestudio.com; test 5/5. DB hiện không có cv_url độc hại.
+- PHÁT HIỆN CŨ (chưa sửa, chờ sếp): POST /api/applications `insert([body])` nguyên khối → ứng viên tự đặt được status, ai_score, admin_notes, test_token, cv_url tuỳ ý (mass assignment); Telegram notify dùng parse_mode HTML không escape.

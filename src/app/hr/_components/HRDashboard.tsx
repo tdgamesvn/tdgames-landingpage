@@ -13,7 +13,7 @@ import ThemeToggle, { useHrTheme } from "./ThemeToggle";
 import PushToggle from "./PushToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
-import { cvViewerUrl } from "@/lib/cv-viewer";
+import { cvViewerUrl, safeExternalUrl } from "@/lib/cv-viewer";
 import { ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -580,11 +580,11 @@ function CandidateModal({
   }, []);
   // Màn hẹp không render iframe (khỏi tải PDF bằng 4G khi đang ẩn).
   const showCv = cvOpenPref && Boolean(cvEmbed) && wide;
+  const cvLink = safeExternalUrl(app.cv_url);
   function toggleCv() {
-    if (!app.cv_url) return;
-    // Điện thoại/màn hẹp (hoặc file không nhúng được): mở tab mới.
+    // Điện thoại/màn hẹp (hoặc file không nhúng được): mở tab mới — chỉ link http(s).
     if (!cvEmbed || !wide) {
-      window.open(app.cv_url, "_blank", "noopener,noreferrer");
+      if (cvLink) window.open(cvLink, "_blank", "noopener,noreferrer");
       return;
     }
     const next = !cvOpenPref;
@@ -699,7 +699,7 @@ function CandidateModal({
                 <RotateCcw className="hr-ico" />Mở lại hồ sơ
               </button>
             )}
-            {app.cv_url && (
+            {cvLink && (
               <button
                 onClick={toggleCv}
                 aria-pressed={showCv}
@@ -731,7 +731,7 @@ function CandidateModal({
             <div className="hidden min-h-0 flex-col border-r border-white/10 lg:flex">
               <iframe key={cvEmbed} src={cvEmbed} title={`CV ${app.full_name}`} className="h-full w-full flex-1 bg-white" />
               <div className="flex justify-end border-t border-white/10 px-3 py-1.5">
-                <a href={app.cv_url!} target="_blank" rel="noopener noreferrer" className="text-[12px] text-white/50 hover:text-white/80">
+                <a href={cvLink!} target="_blank" rel="noopener noreferrer" className="text-[12px] text-white/50 hover:text-white/80">
                   Mở tab mới <ArrowUpRight className="hr-ico" />
                 </a>
               </div>
