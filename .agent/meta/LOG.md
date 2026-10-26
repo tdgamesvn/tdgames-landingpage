@@ -6223,3 +6223,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Work Done: nút "Xem CV"/"Ẩn CV" trên header popup; màn ≥1024px popup rộng ~97vw chia 3 cột (CV | hồ sơ | bình luận), nhớ lựa chọn ở localStorage `hr.modal.cvOpen`. `src/lib/cv-viewer.ts` (+test 3/3): chỉ nhúng file trên *.tdgamestudio.com; PDF thêm `#navpanes=0&view=FitH`; .docx/.doc qua Office Online viewer (sếp OK). Màn hẹp/điện thoại: không render iframe, nút mở CV tab mới.
 - Data: 121 CV, 117 PDF + 4 docx, tất cả trên cdn.tdgamestudio.com (content-type application/pdf, nhúng được).
 - Result: build OK, test lib 27/27; Playwright 1600px: 3 cột, CV vừa khung đọc được; 390px: 0 iframe, nút "Xem CV".
+- Deploy: lần 1 CI fail Google Fonts (VPS, lần thứ 3 trong ngày) → rerun success, /hr 200.
