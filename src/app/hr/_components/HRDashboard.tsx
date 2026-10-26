@@ -690,7 +690,7 @@ function CandidateModal({
                 {facts.map(([label, value]) => (
                   <div key={label} className="hr-fact">
                     <p className="text-[12px] text-white/50">{label}</p>
-                    <p className="mt-0.5 truncate text-[15px] font-semibold text-white" title={value}>{value}</p>
+                    <p className="mt-0.5 break-words text-[15px] font-semibold text-white">{value}</p>
                   </div>
                 ))}
               </div>

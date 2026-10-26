@@ -6202,3 +6202,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - `.env.local` đã thêm `RESEND_API_KEY` (gitignored).
 - Next: sếp duyệt → push (CI deploy) + thêm `RESEND_API_KEY` vào env VPS /opt/tdgames-landingpage (KHÔNG set HR_EMAIL_MODE ⇒ test). Bật thật: `HR_EMAIL_MODE=live` + pm2 restart --update-env.
 - Deploy 2026-10-26: sếp OK → thêm `RESEND_API_KEY` vào `/opt/tdgames-landingpage/.env.local` (backup `.env.local.bak-202610261`, KHÔNG set HR_EMAIL_MODE) → push 53db1a4 → CI success. Prod draft API trả `mode: test`, `test_to: tony@`. Chờ sếp thử trên prod (đổi status/lịch PV → hộp thoại).
+- 2026-10-26: sếp báo ô 'Lương mong muốn' trong hồ sơ bị cắt (…) → HRDashboard facts bỏ `truncate`, cho xuống dòng (`break-words`). Playwright: lương dài nhất (9.000.000 - 12.000.000 VND per month (negotiable)) hiện đủ.
