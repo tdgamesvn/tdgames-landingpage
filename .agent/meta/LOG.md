@@ -6227,3 +6227,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Tự rà soát bảo mật (security-review plugin lỗi 401): commit xem CV mở được `window.open(app.cv_url)` với link `javascript:` (React 19 chỉ chặn trong href, không chặn window.open) + iframe nhận cả tdgamestudio.com (cùng origin /hr, đọc được HR key trong localStorage). Fix: `safeExternalUrl` (chỉ http/https) + iframe chỉ cdn.tdgamestudio.com; test 5/5. DB hiện không có cv_url độc hại.
 - ĐÃ SỬA (sếp OK): POST /api/applications `insert([body])` nguyên khối → ứng viên tự đặt được status, ai_score, admin_notes, test_token, cv_url tuỳ ý (mass assignment); Telegram notify dùng parse_mode HTML không escape.
   → `src/lib/application-input.ts` (+test 7/7): whitelist 16 trường form /apply, job_id UUID, email, work_type fulltime|freelancer, link http(s), cv_url phải https://<host R2_PUBLIC_BASE_URL>, cắt độ dài; Telegram escape HTML. Local: javascript:/cv lạ/thiếu field/work_type lạ → 400.
+
+## 2026-10-26 — HR: upload ghi âm PV "đang tải mãi"
+- Báo lỗi: sếp upload ghi âm PV (hồ sơ Nguyễn Thu Nhật Linh, PV 13:30) hiện "Đang tải lên…" mãi.
+- Điều tra: nginx log 1 request `POST /api/hr/upload/audio` 499 lúc 15:16 (client tự đóng), bắt đầu sau 14:47 → chờ tới ~29'. Không có lỗi server. Tái hiện prod bằng curl: 32KB 1.5s, 40MB 10s, 95MB 24s — đều 200; RAM dư. nginx đã có client_max_body_size 120M + timeout 900s cho /api/hr/(interviews|upload)/.
+- Kết luận: server OK; nghi file lớn + mạng upload chậm + UI không có tiến độ (fetch không báo progress) → trông như treo. CHƯA biết dung lượng/định dạng file thật của sếp.
+- Work Done: `src/lib/interview-audio.ts` (+test 4/4) dùng chung client+route: trần 100MB, định dạng audio/* | video/mp4|webm; client báo lỗi NGAY khi chọn file sai thay vì tải lên hết rồi bị từ chối. InterviewPanel upload bằng XHR có tiến độ "Đang tải lên… 45% · 18.0/40.0 MB" → "Đã tải xong, đang lưu…"; lỗi mạng báo rõ.
+- File test trên R2 (interviews/2026/10/*-t.wav, *-big.mp3 x2, *-t.mp3 ~140MB) chưa xoá.

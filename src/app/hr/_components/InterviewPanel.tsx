@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import type { InterviewSession } from "@/app/admin/_lib/types";
 import { formatInterviewTime, isMeetUrl } from "@/lib/interview-schedule";
 import { useCandidateMail } from "./CandidateMailDialog";
+import { audioFileError, formatProgress } from "@/lib/interview-audio";
 import { CalendarDays, Check, ChevronRight, RefreshCw, Sparkles } from "lucide-react";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
@@ -316,6 +317,7 @@ function SessionCard({
   onDelete: () => void;
 }) {
   const [busy, setBusy] = useState<null | "questions" | "upload" | "analyze" | "save">(null);
+  const [uploadProgress, setUploadProgress] = useState<{ loaded: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState(session.transcript ?? "");
   const [showTranscript, setShowTranscript] = useState(false);
@@ -380,18 +382,40 @@ function SessionCard({
     );
 
   async function uploadAudio(file: File) {
+    // Sai dung lượng/định dạng → báo ngay, khỏi tải cả trăm MB lên rồi mới bị từ chối.
+    const invalid = audioFileError(file);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     setBusy("upload");
     setError(null);
+    setUploadProgress({ loaded: 0, total: file.size });
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const up = await fetch("/api/hr/upload/audio", {
-        method: "POST",
-        headers: { "x-hr-key": hrKey },
-        body: fd,
+      // XHR thay fetch: fetch không báo tiến độ upload — file 50–100MB trên mạng chậm
+      // trông như treo ("Đang tải lên…" mãi).
+      const json = await new Promise<{ url?: string; key?: string; bytes?: number; error?: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/hr/upload/audio");
+        xhr.setRequestHeader("x-hr-key", hrKey);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress({ loaded: e.loaded, total: e.total });
+        };
+        xhr.onload = () => {
+          let body: { url?: string; key?: string; bytes?: number; error?: string } = {};
+          try {
+            body = JSON.parse(xhr.responseText);
+          } catch {
+            body = { error: `Server trả lỗi ${xhr.status}` };
+          }
+          if (xhr.status >= 200 && xhr.status < 300) resolve(body);
+          else reject(new Error(body.error ?? `Upload thất bại (HTTP ${xhr.status})`));
+        };
+        xhr.onerror = () => reject(new Error("Mất kết nối khi tải lên — kiểm tra mạng rồi thử lại"));
+        xhr.send(fd);
       });
-      const json = await up.json();
-      if (!up.ok) throw new Error(json.error ?? "Upload thất bại");
 
       const res = await fetch(`/api/hr/interviews/${session.id}`, {
         method: "PATCH",
@@ -409,6 +433,7 @@ function SessionCard({
       setError(e instanceof Error ? e.message : "Upload thất bại");
     } finally {
       setBusy(null);
+      setUploadProgress(null);
     }
   }
 
@@ -523,7 +548,11 @@ function SessionCard({
             className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/[0.03] px-4 py-3 transition-colors hover:border-amber-500/50 hover:bg-white/5"
           >
             <span className="text-[11px] text-white/45">
-              {busy === "upload" ? "Đang tải lên…" : "Kéo thả hoặc bấm chọn mp3 / m4a / wav (≤100MB)"}
+              {busy === "upload"
+                ? uploadProgress && uploadProgress.total > 0 && uploadProgress.loaded >= uploadProgress.total
+                  ? "Đã tải xong, đang lưu…"
+                  : `Đang tải lên… ${uploadProgress ? formatProgress(uploadProgress.loaded, uploadProgress.total) : ""}`
+                : "Kéo thả hoặc bấm chọn mp3 / m4a / wav (≤100MB)"}
             </span>
           </div>
         )}
