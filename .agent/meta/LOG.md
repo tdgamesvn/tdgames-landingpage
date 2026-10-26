@@ -6201,3 +6201,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Chưa test: trigger khi đổi status/lịch PV thật (không muốn sửa dữ liệu prod + bắn Discord) — sếp thử khi duyệt.
 - `.env.local` đã thêm `RESEND_API_KEY` (gitignored).
 - Next: sếp duyệt → push (CI deploy) + thêm `RESEND_API_KEY` vào env VPS /opt/tdgames-landingpage (KHÔNG set HR_EMAIL_MODE ⇒ test). Bật thật: `HR_EMAIL_MODE=live` + pm2 restart --update-env.
+- Deploy 2026-10-26: sếp OK → thêm `RESEND_API_KEY` vào `/opt/tdgames-landingpage/.env.local` (backup `.env.local.bak-202610261`, KHÔNG set HR_EMAIL_MODE) → push 53db1a4 → CI success. Prod draft API trả `mode: test`, `test_to: tony@`. Chờ sếp thử trên prod (đổi status/lịch PV → hộp thoại).
