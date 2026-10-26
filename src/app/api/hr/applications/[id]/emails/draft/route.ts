@@ -28,7 +28,7 @@ export async function GET(request: Request, { params }: Ctx) {
   const supabase = getSupabaseAdmin();
   const { data: app } = await supabase
     .from("applications")
-    .select("id, email, full_name, job_id, test_token, jobs(title)")
+    .select("id, email, full_name, job_id, test_token, mbti_type, mbti_url, jobs(title)")
     .eq("id", id)
     .maybeSingle();
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -79,6 +79,7 @@ export async function GET(request: Request, { params }: Ctx) {
     interview,
     prevScheduledAt,
     testUrl,
+    hasMbti: Boolean(app.mbti_type || app.mbti_url),
   });
 
   const { data: last } = await supabase

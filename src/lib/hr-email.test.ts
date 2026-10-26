@@ -147,3 +147,28 @@ test("email design: link Meet / bài test có nút bấm", () => {
   const t = textToHtml("Đề bài và chỗ nộp bài ở đây: https://tdgamestudio.com/test/tok123");
   assert.ok(/<a href="https:\/\/tdgamestudio\.com\/test\/tok123"[^>]*>Mở đề bài &amp; nộp bài<\/a>/.test(t));
 });
+
+test("mời PV: chưa có MBTI → kèm link trắc nghiệm TopCV + nút bấm", () => {
+  const d = buildDraft({
+    ...base,
+    kind: "interview_invite",
+    interview: { scheduledAt: at, mode: "offline", meetUrl: null, round: 1 },
+    hasMbti: false,
+  });
+  assert.ok(d.text.includes("https://www.topcv.vn/mbti/lam-trac-nghiem"));
+  assert.ok(d.text.includes("MBTI"));
+  const html = textToHtml(d.text);
+  assert.ok(/<a href="https:\/\/www\.topcv\.vn\/mbti\/lam-trac-nghiem"[^>]*>Làm trắc nghiệm MBTI<\/a>/.test(html));
+});
+
+test("mời PV: đã có MBTI → không nhắc làm lại; mail khác không có MBTI", () => {
+  const d = buildDraft({
+    ...base,
+    kind: "interview_invite",
+    interview: { scheduledAt: at, mode: "offline", meetUrl: null, round: 1 },
+    hasMbti: true,
+  });
+  assert.ok(!d.text.includes("topcv.vn/mbti"));
+  const r = buildDraft({ ...base, kind: "rejection", hasMbti: false });
+  assert.ok(!r.text.includes("topcv.vn/mbti"));
+});

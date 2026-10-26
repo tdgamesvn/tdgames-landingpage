@@ -83,7 +83,12 @@ export type DraftInput = {
   } | null;
   prevScheduledAt?: string | null;
   testUrl?: string | null;
+  /** Hồ sơ đã có kết quả MBTI → mail mời PV không nhắc làm trắc nghiệm nữa. */
+  hasMbti?: boolean;
 };
+
+/** Trắc nghiệm MBTI gửi ứng viên trước buổi PV (sếp chọn, 2026-10-26). */
+export const MBTI_TEST_URL = "https://www.topcv.vn/mbti/lam-trac-nghiem";
 
 const SIGNATURE = [
   "Trân trọng,",
@@ -121,6 +126,11 @@ export function buildDraft(input: DraftInput): { subject: string; text: string }
           i ? `- Thời gian: ${formatInterviewLong(i.scheduledAt)} (giờ Việt Nam)` : "- Thời gian: (HR bổ sung)",
           ...(i ? whereLines(i) : []),
         ].join("\n"),
+        ...(input.hasMbti
+          ? []
+          : [
+              `Trước buổi phỏng vấn, bạn dành khoảng 10 phút làm giúp bài trắc nghiệm tính cách MBTI tại: ${MBTI_TEST_URL}\nLàm xong, bạn trả lời mail này kèm link (hoặc ảnh chụp) trang kết quả nhé.`,
+            ]),
         "Bạn vui lòng trả lời mail này để xác nhận tham gia. Nếu khung giờ trên chưa phù hợp, cứ báo lại để chúng mình sắp xếp lịch khác nhé.",
       ];
       break;
@@ -202,6 +212,7 @@ function linkify(escaped: string) {
 function ctaLabel(url: string): string | null {
   if (/^https:\/\/meet\.google\.com\//.test(url)) return "Tham gia Google Meet";
   if (/^https:\/\/(www\.)?tdgamestudio\.com\/test\//.test(url)) return "Mở đề bài &amp; nộp bài";
+  if (url === MBTI_TEST_URL) return "Làm trắc nghiệm MBTI";
   return null;
 }
 
