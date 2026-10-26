@@ -6243,3 +6243,11 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Gửi 1 mail test (mời PV, hồ sơ Nhật Linh) từ local → tony@ để sếp xem trên Gmail. CHƯA deploy — chờ sếp duyệt.
 - Gửi thêm 4 mẫu test (đổi lịch, huỷ lịch, bài test, báo kết quả) từ local → tony@ (ghi candidate_emails test_mode=true, sent_by 'Claude (xem mẫu mới)').
 - Sếp: mail mời PV thiếu link test MBTI → thêm `MBTI_TEST_URL = https://www.topcv.vn/mbti/lam-trac-nghiem` (sếp chọn); mời PV (chỉ invite) kèm đoạn "Trước buổi PV làm trắc nghiệm MBTI… trả lời mail kèm link/ảnh kết quả" + nút "Làm trắc nghiệm MBTI"; hồ sơ đã có mbti_type/mbti_url → bỏ đoạn này (draft route truyền hasMbti). Test hr-email 19/19. Mail test: Nhật Linh (đã có ESTJ → không có đoạn MBTI), Hương Giang (chưa có → có).
+
+## 2026-10-26 — HR: phân tích ghi âm PV lỗi "Unexpected token '<'"
+- Upload chia phần ĐÃ chạy thật: file sếp 47MB, 10 phần ~50s/phần (mạng ~100KB/s), không kẹt.
+- Lỗi phân tích: nginx 2 lần `POST …/analyze` 502 (16:24, 16:38) — CHƯA TỪNG có lần analyze thành công trên prod. Cloudflare thay body 502 bằng trang HTML → client "Unexpected token '<'". Chạy local: "Gỡ băng thất bại" sau 322s.
+- Gốc 1: generateContent Gemini với file 45' >300s mới trả header → fetch Node (undici) cắt ở headersTimeout 300s; route nuốt lỗi thành câu chung. Fix: `streamGenerateContent?alt=sse` + `src/lib/gemini-sse.ts` (textFromGeminiSse, geminiRetryDelayMs; test 4/4); route ghi kèm nguyên nhân thật.
+- Gốc 2: Cloudflare cắt request ~100s, phân tích mất 5–9'. Fix: chạy nền — migration `20261026020000_interview_analysis_status` (áp prod MCP): interview_sessions + analysis_status ('running'|'failed'), analysis_error, analysis_started_at. POST /analyze → 202 ngay + runAnalysis() không await (PM2 process sống lâu); "running" quá 20' coi như chết (deploy/restart) cho chạy lại. GET /api/hr/interviews/[id] mới. InterviewPanel: poll 5s khi running, hiện "Đang gỡ băng + chấm điểm… 5–8 phút, có thể đóng hồ sơ", lỗi hiện "Phân tích lỗi: …".
+- Gốc 3 (gặp khi test): Gemini 503 "high demand" → thử lại 20/40/60s.
+- Kết quả: local chạy thật vòng PV Nhật Linh (c471c11b): POST 202 0.6s, xong sau 515s, transcript 82,824 ký tự, điểm 87 — đã lưu prod DB.

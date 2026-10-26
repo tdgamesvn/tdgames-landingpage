@@ -171,6 +171,20 @@ export async function PATCH(
   return NextResponse.json({ session: data });
 }
 
+/** 1 vòng PV — client hỏi lại khi đang phân tích nền (analysis_status = "running"). */
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const authError = await requireHR(request);
+  if (authError) return authError;
+  const { id } = await params;
+  const { data, error } = await getSupabaseAdmin().from("interview_sessions").select("*").eq("id", id).maybeSingle();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json({ session: data });
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },

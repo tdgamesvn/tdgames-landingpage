@@ -274,6 +274,10 @@ export type InterviewSession = {
   mode: "offline" | "online" | null;
   meet_url: string | null;
   reminded_at: string | null;
+  /** Phân tích chạy nền: null = rảnh/xong, "running", "failed" (lý do ở analysis_error). */
+  analysis_status?: "running" | "failed" | null;
+  analysis_error?: string | null;
+  analysis_started_at?: string | null;
   created_at: string;
   updated_at: string;
 };

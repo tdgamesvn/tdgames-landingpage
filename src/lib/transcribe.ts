@@ -1,5 +1,7 @@
 import "server-only";
 
+import { geminiRetryDelayMs, textFromGeminiSse } from "./gemini-sse";
+
 /**
  * mp3 ghi âm PV → text.
  *
@@ -125,29 +127,34 @@ async function transcribeGemini(
       ? { file_data: { mime_type: mimeType, file_uri: await geminiUpload(key, bytes, mimeType, fileName) } }
       : { inline_data: { mime_type: mimeType, data: bytes.toString("base64") } };
 
-  const res = await fetch(
-    `${GEMINI_BASE}/v1beta/models/${geminiModel()}:generateContent?key=${key}`,
-    {
+  // Stream (SSE): header về ngay, text về dần. generateContent thường với file 40–50 phút
+  // mất >300s mới trả header → fetch của Node cắt ở headersTimeout 300s.
+  // Gemini hay báo 503 "high demand" lúc cao điểm → thử lại 20s/40s/60s (file đã upload, dùng lại uri).
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: TRANSCRIBE_PROMPT }, audioPart] }],
+    generationConfig: { temperature: 0 },
+  });
+  let res: Response;
+  for (let attempt = 1; ; attempt++) {
+    res = await fetch(`${GEMINI_BASE}/v1beta/models/${geminiModel()}:streamGenerateContent?alt=sse&key=${key}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: TRANSCRIBE_PROMPT }, audioPart] }],
-        generationConfig: { temperature: 0 },
-      }),
+      body,
       signal: AbortSignal.timeout(900_000),
-    },
-  );
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new TranscribeError(`Gemini lỗi ${res.status}: ${body.slice(0, 200)}`);
+    });
+    if (res.ok) break;
+    const delay = geminiRetryDelayMs(res.status, attempt);
+    const errBody = await res.text().catch(() => "");
+    if (delay === null) throw new TranscribeError(`Gemini lỗi ${res.status}: ${errBody.slice(0, 200)}`);
+    await new Promise((r) => setTimeout(r, delay));
   }
 
-  const json = await res.json();
-  const parts: Array<{ text?: string }> = json?.candidates?.[0]?.content?.parts ?? [];
-  const text = parts
-    .map((p) => p.text ?? "")
-    .join("")
-    .trim();
+  let text: string;
+  try {
+    text = textFromGeminiSse(await res.text()).trim();
+  } catch (e) {
+    throw new TranscribeError(e instanceof Error ? e.message : "Gemini stream lỗi");
+  }
   if (!text) throw new TranscribeError("Gemini trả transcript rỗng");
   return text;
 }

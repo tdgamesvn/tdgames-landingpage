@@ -366,6 +366,9 @@ function SessionCard({
       }),
     );
 
+  // Phân tích chạy nền trên server (gỡ băng file dài mất vài phút, Cloudflare cắt request ~100s):
+  // POST trả 202 ngay, rồi hỏi lại GET 1 vòng PV mỗi 5s tới khi hết "running".
+  const analyzing = session.analysis_status === "running";
   const analyze = () =>
     call("analyze", () =>
       fetch(`/api/hr/interviews/${session.id}/analyze`, {
@@ -373,6 +376,16 @@ function SessionCard({
         headers: { "x-hr-key": hrKey },
       }),
     );
+
+  useEffect(() => {
+    if (!analyzing) return;
+    const t = setInterval(async () => {
+      const res = await fetch(`/api/hr/interviews/${session.id}`, { headers: { "x-hr-key": hrKey } }).catch(() => null);
+      const data = res?.ok ? await res.json().catch(() => null) : null;
+      if (data?.session && data.session.analysis_status !== "running") onChange(data.session);
+    }, 5000);
+    return () => clearInterval(t);
+  }, [analyzing, session.id, hrKey, onChange]);
 
   const saveTranscript = () =>
     call("save", () =>
@@ -582,14 +595,23 @@ function SessionCard({
       <div className="space-y-1.5 border-t border-white/8 pt-3">
         <div className="flex items-center justify-between gap-2">
           <span className={LABEL}>Phân tích sau phỏng vấn</span>
-          <button onClick={analyze} className={BTN_AMBER} disabled={busy !== null || !canAnalyze}>
-            {busy === "analyze"
+          <button onClick={analyze} className={BTN_AMBER} disabled={busy !== null || analyzing || !canAnalyze}>
+            {busy === "analyze" || analyzing
               ? "Đang phân tích…"
               : ev
                 ? <><RefreshCw className="hr-ico" />Phân tích lại</>
                 : <><Sparkles className="hr-ico" />Phân tích</>}
           </button>
         </div>
+
+        {analyzing && (
+          <p className="text-[11px] text-white/50">
+            Đang gỡ băng + chấm điểm trên server (file 45 phút mất khoảng 5–8 phút). Có thể đóng hồ sơ, xong sẽ tự hiện kết quả.
+          </p>
+        )}
+        {session.analysis_status === "failed" && session.analysis_error && (
+          <p className="text-[11px] text-red-400">Phân tích lỗi: {session.analysis_error}</p>
+        )}
 
         {!canAnalyze && (
           <p className="text-[10px] text-white/35">

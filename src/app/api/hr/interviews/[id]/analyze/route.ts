@@ -38,14 +38,10 @@ Toàn bộ nội dung viết bằng tiếng Việt.
 
 ${HR_SIGNALS_RULES}`;
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+type RunResult = { ok: true } | { error: string };
 
-  const { id } = await params;
+/** Gỡ băng (nếu cần) + chấm lại. Chạy nền — kết quả/ lỗi ghi vào interview_sessions. */
+async function runAnalysis(id: string): Promise<RunResult> {
   const supabase = getSupabaseAdmin();
 
   const { data: session } = await supabase
@@ -53,7 +49,7 @@ export async function POST(
     .select("*")
     .eq("id", id)
     .single();
-  if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!session) return { error: "Không tìm thấy vòng PV" };
 
   // 1. Có transcript rồi thì dùng luôn; chưa có thì gỡ băng từ file ghi âm.
   let transcript: string | null = session.transcript?.trim() || null;
@@ -61,18 +57,18 @@ export async function POST(
 
   if (!transcript) {
     if (!session.audio_url) {
-      return NextResponse.json(
-        { error: "Chưa có ghi âm và cũng chưa có transcript — upload mp3 hoặc dán transcript trước." },
-        { status: 400 },
-      );
+      return { error: "Chưa có ghi âm và cũng chưa có transcript — upload mp3 hoặc dán transcript trước." };
     }
     try {
       const out = await transcribeFromUrl(session.audio_url);
       transcript = out.text;
       transcriptSource = out.source;
     } catch (e) {
-      const err = e instanceof TranscribeError ? e : new TranscribeError("Gỡ băng thất bại");
-      return NextResponse.json({ error: err.message }, { status: err.status });
+      // Ghi kèm nguyên nhân thật (timeout, lỗi mạng…) — câu chung chung từng che mất lỗi headersTimeout.
+      const cause = e instanceof Error ? `${e.message}${(e.cause as { code?: string } | undefined)?.code ? ` (${(e.cause as { code?: string }).code})` : ""}` : String(e);
+      if (!(e instanceof TranscribeError)) console.error("[analyze] transcribe failed:", e);
+      const err = e instanceof TranscribeError ? e : new TranscribeError(`Gỡ băng thất bại: ${cause}`);
+      return { error: err.message };
     }
     // Lưu transcript ngay — gỡ băng đắt, đừng để mất nếu bước chấm điểm lỗi.
     await supabase
@@ -87,7 +83,7 @@ export async function POST(
     .select(`*, ${JOB_SELECT}`)
     .eq("id", session.application_id)
     .single();
-  if (!app) return NextResponse.json({ error: "Application not found" }, { status: 404 });
+  if (!app) return { error: "Không tìm thấy hồ sơ ứng viên" };
 
   const { jobs: job, ...a } = app;
 
@@ -110,7 +106,7 @@ export async function POST(
     });
   } catch (e) {
     const err = e instanceof AiError ? e : new AiError("AI call failed");
-    return NextResponse.json({ error: err.message, raw: err.raw }, { status: err.status });
+    return { error: `AI chấm điểm lỗi: ${err.message}` };
   }
 
   const p = result.data;
@@ -118,7 +114,7 @@ export async function POST(
   try {
     score = clampScore(p.score);
   } catch {
-    return NextResponse.json({ error: "AI trả điểm không hợp lệ" }, { status: 502 });
+    return { error: "AI trả điểm không hợp lệ" };
   }
 
   const evaluation = {
@@ -141,13 +137,80 @@ export async function POST(
     prior_score: a.ai_score ?? null,
   };
 
-  const { data: updated, error } = await supabase
+  const { error } = await supabase
     .from("interview_sessions")
-    .update({ evaluation, score, transcript, transcript_source: transcriptSource })
+    .update({
+      evaluation,
+      score,
+      transcript,
+      transcript_source: transcriptSource,
+      analysis_status: null,
+      analysis_error: null,
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
+/** Quá mốc này mà vẫn "running" thì coi như tiến trình đã chết (restart/deploy) — cho chạy lại. */
+const STALE_MS = 20 * 60_000;
+
+/**
+ * Bắt đầu phân tích nền, trả 202 ngay. Gỡ băng 40–50 phút + chấm mất vài phút,
+ * vượt trần ~100s của Cloudflare (2026-10-26: 502/HTML). Client hỏi lại
+ * GET /api/hr/interviews/[id] tới khi analysis_status hết "running".
+ */
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const authError = await requireHR(request);
+  if (authError) return authError;
+
+  const { id } = await params;
+  const supabase = getSupabaseAdmin();
+
+  const { data: session } = await supabase
+    .from("interview_sessions")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!session.audio_url && !session.transcript?.trim()) {
+    return NextResponse.json(
+      { error: "Chưa có ghi âm và cũng chưa có transcript — upload mp3 hoặc dán transcript trước." },
+      { status: 400 },
+    );
+  }
+
+  const startedAt = session.analysis_started_at ? new Date(session.analysis_started_at).getTime() : 0;
+  if (session.analysis_status === "running" && Date.now() - startedAt < STALE_MS) {
+    return NextResponse.json({ session }, { status: 202 });
+  }
+
+  const { data: running, error } = await supabase
+    .from("interview_sessions")
+    .update({ analysis_status: "running", analysis_error: null, analysis_started_at: new Date().toISOString() })
     .eq("id", id)
     .select()
     .single();
-
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ session: updated });
+
+  // Chạy nền trong tiến trình Node (PM2, không phải serverless) — không await.
+  void runAnalysis(id)
+    .then(async (r) => {
+      if ("error" in r) {
+        await supabase.from("interview_sessions").update({ analysis_status: "failed", analysis_error: r.error }).eq("id", id);
+      }
+    })
+    .catch(async (e) => {
+      console.error("[analyze] background failed:", e);
+      await supabase
+        .from("interview_sessions")
+        .update({ analysis_status: "failed", analysis_error: e instanceof Error ? e.message : "Phân tích thất bại" })
+        .eq("id", id);
+    });
+
+  return NextResponse.json({ session: running }, { status: 202 });
 }
