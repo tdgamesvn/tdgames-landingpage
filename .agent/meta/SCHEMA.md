@@ -112,3 +112,21 @@ const supabase = createClient(
 // Server-side (service role)
 // Xem: src/lib/supabase-admin.ts
 ```
+
+## `candidate_emails` (2026-10-26)
+
+Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, chỉ service role.
+
+| Cột | Kiểu | Ghi chú |
+|---|---|---|
+| `id` | uuid pk | |
+| `application_id` | uuid fk applications, cascade | |
+| `interview_id` | uuid fk interview_sessions, set null | vòng PV liên quan |
+| `kind` | text | `interview_invite`, `interview_reschedule`, `interview_cancel`, `test_assignment`, `rejection` |
+| `to_email` | text | email ứng viên |
+| `sent_to` | text | địa chỉ thực gửi (test mode → hộp nội bộ) |
+| `test_mode` | bool | |
+| `subject`, `body_text`, `body_html` | text | nội dung đã gửi |
+| `resend_id` | text null | id Resend |
+| `sent_by` | text null | tên HR (localStorage `tdg.hr.comment.author`) |
+| `created_at` | timestamptz | |

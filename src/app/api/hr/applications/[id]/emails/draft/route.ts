@@ -1,0 +1,100 @@
+import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { requireHR } from "@/lib/hr-auth";
+import { newTestToken } from "@/lib/hr-tests";
+import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isValidEmail } from "@/lib/hr-email";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type Ctx = { params: Promise<{ id: string }> };
+
+const SITE = "https://tdgamestudio.com";
+
+/**
+ * Bản nháp mail cho hộp thoại xác nhận. Không gửi gì.
+ * Lỗi nghiệp vụ trả 200 `{ error, message }` để UI quyết định (vd. no_test → chỉ báo nhỏ).
+ */
+export async function GET(request: Request, { params }: Ctx) {
+  const authError = await requireHR(request);
+  if (authError) return authError;
+  const { id } = await params;
+  const url = new URL(request.url);
+  const kind = url.searchParams.get("kind");
+  if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
+  const interviewId = url.searchParams.get("interview_id");
+  const prevScheduledAt = url.searchParams.get("prev_scheduled_at");
+
+  const supabase = getSupabaseAdmin();
+  const { data: app } = await supabase
+    .from("applications")
+    .select("id, email, full_name, job_id, test_token, jobs(title)")
+    .eq("id", id)
+    .maybeSingle();
+  if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const cfg = getHrEmailConfig(process.env);
+  const meta = { mode: cfg.mode, test_to: cfg.testTo };
+  const fail = (error: string, message: string) => NextResponse.json({ ...meta, error, message });
+
+  if (!isValidEmail(app.email)) return fail("no_email", "Ứng viên chưa có email hợp lệ.");
+
+  let interview = null;
+  if (kind === "interview_invite" || kind === "interview_reschedule" || kind === "interview_cancel") {
+    if (interviewId) {
+      const { data: s } = await supabase
+        .from("interview_sessions")
+        .select("id, round, scheduled_at, mode, meet_url")
+        .eq("id", interviewId)
+        .eq("application_id", id)
+        .maybeSingle();
+      if (s?.scheduled_at) {
+        interview = { scheduledAt: s.scheduled_at, mode: s.mode, meetUrl: s.meet_url, round: s.round ?? 1 };
+      }
+    }
+    if (kind !== "interview_cancel" && !interview) return fail("no_schedule", "Vòng PV này chưa có lịch.");
+  }
+
+  let testUrl: string | null = null;
+  if (kind === "test_assignment") {
+    const { count } = await supabase
+      .from("job_tests")
+      .select("id", { count: "exact", head: true })
+      .eq("job_id", app.job_id);
+    if (!count) return fail("no_test", "Job chưa có đề test — chưa gửi mail.");
+    let token = app.test_token as string | null;
+    if (!token) {
+      token = newTestToken();
+      const { error } = await supabase.from("applications").update({ test_token: token }).eq("id", id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    testUrl = `${SITE}/test/${token}`;
+  }
+
+  const job = (Array.isArray(app.jobs) ? app.jobs[0] : app.jobs) as { title?: string } | null;
+  const draft = buildDraft({
+    kind,
+    candidateName: app.full_name ?? "",
+    jobTitle: job?.title ?? "",
+    interview,
+    prevScheduledAt,
+    testUrl,
+  });
+
+  const { data: last } = await supabase
+    .from("candidate_emails")
+    .select("created_at")
+    .eq("application_id", id)
+    .eq("kind", kind)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return NextResponse.json({
+    ...meta,
+    to: app.email,
+    subject: draft.subject,
+    text: draft.text,
+    last_sent_at: last?.created_at ?? null,
+  });
+}

@@ -293,3 +293,20 @@ export type SlotPreset = {
   /** One-line optimization tip shown under the hint card. */
   tip?: string;
 };
+
+/** Mail HR đã gửi cho ứng viên (bảng candidate_emails). */
+export type CandidateEmail = {
+  id: string;
+  application_id: string;
+  interview_id: string | null;
+  kind: import("@/lib/hr-email").CandidateEmailKind;
+  to_email: string;
+  sent_to: string;
+  test_mode: boolean;
+  subject: string;
+  body_text: string;
+  body_html: string;
+  resend_id: string | null;
+  sent_by: string | null;
+  created_at: string;
+};

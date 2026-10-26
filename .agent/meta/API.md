@@ -126,3 +126,10 @@ ADMIN_KEY="..." node scripts/replace-media-urls.mjs --rollback
 ```
 
 Kết quả gần nhất: changedFiles=22, changedRefs=178
+
+## HR — mail ứng viên (2026-10-26), header `x-hr-key`
+
+- `GET /api/hr/applications/[id]/emails/draft?kind=&interview_id=&prev_scheduled_at=` → `{ mode, test_to, to, subject, text, last_sent_at }` hoặc `{ mode, test_to, error: no_email|no_test|no_schedule, message }`. `test_assignment` tạo `test_token` nếu chưa có.
+- `POST /api/hr/applications/[id]/emails` `{ kind, interview_id?, subject, text, sent_by? }` → gửi qua Resend + ghi `candidate_emails`. Người nhận lấy từ DB; `HR_EMAIL_MODE` ≠ `live` ⇒ gửi về `HR_EMAIL_TEST_TO` với tiêu đề `[TEST → <email>]`.
+- `GET /api/hr/applications/[id]/emails` → `{ emails }` mới nhất trước.
+- Env: `RESEND_API_KEY` (bắt buộc), `HR_EMAIL_MODE`, `HR_EMAIL_TEST_TO`, `HR_EMAIL_FROM`, `HR_EMAIL_REPLY_TO`.
