@@ -31,13 +31,28 @@ export function interviewReminderPayload(i: {
 
 export type PushSubscriptionInput = { endpoint: string; keys: { p256dh: string; auth: string } };
 
+// Server sẽ POST tới endpoint → chỉ nhận host của dịch vụ push chính thức (chặn SSRF).
+const PUSH_HOSTS = ["fcm.googleapis.com", "web.push.apple.com"];
+const PUSH_HOST_SUFFIXES = [".push.apple.com", ".push.services.mozilla.com", ".notify.windows.com"];
+
+function isPushServiceUrl(raw: string) {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" || u.username || u.password || u.port) return false;
+    const h = u.hostname.toLowerCase();
+    return PUSH_HOSTS.includes(h) || PUSH_HOST_SUFFIXES.some((s) => h.endsWith(s));
+  } catch {
+    return false;
+  }
+}
+
 export function isPushSubscriptionInput(v: unknown): v is PushSubscriptionInput {
   if (!v || typeof v !== "object") return false;
   const s = v as { endpoint?: unknown; keys?: { p256dh?: unknown; auth?: unknown } };
   return (
     typeof s.endpoint === "string" &&
-    s.endpoint.startsWith("https://") &&
     s.endpoint.length < 2000 &&
+    isPushServiceUrl(s.endpoint) &&
     typeof s.keys?.p256dh === "string" &&
     typeof s.keys?.auth === "string"
   );

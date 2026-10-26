@@ -38,3 +38,25 @@ test("isPushSubscriptionInput chỉ nhận endpoint https + đủ khoá", () => 
   assert.equal(isPushSubscriptionInput(null), false);
   assert.equal(isPushSubscriptionInput("x"), false);
 });
+
+test("chỉ nhận endpoint của dịch vụ push chính thức (chặn SSRF)", () => {
+  const keys = { p256dh: "a", auth: "b" };
+  for (const endpoint of [
+    "https://fcm.googleapis.com/fcm/send/abc",
+    "https://web.push.apple.com/QGx",
+    "https://updates.push.services.mozilla.com/wpush/v2/x",
+    "https://wns2-par02p.notify.windows.com/w/?token=x",
+  ]) {
+    assert.equal(isPushSubscriptionInput({ endpoint, keys }), true, endpoint);
+  }
+  for (const endpoint of [
+    "https://evil.com/x",
+    "https://127.0.0.1/x",
+    "https://169.254.169.254/latest",
+    "https://fcm.googleapis.com.evil.com/x",
+    "https://evilfcm.googleapis.com@evil.com/x",
+    "https://localhost:3000/api",
+  ]) {
+    assert.equal(isPushSubscriptionInput({ endpoint, keys }), false, endpoint);
+  }
+});
