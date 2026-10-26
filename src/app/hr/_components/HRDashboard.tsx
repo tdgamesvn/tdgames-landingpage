@@ -596,13 +596,16 @@ function CandidateModal({
     }
   }
 
+  const { dialogOpen: mailDialogOpen } = useCandidateMail();
   useEffect(() => {
+    // Hộp thoại mail đang mở thì Esc chỉ đóng hộp thoại đó, không đóng luôn hồ sơ.
+    if (mailDialogOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, mailDialogOpen]);
 
   // Portal ra body: modal được render bên trong card kanban — để tại chỗ thì
   // `fixed` bị khung cha giữ lại (mobile bị cắt mép, cuộn trong ô ~400px).

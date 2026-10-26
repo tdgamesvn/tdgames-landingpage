@@ -184,7 +184,11 @@ export function textToHtml(text: string): string {
     .map((p) => {
       const html = escapeHtml(p)
         // Sau escape, `"` thành &quot; nên URL không thể thoát khỏi thuộc tính href.
-        .replace(/https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*/g, (url) => `<a href="${url}" style="color:#ea580c">${url}</a>`)
+        .replace(/https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*/g, (match) => {
+          // Dấu câu cuối câu ("…/abc." hoặc "(…)") không thuộc URL.
+          const url = match.replace(/[.,;:!?)\]]+$/, "");
+          return `<a href="${url}" style="color:#ea580c">${url}</a>${match.slice(url.length)}`;
+        })
         .replace(/\n/g, "<br>");
       return `<p style="margin:0 0 14px">${html}</p>`;
     })

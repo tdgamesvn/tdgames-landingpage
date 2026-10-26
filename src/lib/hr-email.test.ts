@@ -121,3 +121,9 @@ test("mọi loại mail: có chữ ký, không lọt undefined/null", () => {
     assert.ok(!/undefined|null/.test(d.text + d.subject), kind);
   }
 });
+
+test("textToHtml: dấu câu ngay sau URL không dính vào link", () => {
+  const html = textToHtml("Link: https://tdgamestudio.com/test/abc. Hoặc (https://meet.google.com/x-y-z), nhé");
+  assert.ok(html.includes('<a href="https://tdgamestudio.com/test/abc"'));
+  assert.ok(html.includes('<a href="https://meet.google.com/x-y-z"'));
+});

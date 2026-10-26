@@ -31,9 +31,14 @@ type Draft = {
   message?: string;
 };
 
-type Ctx = { prompt: (req: MailPromptRequest) => void; lastSentAt: number };
+type Ctx = {
+  prompt: (req: MailPromptRequest) => void;
+  lastSentAt: number;
+  /** Đang có hộp thoại mail mở — modal hồ sơ phía sau không xử lý phím Esc. */
+  dialogOpen: boolean;
+};
 
-const CandidateMailContext = createContext<Ctx>({ prompt: () => {}, lastSentAt: 0 });
+const CandidateMailContext = createContext<Ctx>({ prompt: () => {}, lastSentAt: 0, dialogOpen: false });
 
 export function useCandidateMail() {
   return useContext(CandidateMailContext);
@@ -42,7 +47,14 @@ export function useCandidateMail() {
 const AUTHOR_KEY = "tdg.hr.comment.author";
 
 export function CandidateMailProvider({ hrKey, children }: { hrKey: string; children: React.ReactNode }) {
-  const [req, setReq] = useState<MailPromptRequest | null>(null);
+  // Hàng đợi: nhiều thao tác liên tiếp (kéo A sang Test rồi B sang Rejected) không đè hộp thoại của nhau.
+  const [queue, setQueue] = useState<(MailPromptRequest & { qid: number })[]>([]);
+  const req = queue[0] ?? null;
+  const enqueue = useCallback(
+    (r: MailPromptRequest) => setQueue((q) => [...q, { ...r, qid: (q.at(-1)?.qid ?? 0) + 1 }]),
+    [],
+  );
+  const dequeue = useCallback(() => setQueue((q) => q.slice(1)), []);
   const [notice, setNotice] = useState<string | null>(null);
   const [lastSentAt, setLastSentAt] = useState(0);
 
@@ -53,13 +65,13 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
         void (async () => {
           const d = await fetchDraft(hrKey, r).catch(() => null);
           if (d?.error === "no_test") setNotice(d.message ?? "Job chưa có đề test — chưa gửi mail");
-          else setReq(r);
+          else enqueue(r);
         })();
         return;
       }
-      setReq(r);
+      enqueue(r);
     },
-    [hrKey],
+    [hrKey, enqueue],
   );
 
   useEffect(() => {
@@ -68,19 +80,20 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
     return () => clearTimeout(t);
   }, [notice]);
 
-  const value = useMemo(() => ({ prompt, lastSentAt }), [prompt, lastSentAt]);
+  const dialogOpen = req !== null;
+  const value = useMemo(() => ({ prompt, lastSentAt, dialogOpen }), [prompt, lastSentAt, dialogOpen]);
 
   return (
     <CandidateMailContext.Provider value={value}>
       {children}
       {req && (
         <MailDialog
-          key={`${req.appId}:${req.kind}:${req.interviewId ?? ""}`}
+          key={req.qid}
           req={req}
           hrKey={hrKey}
-          onClose={() => setReq(null)}
+          onClose={dequeue}
           onSent={() => {
-            setReq(null);
+            dequeue();
             setLastSentAt(Date.now());
           }}
         />
