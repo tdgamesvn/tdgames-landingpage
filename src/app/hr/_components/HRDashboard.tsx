@@ -8,6 +8,7 @@ import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
+import { CandidateMailProvider } from "./CandidateMailDialog";
 import ThemeToggle, { useHrTheme } from "./ThemeToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
@@ -2588,6 +2589,7 @@ export default function HRDashboard() {
 
   return (
     <StatusContext.Provider value={statusApi}>
+    <CandidateMailProvider hrKey={hrKey}>
     <div className="hr-app min-h-screen text-white">
       {/* Thanh công cụ kiểu macOS: tiêu đề trái, segmented control giữa, nút văn bản phải.
           Mobile: hàng 1 = tiêu đề + nút, hàng 2 = segmented full ngang. */}
@@ -2686,6 +2688,7 @@ export default function HRDashboard() {
         />
       )}
     </div>
+    </CandidateMailProvider>
     </StatusContext.Provider>
   );
 }
