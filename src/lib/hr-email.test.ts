@@ -127,3 +127,23 @@ test("textToHtml: dấu câu ngay sau URL không dính vào link", () => {
   assert.ok(html.includes('<a href="https://tdgamestudio.com/test/abc"'));
   assert.ok(html.includes('<a href="https://meet.google.com/x-y-z"'));
 });
+
+test("email design: header logo, footer địa chỉ, preheader ẩn", () => {
+  const html = textToHtml("Chào A,\n\nCảm ơn bạn đã ứng tuyển.\n\nTrân trọng,\nTD Games Studio — Phòng Nhân sự");
+  assert.ok(html.includes("https://cdn.tdgamestudio.com/landing/logoCompany/logo_td2.png"));
+  assert.ok(html.includes("505 Minh Khai"));
+  assert.ok(/display:none[^>]*>[^<]*Chào A/.test(html), "preheader");
+});
+
+test("email design: khối '- Nhãn: giá trị' thành bảng thông tin", () => {
+  const html = textToHtml("Chào A,\n\n- Thời gian: 15:30, Thứ Hai 19/10/2026\n- Hình thức: Online qua Google Meet");
+  assert.ok(/<td[^>]*>Thời gian<\/td>/.test(html));
+  assert.ok(/<td[^>]*>15:30, Thứ Hai 19\/10\/2026<\/td>/.test(html));
+});
+
+test("email design: link Meet / bài test có nút bấm", () => {
+  const meet = textToHtml("- Link tham gia: https://meet.google.com/abc-defg-hij");
+  assert.ok(/<a href="https:\/\/meet\.google\.com\/abc-defg-hij"[^>]*>Tham gia Google Meet<\/a>/.test(meet));
+  const t = textToHtml("Đề bài và chỗ nộp bài ở đây: https://tdgamestudio.com/test/tok123");
+  assert.ok(/<a href="https:\/\/tdgamestudio\.com\/test\/tok123"[^>]*>Mở đề bài &amp; nộp bài<\/a>/.test(t));
+});

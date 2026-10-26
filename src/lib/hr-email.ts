@@ -174,24 +174,105 @@ function escapeHtml(s: string) {
     .replace(/'/g, "&#39;");
 }
 
-/** Text (HR có thể đã sửa) → HTML an toàn: escape hết rồi mới gắn link. */
+// ── HTML mail (layout bảng, inline style — chạy được trên Gmail/Outlook/Apple Mail) ──
+
+const LOGO_URL = "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td2.png"; // icon cam + chữ trắng
+const ACCENT = "#ea580c";
+const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+const URL_RE = /https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*/g;
+
+/** Dấu câu cuối câu ("…/abc." hoặc "(…)") không thuộc URL. */
+function trimUrl(match: string) {
+  return match.replace(/[.,;:!?)\]]+$/, "");
+}
+
+function linkLabel(url: string) {
+  return /^https:\/\/maps\.app\.goo\.gl\//.test(url) ? "Xem trên Google Maps" : url;
+}
+
+/** Text đã escape → gắn <a>. Sau escape `"` thành &quot; nên URL không thoát được khỏi href. */
+function linkify(escaped: string) {
+  return escaped.replace(URL_RE, (match) => {
+    const url = trimUrl(match);
+    return `<a href="${url}" style="color:${ACCENT};text-decoration:underline">${linkLabel(url)}</a>${match.slice(url.length)}`;
+  });
+}
+
+/** Link cần nút bấm nổi bật (Meet, trang nộp bài test). */
+function ctaLabel(url: string): string | null {
+  if (/^https:\/\/meet\.google\.com\//.test(url)) return "Tham gia Google Meet";
+  if (/^https:\/\/(www\.)?tdgamestudio\.com\/test\//.test(url)) return "Mở đề bài &amp; nộp bài";
+  return null;
+}
+
+function ctaButtons(escaped: string) {
+  const urls = [...escaped.matchAll(URL_RE)].map((m) => trimUrl(m[0]));
+  return urls
+    .map((url) => [url, ctaLabel(url)] as const)
+    .filter(([, label]) => label)
+    .map(
+      ([url, label]) =>
+        `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 22px"><tr><td style="border-radius:8px;background:${ACCENT}"><a href="${url}" style="display:inline-block;padding:12px 24px;font-family:${FONT};font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px">${label}</a></td></tr></table>`,
+    )
+    .join("");
+}
+
+function infoTable(lines: string[]) {
+  const rows = lines
+    .map((line) => {
+      const t = line.replace(/^-\s*/, "");
+      const idx = t.indexOf(": ");
+      if (idx === -1) return `<tr><td colspan="2" style="padding:10px 16px;color:#18181b">${linkify(t)}</td></tr>`;
+      const label = t.slice(0, idx);
+      const value = t.slice(idx + 2);
+      return `<tr><td style="padding:10px 16px;width:120px;vertical-align:top;font-size:13px;color:#71717a;border-top:1px solid #f0f0f1">${label}</td><td style="padding:10px 16px;vertical-align:top;font-weight:600;color:#18181b;border-top:1px solid #f0f0f1">${linkify(value)}</td></tr>`;
+    })
+    .join("")
+    // Dòng đầu không cần kẻ trên.
+    .replace(/border-top:1px solid #f0f0f1/, "border-top:0").replace(/border-top:1px solid #f0f0f1/, "border-top:0");
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;border-collapse:separate">${rows}</table>`;
+}
+
+/** Text (HR có thể đã sửa) → HTML mail có thương hiệu. Escape hết rồi mới dựng thẻ. */
 export function textToHtml(text: string): string {
-  const paras = text
+  const blocks = text
     .replace(/\r\n/g, "\n")
     .split(/\n{2,}/)
     .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => {
-      const html = escapeHtml(p)
-        // Sau escape, `"` thành &quot; nên URL không thể thoát khỏi thuộc tính href.
-        .replace(/https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*/g, (match) => {
-          // Dấu câu cuối câu ("…/abc." hoặc "(…)") không thuộc URL.
-          const url = match.replace(/[.,;:!?)\]]+$/, "");
-          return `<a href="${url}" style="color:#ea580c">${url}</a>${match.slice(url.length)}`;
-        })
-        .replace(/\n/g, "<br>");
-      return `<p style="margin:0 0 14px">${html}</p>`;
+    .filter(Boolean);
+
+  const body = blocks
+    .map((raw) => {
+      const p = escapeHtml(raw);
+      const lines = p.split("\n");
+      if (lines.every((l) => /^-\s/.test(l))) return infoTable(lines) + ctaButtons(p);
+      if (/^Trân trọng/i.test(p)) {
+        const [first, name, ...rest] = lines;
+        return `<p style="margin:28px 0 0;padding-top:18px;border-top:1px solid #e4e4e7;color:#52525b">${first}<br><strong style="color:#18181b">${name ?? ""}</strong>${rest.length ? `<br><span style="font-size:13px">${linkify(rest.join("<br>"))}</span>` : ""}</p>`;
+      }
+      return `<p style="margin:0 0 16px">${linkify(lines.join("<br>"))}</p>${ctaButtons(p)}`;
     })
     .join("\n");
-  return `<!doctype html><html><body style="margin:0;padding:24px;background:#ffffff"><div style="max-width:600px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f2937">\n${paras}\n</div></body></html>`;
+
+  const preheader = escapeHtml(text.replace(/\s+/g, " ").trim().slice(0, 140));
+
+  return `<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>TD Games Studio</title></head>
+<body style="margin:0;padding:0;background:#f4f4f5">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${preheader}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5"><tr><td align="center" style="padding:32px 12px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;overflow:hidden">
+<tr><td style="background:#0a0a0a;padding:22px 32px"><img src="${LOGO_URL}" width="150" alt="TD Games Studio" style="display:block;border:0;width:150px;height:auto"></td></tr>
+<tr><td style="height:4px;line-height:4px;font-size:0;background:${ACCENT}">&nbsp;</td></tr>
+<tr><td style="padding:32px;font-family:${FONT};font-size:15px;line-height:1.65;color:#27272a">
+${body}
+</td></tr>
+</table>
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px"><tr><td style="padding:18px 32px;font-family:${FONT};font-size:12px;line-height:1.6;color:#a1a1aa;text-align:center">
+TD Games Studio · ${escapeHtml(OFFICE_ADDRESS)}<br>
+<a href="https://tdgamestudio.com" style="color:#71717a;text-decoration:none">tdgamestudio.com</a> · <a href="mailto:hr@tdgamestudio.com" style="color:#71717a;text-decoration:none">hr@tdgamestudio.com</a><br>
+Bạn nhận email này vì đã ứng tuyển tại TD Games.
+</td></tr></table>
+</td></tr></table>
+</body></html>`;
 }
