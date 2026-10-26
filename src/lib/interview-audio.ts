@@ -25,3 +25,19 @@ export function formatProgress(loaded: number, total: number): string {
   const pct = Math.min(100, Math.round((loaded / total) * 100));
   return `${pct}% · ${(loaded / MB).toFixed(1)}/${(total / MB).toFixed(1)} MB`;
 }
+
+/** Upload chia phần (R2 multipart): mọi phần trừ phần cuối phải ≥ 5 MiB. */
+export const AUDIO_PART_BYTES = 5 * 1024 * 1024;
+
+export function planParts(size: number, partSize = AUDIO_PART_BYTES) {
+  const parts: { partNumber: number; start: number; end: number }[] = [];
+  for (let start = 0, n = 1; start < size; start += partSize, n++) {
+    parts.push({ partNumber: n, start, end: Math.min(size, start + partSize) });
+  }
+  return parts;
+}
+
+/** Key do server sinh: interviews/YYYY/MM/<uuid>-<tên đã sanitize>. Chặn ghi đè file khác trên R2. */
+export function isInterviewAudioKey(key: string): boolean {
+  return /^interviews\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-[a-z0-9._-]+$/.test(key) && !key.includes("..");
+}

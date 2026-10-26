@@ -1,6 +1,14 @@
 import "server-only";
 
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CreateMultipartUploadCommand,
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand,
+} from "@aws-sdk/client-s3";
 import sharp from "sharp";
 
 // ponytail: tham số tune thực tế từ bot tdgames-discord. gif/svg cố ý không match
@@ -151,5 +159,50 @@ export async function deleteFromR2(key: string | null | undefined): Promise<bool
   } catch (err) {
     console.warn("[r2] xoá object thất bại, file còn lại trên CDN:", cleanKey, err);
     return false;
+  }
+}
+
+/**
+ * Upload chia phần (multipart) — dùng cho file lớn đi qua mạng chập chờn: mỗi phần là
+ * 1 request riêng, kẹt thì client gửi lại đúng phần đó (xem /api/hr/upload/audio/multipart).
+ */
+export async function createR2Multipart(key: string, contentType: string): Promise<string> {
+  const { bucket } = getR2Config();
+  const out = await createR2Client().send(
+    new CreateMultipartUploadCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
+  );
+  if (!out.UploadId) throw new Error("R2 không trả UploadId");
+  return out.UploadId;
+}
+
+export async function uploadR2Part(key: string, uploadId: string, partNumber: number, body: Buffer): Promise<string> {
+  const { bucket } = getR2Config();
+  const out = await createR2Client().send(
+    new UploadPartCommand({ Bucket: bucket, Key: key, UploadId: uploadId, PartNumber: partNumber, Body: body }),
+  );
+  if (!out.ETag) throw new Error("R2 không trả ETag");
+  return out.ETag;
+}
+
+export async function completeR2Multipart(key: string, uploadId: string, parts: { PartNumber: number; ETag: string }[]) {
+  const { bucket } = getR2Config();
+  await createR2Client().send(
+    new CompleteMultipartUploadCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: { Parts: [...parts].sort((a, b) => a.PartNumber - b.PartNumber) },
+    }),
+  );
+  return { key, url: r2PublicUrl(key) };
+}
+
+/** Best-effort, không throw. */
+export async function abortR2Multipart(key: string, uploadId: string) {
+  try {
+    const { bucket } = getR2Config();
+    await createR2Client().send(new AbortMultipartUploadCommand({ Bucket: bucket, Key: key, UploadId: uploadId }));
+  } catch {
+    // bỏ qua — R2 tự dọn multipart dở sau 7 ngày
   }
 }
