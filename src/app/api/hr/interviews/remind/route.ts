@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
 import { discordNotify, getDiscordUrl } from "@/lib/discord-notify";
 import { formatInterviewTime, modeLabel } from "@/lib/interview-schedule";
+import { sendHrPush } from "@/lib/hr-push";
+import { interviewReminderPayload } from "@/lib/hr-push-payload";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +24,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("interview_sessions")
-    .select("id, round, title, scheduled_at, mode, meet_url, applications(full_name, status, jobs(title))")
+    .select("id, application_id, round, title, scheduled_at, mode, meet_url, applications(full_name, status, jobs(title))")
     .is("reminded_at", null)
     .gt("scheduled_at", now.toISOString())
     .lte("scheduled_at", until.toISOString())
@@ -41,14 +43,31 @@ export async function GET(request: Request) {
   });
 
   if (due.length === 0) return NextResponse.json({ sent: 0 });
-  if (!getDiscordUrl("hr")) {
-    return NextResponse.json({ sent: 0, reason: "No Discord webhook configured for HR channel" });
-  }
+  const hasDiscord = Boolean(getDiscordUrl("hr"));
+  let pushed = 0;
 
   for (const s of due) {
     const app = one(s.applications)!;
     const job = one(app.jobs as { title: string } | { title: string }[] | null);
     const mins = Math.max(0, Math.round((new Date(s.scheduled_at!).getTime() - now.getTime()) / 60_000));
+
+    // Thông báo đẩy tới điện thoại đã cài app PWA /hr (song song với Discord).
+    const push = await sendHrPush(
+      interviewReminderPayload({
+        candidateName: app.full_name,
+        jobTitle: job?.title ?? null,
+        roundTitle: s.title ?? `Vòng ${s.round}`,
+        scheduledAt: s.scheduled_at!,
+        mode: s.mode,
+        meetUrl: s.meet_url,
+        minutes: mins,
+        interviewId: s.id,
+        applicationId: s.application_id,
+      }),
+    );
+    pushed += push.sent;
+
+    if (!hasDiscord) continue;
     await discordNotify("hr", {
       content: `@everyone ⏰ **Sắp PV** — ${app.full_name} sau ~${mins} phút`,
       embeds: [
@@ -71,5 +90,5 @@ export async function GET(request: Request) {
     .update({ reminded_at: now.toISOString() })
     .in("id", due.map((s) => s.id));
 
-  return NextResponse.json({ sent: due.length });
+  return NextResponse.json({ sent: due.length, pushed, discord: hasDiscord });
 }

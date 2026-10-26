@@ -10,6 +10,7 @@ import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
 import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
 import ThemeToggle, { useHrTheme } from "./ThemeToggle";
+import PushToggle from "./PushToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 import { ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
@@ -2655,6 +2656,7 @@ export default function HRDashboard() {
                 <path d="M16.5 3.5v3.6h-3.6" />
               </svg>
             </button>
+            <PushToggle hrKey={hrKey} />
             <div className="mx-1 sm:mx-1.5">
               <ThemeToggle pref={themePref} onChange={setThemePref} />
             </div>

@@ -1,0 +1,17 @@
+{
+  "name": "TD Games HR",
+  "short_name": "TD HR",
+  "description": "Tuyển dụng nội bộ TD Games — pipeline ứng viên, lịch phỏng vấn",
+  "id": "/hr",
+  "start_url": "/hr",
+  "scope": "/hr",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "lang": "vi",
+  "icons": [
+    { "src": "/hr-pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/hr-pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/hr-pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
