@@ -2,6 +2,8 @@
 
 ## Doing
 
+- [ ] HR: gửi mail ứng viên từ /hr qua Resend (hr@), hộp thoại xác nhận, chế độ test mặc định (2026-10-26) — code xong trên local (commit 7beea08..6e41757, chưa push), chờ sếp duyệt → push + RESEND_API_KEY lên VPS. LOG 2026-10-26
+
 - [x] HR: giao diện theo styleguide TD Games Work v4 (cam, Inter, chấm trạng thái, icon Lucide, làn Board) + Sáng/Tối/Theo máy (2026-10-22→23) — LOG 2026-10-23. Code xong + build OK; + popup hồ sơ mới + status dropdown (2026-10-23). Sếp duyệt trên local → commit + push 2026-10-23.
 
 - [x] HR: AI xếp hạng ứng viên phù hợp theo job (2026-10-22) — LOG 2026-10-22

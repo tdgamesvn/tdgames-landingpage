@@ -6170,3 +6170,34 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Result: tsc sạch; Playwright: ứng viên có vòng (Nguyen Thao Nguyen, 13 câu đã soạn → gập), ứng viên chưa có (nút Đặt lịch PV). KHÔNG bấm tạo vòng (DB prod).
 - Sếp OK → commit + push 2026-10-23.
 - Deploy 89a8648 CI success, prod có chuỗi 'Soạn câu hỏi bằng AI'.
+
+## 2026-10-26 — Kiểm tra gửi mail từ hr@tdgamestudio.com qua Resend
+- Task: sếp hỏi luồng gửi mail từ domain chính (hr@) bằng Resend chạy chưa.
+- Thực trạng: repo landingpage (cả /hr) CHƯA có code gửi mail, không có env mail. Resend chỉ dùng ở tdgames-platforms (notify-email `noreply@`, outreach `td-mailer-api`).
+- Resend account: 3 domain verified + sending enabled — `tdgamestudio.com`, `go.tdgamestudio.com` (outreach), `tdguild.com`. DNS domain chính đủ DKIM/SPF/bounce MX; DMARC `p=none`.
+- Test: gửi `TD Games HR <hr@tdgamestudio.com>` → tony@ bằng key mới sếp đưa → delivered, sếp xác nhận đã nhận.
+- Bẫy: `RESEND_API_KEY` trong `/etc/systemd/system/td-mailer-api.service` (VPS) đã CHẾT (Resend trả "API key is invalid"). Outreach đang tạm dừng nên chưa ảnh hưởng — phải thay key trước khi bật lại.
+- Next: nếu cần mail HR → làm tính năng gửi mail từ /hr (chưa có yêu cầu). Key mới đã lộ trong chat Telegram → nên tạo key sending-only.
+
+## 2026-10-26 — HR: thiết kế gửi mail ứng viên từ /hr (Resend, hr@) — CHƯA CODE
+- Task: sếp yêu cầu làm tính năng gửi mail ứng viên (mời PV, gửi bài test, báo trượt) từ /hr; CHƯA bật gửi thật cho ứng viên — cần test trước.
+- Sếp chốt: luôn hiện hộp thoại để HR xác nhận Gửi / Không gửi (không tự gửi); mail tiếng Việt.
+- Work Done: brainstorm + viết spec `docs/superpowers/specs/2026-10-26-hr-candidate-email-design.md` (4 loại mail, chế độ test qua env `HR_EMAIL_MODE` mặc định test → tony@, bảng `candidate_emails`, 3 API). Builder-check subagent đã review, đã cập nhật spec (test không phải status hệ thống, job_tests không có hạn nộp, địa chỉ VP chỉ có ở site-footer).
+- Result: spec chờ sếp duyệt. Chưa có code/migration.
+- Next: sếp trả lời (1) có thêm mail thứ 5 "Huỷ lịch PV" không, (2) duyệt spec → superpowers:writing-plans → implement. Khi deploy cần thêm `RESEND_API_KEY` + `HR_EMAIL_*` vào env VPS /opt/tdgames-landingpage.
+
+## 2026-10-26 (tiếp) — HR mail ứng viên: spec duyệt + plan
+- Sếp "duyệt hết" (gồm mail thứ 5 `interview_cancel`). Spec đã cập nhật.
+- Plan: `docs/superpowers/plans/2026-10-26-hr-candidate-email.md` (5 task: lib+test, DB+API, dialog, nối trigger, env+deploy).
+- Next: sếp xem plan + chọn cách chạy (subagent-driven / native) → implement. Chưa có code.
+
+## 2026-10-26 (tiếp) — HR mail ứng viên: code xong (local), CHƯA push
+- Task: thực hiện plan `docs/superpowers/plans/2026-10-26-hr-candidate-email.md` (native, sếp duyệt).
+- Work Done (commits 7beea08..6e41757 trên main, CHƯA push):
+  - `src/lib/hr-email.ts` (+test 14/14 `node --test src/lib/hr-email.test.ts`): config env, chế độ test (chỉ `HR_EMAIL_MODE=live` mới gửi thật), 5 mẫu mail tiếng Việt, textToHtml escape. `OFFICE_ADDRESS` trong company-location.ts.
+  - DB `candidate_emails` (migration 20261026000000, ĐÃ áp prod qua Supabase MCP). `src/lib/hr-email-send.ts` (Resend fetch). API `GET .../emails/draft`, `GET/POST .../emails`.
+  - UI: `CandidateMailDialog.tsx` (provider + hàng đợi hộp thoại + mục "Mail ứng viên" trong hồ sơ: nút Gửi mail + lịch sử, badge TEST). Hỏi gửi sau khi đổi status sang Test/Rejected (PipelineView kéo thả, AppCard, CandidateModalHost, QuickAction) và khi đặt/đổi/huỷ lịch PV (ScheduleBlock).
+- Result: tsc + build OK. Playwright local: Gửi mail → Mời PV → hộp thoại có dải TEST → Gửi → Resend delivered tới tony@ (From/Reply-To hr@), ứng viên thật KHÔNG nhận; lịch sử hiện TEST. Job chưa có đề → chỉ toast. Esc chỉ đóng hộp thoại. Review opus: 0 Critical, 2 Important đã sửa.
+- Chưa test: trigger khi đổi status/lịch PV thật (không muốn sửa dữ liệu prod + bắn Discord) — sếp thử khi duyệt.
+- `.env.local` đã thêm `RESEND_API_KEY` (gitignored).
+- Next: sếp duyệt → push (CI deploy) + thêm `RESEND_API_KEY` vào env VPS /opt/tdgames-landingpage (KHÔNG set HR_EMAIL_MODE ⇒ test). Bật thật: `HR_EMAIL_MODE=live` + pm2 restart --update-env.

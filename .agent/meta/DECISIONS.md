@@ -338,3 +338,8 @@ Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau 
 - (2026-10-22, v2) Khi chấm phù hợp: kết luận của team (lý do reject, comment, Leader chấm, PV) NẶNG HƠN CV tự khai — đừng viết prompt kiểu "ý kiến nội bộ chỉ tham khảo". Tiêu chí loại cứng (app_settings `hr_ranking_rules`) → blocked, không chỉ trừ điểm.
 - (2026-10-22) Theme /hr: KHÔNG sửa từng class màu trong component. `hr-theme.css` đổi nghĩa biến Tailwind (`--color-white`, `--color-amber-*`…) dưới `html[data-hr-theme]`. Component mới trong /hr cứ viết `text-white/50`, `bg-white/5`, `border-amber-500/30` như cũ là tự đúng ở cả Sáng/Tối. Không hardcode hex nền (dùng `hr-sheet` / `var(--hr-*)`); nút nền màu đặc chỉ dùng các class đã có rule chữ trắng trong hr-theme.css.
 - (2026-10-23) /hr theo styleguide TD Games Work v4 của tdgames-project-manager (bản chép `.agent/ref/STYLEGUIDE.md`) — 2 app nội bộ cùng một ngôn ngữ: cam #FF9500 (chữ cam = --hr-orange-ink), Inter, mặc định Sáng, nút viên thuốc, trạng thái = chấm 7px + chữ (`hr-tag--status`, `--tag`), tag không tô nền, icon `lucide-react` (class `hr-ico`/`hr-ico-solo`) — KHÔNG dùng emoji làm icon trong /hr. Styleguide gốc đổi thì cập nhật hr-theme.css theo.
+
+## 2026-10-26 — Mail ứng viên từ /hr: công tắc gửi thật là env, không phải UI
+- `HR_EMAIL_MODE` chỉ đúng `live` mới gửi tới ứng viên; thiếu/sai ⇒ test, mọi mail về `HR_EMAIL_TEST_TO` (mặc định tony@) với tiêu đề `[TEST → email]`. Lý do: HR không lỡ tay bật; người nhận luôn do server quyết.
+- Không bao giờ tự gửi: mọi mail qua hộp thoại xác nhận, HR sửa được nội dung (plain text → server dựng HTML có escape).
+- Gửi qua Resend REST (`fetch`, không SDK), From `TD Games HR <hr@tdgamestudio.com>`. Lịch sử ở bảng `candidate_emails`.
