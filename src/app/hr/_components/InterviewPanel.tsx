@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { InterviewSession } from "@/app/admin/_lib/types";
 import { formatInterviewTime, isMeetUrl } from "@/lib/interview-schedule";
+import { useCandidateMail } from "./CandidateMailDialog";
 import { CalendarDays, Check, ChevronRight, RefreshCw, Sparkles } from "lucide-react";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
@@ -64,12 +65,15 @@ function toLocalInput(iso: string | null) {
 function ScheduleBlock({
   session,
   hrKey,
+  candidateName,
   onChange,
 }: {
   session: InterviewSession;
   hrKey: string;
+  candidateName: string;
   onChange: (s: InterviewSession) => void;
 }) {
+  const mail = useCandidateMail();
   const [editing, setEditing] = useState(!session.scheduled_at);
   const [when, setWhen] = useState(toLocalInput(session.scheduled_at));
   const [mode, setMode] = useState<"offline" | "online">(session.mode ?? "offline");
@@ -112,17 +116,31 @@ function ScheduleBlock({
   }
 
   async function submit() {
+    const prev = session;
     const s = await save({
       scheduled_at: new Date(when).toISOString(),
       mode,
       meet_url: mode === "online" ? meet.trim() : null,
     });
-    if (s) setEditing(false);
+    if (!s) return;
+    setEditing(false);
+    // Lịch đã lưu — giờ mới hỏi có gửi mail cho ứng viên không (Không gửi thì lịch vẫn giữ).
+    const changed =
+      s.scheduled_at !== prev.scheduled_at || s.mode !== prev.mode || (s.meet_url ?? null) !== (prev.meet_url ?? null);
+    if (!prev.scheduled_at) {
+      mail.prompt({ appId: s.application_id, candidateName, kind: "interview_invite", interviewId: s.id });
+    } else if (changed) {
+      mail.prompt({ appId: s.application_id, candidateName, kind: "interview_reschedule", interviewId: s.id });
+    }
   }
 
   async function clear() {
     if (!confirm("Huỷ lịch PV của vòng này?")) return;
+    const prevAt = session.scheduled_at;
     const s = await save({ scheduled_at: null, mode: null, meet_url: null });
+    if (s && prevAt) {
+      mail.prompt({ appId: s.application_id, candidateName, kind: "interview_cancel", interviewId: s.id, prevScheduledAt: prevAt });
+    }
     if (s) {
       setWhen("");
       setMode("offline");
@@ -287,11 +305,13 @@ function Fold({
 function SessionCard({
   session,
   hrKey,
+  candidateName,
   onChange,
   onDelete,
 }: {
   session: InterviewSession;
   hrKey: string;
+  candidateName: string;
   onChange: (s: InterviewSession) => void;
   onDelete: () => void;
 }) {
@@ -429,7 +449,7 @@ function SessionCard({
 
       {error && <p className={ERR}>{error}</p>}
 
-      <ScheduleBlock session={session} hrKey={hrKey} onChange={onChange} />
+      <ScheduleBlock session={session} hrKey={hrKey} candidateName={candidateName} onChange={onChange} />
 
       {/* ── Câu hỏi PV (tuỳ chọn, cho Lead) ── */}
       <Fold
@@ -630,10 +650,13 @@ function SessionCard({
 export default function InterviewPanel({
   appId,
   hrKey,
+  candidateName = "",
   onSessionsChange,
 }: {
   appId: string;
   hrKey: string;
+  /** Tên ứng viên — hiện trong hộp thoại gửi mail mời/đổi/huỷ lịch PV. */
+  candidateName?: string;
   /** Báo ra ngoài để card ở kanban cập nhật chip lịch PV mà không cần tải lại. */
   onSessionsChange?: (sessions: InterviewSession[]) => void;
 }) {
@@ -730,6 +753,7 @@ export default function InterviewPanel({
           key={s.id}
           session={s}
           hrKey={hrKey}
+          candidateName={candidateName}
           onChange={(next) => setSessions((prev) => prev.map((x) => (x.id === next.id ? next : x)))}
           onDelete={() => removeRound(s.id)}
         />

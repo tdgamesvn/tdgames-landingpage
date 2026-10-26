@@ -8,7 +8,7 @@ import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
-import { CandidateMailProvider } from "./CandidateMailDialog";
+import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
 import ThemeToggle, { useHrTheme } from "./ThemeToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
@@ -81,6 +81,16 @@ async function patchStatus(
     body: JSON.stringify(body),
   });
   return res.ok;
+}
+
+/** Sau khi đổi status thành công: Test → hỏi gửi bài test, Rejected → hỏi gửi mail báo kết quả. */
+function promptMailForStatus(
+  prompt: ReturnType<typeof useCandidateMail>["prompt"],
+  app: Pick<Application, "id" | "full_name">,
+  status: ApplicationStatus,
+) {
+  const kind = status === "test" ? "test_assignment" : status === "rejected" ? "rejection" : null;
+  if (kind) prompt({ appId: app.id, candidateName: app.full_name, kind });
 }
 
 const DRAG_MIME = "application/x-tdg-app-id";
@@ -788,6 +798,7 @@ function CandidateModal({
             <InterviewPanel
               appId={app.id}
               hrKey={hrKey}
+              candidateName={app.full_name}
               onSessionsChange={(list) =>
                 onPatch({
                   interview_sessions: list.map(({ id, round, title, scheduled_at, mode, meet_url }) => ({
@@ -795,6 +806,13 @@ function CandidateModal({
                   })),
                 })
               }
+            />
+
+            <CandidateMailSection
+              appId={app.id}
+              candidateName={app.full_name}
+              hrKey={hrKey}
+              rounds={app.interview_sessions ?? []}
             />
 
             {/* Liên hệ & hồ sơ */}
@@ -987,6 +1005,7 @@ function AppCard({
   onDelete: (id: string) => void;
 }) {
   const S = useStatuses();
+  const mail = useCandidateMail();
   const [saving, setSaving] = useState(false);
   const [showNote, setShowNote] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -997,8 +1016,10 @@ function AppCard({
     if (status === app.status) return;
     setSaving(true);
     try {
-      if (await patchStatus(hrKey, app.id, status, rejection_reason))
+      if (await patchStatus(hrKey, app.id, status, rejection_reason)) {
         onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+        promptMailForStatus(mail.prompt, app, status);
+      }
     } finally {
       setSaving(false);
     }
@@ -1270,14 +1291,17 @@ function CandidateModalHost({
   onDelete: (id: string) => void;
   onClose: () => void;
 }) {
+  const mail = useCandidateMail();
   const [saving, setSaving] = useState(false);
 
   async function move(status: ApplicationStatus, rejection_reason?: string) {
     if (status === app.status) return;
     setSaving(true);
     try {
-      if (await patchStatus(hrKey, app.id, status, rejection_reason))
+      if (await patchStatus(hrKey, app.id, status, rejection_reason)) {
         onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+        promptMailForStatus(mail.prompt, app, status);
+      }
     } finally {
       setSaving(false);
     }
@@ -1336,6 +1360,7 @@ function PipelineView({
   onDelete: (id: string) => void;
 }) {
   const S = useStatuses();
+  const mail = useCandidateMail();
   const [overCol, setOverCol] = useState<ApplicationStatus | null>(null);
   const [pendingReject, setPendingReject] = useState<Application | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -1373,6 +1398,8 @@ function PipelineView({
     if (!ok) {
       onUpdate(app.id, prev as Partial<Application>);
       setError(`Không chuyển được "${app.full_name}" sang ${S.label(status)} — thử lại.`);
+    } else {
+      promptMailForStatus(mail.prompt, app, status);
     }
   }
 
@@ -2387,6 +2414,7 @@ function QuickAction({
   variant?: "reject" | "reopen";
 }) {
   const S = useStatuses();
+  const mail = useCandidateMail();
   const [saving, setSaving] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
 
@@ -2401,7 +2429,10 @@ function QuickAction({
         headers: { "content-type": "application/json", "x-hr-key": hrKey },
         body: JSON.stringify(body),
       });
-      if (res.ok) onUpdate(app.id, { status: targetStatus, rejection_reason: targetStatus === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+      if (res.ok) {
+        onUpdate(app.id, { status: targetStatus, rejection_reason: targetStatus === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+        promptMailForStatus(mail.prompt, app, targetStatus);
+      }
     } finally { setSaving(false); }
   }
 

@@ -5,7 +5,8 @@
  * SAU KHI thao tác gốc (đổi status, lưu lịch PV) đã lưu xong — bấm "Không gửi" không hoàn tác gì.
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { CandidateEmail } from "@/app/admin/_lib/types";
 import { createPortal } from "react-dom";
 import { CircleAlert, Mail, Send, X } from "lucide-react";
 import { KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
@@ -245,7 +246,7 @@ function MailDialog({
           <button onClick={onClose} disabled={sending} className="hr-secondary-btn">
             Không gửi
           </button>
-          <button onClick={() => void send()} disabled={!canSend} className="hr-primary-btn">
+          <button onClick={() => void send()} disabled={!canSend} className="hr-primary-btn inline-flex items-center gap-1.5 px-5 py-2">
             <Send className="hr-ico" />
             {sending ? "Đang gửi…" : "Gửi"}
           </button>
@@ -253,5 +254,103 @@ function MailDialog({
       </div>
     </div>,
     document.body,
+  );
+}
+
+type ScheduledRound = { id: string; round: number; scheduled_at: string | null };
+
+/** Mục "Mail ứng viên" trong hồ sơ: nút gửi tay + lịch sử mail đã gửi. */
+export function CandidateMailSection({
+  appId,
+  candidateName,
+  hrKey,
+  rounds,
+}: {
+  appId: string;
+  candidateName: string;
+  hrKey: string;
+  rounds: ScheduledRound[];
+}) {
+  const { prompt, lastSentAt } = useCandidateMail();
+  const [emails, setEmails] = useState<CandidateEmail[] | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/hr/applications/${appId}/emails`, { headers: { "x-hr-key": hrKey } })
+      .then((r) => r.json())
+      .then((j) => alive && setEmails(j.emails ?? []))
+      .catch(() => alive && setEmails([]));
+    return () => {
+      alive = false;
+    };
+  }, [appId, hrKey, lastSentAt]);
+
+  const scheduled = rounds.filter((r) => r.scheduled_at).sort((a, b) => a.round - b.round);
+  const pick = (kind: CandidateEmailKind, interviewId?: string) => {
+    setMenuOpen(false);
+    prompt({ appId, candidateName, kind, interviewId });
+  };
+
+  return (
+    <section className="hr-group px-4 py-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="hr-section-title">
+          Mail ứng viên <span className="font-normal text-white/50">{emails?.length ?? ""}</span>
+        </h4>
+        <div className="relative">
+          <button type="button" onClick={() => setMenuOpen((v) => !v)} className="hr-secondary-btn" aria-haspopup="menu" aria-expanded={menuOpen}>
+            <Mail className="hr-ico" />Gửi mail
+          </button>
+          {menuOpen && (
+            <div role="menu" className="hr-menu right-0">
+              {scheduled.length === 0 && (
+                <button role="menuitem" disabled className="hr-menu-item opacity-40">Mời / đổi lịch PV (chưa có lịch)</button>
+              )}
+              {scheduled.map((r) => (
+                <Fragment key={r.id}>
+                  <button role="menuitem" onClick={() => pick("interview_invite", r.id)} className="hr-menu-item">
+                    {KIND_LABEL.interview_invite} — vòng {r.round} ({formatInterviewTime(r.scheduled_at!)})
+                  </button>
+                  <button role="menuitem" onClick={() => pick("interview_reschedule", r.id)} className="hr-menu-item">
+                    {KIND_LABEL.interview_reschedule} — vòng {r.round}
+                  </button>
+                </Fragment>
+              ))}
+              <button role="menuitem" onClick={() => pick("test_assignment")} className="hr-menu-item">{KIND_LABEL.test_assignment}</button>
+              <button role="menuitem" onClick={() => pick("rejection")} className="hr-menu-item">{KIND_LABEL.rejection}</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {emails === null && <p className="text-[13px] text-white/50">Đang tải…</p>}
+      {emails?.length === 0 && <p className="text-[13px] text-white/50">Chưa gửi mail nào.</p>}
+      {emails && emails.length > 0 && (
+        <ul className="space-y-1.5">
+          {emails.map((e) => (
+            <li key={e.id} className="text-[13px]">
+              <button type="button" onClick={() => setOpenId(openId === e.id ? null : e.id)} className="w-full text-left">
+                <span className="font-semibold text-white/80">{KIND_LABEL[e.kind]}</span>
+                {e.test_mode && (
+                  <span className="ml-1.5 rounded border border-amber-500/40 px-1 text-[10px] font-bold text-amber-300">TEST</span>
+                )}
+                <span className="block text-[12px] text-white/50">
+                  {formatInterviewTime(e.created_at)} · tới {e.sent_to}
+                  {e.sent_by ? ` · ${e.sent_by}` : ""}
+                </span>
+              </button>
+              {openId === e.id && (
+                <div className="mt-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
+                  <p className="text-[12px] font-semibold text-white/70">{e.subject}</p>
+                  <pre className="mt-1 whitespace-pre-wrap font-sans text-[12px] text-white/60">{e.body_text}</pre>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
