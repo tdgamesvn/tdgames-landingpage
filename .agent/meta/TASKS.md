@@ -2,6 +2,8 @@
 
 ## Doing
 
+- [ ] HR: app PWA /hr + thông báo đẩy nhắc lịch PV (2026-10-26) — đã deploy, chờ sếp cài lên điện thoại + bật chuông để thử. LOG 2026-10-26
+
 - [ ] HR: gửi mail ứng viên từ /hr qua Resend (hr@), hộp thoại xác nhận, chế độ test mặc định (2026-10-26) — đã deploy prod ở chế độ test (53db1a4, 2026-10-26), chờ sếp thử rồi bật HR_EMAIL_MODE=live. LOG 2026-10-26
 
 - [x] HR: giao diện theo styleguide TD Games Work v4 (cam, Inter, chấm trạng thái, icon Lucide, làn Board) + Sáng/Tối/Theo máy (2026-10-22→23) — LOG 2026-10-23. Code xong + build OK; + popup hồ sơ mới + status dropdown (2026-10-23). Sếp duyệt trên local → commit + push 2026-10-23.

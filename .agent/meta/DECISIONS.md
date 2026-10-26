@@ -343,3 +343,8 @@ Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau 
 - `HR_EMAIL_MODE` chỉ đúng `live` mới gửi tới ứng viên; thiếu/sai ⇒ test, mọi mail về `HR_EMAIL_TEST_TO` (mặc định tony@) với tiêu đề `[TEST → email]`. Lý do: HR không lỡ tay bật; người nhận luôn do server quyết.
 - Không bao giờ tự gửi: mọi mail qua hộp thoại xác nhận, HR sửa được nội dung (plain text → server dựng HTML có escape).
 - Gửi qua Resend REST (`fetch`, không SDK), From `TD Games HR <hr@tdgamestudio.com>`. Lịch sử ở bảng `candidate_emails`.
+
+## 2026-10-26 — Nhắc lịch PV qua PWA: Web Push VAPID, SW không cache
+- /hr là PWA riêng (scope /hr), SW chỉ làm push — không cache để dữ liệu HR luôn mới.
+- Mọi thiết bị đã bật đều nhận (HR dùng chung key, không có user riêng). Nhắc cùng lúc Discord (~60' trước).
+- Endpoint push bắt buộc thuộc dịch vụ push chính thức (allowlist host) để server không POST tới địa chỉ tuỳ ý.

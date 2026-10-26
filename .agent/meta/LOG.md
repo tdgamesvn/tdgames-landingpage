@@ -6204,3 +6204,16 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Deploy 2026-10-26: sếp OK → thêm `RESEND_API_KEY` vào `/opt/tdgames-landingpage/.env.local` (backup `.env.local.bak-202610261`, KHÔNG set HR_EMAIL_MODE) → push 53db1a4 → CI success. Prod draft API trả `mode: test`, `test_to: tony@`. Chờ sếp thử trên prod (đổi status/lịch PV → hộp thoại).
 - 2026-10-26: sếp báo ô 'Lương mong muốn' trong hồ sơ bị cắt (…) → HRDashboard facts bỏ `truncate`, cho xuống dòng (`break-words`). Playwright: lương dài nhất (9.000.000 - 12.000.000 VND per month (negotiable)) hiện đủ.
 - Deploy commit 'ô số liệu xuống dòng': lần 1 CI fail (Google Fonts trên VPS, chập chờn như 2026-10-23) → rerun success, prod /hr 200.
+
+## 2026-10-26 — HR: app PWA /hr + thông báo đẩy nhắc lịch PV
+- Task: sếp muốn nhắc hẹn PV qua app PWA trên điện thoại (bỏ qua hỏi đáp, để em tự chọn).
+- Work Done (d5759de + fix SSRF, đã deploy):
+  - PWA: `public/hr.webmanifest` (scope/start_url /hr, "TD HR"), icon `public/hr-pwa/*` (nền #0a0a0a), SW `public/hr-sw.js` (chỉ push + notificationclick, KHÔNG cache), metadata trong `src/app/hr/page.tsx` (manifest, appleWebApp, noindex).
+  - Push: `web-push` (dep mới), `src/lib/hr-push.ts` (VAPID env `HR_PUSH_VAPID_PUBLIC_KEY`/`HR_PUSH_VAPID_PRIVATE_KEY`, xoá sub 404/410), `src/lib/hr-push-payload.ts` (+test 4/4; endpoint chỉ nhận fcm.googleapis.com, *.push.apple.com, *.push.services.mozilla.com, *.notify.windows.com — chặn SSRF theo security review).
+  - DB `hr_push_subscriptions` (migration 20261026010000, áp prod qua MCP). API `GET/POST/DELETE /api/hr/push` (POST `{action:"test", endpoint}` gửi thử 1 máy).
+  - Cron nhắc PV `/api/hr/interviews/remind` (~60' trước) giờ gửi push song song Discord; không có Discord vẫn push.
+  - UI: `PushToggle.tsx` — nút chuông trên toolbar: Bật thông báo (xin quyền → subscribe → gửi thử) / Gửi thử / Tắt; iPhone chưa cài app → hướng dẫn Thêm vào MH chính.
+- VPS: thêm 2 khoá VAPID vào `/opt/tdgames-landingpage/.env.local` (backup `.env.local.bak-202610262`).
+- Result: tsc/build OK; local Playwright: SW scope /hr activated, manifest + apple icon, chuông + popover. Prod: /hr.webmanifest, /hr-sw.js, icon 200; /api/hr/push trả publicKey; endpoint lạ → 400.
+- Chưa test: nhận push thật trên điện thoại (Playwright không bấm được "Cho phép") — sếp thử.
+- Bẫy: gọi `/api/hr/interviews/remind` từ local là chạy trên DB prod (bắn Discord + set reminded_at nếu có vòng sắp tới) — đừng gọi bừa.
