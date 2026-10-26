@@ -6217,3 +6217,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Result: tsc/build OK; local Playwright: SW scope /hr activated, manifest + apple icon, chuông + popover. Prod: /hr.webmanifest, /hr-sw.js, icon 200; /api/hr/push trả publicKey; endpoint lạ → 400.
 - Chưa test: nhận push thật trên điện thoại (Playwright không bấm được "Cho phép") — sếp thử.
 - Bẫy: gọi `/api/hr/interviews/remind` từ local là chạy trên DB prod (bắn Discord + set reminded_at nếu có vòng sắp tới) — đừng gọi bừa.
+
+## 2026-10-26 — HR: xem CV ngay trong popup hồ sơ
+- Task: sếp muốn vừa xem CV vừa xem câu hỏi PV + thông tin khác trong hồ sơ ứng viên.
+- Work Done: nút "Xem CV"/"Ẩn CV" trên header popup; màn ≥1024px popup rộng ~97vw chia 3 cột (CV | hồ sơ | bình luận), nhớ lựa chọn ở localStorage `hr.modal.cvOpen`. `src/lib/cv-viewer.ts` (+test 3/3): chỉ nhúng file trên *.tdgamestudio.com; PDF thêm `#navpanes=0&view=FitH`; .docx/.doc qua Office Online viewer (sếp OK). Màn hẹp/điện thoại: không render iframe, nút mở CV tab mới.
+- Data: 121 CV, 117 PDF + 4 docx, tất cả trên cdn.tdgamestudio.com (content-type application/pdf, nhúng được).
+- Result: build OK, test lib 27/27; Playwright 1600px: 3 cột, CV vừa khung đọc được; 390px: 0 iframe, nút "Xem CV".

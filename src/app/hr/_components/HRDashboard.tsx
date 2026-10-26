@@ -13,7 +13,8 @@ import ThemeToggle, { useHrTheme } from "./ThemeToggle";
 import PushToggle from "./PushToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
-import { ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
+import { cvViewerUrl } from "@/lib/cv-viewer";
+import { ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,8 @@ const StatusContext = createContext<StatusApi>(buildStatusApi(DEFAULT_STATUSES))
 const useStatuses = () => useContext(StatusContext);
 
 const COLLAPSED_KEY = "hr.pipeline.collapsed";
+const CV_OPEN_KEY = "hr.modal.cvOpen";
+const WIDE_MQ = "(min-width: 1024px)";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -565,6 +568,29 @@ function CandidateModal({
 }) {
   const S = useStatuses();
   const [showRejectModal, setShowRejectModal] = useState(false);
+  // Xem CV cạnh hồ sơ (màn ≥1024px). Nhớ lựa chọn để mở ứng viên khác vẫn giữ.
+  const cvEmbed = cvViewerUrl(app.cv_url);
+  const [cvOpenPref, setCvOpenPref] = useState(() => localStorage.getItem(CV_OPEN_KEY) === "1");
+  const [wide, setWide] = useState(() => window.matchMedia(WIDE_MQ).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(WIDE_MQ);
+    const on = () => setWide(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  // Màn hẹp không render iframe (khỏi tải PDF bằng 4G khi đang ẩn).
+  const showCv = cvOpenPref && Boolean(cvEmbed) && wide;
+  function toggleCv() {
+    if (!app.cv_url) return;
+    // Điện thoại/màn hẹp (hoặc file không nhúng được): mở tab mới.
+    if (!cvEmbed || !wide) {
+      window.open(app.cv_url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    const next = !cvOpenPref;
+    setCvOpenPref(next);
+    localStorage.setItem(CV_OPEN_KEY, next ? "1" : "0");
+  }
   const [note, setNote] = useState(app.admin_notes ?? "");
   const noteRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -632,7 +658,7 @@ function CandidateModal({
       onClick={onClose}
     >
       <div
-        className="flex h-[100dvh] w-full max-w-5xl flex-col hr-sheet overflow-hidden shadow-2xl md:h-[90vh] md:rounded-2xl md:border md:border-white/15"
+        className={`flex h-[100dvh] w-full ${showCv ? "max-w-5xl lg:h-[94vh] lg:max-w-[min(1800px,97vw)]" : "max-w-5xl"} flex-col hr-sheet overflow-hidden shadow-2xl md:h-[90vh] md:rounded-2xl md:border md:border-white/15`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header: danh tính + trạng thái + hành động chính */}
@@ -673,6 +699,18 @@ function CandidateModal({
                 <RotateCcw className="hr-ico" />Mở lại hồ sơ
               </button>
             )}
+            {app.cv_url && (
+              <button
+                onClick={toggleCv}
+                aria-pressed={showCv}
+                title={cvEmbed ? "Xem CV ngay cạnh hồ sơ" : "Mở CV ở tab mới"}
+                className={`hr-secondary-btn ${showCv ? "text-[var(--hr-orange)]" : ""}`}
+              >
+                <FileText className="hr-ico" />
+                <span className="lg:hidden">Xem CV</span>
+                <span className="hidden lg:inline">{showCv ? "Ẩn CV" : "Xem CV"}</span>
+              </button>
+            )}
             <MoreMenu>
               <button role="menuitem" onClick={onDeleteApp} disabled={saving} className="hr-menu-item text-red-400">
                 <Trash2 className="hr-ico" />Xoá hồ sơ
@@ -683,7 +721,22 @@ function CandidateModal({
 
         {/* Body */}
         {/* Mobile: 1 cột, cả thân modal cuộn chung. Desktop: 2 cột cuộn riêng. */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[1fr_360px] md:overflow-hidden">
+        <div
+          className={`grid min-h-0 flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[1fr_360px] md:overflow-hidden ${
+            showCv ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_340px]" : ""
+          }`}
+        >
+          {/* CV ứng viên — chỉ màn rộng; màn hẹp nút "Xem CV" mở tab mới */}
+          {showCv && cvEmbed && (
+            <div className="hidden min-h-0 flex-col border-r border-white/10 lg:flex">
+              <iframe key={cvEmbed} src={cvEmbed} title={`CV ${app.full_name}`} className="h-full w-full flex-1 bg-white" />
+              <div className="flex justify-end border-t border-white/10 px-3 py-1.5">
+                <a href={app.cv_url!} target="_blank" rel="noopener noreferrer" className="text-[12px] text-white/50 hover:text-white/80">
+                  Mở tab mới <ArrowUpRight className="hr-ico" />
+                </a>
+              </div>
+            </div>
+          )}
           <div className="hr-sheet-body min-w-0 space-y-4 px-4 py-4 md:overflow-y-auto md:px-6 md:py-5">
             {/* Số liệu chính — nhìn lướt là biết */}
             {facts.length > 0 && (
