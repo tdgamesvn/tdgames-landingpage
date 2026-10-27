@@ -154,8 +154,15 @@ export function validateTemplate(kind: string, subject: string, body: string): s
   if (typeof body !== "string" || body.trim().length < 1 || body.length > 10000) {
     return "Nội dung phải từ 1 đến 10000 ký tự";
   }
+  if (subject.replace(VAR_RE, "").trim().length < 1) return "Tiêu đề cần có chữ cố định, không chỉ gồm biến";
   const allowed = new Set(KIND_VARS[kind]);
+  const nearMiss = "Viết biến đúng dạng {ten_ung_vien} (không dấu cách, không ngoặc kép, viết thường)";
   for (const text of [subject, body]) {
+    if (/\{\{|\}\}/.test(text)) return nearMiss;
+    for (const m of text.matchAll(/\{([^{}\n]*)\}/g)) {
+      if (!/^[a-zA-Z0-9_]+$/.test(m[1]) && /^\s*[\p{L}_][\p{L}\p{N}_ ]*$/u.test(m[1].trimEnd())) return nearMiss;
+      if (/[A-Z]/.test(m[1]) && /^[a-zA-Z0-9_]+$/.test(m[1])) return nearMiss;
+    }
     for (const m of text.matchAll(VAR_RE)) {
       if (!allowed.has(m[1])) return `Biến {${m[1]}} không dùng được trong mẫu ${KIND_LABEL[kind]}`;
     }

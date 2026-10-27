@@ -181,7 +181,7 @@ test("validate: độ dài tiêu đề / nội dung", () => {
 });
 
 test("validate: mẫu hợp lệ → null; dấu ngoặc nhọn thường không bị coi là biến", () => {
-  assert.equal(validateTemplate("rejection", "Chào {ten_ung_vien}", "Xin chào {ten_ung_vien}, {vi_tri} {chu_ky} {} { a b }"), null);
+  assert.equal(validateTemplate("rejection", "Chào {ten_ung_vien}", "Xin chào {ten_ung_vien}, {vi_tri} {chu_ky} {} lẻ { nhé"), null);
 });
 
 test("renderTemplate: thay đúng biến, biến không có giữ nguyên, không thay lồng", () => {
@@ -221,4 +221,19 @@ test("SAMPLE_DRAFT_INPUT: render sạch, không còn biến chưa thay", () => {
     assert.match(d.text, /Nguyễn Văn A/);
   }
   assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 12);
+});
+
+test("validate: biến viết gần đúng bị từ chối, ngoặc lẻ vẫn được", () => {
+  for (const bad of ["{ ten_ung_vien }", "{{ten_ung_vien}}", "{Ten_Ung_Vien}", "{ten ung vien}", "{ten_ung_vien }"]) {
+    assert.match(validateTemplate("rejection", "Tiêu đề", `Chào ${bad}`) ?? "", /Viết biến đúng dạng \{ten_ung_vien\}/, bad);
+    assert.match(validateTemplate("rejection", `T ${bad}`, "x") ?? "", /Viết biến đúng dạng/, bad);
+  }
+  assert.equal(validateTemplate("rejection", "T", "a { b } c"), "Viết biến đúng dạng {ten_ung_vien} (không dấu cách, không ngoặc kép, viết thường)");
+  assert.equal(validateTemplate("rejection", "T", "dấu { lẻ, } lẻ, {} và {1+1}"), null);
+});
+
+test("validate: tiêu đề chỉ gồm biến/khoảng trắng bị từ chối", () => {
+  assert.ok(validateTemplate("rejection", "{vi_tri}", "x"));
+  assert.ok(validateTemplate("rejection", " {vi_tri} {ten_ung_vien} ", "x"));
+  assert.equal(validateTemplate("rejection", "{vi_tri} | TD", "x"), null);
 });

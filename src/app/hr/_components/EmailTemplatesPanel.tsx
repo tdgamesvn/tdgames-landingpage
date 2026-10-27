@@ -42,6 +42,8 @@ export default function EmailTemplatesPanel() {
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const lastField = useRef<"subject" | "body">("body");
 
   const load = useCallback(async () => {
     try {
@@ -65,6 +67,16 @@ export default function EmailTemplatesPanel() {
   const body = draft?.body ?? saved?.body ?? "";
   const dirty = !!saved && !!draft && (draft.subject !== saved.subject || draft.body !== saved.body);
 
+  useEffect(() => {
+    if (!dirty) return;
+    const h = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [dirty]);
+
   function pickKind(k: CandidateEmailKind) {
     if (k === kind) return;
     if (dirty && !confirm("Bỏ thay đổi chưa lưu của mẫu này?")) return;
@@ -78,11 +90,24 @@ export default function EmailTemplatesPanel() {
   }
 
   function insertVar(name: string) {
-    const el = bodyRef.current;
+    const field = lastField.current;
+    const el = field === "subject" ? subjectRef.current : bodyRef.current;
+    const cur = field === "subject" ? subject : body;
+    const max = field === "subject" ? 200 : 10000;
     const token = `{${name}}`;
-    const start = el?.selectionStart ?? body.length;
-    const end = el?.selectionEnd ?? body.length;
-    edit({ body: body.slice(0, start) + token + body.slice(end) });
+    if (cur.length + token.length > max) {
+      setNotice({ kind: "error", text: `Không chèn được: ${field === "subject" ? "tiêu đề" : "nội dung"} sẽ vượt ${max} ký tự` });
+      return;
+    }
+    const start = el?.selectionStart ?? cur.length;
+    const end = el?.selectionEnd ?? cur.length;
+    const next = cur.slice(0, start) + token + cur.slice(end);
+    if (next.length > max) {
+      setNotice({ kind: "error", text: `Không chèn được: ${field === "subject" ? "tiêu đề" : "nội dung"} sẽ vượt ${max} ký tự` });
+      return;
+    }
+    setNotice(null);
+    edit(field === "subject" ? { subject: next } : { body: next });
     requestAnimationFrame(() => {
       el?.focus();
       el?.setSelectionRange(start + token.length, start + token.length);
@@ -180,6 +205,8 @@ export default function EmailTemplatesPanel() {
             <label className="text-[12px] text-white/50" htmlFor="tpl-subject">Tiêu đề</label>
             <input
               id="tpl-subject"
+              ref={subjectRef}
+              onFocus={() => (lastField.current = "subject")}
               className={inputCls}
               value={subject}
               maxLength={200}
@@ -190,6 +217,7 @@ export default function EmailTemplatesPanel() {
             <label className="text-[12px] text-white/50" htmlFor="tpl-body">Nội dung</label>
             <textarea
               id="tpl-body"
+              onFocus={() => (lastField.current = "body")}
               ref={bodyRef}
               rows={16}
               maxLength={10000}
