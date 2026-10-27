@@ -69,6 +69,22 @@ export default function PushToggle() {
     };
   }, []);
 
+  // Máy đã bật thông báo từ trước (vd. thời mật khẩu chung, user_id = null) → khi đăng nhập tài khoản,
+  // gửi lại subscription im lặng để server gắn user_id (nhắc PV theo người). Phiên mật khẩu chung: bỏ qua.
+  const userId = me?.user.id ?? null;
+  const canPush = can("push.receive");
+  const resynced = useRef<string | null>(null);
+  useEffect(() => {
+    if (state !== "on" || !userId || !canPush || resynced.current === userId) return;
+    resynced.current = userId;
+    (async () => {
+      const reg = await navigator.serviceWorker.getRegistration(SW_SCOPE).catch(() => undefined);
+      const sub = await reg?.pushManager.getSubscription().catch(() => null);
+      if (!sub) return;
+      await api("POST", { subscription: sub.toJSON(), label: me?.user.displayName ?? null }).catch(() => {});
+    })();
+  }, [state, userId, canPush, api, me?.user.displayName]);
+
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {

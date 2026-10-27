@@ -72,14 +72,27 @@ const WIDE_MQ = "(min-width: 1024px)";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** PATCH status tự do sang bất kỳ cột nào (không ép thứ tự). Trả về true nếu OK. */
+/**
+ * Field server tự đặt khi đổi status (vd. sang Offer → offer_status = "pending") — gộp vào state local
+ * để khối Offer hiện ngay, không cần tải lại.
+ */
+async function serverSideFields(res: Response): Promise<Partial<Application>> {
+  const j = await res.json().catch(() => null);
+  const a = j?.application as Partial<Application> | undefined;
+  if (!a) return {};
+  const out: Partial<Application> = {};
+  if ("offer_status" in a) out.offer_status = a.offer_status;
+  return out;
+}
+
+/** PATCH status tự do sang bất kỳ cột nào (không ép thứ tự). Trả về field server đặt thêm nếu OK, null nếu lỗi. */
 async function patchStatus(
   id: string,
   status: ApplicationStatus,
   rejection_reason?: string,
   /** Có apps.edit — người chỉ có apps.offer không được gửi rejection_reason (server 403). */
   canEdit = true,
-): Promise<boolean> {
+): Promise<Partial<Application> | null> {
   const body: Record<string, unknown> = { status };
   // Rời Rejected thì xoá lý do; vào Rejected thì ghi lý do.
   if (canEdit) body.rejection_reason = status === "rejected" ? (rejection_reason ?? null) : null;
@@ -88,7 +101,7 @@ async function patchStatus(
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
-  return res.ok;
+  return res.ok ? serverSideFields(res) : null;
 }
 
 type Can = (p: PermissionKey) => boolean;
@@ -1072,8 +1085,9 @@ function AppCard({
     if (status === app.status) return;
     setSaving(true);
     try {
-      if (await patchStatus(app.id, status, rejection_reason, can("apps.edit"))) {
-        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+      const extra = await patchStatus(app.id, status, rejection_reason, can("apps.edit"));
+      if (extra) {
+        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null, ...extra } as Partial<Application>);
         promptMailForStatus(mail.prompt, app, status);
       }
     } finally {
@@ -1360,8 +1374,9 @@ function CandidateModalHost({
     if (status === app.status) return;
     setSaving(true);
     try {
-      if (await patchStatus(app.id, status, rejection_reason, can("apps.edit"))) {
-        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+      const extra = await patchStatus(app.id, status, rejection_reason, can("apps.edit"));
+      if (extra) {
+        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null, ...extra } as Partial<Application>);
         promptMailForStatus(mail.prompt, app, status);
       }
     } finally {
@@ -1456,16 +1471,17 @@ function PipelineView({
       rejection_reason: status === "rejected" ? (reason ?? null) : null,
     } as Partial<Application>);
     setError(null);
-    let ok = false;
+    let extra: Partial<Application> | null = null;
     try {
-      ok = await patchStatus(app.id, status, reason, can("apps.edit"));
+      extra = await patchStatus(app.id, status, reason, can("apps.edit"));
     } catch {
-      ok = false;
+      extra = null;
     }
-    if (!ok) {
+    if (!extra) {
       onUpdate(app.id, prev as Partial<Application>);
       setError(`Không chuyển được "${app.full_name}" sang ${S.label(status)} — thử lại.`);
     } else {
+      if (Object.keys(extra).length) onUpdate(app.id, extra);
       promptMailForStatus(mail.prompt, app, status);
     }
   }
@@ -2561,7 +2577,8 @@ function QuickAction({
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        onUpdate(app.id, { status: targetStatus, rejection_reason: targetStatus === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+        const extra = await serverSideFields(res);
+        onUpdate(app.id, { status: targetStatus, rejection_reason: targetStatus === "rejected" ? (rejection_reason ?? null) : null, ...extra } as Partial<Application>);
         promptMailForStatus(mail.prompt, app, targetStatus);
       }
     } finally { setSaving(false); }
@@ -2686,10 +2703,38 @@ export default function HRDashboard() {
 
 /** Chưa biết phiên → nền trống; chưa đăng nhập → form; có phiên → bàn làm việc. */
 function HrGate() {
-  const { me, loading } = useHrSession();
+  const { me, loading, connError, refresh } = useHrSession();
   // Giữ theme ở đây (1 chỗ) để đổi qua lại form ↔ bàn làm việc không bị gỡ data-hr-theme.
   const theme = useHrTheme();
+  const [retrying, setRetrying] = useState(false);
+  // Server lỗi (502 lúc pm2 restart) khi chưa có phiên → tự hỏi lại mỗi 5 giây.
+  const waiting = !loading && !me && !!connError;
+  useEffect(() => {
+    if (!waiting) return;
+    const t = setInterval(() => void refresh(), 5000);
+    return () => clearInterval(t);
+  }, [waiting, refresh]);
   if (loading) return <div className="hr-app min-h-screen" />;
+  if (waiting) {
+    return (
+      <HrAuthCard theme={theme} subtitle="Mất kết nối">
+        <div className="space-y-4">
+          <p className="text-[14px] leading-relaxed text-white/80">{connError}</p>
+          <button
+            type="button"
+            disabled={retrying}
+            onClick={() => {
+              setRetrying(true);
+              void refresh().finally(() => setRetrying(false));
+            }}
+            className="hr-primary-btn w-full py-2.5"
+          >
+            {retrying ? "Đang thử lại…" : "Thử lại"}
+          </button>
+        </div>
+      </HrAuthCard>
+    );
+  }
   if (!me) return <HrLogin theme={theme} />;
   return <HrWorkspace key={`${me.user.id ?? "legacy"}:${me.role}`} theme={theme} />;
 }

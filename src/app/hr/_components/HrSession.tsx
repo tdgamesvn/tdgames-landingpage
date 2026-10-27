@@ -6,7 +6,7 @@
  * và gửi qua header x-hr-key. Mọi request /api/hr đi qua `hrFetch` để không nơi nào tự gắn header.
  */
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { HrRole, PermissionKey } from "@/lib/hr-permissions";
 
 export type Me = {
@@ -53,6 +53,8 @@ type SessionApi = {
   me: Me | null;
   /** Đang hỏi server lần đầu — chưa biết đăng nhập hay chưa. */
   loading: boolean;
+  /** Lần hỏi /me gần nhất lỗi mạng / 5xx (vd. 502 lúc deploy): giữ nguyên phiên cũ, hiện thông báo thử lại. */
+  connError: string | null;
   can: (p: PermissionKey) => boolean;
   /** Hỏi lại /api/hr/auth/me (sau đăng nhập, hoặc khi API trả 401). */
   refresh: () => Promise<Me | null>;
@@ -78,23 +80,32 @@ async function fetchMe(): Promise<Me | null> {
   return (await res.json()) as Me;
 }
 
+const CONN_ERROR = "Không kết nối được máy chủ (có thể đang cập nhật) — thử lại sau ít giây.";
+
 export function HrSessionProvider({ children }: { children: React.ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
+  const [connError, setConnError] = useState<string | null>(null);
+  const meRef = useRef<Me | null>(null);
 
-  const refresh = useCallback(async () => {
-    let next: Me | null = null;
+  /** Hỏi /me. `failed` = lỗi mạng/5xx → KHÔNG đổi phiên, KHÔNG xoá mật khẩu chung. */
+  const load = useCallback(async (): Promise<{ me: Me | null; failed: boolean }> => {
+    let next: Me | null;
     try {
       next = await fetchMe();
     } catch {
-      // Lỗi mạng/server: coi như chưa đăng nhập, người dùng thử lại ở form.
-      next = null;
+      setConnError(CONN_ERROR);
+      return { me: meRef.current, failed: true };
     }
-    // Mật khẩu chung chỉ gửi kèm khi chính nó là thứ đang đăng nhập (cookie hợp lệ / key hỏng → bỏ key).
+    setConnError(null);
+    // Chỉ 401/403 mới là "chưa đăng nhập". Mật khẩu chung chỉ giữ khi chính nó đang đăng nhập.
     if (!next || !next.legacy) clearLegacyKey();
+    meRef.current = next;
     setMe(next);
-    return next;
+    return { me: next, failed: false };
   }, []);
+
+  const refresh = useCallback(async () => (await load()).me, [load]);
 
   useEffect(() => {
     let alive = true;
@@ -121,10 +132,11 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
         return typeof j.error === "string" ? j.error : "Email hoặc mật khẩu không đúng";
       }
       clearLegacyKey();
-      const next = await refresh();
-      return next ? null : "Đăng nhập không thành công, thử lại";
+      const r = await load();
+      if (r.failed) return CONN_ERROR;
+      return r.me ? null : "Đăng nhập không thành công, thử lại";
     },
-    [refresh],
+    [load],
   );
 
   const signInLegacy = useCallback(
@@ -134,10 +146,11 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
       } catch {
         return "Trình duyệt chặn lưu mật khẩu";
       }
-      const next = await refresh();
-      return next ? null : "Mật khẩu chung không đúng";
+      const r = await load();
+      if (r.failed) return CONN_ERROR;
+      return r.me ? null : "Mật khẩu chung không đúng";
     },
-    [refresh],
+    [load],
   );
 
   const signOut = useCallback(async () => {
@@ -146,6 +159,7 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
     if (!wasLegacy) {
       await fetch("/api/hr/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => null);
     }
+    meRef.current = null;
     setMe(null);
   }, [me?.legacy]);
 
@@ -154,13 +168,14 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
     return {
       me,
       loading,
+      connError,
       can: (p) => perms.has(p),
       refresh,
       signIn,
       signInLegacy,
       signOut,
     };
-  }, [me, loading, refresh, signIn, signInLegacy, signOut]);
+  }, [me, loading, connError, refresh, signIn, signInLegacy, signOut]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
