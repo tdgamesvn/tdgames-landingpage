@@ -130,7 +130,7 @@ test("textToHtml: dấu câu ngay sau URL không dính vào link", () => {
 
 test("email design: header logo, footer địa chỉ, preheader ẩn", () => {
   const html = textToHtml("Chào A,\n\nCảm ơn bạn đã ứng tuyển.\n\nTrân trọng,\nTD Games Studio — Phòng Nhân sự");
-  assert.ok(html.includes("https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark.png"));
+  assert.ok(html.includes("https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark-v2.png"));
   assert.ok(html.includes("505 Minh Khai"));
   assert.ok(/display:none[^>]*>[^<]*Chào A/.test(html), "preheader");
 });
@@ -256,7 +256,7 @@ test("resolveCc: Sếp là Leader của job → được CC ở mail mời PV", 
 
 test("textToHtml: header là ảnh banner nền tối (không mất logo khi Gmail đảo màu ở chế độ tối)", () => {
   const html = textToHtml("Chào bạn");
-  assert.ok(html.includes("https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark.png"));
+  assert.ok(html.includes("https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark-v2.png"));
   assert.ok(!html.includes("logo_td2.png"));
 });
 

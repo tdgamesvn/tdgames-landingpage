@@ -240,9 +240,9 @@ function escapeHtml(s: string) {
 
 // ── HTML mail (layout bảng, inline style — chạy được trên Gmail/Outlook/Apple Mail) ──
 
-// Header là ẢNH có sẵn nền #0a0a0a + logo (600×84, vẽ x2). Gmail chế độ tối đảo màu nền ô nhưng không
+// Header là ẢNH có sẵn nền #0a0a0a + logo (1200×272, co theo bề ngang; tỉ lệ như bản cũ trên điện thoại). Gmail chế độ tối đảo màu nền ô nhưng không
 // đảo ảnh → nếu để nền bằng CSS + logo chữ trắng thì nền thành sáng và chữ logo biến mất.
-const HEADER_URL = "https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark.png";
+const HEADER_URL = "https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark-v2.png";
 const ACCENT = "#ea580c";
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 const URL_RE = /https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*/g;
