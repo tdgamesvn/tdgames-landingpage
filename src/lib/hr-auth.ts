@@ -20,11 +20,12 @@ export async function getHRSecret(): Promise<string> {
   return process.env.HR_SECRET ?? process.env.ADMIN_SECRET ?? "";
 }
 
+/**
+ * Giữ chữ ký cũ cho các route chưa chuyển. Ủy quyền cho requireHrUser (cookie phiên hoặc x-hr-key).
+ * Import hr-session theo kiểu lazy vì hr-session import getHRSecret từ file này (tránh vòng khi khởi tạo module).
+ */
 export async function requireHR(req: Request): Promise<NextResponse | null> {
-  const secret = await getHRSecret();
-  if (!secret)
-    return NextResponse.json({ error: "HR_SECRET not configured" }, { status: 500 });
-  if (req.headers.get("x-hr-key") !== secret)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return null;
+  const { requireHrUser } = await import("./hr-session");
+  const r = await requireHrUser(req);
+  return "response" in r ? r.response : null;
 }
