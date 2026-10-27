@@ -74,9 +74,42 @@ test("đủ apps.view_* → nguyên bản", () => {
   assert.ok("some_future_column" in redactApplication(app, perms));
 });
 
-test("redactInterview", () => {
-  const row = { id: "i", application_id: "a", scheduled_at: "t", transcript: "x", evaluation: {}, score: 1, audio_url: "u", questions: [], future: 1 };
+test("redactInterview với đủ cột thật", () => {
+  const row = {
+    id: "i", application_id: "a", round: 1, title: "t", questions: [], audio_url: "u", audio_key: "k",
+    audio_bytes: 1, transcript: "x", transcript_source: "s", evaluation: {}, score: 1,
+    created_at: "c", updated_at: "u", scheduled_at: "t", mode: "online", meet_url: "m",
+    reminded_at: "r", analysis_status: "done", analysis_error: "e", analysis_started_at: "s", future: 1,
+  };
   const no = redactInterview(row, new Set<PermissionKey>(["apps.view_interviews"]));
-  assert.deepEqual(Object.keys(no), ["id", "application_id", "scheduled_at"]);
+  assert.deepEqual(Object.keys(no).sort(), [
+    "analysis_status", "application_id", "created_at", "id", "meet_url", "mode",
+    "reminded_at", "round", "scheduled_at", "title", "updated_at",
+  ]);
   assert.equal(redactInterview(row, new Set<PermissionKey>(["apps.view_interview_analysis"])), row);
+});
+
+test("redactApplication gỡ nested interview_sessions và jobs", () => {
+  const a = {
+    id: "a", job_id: "j1", status: "new",
+    jobs: { id: "j1", title: "T", slug: "t", leader_user_id: "u", secret: 1 },
+    interview_sessions: [{ id: "i", scheduled_at: "t", meet_url: "m", transcript: "x", questions: [1], score: 5 }],
+  };
+  const perms = effectivePermissions("leader", []);
+  const out = redactApplication(a, perms) as typeof a;
+  assert.deepEqual(out.jobs, { id: "j1", title: "T", slug: "t" });
+  assert.deepEqual(out.interview_sessions, [{ id: "i", scheduled_at: "t", meet_url: "m" }]);
+  const noIv = new Set<PermissionKey>(["apps.view_tests"]);
+  assert.ok(!("interview_sessions" in redactApplication(a, noIv)));
+  assert.equal(a.interview_sessions[0].transcript, "x");
+});
+
+test("kế toán: status đảo thứ tự theo position; thiếu interview + offer_status vẫn thấy", () => {
+  const acc = { ...base, role: "accountant" as const };
+  const shuffled = [...statuses].reverse();
+  assert.deepEqual(accountantStatusKeys(shuffled).sort(), ["interview", "offer"]);
+  const noIv = statuses.filter((s) => s.key !== "interview");
+  const s2 = { ...acc, statuses: noIv };
+  assert.equal(inScope(s2, { job_id: "j", status: "offer" }), false);
+  assert.equal(inScope(s2, { job_id: "j", status: "offer", offer_status: "accepted" }), true);
 });

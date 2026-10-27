@@ -9,6 +9,7 @@ export type ScopeInput = {
   statuses: { key: string; position: number; kind: "open" | "won" | "lost" }[];
 };
 
+/** Phạm vi kế toán neo theo status có key "interview" (đổi/xoá key này thì kế toán chỉ còn thấy hồ sơ có offer_status). */
 /** Status kế toán được thấy: từ vị trí "interview" trở đi, trừ nhóm lost. Không có "interview" → []. */
 export function accountantStatusKeys(statuses: ScopeInput["statuses"]): string[] {
   const iv = statuses.find((s) => s.key === "interview");
@@ -32,17 +33,14 @@ export function inScope(
 }
 
 /** Luôn giữ, không phụ thuộc quyền. */
-export const BASE_FIELDS: string[] = [
+export const BASE_FIELDS: readonly string[] = Object.freeze([
   "id", "job_id", "jobs", "full_name", "work_type", "years_experience", "cv_url", "portfolio_url",
   "available_from", "status", "offer_status", "offer_status_at", "created_at", "updated_at",
   "message", "available_hours_per_week",
-];
+]);
 
 /** Nhóm field theo quyền; quyền không gắn field trên hồ sơ → []. Key không thuộc nhóm nào bị bỏ. */
-export const FIELD_GROUPS: Record<PermissionKey, string[]> = Object.fromEntries(
-  HR_PERMISSIONS.map((p) => [p.key, [] as string[]]),
-) as Record<PermissionKey, string[]>;
-Object.assign(FIELD_GROUPS, {
+const GROUPS_WITH_FIELDS = {
   "apps.view_contact": ["email", "phone", "contact_channel", "contact_handle", "linkedin_url", "website_url"],
   "apps.view_salary": ["expected_salary", "rate_per_hour"],
   "apps.view_ai": [
@@ -52,7 +50,19 @@ Object.assign(FIELD_GROUPS, {
   "apps.view_notes": ["admin_notes", "rejection_reason", "referred_by", "source", "blocked", "block_reason", "label"],
   "apps.view_interviews": ["interview_sessions"],
   "apps.view_tests": ["test_submissions", "test_review", "test_token", "test_eta", "test_eta_set_at"],
-});
+} as const;
+
+export const FIELD_GROUPS: Readonly<Record<PermissionKey, readonly string[]>> = Object.freeze(
+  Object.fromEntries(
+    HR_PERMISSIONS.map((p) => [
+      p.key,
+      Object.freeze([...((GROUPS_WITH_FIELDS as Record<string, readonly string[]>)[p.key] ?? [])]),
+    ]),
+  ),
+) as Readonly<Record<PermissionKey, readonly string[]>>;
+
+/** Job lồng trong hồ sơ: chỉ giữ các key này khi không đủ quyền. */
+const JOB_FIELDS = ["id", "title", "slug"] as const;
 
 const VIEW_PERMS = HR_PERMISSIONS.map((p) => p.key).filter((k) => k.startsWith("apps.view_"));
 
@@ -73,7 +83,14 @@ export function redactApplication<T extends Record<string, unknown>>(
   const canAi = perms.has("apps.view_ai");
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(app)) {
-    if (allowed.has(k) || (canAi && isAiKey(k))) out[k] = v;
+    if (!(allowed.has(k) || (canAi && isAiKey(k)))) continue;
+    if (k === "jobs" && v && typeof v === "object" && !Array.isArray(v)) {
+      const job = v as Record<string, unknown>;
+      out[k] = Object.fromEntries(JOB_FIELDS.filter((f) => f in job).map((f) => [f, job[f]]));
+    } else if (k === "interview_sessions" && Array.isArray(v)) {
+      // Lịch PV lồng trong hồ sơ cũng phải gỡ băng/phân tích khi thiếu quyền.
+      out[k] = v.map((r) => (r && typeof r === "object" ? redactInterview(r as Record<string, unknown>, perms) : r));
+    } else out[k] = v;
   }
   return out as Partial<T>;
 }
