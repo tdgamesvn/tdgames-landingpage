@@ -6,6 +6,7 @@ import { formatInterviewTime, modeLabel } from "@/lib/interview-schedule";
 import { sendHrPush } from "@/lib/hr-push";
 import { interviewReminderPayload } from "@/lib/hr-push-payload";
 import { pushRecipientUserIds } from "@/lib/hr-push-recipients";
+import { buildMentions } from "@/lib/hr-discord-mentions";
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "@/lib/hr-permissions";
 
 export const runtime = "nodejs";
@@ -50,12 +51,17 @@ export async function GET(request: Request) {
   // Người nhận push: tài khoản chưa khoá có quyền push.receive; Leader chỉ nhận PV job mình phụ trách.
   // Lỗi đọc DB → không đẩy ai (fail closed), Discord vẫn chạy.
   const [{ data: userRows, error: usersErr }, { data: permRows, error: permsErr }] = await Promise.all([
-    supabase.from("hr_users").select("id, role, disabled"),
+    supabase.from("hr_users").select("id, role, disabled, discord_user_id"),
     supabase.from("hr_role_permissions").select("role, permission, allowed"),
   ]);
   const recipientsOk = !usersErr && !permsErr;
   const pushUsers = (userRows ?? []).flatMap((u) =>
     (HR_ROLES as readonly string[]).includes(u.role) ? [{ id: String(u.id), role: u.role as HrRole, disabled: !!u.disabled }] : [],
+  );
+  const mentionStaff = (userRows ?? []).flatMap((u) =>
+    (HR_ROLES as readonly string[]).includes(u.role)
+      ? [{ id: String(u.id), role: u.role as HrRole, disabled: !!u.disabled, discord_user_id: u.discord_user_id ?? null }]
+      : [],
   );
   const overrides = (permRows ?? []).map((r) => ({ role: String(r.role), permission: String(r.permission), allowed: !!r.allowed }));
   const permsByRole = new Map<HrRole, Set<PermissionKey>>(HR_ROLES.map((r) => [r, effectivePermissions(r, overrides)]));
@@ -85,8 +91,9 @@ export async function GET(request: Request) {
     pushed += push.sent;
 
     if (!hasDiscord) continue;
+    const tag = recipientsOk ? buildMentions(mentionStaff, ["hr", "leader"], job?.leader_user_id ?? null) : "@everyone";
     await discordNotify("hr", {
-      content: `@everyone ⏰ **Sắp PV** — ${app.full_name} sau ~${mins} phút`,
+      content: `${tag} ⏰ **Sắp PV** — ${app.full_name} sau ~${mins} phút`,
       embeds: [
         {
           title: `${app.full_name} — ${job?.title ?? "?"} · ${s.title ?? `Vòng ${s.round}`}`,

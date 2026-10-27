@@ -7,6 +7,30 @@
 
 import { discordNotify } from "@/lib/discord-notify";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { buildMentions, type MentionStaff } from "@/lib/hr-discord-mentions";
+import { HR_ROLES, type HrRole } from "@/lib/hr-permissions";
+
+/**
+ * Tag đúng người (Discord ID trong tài khoản /hr) thay cho @everyone.
+ * Lỗi đọc DB hoặc không ai có ID → "@everyone" như cũ (không được làm mất thông báo).
+ */
+export async function hrMentions(roles: HrRole[], jobId: string | null | undefined): Promise<string> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const [{ data: users, error }, job] = await Promise.all([
+      supabase.from("hr_users").select("id, role, disabled, discord_user_id").not("discord_user_id", "is", null),
+      jobId
+        ? supabase.from("jobs").select("leader_user_id").eq("id", jobId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    if (error) return "@everyone";
+    const staff = (users ?? []).filter((u) => (HR_ROLES as readonly string[]).includes(u.role)) as MentionStaff[];
+    const leaderId = (job.data as { leader_user_id: string | null } | null)?.leader_user_id ?? null;
+    return buildMentions(staff, roles, leaderId);
+  } catch {
+    return "@everyone";
+  }
+}
 
 interface OldApp {
   full_name: string | null;
@@ -25,6 +49,7 @@ export async function notifyNewComment(
   authorName: string,
   content: string,
   jobTitle?: string,
+  jobId?: string | null,
 ): Promise<void> {
   const truncated =
     content.length > 500 ? content.slice(0, 497) + "..." : content;
@@ -35,8 +60,9 @@ export async function notifyNewComment(
   if (jobTitle) fields.push({ name: "Position", value: jobTitle, inline: true });
   fields.push({ name: "Comment", value: truncated, inline: false });
 
+  const tag = await hrMentions(["hr", "leader"], jobId);
   await discordNotify("hr", {
-    content: `@everyone 💬 **${applicantName}** — new comment by ${authorName}`,
+    content: `${tag} 💬 **${applicantName}** — new comment by ${authorName}`,
     embeds: [
       {
         title: `💬 Comment — ${applicantName}`,
@@ -81,6 +107,8 @@ export async function notifyApplicationUpdate(
   if (statusChanged) {
     const oldStatus = oldApp.status ?? "unknown";
     const newStatus = String(updates.status);
+    // Chuyển sang Offer → báo thêm Kế toán (người soạn + gửi mail offer).
+    const statusTag = await hrMentions(newStatus === "offer" ? ["hr", "leader", "accountant"] : ["hr", "leader"], oldApp.job_id);
     const isRejected = newStatus === "rejected";
     const reason = isRejected
       ? String(updates.rejection_reason ?? body.rejection_reason ?? "")
@@ -106,7 +134,7 @@ export async function notifyApplicationUpdate(
       fields.push({ name: "Reason", value: reason, inline: false });
 
     await discordNotify("hr", {
-      content: `@everyone ${emoji} **${name}** — status updated`,
+      content: `${statusTag} ${emoji} **${name}** — status updated`,
       embeds: [
         {
           title: `${emoji} ${isRejected ? "Rejected" : newStatus === "offer" ? "Offer!" : "Status Update"} — ${name}`,
@@ -136,8 +164,9 @@ export async function notifyApplicationUpdate(
       if (jobTitle)
         fields.push({ name: "Position", value: jobTitle, inline: true });
 
+      const noteTag = await hrMentions(["hr", "leader"], oldApp.job_id);
       await discordNotify("hr", {
-        content: `@everyone 💬 **${name}** — note updated`,
+        content: `${noteTag} 💬 **${name}** — note updated`,
         embeds: [
           {
             title: `💬 Note — ${name}`,
@@ -181,8 +210,9 @@ export async function notifyApplicationUpdate(
         inline: false,
       });
 
+    const reviewTag = await hrMentions(["hr"], oldApp.job_id);
     await discordNotify("hr", {
-      content: `@everyone 📝 **${name}** — ${review.reviewer} đã chấm bài test: ${v.emoji} ${v.label} (${review.score}/10)`,
+      content: `${reviewTag} 📝 **${name}** — ${review.reviewer} đã chấm bài test: ${v.emoji} ${v.label} (${review.score}/10)`,
       embeds: [
         {
           title: `📝 Chấm bài test — ${name}`,

@@ -101,6 +101,7 @@ export async function POST(
         authorName,
         content,
         jobTitle,
+        app?.job_id ?? null,
       );
     } catch {
       // Silently ignore — DB insert already succeeded

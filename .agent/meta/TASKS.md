@@ -2,7 +2,7 @@
 
 ## Doing
 
-- [ ] HR: đăng nhập theo tài khoản + phân quyền theo vai (2026-10-27) — ĐÃ DEPLOY. Còn: sếp đặt mật khẩu tài khoản Sếp → tạo tài khoản HR/Leader/Kế toán, gán Leader cho job → báo em gỡ mật khẩu chung (Task 12B trong plan). Minor tồn: clientIp nên ưu tiên x-real-ip (nginx ghi đè) trước cf-connecting-ip; nút ghi trong GET (remind, draft test token); file R2 cũ svg chưa chuyển; /api/hr/upload + upload-cv vẫn tin content-type trình duyệt. LOG 2026-10-27
+- [ ] HR: đăng nhập theo tài khoản + phân quyền theo vai (2026-10-27) — ĐÃ DEPLOY. + Discord ID + tag đúng người (2026-10-27) — chờ sếp điền Discord ID trong tab Tài khoản. Còn: sếp đặt mật khẩu tài khoản Sếp → tạo tài khoản HR/Leader/Kế toán, gán Leader cho job → báo em gỡ mật khẩu chung (Task 12B trong plan). Minor tồn: clientIp nên ưu tiên x-real-ip (nginx ghi đè) trước cf-connecting-ip; nút ghi trong GET (remind, draft test token); file R2 cũ svg chưa chuyển; /api/hr/upload + upload-cv vẫn tin content-type trình duyệt. LOG 2026-10-27
 
 - [ ] HR: app PWA /hr + thông báo đẩy nhắc lịch PV (2026-10-26) — đã deploy, chờ sếp cài lên điện thoại + bật chuông để thử. LOG 2026-10-26
 
