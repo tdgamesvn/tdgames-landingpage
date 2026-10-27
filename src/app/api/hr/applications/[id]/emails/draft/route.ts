@@ -81,6 +81,17 @@ export async function GET(request: Request, { params }: Ctx) {
   }
 
   const job = (Array.isArray(app.jobs) ? app.jobs[0] : app.jobs) as { title?: string } | null;
+  // Mẫu HR đã sửa (nếu có). Lỗi đọc → dùng mẫu mặc định, không chặn việc soạn mail.
+  let template: { subject: string; body: string } | null = null;
+  {
+    const { data: t, error: tErr } = await supabase
+      .from("hr_email_templates")
+      .select("subject, body")
+      .eq("kind", kind)
+      .maybeSingle();
+    if (tErr) console.error("draft: đọc hr_email_templates lỗi, dùng mẫu mặc định:", tErr.message);
+    else if (t) template = { subject: String(t.subject), body: String(t.body) };
+  }
   const draft = buildDraft({
     kind,
     candidateName: app.full_name ?? "",
@@ -90,7 +101,7 @@ export async function GET(request: Request, { params }: Ctx) {
     testUrl,
     hasMbti: Boolean(app.mbti_type || app.mbti_url),
     offer: kind === "offer" ? { salary: url.searchParams.get("salary")?.slice(0, 100) ?? "", startDate: url.searchParams.get("start_date")?.slice(0, 100) ?? "" } : null,
-  });
+  }, template);
   let ccPreview: string[];
   try {
     ccPreview = (await resolveCcForApplication(cfg, kind, auth.ctx, (app.job_id as string | null) ?? null)).ccPreview;

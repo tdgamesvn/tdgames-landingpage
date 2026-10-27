@@ -36,6 +36,7 @@ export const HR_PERMISSIONS = [
   { key: "interviews.manage", label: "Tạo / sửa lịch PV, upload & phân tích ghi âm", group: "Phỏng vấn & mail", defaults: d(true, false, false) },
   { key: "emails.send", label: "Gửi mail ứng viên (mời PV, bài test, báo trượt…)", group: "Phỏng vấn & mail", defaults: d(true, false, false) },
   { key: "emails.send_offer", label: "Gửi mail offer", group: "Phỏng vấn & mail", defaults: d(true, false, true) },
+  { key: "emails.templates", label: "Xem & sửa mẫu mail", group: "Phỏng vấn & mail", defaults: d(true, false, true) },
   { key: "jobs.manage", label: "Quản lý job, bài test, trạng thái pipeline, quy tắc xếp hạng", group: "Job & hệ thống", defaults: d(true, false, false) },
   { key: "jobs.assign_leader", label: "Gán Leader cho job", group: "Job & hệ thống", defaults: d(true, false, false) },
   { key: "ai.run", label: "Chạy AI chấm / xếp hạng / tìm kiếm AI", group: "Job & hệ thống", defaults: d(true, false, false) },

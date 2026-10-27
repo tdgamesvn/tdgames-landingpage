@@ -144,3 +144,4 @@ Mọi request ghi (POST/PATCH/PUT/DELETE) phải cùng nguồn: header `Origin` 
 - Cron: `GET /api/hr/remind`, `/api/hr/interviews/remind` header `x-hr-cron-key: $HR_CRON_SECRET` (GitHub secret + VPS .env.local).
 - Quyền theo vai: `src/lib/hr-permissions.ts`; phạm vi + ẩn field: `src/lib/hr-scope.ts` (Leader: job có `leader_user_id` = mình; Kế toán: status từ Interview trở đi hoặc có `offer_status`).
 - Tạo tài khoản Sếp đầu tiên: `node --env-file=.env.local scripts/hr-create-boss.mjs --email … --name …` (in link đặt mật khẩu).
+- Mẫu mail ứng viên (quyền `emails.templates`): `GET /api/hr/email-templates` → `{templates[{kind,label,subject,body,isDefault,updated_by,updated_at}], defaults, vars, varHelp}` · `PUT {kind,subject,body}` (400 tiếng Việt nêu tên biến sai) · `DELETE ?kind=` (về mặc định = xoá dòng). `GET /api/hr/applications/[id]/emails/draft` dùng mẫu này (lỗi đọc DB → mặc định).

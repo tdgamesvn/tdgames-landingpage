@@ -5,32 +5,23 @@
  * Chế độ test là mặc định: chỉ `HR_EMAIL_MODE=live` mới gửi tới ứng viên.
  */
 
-import { GOOGLE_MAPS_URL, OFFICE_ADDRESS } from "./company-location.ts";
+import { OFFICE_ADDRESS } from "./company-location.ts";
+import {
+  CANDIDATE_EMAIL_KINDS,
+  KIND_LABEL,
+  MBTI_TEST_URL,
+  formatInterviewLong,
+  isCandidateKind,
+  type CandidateEmailKind,
+  type DraftInput,
+} from "./hr-email-base.ts";
+import { DEFAULT_TEMPLATES, renderTemplate, templateVars, type EmailTemplate } from "./hr-email-templates.ts";
 import type { HrRole } from "./hr-permissions.ts";
 
-export const CANDIDATE_EMAIL_KINDS = [
-  "interview_invite",
-  "interview_reschedule",
-  "interview_cancel",
-  "test_assignment",
-  "rejection",
-  "offer",
-] as const;
+export { CANDIDATE_EMAIL_KINDS, KIND_LABEL, MBTI_TEST_URL, formatInterviewLong };
+export type { CandidateEmailKind, DraftInput };
 
-export type CandidateEmailKind = (typeof CANDIDATE_EMAIL_KINDS)[number];
-
-export const KIND_LABEL: Record<CandidateEmailKind, string> = {
-  interview_invite: "Mời phỏng vấn",
-  interview_reschedule: "Đổi lịch phỏng vấn",
-  interview_cancel: "Huỷ lịch phỏng vấn",
-  test_assignment: "Gửi bài test",
-  rejection: "Báo kết quả (không phù hợp)",
-  offer: "Gửi offer",
-};
-
-export function isCandidateEmailKind(v: unknown): v is CandidateEmailKind {
-  return typeof v === "string" && (CANDIDATE_EMAIL_KINDS as readonly string[]).includes(v);
-}
+export const isCandidateEmailKind = isCandidateKind;
 
 export type HrEmailConfig = {
   mode: "test" | "live";
@@ -98,135 +89,9 @@ export function resolveCc(
   return { cc: cfg.mode === "live" ? ccPreview : [], ccPreview };
 }
 
-const VN_TZ = "Asia/Ho_Chi_Minh";
-const WEEKDAY_LONG: Record<string, string> = {
-  Mon: "Thứ Hai", Tue: "Thứ Ba", Wed: "Thứ Tư", Thu: "Thứ Năm", Fri: "Thứ Sáu", Sat: "Thứ Bảy", Sun: "Chủ Nhật",
-};
-
-/** "15:30, Thứ Hai 19/10/2026" theo giờ VN. */
-export function formatInterviewLong(iso: string) {
-  const d = new Date(iso);
-  const time = d.toLocaleTimeString("en-GB", { timeZone: VN_TZ, hour: "2-digit", minute: "2-digit", hour12: false });
-  const date = d.toLocaleDateString("en-GB", { timeZone: VN_TZ, day: "2-digit", month: "2-digit", year: "numeric" });
-  const wd = new Intl.DateTimeFormat("en-US", { timeZone: VN_TZ, weekday: "short" }).format(d);
-  return `${time}, ${WEEKDAY_LONG[wd] ?? wd} ${date}`;
-}
-
-export type DraftInput = {
-  kind: CandidateEmailKind;
-  candidateName: string;
-  jobTitle: string;
-  interview?: {
-    scheduledAt: string;
-    mode: "offline" | "online" | null;
-    meetUrl: string | null;
-    round: number;
-  } | null;
-  prevScheduledAt?: string | null;
-  testUrl?: string | null;
-  /** Hồ sơ đã có kết quả MBTI → mail mời PV không nhắc làm trắc nghiệm nữa. */
-  hasMbti?: boolean;
-  /** Mail offer: lương + ngày bắt đầu (trống → "…" để người gửi điền). */
-  offer?: { salary: string; startDate: string } | null;
-};
-
-/** Trắc nghiệm MBTI gửi ứng viên trước buổi PV (sếp chọn, 2026-10-26). */
-export const MBTI_TEST_URL = "https://www.topcv.vn/mbti/lam-trac-nghiem";
-
-const SIGNATURE = [
-  "Trân trọng,",
-  "TD Games Studio — Phòng Nhân sự",
-  "https://tdgamestudio.com · hr@tdgamestudio.com",
-].join("\n");
-
-function whereLines(i: NonNullable<DraftInput["interview"]>): string[] {
-  if (i.mode === "online" && i.meetUrl) {
-    return ["- Hình thức: Online qua Google Meet", `- Link tham gia: ${i.meetUrl}`];
-  }
-  return [
-    "- Hình thức: Trực tiếp tại văn phòng TD Games",
-    `- Địa chỉ: ${OFFICE_ADDRESS}`,
-    `- Bản đồ: ${GOOGLE_MAPS_URL}`,
-  ];
-}
-
-export function buildDraft(input: DraftInput): { subject: string; text: string } {
-  const name = input.candidateName.trim() || "bạn";
-  const job = input.jobTitle.trim() || "vị trí bạn ứng tuyển";
-  const hello = `Chào ${name},`;
-  const i = input.interview ?? null;
-  const roundText = i && i.round > 1 ? ` (vòng ${i.round})` : "";
-
-  let subject: string;
-  let body: string[];
-
-  switch (input.kind) {
-    case "interview_invite":
-      subject = `Thư mời phỏng vấn — ${job} | TD Games`;
-      body = [
-        `Cảm ơn bạn đã ứng tuyển vị trí ${job} tại TD Games. Chúng mình rất vui được mời bạn tham gia buổi phỏng vấn${roundText}:`,
-        [
-          i ? `- Thời gian: ${formatInterviewLong(i.scheduledAt)} (giờ Việt Nam)` : "- Thời gian: (HR bổ sung)",
-          ...(i ? whereLines(i) : []),
-        ].join("\n"),
-        ...(input.hasMbti
-          ? []
-          : [
-              `Trước buổi phỏng vấn, bạn dành khoảng 10 phút làm giúp bài trắc nghiệm tính cách MBTI tại: ${MBTI_TEST_URL}\nLàm xong, bạn trả lời mail này kèm link (hoặc ảnh chụp) trang kết quả nhé.`,
-            ]),
-        "Bạn vui lòng trả lời mail này để xác nhận tham gia. Nếu khung giờ trên chưa phù hợp, cứ báo lại để chúng mình sắp xếp lịch khác nhé.",
-      ];
-      break;
-    case "interview_reschedule":
-      subject = `Thay đổi lịch phỏng vấn — ${job} | TD Games`;
-      body = [
-        `Lịch phỏng vấn${roundText} vị trí ${job} của bạn đã được cập nhật như sau:`,
-        [
-          i ? `- Thời gian mới: ${formatInterviewLong(i.scheduledAt)} (giờ Việt Nam)` : "- Thời gian mới: (HR bổ sung)",
-          ...(i ? whereLines(i) : []),
-        ].join("\n"),
-        "Xin lỗi bạn vì sự thay đổi này. Bạn vui lòng trả lời mail để xác nhận lịch mới giúp chúng mình nhé.",
-      ];
-      break;
-    case "interview_cancel":
-      subject = `Huỷ lịch phỏng vấn — ${job} | TD Games`;
-      body = [
-        input.prevScheduledAt
-          ? `Buổi phỏng vấn vị trí ${job} vào lúc ${formatInterviewLong(input.prevScheduledAt)} đã được huỷ.`
-          : `Buổi phỏng vấn vị trí ${job} đã được huỷ.`,
-        "Chúng mình xin lỗi vì sự bất tiện này và sẽ liên hệ lại với bạn nếu có lịch mới.",
-      ];
-      break;
-    case "test_assignment":
-      subject = `Bài test — ${job} | TD Games`;
-      body = [
-        `Cảm ơn bạn đã quan tâm tới vị trí ${job} tại TD Games. Bước tiếp theo, chúng mình gửi bạn một bài test nhỏ.`,
-        `Đề bài và chỗ nộp bài ở đây: ${input.testUrl ?? "(HR bổ sung link)"}`,
-        "Khi mở link, bạn chọn giúp chúng mình ngày dự kiến nộp bài để tiện theo dõi. Nếu có câu hỏi về đề, cứ trả lời mail này nhé.",
-      ];
-      break;
-    case "rejection":
-      subject = `Kết quả ứng tuyển — ${job} | TD Games`;
-      body = [
-        `Cảm ơn bạn đã dành thời gian ứng tuyển vị trí ${job} tại TD Games.`,
-        "Sau khi cân nhắc, chúng mình rất tiếc chưa thể tiếp tục cùng bạn ở thời điểm này. Hồ sơ của bạn sẽ được lưu lại và chúng mình sẽ liên hệ khi có vị trí phù hợp hơn.",
-        "Chúc bạn nhiều thành công trên con đường sắp tới.",
-      ];
-      break;
-    case "offer": {
-      const salary = input.offer?.salary.trim() || "…";
-      const startDate = input.offer?.startDate.trim() || "…";
-      subject = `Thư mời làm việc — ${job} | TD Games`;
-      body = [
-        `Cảm ơn bạn đã dành thời gian tham gia phỏng vấn vị trí ${job} tại TD Games. Chúng tôi rất vui được gửi tới bạn lời mời làm việc:`,
-        [`- Vị trí: ${job}`, `- Mức lương: ${salary}`, `- Ngày bắt đầu dự kiến: ${startDate}`].join("\n"),
-        "Bạn vui lòng trả lời email này để xác nhận nhận offer, hoặc gửi lại bất kỳ câu hỏi nào — chúng tôi luôn sẵn sàng giải đáp.",
-      ];
-      break;
-    }
-  }
-
-  return { subject, text: [hello, ...body, SIGNATURE].join("\n\n") };
+/** Dựng bản nháp từ mẫu (HR đã sửa trong DB) hoặc mẫu mặc định. */
+export function buildDraft(input: DraftInput, template?: EmailTemplate | null): { subject: string; text: string } {
+  return renderTemplate(template ?? DEFAULT_TEMPLATES[input.kind], templateVars(input));
 }
 
 function escapeHtml(s: string) {

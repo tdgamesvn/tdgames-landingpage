@@ -7,6 +7,7 @@ import InterviewPanel from "./InterviewPanel";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import AccountsPanel from "./AccountsPanel";
+import EmailTemplatesPanel from "./EmailTemplatesPanel";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
 import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
@@ -2689,7 +2690,7 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type View = "pipeline" | "kpi" | "jobs" | "data" | "accounts";
+type View = "pipeline" | "kpi" | "jobs" | "data" | "templates" | "accounts";
 
 type ThemeState = readonly [HrThemePref, (p: HrThemePref) => void];
 
@@ -2959,6 +2960,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     "data",
     ...(can("apps.view_notes") ? (["kpi"] as View[]) : []),
     ...(can("jobs.manage") ? (["jobs"] as View[]) : []),
+    ...(can("emails.templates") ? (["templates"] as View[]) : []),
     // Tài khoản & quyền: chỉ Sếp.
     ...(me?.role === "boss" ? (["accounts"] as View[]) : []),
   ];
@@ -2987,7 +2989,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <div className="hr-segmented order-last w-full md:order-none md:w-auto" role="group" aria-label="Chế độ xem">
             {views.map((v) => (
               <button key={v} type="button" aria-pressed={activeView === v} onClick={() => setView(v)}>
-                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
+                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "templates" ? "Mẫu mail" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
               </button>
             ))}
           </div>
@@ -3047,6 +3049,8 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <DataView apps={apps} jobs={jobs} onUpdate={updateApp} onDelete={deleteApp} />
         ) : activeView === "kpi" ? (
           <KPIView apps={apps} />
+        ) : activeView === "templates" ? (
+          <EmailTemplatesPanel />
         ) : activeView === "accounts" ? (
           <AccountsPanel />
         ) : (
