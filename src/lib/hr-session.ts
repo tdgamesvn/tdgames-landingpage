@@ -178,12 +178,15 @@ export async function loadScopedApplication(
   appId: string,
   columns = "id",
 ): Promise<Record<string, unknown> | null> {
-  const needed = ["id", "job_id", "status", "offer_status"];
+  // boss/hr thấy mọi hồ sơ: bỏ qua loadScope, chỉ cần biết hồ sơ có tồn tại.
+  const full = ctx.role === "boss" || ctx.role === "hr";
+  const needed = full ? ["id"] : ["id", "job_id", "status", "offer_status"];
   const cols = columns === "*" ? "*" : [...new Set([...columns.split(",").map((c) => c.trim()), ...needed])].join(", ");
   const { data, error } = await getSupabaseAdmin().from("applications").select(cols).eq("id", appId).maybeSingle();
   if (error) throw new Error(`loadScopedApplication: ${error.message}`);
   if (!data) return null;
   const row = data as unknown as Record<string, unknown>;
+  if (full) return row;
   const scope = await loadScope(ctx);
   const ok = inScope(scope, {
     job_id: String(row.job_id),

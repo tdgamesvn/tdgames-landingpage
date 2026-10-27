@@ -20,11 +20,19 @@ export async function GET(request: Request, { params }: Ctx) {
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const { data, error } = await getSupabaseAdmin()
     .from("candidate_emails")
-    .select("*")
+    .select("id, application_id, interview_id, kind, to_email, sent_to, cc_emails, test_mode, subject, body_text, body_html, resend_id, sent_by, created_at")
     .eq("application_id", id)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ emails: data ?? [] });
+  // Không có quyền xem liên hệ → gỡ địa chỉ email khỏi từng dòng (nội dung mail vẫn giữ).
+  const canContact = auth.ctx.perms.has("apps.view_contact");
+  const emails = (data ?? []).map((r) => {
+    if (canContact) return r;
+    const rest: Record<string, unknown> = { ...r };
+    for (const k of ["to_email", "sent_to", "cc_emails"]) delete rest[k];
+    return rest;
+  });
+  return NextResponse.json({ emails });
 }
 
 /**

@@ -46,7 +46,7 @@ async function loadPool(jobId: string) {
   const supabase = getSupabaseAdmin();
   const [{ data: job }, { data: apps, error }, { data: entries }, { data: meta }, rules] = await Promise.all([
     supabase.from("jobs").select(RANK_JOB_SELECT).eq("id", jobId).single(),
-    supabase.from("applications").select(APP_SELECT),
+    supabase.from("applications").select(`${APP_SELECT}, offer_status`),
     supabase.from("job_ranking_entries").select("*").eq("job_id", jobId),
     supabase.from("job_rankings").select("*").eq("job_id", jobId).maybeSingle(),
     loadRankingRules(supabase),
@@ -103,14 +103,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!ctx) return NextResponse.json({ error: "Job not found" }, { status: 404 });
   const { rules, jh, pool: fullPool, entryMap, meta } = ctx;
 
-  // Pool xếp hạng gồm hồ sơ mọi job → lọc theo phạm vi (kế toán cần offer_status, APP_SELECT không có).
-  let offerById = new Map<string, string | null>();
-  if (user.role === "accountant") {
-    const { data: offers } = await ctx.supabase.from("applications").select("id, offer_status").in("id", fullPool.map((x) => String(x.a.id)));
-    offerById = new Map((offers ?? []).map((o) => [String(o.id), (o.offer_status as string | null) ?? null]));
-  }
+  // Pool xếp hạng gồm hồ sơ mọi job → lọc theo phạm vi.
   const pool = fullPool.filter(({ a }) =>
-    inScope(scope, { job_id: String(a.job_id), status: String(a.status), offer_status: offerById.get(String(a.id)) ?? null }),
+    inScope(scope, { job_id: String(a.job_id), status: String(a.status), offer_status: (a.offer_status as string | null) ?? null }),
   );
   const canNotes = user.perms.has("apps.view_notes");
 

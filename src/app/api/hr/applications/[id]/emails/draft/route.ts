@@ -19,12 +19,15 @@ export async function GET(request: Request, { params }: Ctx) {
   const { id } = await params;
   const url = new URL(request.url);
   const kind = url.searchParams.get("kind");
-  // Xác thực trước (401) rồi mới kiểm kind; perm phụ thuộc kind: offer cần emails.send_offer, còn lại emails.send.
-  const base = await requireHrUser(request, "apps.view_emails");
-  if ("response" in base) return base.response;
-  if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
-  const auth = await requireHrUser(request, (kind as string) === "offer" ? "emails.send_offer" : "emails.send");
+  // Xác thực một lần, rồi kiểm quyền theo kind.
+  const auth = await requireHrUser(request, "apps.view_emails");
   if ("response" in auth) return auth.response;
+  if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
+  const forbidden = () => NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
+  // Nhánh "offer" chỉ chạy khi Task 8 thêm kind này vào CANDIDATE_EMAIL_KINDS.
+  if (!auth.ctx.perms.has((kind as string) === "offer" ? "emails.send_offer" : "emails.send")) return forbidden();
+  // Nháp bài test tạo token + lộ link test → cần thêm quyền xem test, kiểm TRƯỚC khi tạo token.
+  if (kind === "test_assignment" && !auth.ctx.perms.has("apps.view_tests")) return forbidden();
   const scoped = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
   if (scoped === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!scoped) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -99,7 +102,7 @@ export async function GET(request: Request, { params }: Ctx) {
 
   return NextResponse.json({
     ...meta,
-    to: app.email,
+    ...(auth.ctx.perms.has("apps.view_contact") ? { to: app.email } : {}),
     subject: draft.subject,
     text: draft.text,
     last_sent_at: last?.created_at ?? null,
