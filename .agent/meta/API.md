@@ -139,7 +139,7 @@ Auth: cookie httpOnly `hr_session` (đăng nhập tài khoản). `x-hr-key` (m�
 Mọi request ghi (POST/PATCH/PUT/DELETE) phải cùng nguồn: header `Origin` = https://tdgamestudio.com (chặn CSRF từ cdn.*).
 - `POST /api/hr/auth/login {email,password}` · `POST /api/hr/auth/logout` · `GET /api/hr/auth/me` → `{user,role,roleLabel,perms,legacy}`
 - `POST /api/hr/auth/forgot {email}` (luôn 200) · `GET|POST /api/hr/auth/set-password` (`?token=` / `{token,password}`)
-- Chỉ Sếp: `GET|POST /api/hr/users`, `PATCH /api/hr/users/[id] {display_name?,role?,disabled?,resend_invite?}`, `PUT /api/hr/permissions {role,permission,allowed}`
+- Chỉ Sếp: `GET|POST /api/hr/users`, `PATCH /api/hr/users/[id] {display_name?,role?,disabled?,resend_invite?,discord_user_id?}` (POST cũng nhận discord_user_id; nhận cả dạng <@id>), `PUT /api/hr/permissions {role,permission,allowed}`
 - `GET /api/hr/permissions` (mọi user) · `GET /api/hr/users/leaders` (quyền jobs.assign_leader)
 - Cron: `GET /api/hr/remind`, `/api/hr/interviews/remind` header `x-hr-cron-key: $HR_CRON_SECRET` (GitHub secret + VPS .env.local).
 - Quyền theo vai: `src/lib/hr-permissions.ts`; phạm vi + ẩn field: `src/lib/hr-scope.ts` (Leader: job có `leader_user_id` = mình; Kế toán: status từ Interview trở đi hoặc có `offer_status`).

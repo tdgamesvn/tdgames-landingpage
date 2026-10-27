@@ -18,3 +18,16 @@ export function validateUserChange(
   if (losesBoss && activeBossCount <= 1) return "Phải còn ít nhất 1 tài khoản Sếp";
   return null;
 }
+
+/**
+ * ID Discord (snowflake 17–20 chữ số) để tag `<@id>`. Nhận cả dạng dán mention `<@id>` / `<@!id>`.
+ * Rỗng / null → null (xoá ID); sai định dạng → "invalid".
+ */
+export function parseDiscordId(v: unknown): string | null | "invalid" {
+  if (v === null || v === undefined) return null;
+  if (typeof v !== "string") return "invalid";
+  const s = v.trim();
+  if (!s) return null;
+  const m = /^(?:<@!?)?(\d{17,20})>?$/.exec(s);
+  return m ? m[1] : "invalid";
+}

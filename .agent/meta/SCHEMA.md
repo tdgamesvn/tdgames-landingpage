@@ -132,7 +132,7 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 | `created_at` | timestamptz | |
 
 ## Tài khoản HR (2026-10-27, migration `20261027000000_hr_accounts`, đã áp prod)
-- `hr_users` (email lower-case unique, display_name, role boss|hr|leader|accountant, password_hash scrypt, disabled, last_login_at)
+- `hr_users` (email lower-case unique, display_name, role boss|hr|leader|accountant, password_hash scrypt, disabled, last_login_at, discord_user_id (17–20 số, để tag <@id> — migration 20261027010000))
 - `hr_sessions` (token_hash sha256 PK, user_id, expires_at 30 ngày) · `hr_user_tokens` (invite 7 ngày | reset 1 giờ, used_at)
 - `hr_role_permissions` (role hr|leader|accountant, permission, allowed) — chỉ lưu ô khác mặc định
 - Cột mới: `jobs.leader_user_id`, `applications.offer_status` (pending|accepted|declined) + `offer_status_at`, `application_comments.author_user_id`, `candidate_emails.cc_emails` + `sent_by_user_id` + kind `offer`, `hr_push_subscriptions.user_id`

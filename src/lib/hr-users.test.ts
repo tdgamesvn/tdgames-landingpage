@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { validateUserChange } from "./hr-users.ts";
+import { parseDiscordId, validateUserChange } from "./hr-users.ts";
 
 const boss = (id: string) => ({ id, role: "boss" as const, disabled: false });
 
@@ -32,4 +32,19 @@ test("đổi hr → leader → null", () => {
 });
 test("actor legacy khoá boss khi còn 2 boss → null", () => {
   assert.equal(validateUserChange({ id: null }, boss("b"), { disabled: true }, 2), null);
+});
+
+test("parseDiscordId: nhận ID số 17–20 chữ số, cả dạng mention <@…> / <@!…>", () => {
+  assert.equal(parseDiscordId("123456789012345678"), "123456789012345678");
+  assert.equal(parseDiscordId("  <@123456789012345678> "), "123456789012345678");
+  assert.equal(parseDiscordId("<@!12345678901234567>"), "12345678901234567");
+});
+
+test("parseDiscordId: rỗng/null → null (xoá), sai định dạng → 'invalid'", () => {
+  assert.equal(parseDiscordId(""), null);
+  assert.equal(parseDiscordId(null), null);
+  assert.equal(parseDiscordId("toan.dang"), "invalid");
+  assert.equal(parseDiscordId("1234"), "invalid");
+  assert.equal(parseDiscordId("123456789012345678901"), "invalid");
+  assert.equal(parseDiscordId(123), "invalid");
 });

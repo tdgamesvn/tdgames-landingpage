@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireBoss, hrPublicOrigin, issueToken } from "@/lib/hr-session";
 import { HR_ROLES, ROLE_LABEL, type HrRole } from "@/lib/hr-permissions";
-import { validateUserChange } from "@/lib/hr-users";
+import { parseDiscordId, validateUserChange } from "@/lib/hr-users";
 import { buildStaffInviteEmail } from "@/lib/hr-staff-email";
 import { sendStaffEmail } from "@/lib/hr-email-send";
 
-const COLS = "id, email, display_name, role, disabled, created_at, last_login_at, password_hash";
+const COLS = "id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, password_hash";
 
 type Row = {
   id: string;
@@ -16,6 +16,7 @@ type Row = {
   disabled: boolean;
   created_at: string | null;
   last_login_at: string | null;
+  discord_user_id: string | null;
   password_hash: string | null;
 };
 
@@ -33,7 +34,7 @@ export async function PATCH(req: Request, ctxRoute: { params: Promise<{ id: stri
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
 
-  const change: { display_name?: string; role?: HrRole; disabled?: boolean } = {};
+  const change: { display_name?: string; role?: HrRole; disabled?: boolean; discord_user_id?: string | null } = {};
   if (body.display_name !== undefined) {
     const n = typeof body.display_name === "string" ? body.display_name.trim() : "";
     if (n.length < 1 || n.length > 80) return NextResponse.json({ error: "Tên hiển thị phải từ 1 đến 80 ký tự" }, { status: 400 });
@@ -48,6 +49,16 @@ export async function PATCH(req: Request, ctxRoute: { params: Promise<{ id: stri
   if (body.disabled !== undefined) {
     if (typeof body.disabled !== "boolean") return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
     change.disabled = body.disabled;
+  }
+  if (body.discord_user_id !== undefined) {
+    const d = parseDiscordId(body.discord_user_id);
+    if (d === "invalid") {
+      return NextResponse.json(
+        { error: "ID Discord phải là dãy 17–20 chữ số (Discord → bật Developer Mode → chuột phải tên → Copy User ID)" },
+        { status: 400 },
+      );
+    }
+    change.discord_user_id = d;
   }
   const resend = body.resend_invite === true;
 
