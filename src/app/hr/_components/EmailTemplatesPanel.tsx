@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RotateCcw, Save, Undo2 } from "lucide-react";
+import { Monitor, RotateCcw, Save, Smartphone, Undo2 } from "lucide-react";
 import { hrFetch } from "./HrSession";
 import { textToHtml, CANDIDATE_EMAIL_KINDS, KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
 import { SAMPLE_DRAFT_INPUT, renderTemplate, templateVars } from "@/lib/hr-email-templates";
@@ -28,7 +28,10 @@ type Data = {
   varHelp: Record<string, string>;
 };
 
-const inputCls = "w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[13px] text-white focus:outline-none";
+// Màu lấy thẳng từ token theme /hr (hr-theme.css) để chạy cả Sáng/Tối.
+const surface = "rounded-2xl bg-[var(--hr-raised)] shadow-[var(--hr-surface-shadow)] ring-1 ring-[var(--hr-hair)]";
+const fieldBase =
+  "w-full bg-transparent text-[var(--hr-ink)] placeholder:text-[var(--hr-ink-3)] focus:outline-none";
 
 async function readJson(res: Response) {
   return (await res.json().catch(() => ({}))) as Record<string, unknown>;
@@ -41,6 +44,7 @@ export default function EmailTemplatesPanel() {
   const [draft, setDraft] = useState<{ subject: string; body: string } | null>(null);
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const subjectRef = useRef<HTMLInputElement>(null);
   const lastField = useRef<"subject" | "body">("body");
@@ -149,131 +153,197 @@ export default function EmailTemplatesPanel() {
   const preview = renderTemplate({ subject, body }, templateVars(SAMPLE_DRAFT_INPUT(kind)));
   const html = textToHtml(preview.text);
 
-  if (loadError) return <p className="text-[13px] text-red-400">{loadError}</p>;
-  if (!data || !saved) return <p className="py-16 text-center text-sm text-white/30">Loading…</p>;
+  if (loadError) return <p className="text-[13px] text-[var(--hr-danger-ink)]">{loadError}</p>;
+  if (!data || !saved) return <p className="py-16 text-center text-sm text-white/30">Đang tải mẫu mail…</p>;
+
+  const status = saved.isDefault
+    ? "Đang dùng mẫu mặc định"
+    : `Sửa lần cuối bởi ${saved.updated_by ?? "—"}${saved.updated_at ? `, ${formatInterviewTime(saved.updated_at)}` : ""}`;
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-white">Mẫu mail ứng viên</h2>
-      {notice && (
-        <p
-          role="status"
-          className={`rounded-lg border px-3 py-2 text-[13px] ${
-            notice.kind === "ok"
-              ? "border-green-500/30 bg-green-500/10 text-green-400"
-              : "border-red-500/30 bg-red-500/10 text-red-400"
-          }`}
-        >
-          {notice.text}
-        </p>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-        {/* Chọn loại: select trên mobile, danh sách trên màn rộng */}
-        <select
-          className={`${inputCls} lg:hidden`}
-          value={kind}
-          onChange={(e) => pickKind(e.target.value as CandidateEmailKind)}
+    <div className="flex flex-col gap-4">
+      {/* Chọn loại mail — nút gạt như thanh tab trên cùng; chấm cam = đã sửa khỏi mặc định */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[17px] font-semibold tracking-tight text-[var(--hr-ink)]">Mẫu mail ứng viên</h2>
+        <div
+          role="tablist"
           aria-label="Loại mail"
+          className="-mx-1 flex max-w-full gap-1 overflow-x-auto rounded-full bg-[var(--hr-segment-bg)] p-1"
         >
-          {data.templates.map((t) => (
-            <option key={t.kind} value={t.kind}>
-              {t.label}
-              {t.isDefault ? "" : " •"}
-            </option>
-          ))}
-        </select>
-        <div className="hr-group hidden h-fit flex-col overflow-hidden lg:flex">
-          {data.templates.map((t) => (
-            <button
-              key={t.kind}
-              type="button"
-              aria-pressed={t.kind === kind}
-              onClick={() => pickKind(t.kind)}
-              className={`flex items-center justify-between gap-2 px-4 py-2.5 text-left text-[13px] ${
-                t.kind === kind ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5"
-              }`}
-            >
-              <span>{t.label}</span>
-              {!t.isDefault && <span className="text-[11px] text-amber-400">đã sửa</span>}
-            </button>
-          ))}
+          {data.templates.map((t) => {
+            const on = t.kind === kind;
+            return (
+              <button
+                key={t.kind}
+                role="tab"
+                aria-selected={on}
+                type="button"
+                onClick={() => pickKind(t.kind)}
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hr-orange)] ${
+                  on
+                    ? "bg-[var(--hr-segment-on)] font-semibold text-[var(--hr-ink)] shadow-sm"
+                    : "text-[var(--hr-ink-2)] hover:text-[var(--hr-ink)]"
+                }`}
+              >
+                {t.label.replace(" (không phù hợp)", "")}
+                {!t.isDefault && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--hr-orange)]" title="Đã sửa khỏi mẫu mặc định" />
+                )}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        <div className="min-w-0 space-y-3">
-          <div className="space-y-1">
-            <label className="text-[12px] text-white/50" htmlFor="tpl-subject">Tiêu đề</label>
+      <div className="grid gap-4 lg:h-[calc(100vh-190px)] lg:min-h-[560px] lg:grid-cols-2">
+        {/* ── Soạn ── */}
+        <section className={`${surface} flex min-h-[520px] flex-col overflow-hidden`} aria-label="Soạn mẫu">
+          <div className="border-b border-[var(--hr-hair)] px-5 pb-3 pt-4">
+            <label htmlFor="tpl-subject" className="text-[12px] text-[var(--hr-ink-2)]">
+              Tiêu đề
+            </label>
             <input
               id="tpl-subject"
               ref={subjectRef}
               onFocus={() => (lastField.current = "subject")}
-              className={inputCls}
+              className={`${fieldBase} mt-0.5 text-[16px] font-semibold`}
               value={subject}
               maxLength={200}
               onChange={(e) => edit({ subject: e.target.value })}
             />
           </div>
-          <div className="space-y-1">
-            <label className="text-[12px] text-white/50" htmlFor="tpl-body">Nội dung</label>
-            <textarea
-              id="tpl-body"
-              onFocus={() => (lastField.current = "body")}
-              ref={bodyRef}
-              rows={16}
-              maxLength={10000}
-              className={`${inputCls} font-mono text-[12.5px] leading-relaxed`}
-              value={body}
-              onChange={(e) => edit({ body: e.target.value })}
-            />
+
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--hr-hair)] bg-[var(--hr-fill)] px-5 py-2.5">
+            <span className="mr-1 text-[12px] text-[var(--hr-ink-2)]">Chèn</span>
+            {data.vars[kind].map((v) => (
+              <button
+                key={v}
+                type="button"
+                title={data.varHelp[v]}
+                onMouseDown={(e) => e.preventDefault() /* giữ con trỏ ở ô đang soạn */}
+                onClick={() => insertVar(v)}
+                className="rounded-md bg-[var(--hr-raised)] px-2 py-0.5 text-[12px] text-[var(--hr-orange-ink)] ring-1 ring-[var(--hr-hair)] hover:ring-[var(--hr-orange)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hr-orange)]"
+              >
+                {`{${v}}`}
+              </button>
+            ))}
           </div>
-          <div className="space-y-1">
-            <p className="text-[12px] text-white/50">Biến tự điền (bấm để chèn tại con trỏ)</p>
-            <div className="flex flex-wrap gap-1.5">
-              {data.vars[kind].map((v) => (
+
+          <label htmlFor="tpl-body" className="sr-only">
+            Nội dung
+          </label>
+          <textarea
+            id="tpl-body"
+            ref={bodyRef}
+            onFocus={() => (lastField.current = "body")}
+            maxLength={10000}
+            className={`${fieldBase} min-h-[320px] flex-1 resize-none px-5 py-4 text-[14px] leading-7`}
+            value={body}
+            onChange={(e) => edit({ body: e.target.value })}
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--hr-hair)] px-5 py-3">
+            <p
+              role="status"
+              className={`min-w-0 flex-1 truncate text-[12.5px] ${
+                notice?.kind === "error"
+                  ? "text-[var(--hr-danger-ink)]"
+                  : notice
+                    ? "text-[var(--hr-orange-ink)]"
+                    : dirty
+                      ? "text-[var(--hr-orange-ink)]"
+                      : "text-[var(--hr-ink-2)]"
+              }`}
+              title={notice?.text ?? status}
+            >
+              {notice?.text ?? (dirty ? "Có thay đổi chưa lưu" : status)}
+            </p>
+            <div className="flex items-center gap-1.5">
+              {!saved.isDefault && (
                 <button
-                  key={v}
                   type="button"
-                  title={data.varHelp[v]}
-                  onClick={() => insertVar(v)}
-                  className="hr-secondary-btn hr-secondary-btn--sm font-mono"
+                  className="hr-secondary-btn hr-secondary-btn--sm"
+                  disabled={busy}
+                  onClick={resetDefault}
+                  title="Xoá bản đã sửa, dùng lại mẫu mặc định"
                 >
-                  {`{${v}}`}
+                  <RotateCcw className="mr-1 inline h-3.5 w-3.5" /> Về mặc định
+                </button>
+              )}
+              {dirty && (
+                <button type="button" className="hr-secondary-btn hr-secondary-btn--sm" disabled={busy} onClick={() => setDraft(null)}>
+                  <Undo2 className="mr-1 inline h-3.5 w-3.5" /> Huỷ
+                </button>
+              )}
+              <button
+                type="button"
+                className="hr-primary-btn hr-primary-btn--sm"
+                disabled={busy || !dirty}
+                onClick={() => void save()}
+              >
+                <Save className="mr-1 inline h-3.5 w-3.5" /> {busy ? "Đang lưu…" : "Lưu mẫu"}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Xem trước: dựng như một mail trong hộp thư, gạt xem trên máy tính / điện thoại ── */}
+        <section className={`${surface} flex min-h-[560px] flex-col overflow-hidden`} aria-label="Xem trước">
+          <div className="flex items-start gap-3 border-b border-[var(--hr-hair)] px-5 py-3.5">
+            <span
+              aria-hidden
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--hr-orange)] text-[14px] font-bold text-[var(--hr-on-orange)]"
+            >
+              T
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-semibold text-[var(--hr-ink)]">{preview.subject || "(chưa có tiêu đề)"}</p>
+              <p className="truncate text-[12.5px] text-[var(--hr-ink-2)]">
+                TD Games HR &lt;hr@tdgamestudio.com&gt; gửi Nguyễn Văn A
+              </p>
+            </div>
+            <div
+              role="radiogroup"
+              aria-label="Kích thước xem trước"
+              className="flex shrink-0 gap-0.5 rounded-full bg-[var(--hr-segment-bg)] p-0.5"
+            >
+              {(
+                [
+                  ["desktop", Monitor, "Máy tính"],
+                  ["mobile", Smartphone, "Điện thoại"],
+                ] as const
+              ).map(([d, Icon, label]) => (
+                <button
+                  key={d}
+                  type="button"
+                  role="radio"
+                  aria-checked={device === d}
+                  aria-label={label}
+                  title={label}
+                  onClick={() => setDevice(d)}
+                  className={`grid h-7 w-8 place-items-center rounded-full ${
+                    device === d ? "bg-[var(--hr-segment-on)] text-[var(--hr-ink)] shadow-sm" : "text-[var(--hr-ink-2)]"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
                 </button>
               ))}
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className="hr-primary-btn hr-primary-btn--sm" disabled={busy || !dirty} onClick={() => void save()}>
-              <Save className="mr-1 inline h-3.5 w-3.5" /> Lưu
-            </button>
-            <button type="button" className="hr-secondary-btn hr-secondary-btn--sm" disabled={busy || !dirty} onClick={() => setDraft(null)}>
-              <Undo2 className="mr-1 inline h-3.5 w-3.5" /> Huỷ thay đổi
-            </button>
-            <button type="button" className="hr-secondary-btn hr-secondary-btn--sm" disabled={busy || saved.isDefault} onClick={resetDefault}>
-              <RotateCcw className="mr-1 inline h-3.5 w-3.5" /> Về mặc định
-            </button>
-            <span className="text-[12px] text-white/50">
-              {saved.isDefault
-                ? "Đang dùng mẫu mặc định"
-                : `Sửa lần cuối: ${saved.updated_by ?? "—"}${saved.updated_at ? ` · ${formatInterviewTime(saved.updated_at)}` : ""}`}
-            </span>
-          </div>
-
-          <div className="space-y-1.5">
-            <p className="text-[12px] text-white/50">Xem trước (dữ liệu mẫu)</p>
-            <p className="text-[13px] text-white">
-              <span className="text-white/50">Tiêu đề: </span>
-              {preview.subject}
-            </p>
+          <div className="flex flex-1 justify-center overflow-hidden bg-[#f4f4f5] p-0">
             <iframe
               title="Xem trước mail"
               sandbox=""
               srcDoc={html}
-              className="h-[560px] w-full rounded-lg border border-white/15 bg-white"
+              className={`h-full min-h-[480px] bg-[#f4f4f5] transition-[width] duration-300 ${
+                device === "mobile" ? "my-4 w-[375px] max-w-full rounded-[28px] ring-8 ring-[#1d1d1f]" : "w-full"
+              }`}
             />
           </div>
-        </div>
+          <p className="border-t border-[var(--hr-hair)] px-5 py-2 text-[12px] text-[var(--hr-ink-2)]">
+            Dữ liệu mẫu. Khi gửi thật, biến được điền theo hồ sơ ứng viên và vẫn sửa được trong hộp thoại gửi mail.
+          </p>
+        </section>
       </div>
     </div>
   );

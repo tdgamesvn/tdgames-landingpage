@@ -158,7 +158,7 @@ function infoTable(lines: string[]) {
       if (idx === -1) return `<tr><td colspan="2" style="padding:10px 16px;color:#18181b">${linkify(t)}</td></tr>`;
       const label = t.slice(0, idx);
       const value = t.slice(idx + 2);
-      return `<tr><td style="padding:10px 16px;width:120px;vertical-align:top;font-size:13px;color:#71717a;border-top:1px solid #f0f0f1">${label}</td><td style="padding:10px 16px;vertical-align:top;font-weight:600;color:#18181b;border-top:1px solid #f0f0f1">${linkify(value)}</td></tr>`;
+      return `<tr><td style="padding:10px 16px;width:120px;white-space:nowrap;vertical-align:top;font-size:13px;color:#71717a;border-top:1px solid #f0f0f1">${label}</td><td style="padding:10px 16px;vertical-align:top;font-weight:600;color:#18181b;border-top:1px solid #f0f0f1">${linkify(value)}</td></tr>`;
     })
     .join("")
     // Dòng đầu không cần kẻ trên.
