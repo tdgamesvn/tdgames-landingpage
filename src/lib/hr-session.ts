@@ -146,3 +146,8 @@ export async function issueToken(userId: string, purpose: "invite" | "reset"): P
   if (error) throw new Error(`issueToken: ${error.message}`);
   return token;
 }
+
+/** Gốc URL công khai cho link trong email. KHÔNG lấy từ request (chống Host header injection). Dev: đặt HR_PUBLIC_ORIGIN=http://localhost:3000. */
+export function hrPublicOrigin(): string {
+  return (process.env.HR_PUBLIC_ORIGIN?.trim() || "https://tdgamestudio.com").replace(/\/+$/, "");
+}

@@ -60,3 +60,10 @@ test("readCookie", () => {
   assert.equal(readCookie("hr_session=%E0%A4%A", "hr_session"), "%E0%A4%A");
   assert.equal(readCookie("hr_session=a%20b", "hr_session"), "a b");
 });
+
+test("verifyPassword với hash null/rác vẫn false (và tốn thời gian scrypt)", async () => {
+  const t0 = Date.now();
+  assert.equal(await verifyPassword("x", null), false);
+  assert.equal(await verifyPassword("x", "scrypt$abc$8$1$a$b"), false);
+  assert.ok(Date.now() - t0 > 5);
+});

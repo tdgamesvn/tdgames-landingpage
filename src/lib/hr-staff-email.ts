@@ -10,10 +10,9 @@ export function buildStaffInviteEmail(input: {
 }): { subject: string; text: string } {
   const name = input.displayName.trim() || "bạn";
   const by = input.invitedBy.trim();
-  const who = by ? `${by} đã mời` : "Bạn được mời";
   const text = [
     `Chào ${name},`,
-    `${who} bạn vào TD Games HR với vai trò ${input.roleLabel}. Bấm vào link dưới đây để đặt mật khẩu và đăng nhập:`,
+    `${by ? `${by} đã mời bạn` : "Bạn được mời"} vào TD Games HR với vai trò ${input.roleLabel}. Bấm vào link dưới đây để đặt mật khẩu và đăng nhập:`,
     input.link,
     "Link có hiệu lực 7 ngày và chỉ dùng được một lần.",
     SIGNATURE,

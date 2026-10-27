@@ -45,6 +45,9 @@ export async function POST(req: Request) {
   if (password.length < 8) {
     return NextResponse.json({ error: "Mật khẩu tối thiểu 8 ký tự" }, { status: 400 });
   }
+  if (password.length > 200) {
+    return NextResponse.json({ error: "Mật khẩu tối đa 200 ký tự" }, { status: 400 });
+  }
   const found = await findUsable(token);
   if (!found) return NextResponse.json({ error: BAD_LINK }, { status: 400 });
 
@@ -74,7 +77,13 @@ export async function POST(req: Request) {
   }
 
   // Đổi mật khẩu → mọi phiên cũ mất hiệu lực, rồi đăng nhập luôn bằng phiên mới.
-  await supabase.from("hr_sessions").delete().eq("user_id", found.user.id);
+  const { error: sessDelError } = await supabase.from("hr_sessions").delete().eq("user_id", found.user.id);
+  if (sessDelError) {
+    console.error("[hr-set-password] xoá phiên cũ lỗi:", sessDelError.message);
+    return NextResponse.json({ error: "Không đặt được mật khẩu, thử lại sau" }, { status: 500 });
+  }
+  // Vô hiệu mọi token chưa dùng còn lại của user (mọi mục đích).
+  await supabase.from("hr_user_tokens").delete().eq("user_id", found.user.id).is("used_at", null);
   const { token: sessionToken, expires } = await createSession(found.user.id);
   await supabase.from("hr_users").update({ last_login_at: new Date().toISOString() }).eq("id", found.user.id);
   const res = NextResponse.json({ ok: true });

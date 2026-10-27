@@ -39,3 +39,11 @@ test("textToHtml: footer mặc định giữ nguyên, footerNote tuỳ chọn", 
   assert.ok(h.includes("được mời sử dụng TD Games HR"));
   assert.ok(!h.includes("đã ứng tuyển"));
 });
+
+test("mail mời đọc tự nhiên cả khi có / không có người mời", () => {
+  const a = buildStaffInviteEmail({ displayName: "Lan", roleLabel: "HR", link, invitedBy: "Tony" });
+  assert.ok(a.text.includes("Tony đã mời bạn vào TD Games HR"));
+  const b = buildStaffInviteEmail({ displayName: "Lan", roleLabel: "HR", link, invitedBy: "" });
+  assert.ok(b.text.includes("Bạn được mời vào TD Games HR"));
+  assert.ok(!b.text.includes("bạn vào"));
+});
