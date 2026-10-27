@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { HrEmailConfig } from "./hr-email";
+import { getHrEmailConfig, textToHtml, type HrEmailConfig } from "./hr-email";
 
 /** Gửi 1 mail qua Resend REST API. Không throw — trả `{ error }` để route báo lại HR. */
 export async function sendViaResend(
@@ -28,4 +28,14 @@ export async function sendViaResend(
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Không gọi được Resend" };
   }
+}
+
+/** Mail cho nhân viên (mời, đặt lại mật khẩu): gửi thẳng tới `to` thật, không qua chế độ test. */
+export async function sendStaffEmail(
+  to: string,
+  msg: { subject: string; text: string },
+): Promise<{ id: string } | { error: string }> {
+  const cfg = getHrEmailConfig(process.env);
+  const html = textToHtml(msg.text, { footerNote: "Bạn nhận email này vì được mời sử dụng TD Games HR." });
+  return sendViaResend(cfg, { to, subject: msg.subject, html, text: msg.text });
 }

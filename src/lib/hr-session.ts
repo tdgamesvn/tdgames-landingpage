@@ -123,3 +123,26 @@ export function sessionCookie(token: string, expires: Date): string {
 export function clearSessionCookie(): string {
   return `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
+
+const TOKEN_TTL_MS = { invite: 7 * 24 * 60 * 60 * 1000, reset: 60 * 60 * 1000 } as const;
+
+/** Tạo token mời (7 ngày) / đặt lại mật khẩu (1 giờ). Xoá token cũ chưa dùng cùng mục đích của user. Trả token thô. */
+export async function issueToken(userId: string, purpose: "invite" | "reset"): Promise<string> {
+  const supabase = getSupabaseAdmin();
+  const { error: delError } = await supabase
+    .from("hr_user_tokens")
+    .delete()
+    .eq("user_id", userId)
+    .eq("purpose", purpose)
+    .is("used_at", null);
+  if (delError) throw new Error(`issueToken: ${delError.message}`);
+  const { token, hash } = newToken();
+  const { error } = await supabase.from("hr_user_tokens").insert({
+    token_hash: hash,
+    user_id: userId,
+    purpose,
+    expires_at: new Date(Date.now() + TOKEN_TTL_MS[purpose]).toISOString(),
+  });
+  if (error) throw new Error(`issueToken: ${error.message}`);
+  return token;
+}

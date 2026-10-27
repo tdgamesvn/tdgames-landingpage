@@ -245,7 +245,8 @@ function infoTable(lines: string[]) {
 }
 
 /** Text (HR có thể đã sửa) → HTML mail có thương hiệu. Escape hết rồi mới dựng thẻ. */
-export function textToHtml(text: string): string {
+export function textToHtml(text: string, opts?: { footerNote?: string }): string {
+  const footerNote = opts?.footerNote ?? "Bạn nhận email này vì đã ứng tuyển tại TD Games.";
   const blocks = text
     .replace(/\r\n/g, "\n")
     .split(/\n{2,}/)
@@ -282,7 +283,7 @@ ${body}
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px"><tr><td style="padding:18px 32px;font-family:${FONT};font-size:12px;line-height:1.6;color:#a1a1aa;text-align:center">
 TD Games Studio · ${escapeHtml(OFFICE_ADDRESS)}<br>
 <a href="https://tdgamestudio.com" style="color:#71717a;text-decoration:none">tdgamestudio.com</a> · <a href="mailto:hr@tdgamestudio.com" style="color:#71717a;text-decoration:none">hr@tdgamestudio.com</a><br>
-Bạn nhận email này vì đã ứng tuyển tại TD Games.
+${escapeHtml(footerNote)}
 </td></tr></table>
 </td></tr></table>
 </body></html>`;
