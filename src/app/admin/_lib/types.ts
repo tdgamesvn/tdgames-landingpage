@@ -219,6 +219,11 @@ export type ApplicationComment = {
   id: string;
   application_id: string;
   author_name: string;
+  author_user_id?: string | null;
+  /** Vai của người viết (server join hr_users); null với comment cũ. */
+  author_role?: string | null;
+  /** id hr_users được @tag. */
+  mentions?: string[];
   content: string;
   created_at: string;
 };

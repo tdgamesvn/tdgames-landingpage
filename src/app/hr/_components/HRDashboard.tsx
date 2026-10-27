@@ -2,12 +2,13 @@
 
 import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { Application, ApplicationComment, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
+import type { Application, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
 import InterviewPanel from "./InterviewPanel";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import AccountsPanel from "./AccountsPanel";
 import EmailTemplatesPanel from "./EmailTemplatesPanel";
+import CommentThread from "./CommentThread";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
 import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
@@ -20,7 +21,7 @@ import PushToggle from "./PushToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 import { cvViewerUrl, safeExternalUrl } from "@/lib/cv-viewer";
-import { ArrowUp, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -350,140 +351,6 @@ function MbtiField({
             className="rounded border border-white/20 px-2.5 py-1 text-[11px] text-white/60 hover:bg-white/10 transition-colors"
           >
             Thôi
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CommentThread({ appId, listMaxH = "max-h-60" }: { appId: string; listMaxH?: string }) {
-  const [comments, setComments] = useState<ApplicationComment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [content, setContent] = useState("");
-  // Tên người bình luận do server lấy từ tài khoản đăng nhập.
-  const { me, can } = useHrSession();
-  const canComment = can("apps.comment");
-  const listRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const el = contentRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
-  }, [content]);
-
-  const fetchComments = useCallback(async () => {
-    if (!canComment) return;
-    try {
-      const res = await hrFetch(`/api/hr/applications/${appId}/comments`);
-      if (res.ok) {
-        const data = await res.json();
-        setComments(data.comments ?? []);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, [appId, canComment]);
-
-  // Qua microtask — không setState đồng bộ trong effect.
-  useEffect(() => {
-    void Promise.resolve().then(fetchComments);
-  }, [fetchComments]);
-
-  // Chỉ cuộn khung danh sách comment — scrollIntoView cuộn cả mọi khung cha
-  // (trên mobile modal cuộn chung 1 khung → mở ra bị nhảy xuống giữa).
-  useEffect(() => {
-    const el = listRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [comments.length]);
-
-  async function submit() {
-    const trimContent = content.trim();
-    if (!trimContent) return;
-
-    setSending(true);
-    try {
-      const res = await hrFetch(`/api/hr/applications/${appId}/comments`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ content: trimContent }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setComments((prev) => [...prev, data.comment]);
-        setContent("");
-      }
-    } finally {
-      setSending(false);
-    }
-  }
-
-  if (!canComment) return null;
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <h4 className="hr-section-title">
-        Bình luận <span className="font-normal text-white/50">{comments.length}</span>
-      </h4>
-
-      {/* Comment list */}
-      <div ref={listRef} className={`${listMaxH} min-h-0 space-y-3 overflow-y-auto pr-1`}>
-        {loading && <p className="text-[13px] text-white/50">Đang tải…</p>}
-        {!loading && comments.length === 0 && (
-          <p className="text-[13px] text-white/50">Chưa có bình luận. Viết nhận xét đầu tiên cho team.</p>
-        )}
-        {comments.map((c) => (
-          <div key={c.id} className="space-y-1">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[13px] font-semibold text-white">{c.author_name}</span>
-              <span className="text-[12px] text-white/50">
-                {new Date(c.created_at).toLocaleString("vi-VN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-            <p className="hr-bubble whitespace-pre-wrap text-[13px] leading-relaxed text-white/85">{c.content}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* New comment form */}
-      <div className="space-y-2 border-t border-white/10 pt-3">
-        {me && (
-          <p className="px-1 text-[12px] text-white/50">
-            Bình luận với tên <span className="font-semibold text-white/80">{me.user.displayName}</span>
-          </p>
-        )}
-        <div className="hr-pill-input flex items-end gap-2 py-1.5 pl-4 pr-1.5">
-          <textarea
-            ref={contentRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && content.trim()) {
-                e.preventDefault();
-                void submit();
-              }
-            }}
-            placeholder="Viết bình luận… (Shift+Enter xuống dòng)"
-            rows={1}
-            className="hr-bare-input min-w-0 flex-1 resize-none self-center overflow-y-auto py-1 text-[13px] text-white placeholder:text-white/30"
-          />
-          <button
-            onClick={submit}
-            disabled={sending || !content.trim()}
-            aria-label="Gửi bình luận"
-            className="hr-send-btn"
-          >
-            <ArrowUp className="hr-ico-solo" />
           </button>
         </div>
       </div>

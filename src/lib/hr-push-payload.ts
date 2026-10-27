@@ -29,6 +29,23 @@ export function interviewReminderPayload(i: {
   };
 }
 
+/** Push khi được @tag trong comment hồ sơ. */
+export function mentionPayload(i: {
+  authorName: string;
+  candidateName: string;
+  content: string;
+  commentId: string;
+  applicationId: string;
+}): PushPayload {
+  const text = i.content.length > 120 ? `${i.content.slice(0, 119)}…` : i.content;
+  return {
+    title: `💬 ${i.authorName} nhắc bạn`,
+    body: `${i.candidateName}: ${text}`,
+    url: "/hr", // /hr chưa có deep-link mở hồ sơ
+    tag: `hr-mention-${i.commentId}`,
+  };
+}
+
 export type PushSubscriptionInput = { endpoint: string; keys: { p256dh: string; auth: string } };
 
 // Server sẽ POST tới endpoint → chỉ nhận host của dịch vụ push chính thức (chặn SSRF).

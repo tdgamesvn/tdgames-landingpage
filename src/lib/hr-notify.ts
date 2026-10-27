@@ -50,6 +50,7 @@ export async function notifyNewComment(
   content: string,
   jobTitle?: string,
   jobId?: string | null,
+  mentionedUserIds: string[] = [],
 ): Promise<void> {
   const truncated =
     content.length > 500 ? content.slice(0, 497) + "..." : content;
@@ -60,7 +61,24 @@ export async function notifyNewComment(
   if (jobTitle) fields.push({ name: "Position", value: jobTitle, inline: true });
   fields.push({ name: "Comment", value: truncated, inline: false });
 
-  const tag = await hrMentions(["hr", "leader"], jobId);
+  let tag = await hrMentions(["hr", "leader"], jobId);
+  // Người được @tag trong comment: thêm <@discord_id>, không trùng với tag sẵn có.
+  if (mentionedUserIds.length) {
+    try {
+      const { data } = await getSupabaseAdmin()
+        .from("hr_users")
+        .select("discord_user_id")
+        .in("id", mentionedUserIds)
+        .eq("disabled", false)
+        .not("discord_user_id", "is", null);
+      const extra = (data ?? [])
+        .map((u) => `<@${u.discord_user_id}>`)
+        .filter((t, i, a) => a.indexOf(t) === i && !tag.includes(t));
+      if (extra.length) tag = `${tag} ${extra.join(" ")}`;
+    } catch {
+      // bỏ qua — vẫn gửi thông báo với tag cũ
+    }
+  }
   await discordNotify("hr", {
     content: `${tag} 💬 **${applicantName}** — new comment by ${authorName}`,
     embeds: [

@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { interviewReminderPayload, isPushSubscriptionInput } from "./hr-push-payload.ts";
+import { interviewReminderPayload, isPushSubscriptionInput, mentionPayload } from "./hr-push-payload.ts";
 
 const base = {
   candidateName: "Nguyễn Văn A",
@@ -59,4 +59,15 @@ test("chỉ nhận endpoint của dịch vụ push chính thức (chặn SSRF)",
   ]) {
     assert.equal(isPushSubscriptionInput({ endpoint, keys }), false, endpoint);
   }
+});
+
+test("mentionPayload: tiêu đề, body cắt 120, url, tag", () => {
+  const p = mentionPayload({ authorName: "Toàn", candidateName: "Nguyễn A", content: "x".repeat(300), commentId: "c1", applicationId: "a1" });
+  assert.equal(p.title, "💬 Toàn nhắc bạn");
+  assert.ok(p.body.startsWith("Nguyễn A: xxx"));
+  assert.equal(p.body.length, "Nguyễn A: ".length + 120);
+  assert.ok(p.body.endsWith("…"));
+  assert.equal(p.url, "/hr");
+  assert.equal(p.tag, "hr-mention-c1");
+  assert.equal(mentionPayload({ authorName: "T", candidateName: "N", content: "ngắn", commentId: "c", applicationId: "a" }).body, "N: ngắn");
 });

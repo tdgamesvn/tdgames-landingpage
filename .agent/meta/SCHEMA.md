@@ -139,3 +139,5 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 
 ## Mẫu mail ứng viên (2026-10-27, migration `20261027020000_hr_email_templates` — chưa áp prod)
 - `hr_email_templates` (kind PK ∈ 6 loại mail ứng viên, subject, body, updated_by text, updated_by_user_id → hr_users ON DELETE SET NULL, updated_at). RLS bật, không policy. Không có dòng = mẫu mặc định trong `src/lib/hr-email-templates.ts`.
+
+- `application_comments.mentions uuid[] not null default '{}'` — id hr_users được @tag (migration 20261027030000, chưa áp prod).
