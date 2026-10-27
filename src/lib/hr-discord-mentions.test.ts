@@ -14,29 +14,31 @@ const staff = [
   { id: "h3", role: "hr" as const, disabled: false, discord_user_id: null },
 ];
 
-test("HR + Leader của job: chỉ leader được gán, bỏ tài khoản khoá / chưa có ID", () => {
-  assert.equal(buildMentions(staff, ["hr", "leader"], "l1"), "<@100000000000000002> <@100000000000000004>");
+test("HR + Leader của job (+ Sếp luôn có): chỉ leader được gán, bỏ tài khoản khoá / chưa có ID", () => {
+  assert.equal(buildMentions(staff, ["hr", "leader"], "l1"), "<@100000000000000001> <@100000000000000002> <@100000000000000004>");
 });
 
 test("Offer: thêm Kế toán", () => {
   assert.equal(
     buildMentions(staff, ["hr", "leader", "accountant"], "l2"),
-    "<@100000000000000002> <@100000000000000005> <@100000000000000006>",
+    "<@100000000000000001> <@100000000000000002> <@100000000000000005> <@100000000000000006>",
   );
 });
 
-test("Leader chưa gán → không tag leader nào", () => {
-  assert.equal(buildMentions(staff, ["leader"], null), "@everyone");
+test("Leader chưa gán → không tag leader nào (Sếp vẫn có)", () => {
+  assert.equal(buildMentions(staff, ["leader"], null), "<@100000000000000001>");
+  assert.equal(buildMentions(staff.filter((u) => u.role !== "boss"), ["leader"], null), "@everyone");
 });
 
 test("Không ai có ID → @everyone; trùng ID chỉ tag 1 lần", () => {
   assert.equal(buildMentions([], ["hr"], null), "@everyone");
   const dup = [...staff, { id: "x", role: "hr" as const, disabled: false, discord_user_id: "100000000000000002" }];
-  assert.equal(buildMentions(dup, ["hr"], null), "<@100000000000000002>");
+  assert.equal(buildMentions(dup, ["hr"], null), "<@100000000000000001> <@100000000000000002>");
 });
 
 test("Sếp được gán làm Leader của job → được tag như Leader", () => {
   assert.equal(buildMentions(staff, ["hr", "leader"], "b"), "<@100000000000000001> <@100000000000000002>");
-  // Không phải leader của job thì Sếp không bị tag ở thông báo chỉ dành cho HR + Leader.
-  assert.equal(buildMentions(staff, ["hr", "leader"], "l1"), "<@100000000000000002> <@100000000000000004>");
+  // Sếp khoá thì không tag.
+  const off = staff.map((u) => (u.role === "boss" ? { ...u, disabled: true } : u));
+  assert.equal(buildMentions(off, ["hr"], null), "<@100000000000000002>");
 });

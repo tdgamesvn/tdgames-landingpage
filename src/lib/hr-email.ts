@@ -88,7 +88,8 @@ export function resolveCc(
     if (u.disabled) continue;
     // "leader" = người được gán phụ trách job (vai Leader hoặc Sếp kiêm Leader); vai khác theo role.
     const isJobLeader = roles.includes("leader") && jobLeaderId !== null && u.id === jobLeaderId;
-    const hit = isJobLeader || (u.role !== "leader" && (roles as string[]).includes(u.role));
+    // Sếp luôn được CC mọi mail ứng viên (sếp chốt 2026-10-27).
+    const hit = u.role === "boss" || isJobLeader || (u.role !== "leader" && (roles as string[]).includes(u.role));
     if (!hit || !isValidEmail(u.email)) continue;
     const e = u.email.trim().toLowerCase();
     if (e !== sender) out.add(e);

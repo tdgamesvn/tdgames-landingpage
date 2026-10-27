@@ -5,7 +5,7 @@ export type MentionStaff = { id: string; role: HrRole; disabled: boolean; discor
 
 /**
  * Chuỗi tag `<@id> <@id>` cho các vai cần báo. Vai "leader" = người phụ trách job (jobLeaderId, có thể là Sếp),
- * vai khác = mọi tài khoản chưa khoá của vai đó. Không ai có Discord ID → "@everyone" như cũ.
+ * vai khác = mọi tài khoản chưa khoá của vai đó; vai Sếp luôn được tag. Không ai có Discord ID → "@everyone" như cũ.
  */
 export function buildMentions(staff: MentionStaff[], roles: HrRole[], jobLeaderId: string | null): string {
   const ids: string[] = [];
@@ -13,7 +13,9 @@ export function buildMentions(staff: MentionStaff[], roles: HrRole[], jobLeaderI
     if (u.disabled || !u.discord_user_id) continue;
     // "leader" = người được gán phụ trách job (vai Leader hoặc Sếp kiêm Leader).
     const isJobLeader = roles.includes("leader") && jobLeaderId !== null && u.id === jobLeaderId;
-    if (!isJobLeader && (u.role === "leader" || !roles.includes(u.role))) continue;
+    // Sếp luôn được tag ở mọi thông báo (sếp chốt 2026-10-27).
+    const always = u.role === "boss";
+    if (!always && !isJobLeader && (u.role === "leader" || !roles.includes(u.role))) continue;
     if (!ids.includes(u.discord_user_id)) ids.push(u.discord_user_id);
   }
   return ids.length ? ids.map((id) => `<@${id}>`).join(" ") : "@everyone";

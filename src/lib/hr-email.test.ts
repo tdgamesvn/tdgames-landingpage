@@ -207,10 +207,12 @@ const staff = [
   { id: "l2", email: "lead2@td.com", role: "leader" as const, disabled: false },
 ];
 
-test("resolveCc live + rejection: chỉ HR active, không trùng", () => {
+test("resolveCc live + rejection: HR active + Sếp (luôn CC), không trùng", () => {
   const r = resolveCc(liveCfg, "rejection", staff, "l1", "x@td.com");
-  assert.deepEqual(r.ccPreview, ["hr1@td.com"]);
-  assert.deepEqual(r.cc, ["hr1@td.com"]);
+  assert.deepEqual(r.ccPreview, ["boss@td.com", "hr1@td.com"]);
+  assert.deepEqual(r.cc, ["boss@td.com", "hr1@td.com"]);
+  // Sếp tự gửi thì không CC chính mình.
+  assert.deepEqual(resolveCc(liveCfg, "rejection", staff, "l1", "boss@td.com").ccPreview, ["hr1@td.com"]);
 });
 
 test("resolveCc offer: kế toán + HR + boss, không người gửi, không disabled", () => {
@@ -226,7 +228,7 @@ test("resolveCc invite: có leader của job, không có leader khác", () => {
   assert.ok(r.ccPreview.includes("lead1@td.com"));
   assert.ok(!r.ccPreview.includes("lead2@td.com"));
   assert.ok(r.ccPreview.includes("hr1@td.com"));
-  assert.deepEqual(resolveCc(liveCfg, "interview_invite", staff, null, "x@td.com").ccPreview, ["hr1@td.com"]);
+  assert.deepEqual(resolveCc(liveCfg, "interview_invite", staff, null, "x@td.com").ccPreview, ["boss@td.com", "hr1@td.com"]);
 });
 
 test("resolveCc: leader bị disabled hoặc email sai bị loại", () => {
