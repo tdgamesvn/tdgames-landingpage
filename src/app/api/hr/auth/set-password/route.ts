@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { hashPassword, hashToken, isTokenUsable } from "@/lib/hr-crypto";
-import { createSession, sessionCookie } from "@/lib/hr-session";
+import { createSession, sessionCookie, rejectCrossOrigin } from "@/lib/hr-session";
 
 const BAD_LINK = "Link không còn hiệu lực";
 
@@ -39,6 +39,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
   const body = await req.json().catch(() => null);
   const token = typeof body?.token === "string" ? body.token : "";
   const password = typeof body?.password === "string" ? body.password : "";

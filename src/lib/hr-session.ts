@@ -7,6 +7,7 @@ import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from 
 import { createHash, timingSafeEqual } from "node:crypto";
 import { hashToken, newToken, readCookie, sessionUserIsActive } from "./hr-crypto";
 import { inScope, type ScopeInput } from "./hr-scope";
+import { isSameOriginRequest } from "./hr-origin";
 
 export const SESSION_COOKIE = "hr_session";
 const SESSION_DAYS = 30;
@@ -85,7 +86,22 @@ export async function getHrContext(req: Request): Promise<HrContext | null> {
 
 export type HrAuthResult = { ctx: HrContext } | { response: NextResponse };
 
+/** Các origin được phép gửi request ghi: origin công khai; dev thêm http://localhost:3000. */
+export function hrAllowedOrigins(): string[] {
+  const list = [hrPublicOrigin()];
+  if (process.env.NODE_ENV !== "production") list.push("http://localhost:3000");
+  return list;
+}
+
+/** Chặn CSRF: request ghi đến từ origin khác (kể cả subdomain cùng site) → 403. null = cho qua. */
+export function rejectCrossOrigin(req: Request): NextResponse | null {
+  if (isSameOriginRequest(req.method, req.headers, hrAllowedOrigins())) return null;
+  return NextResponse.json({ error: "Yêu cầu không hợp lệ (sai nguồn gửi)" }, { status: 403 });
+}
+
 export async function requireHrUser(req: Request, perm?: PermissionKey): Promise<HrAuthResult> {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return { response: csrf };
   const ctx = await getHrContext(req);
   if (!ctx) return { response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   if (perm && !ctx.perms.has(perm)) {
@@ -105,12 +121,16 @@ function cronKeyMatches(provided: string | null): boolean {
 
 /** Cổng cho 2 route remind: cron gửi `x-hr-cron-key`, còn người dùng phải đăng nhập và có quyền `jobs.manage`. */
 export async function requireCronOrHr(req: Request): Promise<NextResponse | null> {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
   if (cronKeyMatches(req.headers.get("x-hr-cron-key"))) return null;
   const auth = await requireHrUser(req, "jobs.manage");
   return "response" in auth ? auth.response : null;
 }
 
 export async function requireBoss(req: Request): Promise<HrAuthResult> {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return { response: csrf };
   const ctx = await getHrContext(req);
   if (!ctx) return { response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   if (ctx.role !== "boss") {

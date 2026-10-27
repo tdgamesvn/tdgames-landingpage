@@ -1,6 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { hrPublicOrigin, issueToken } from "@/lib/hr-session";
+import { hrPublicOrigin, issueToken, rejectCrossOrigin } from "@/lib/hr-session";
 import { buildPasswordResetEmail } from "@/lib/hr-staff-email";
 import { sendStaffEmail } from "@/lib/hr-email-send";
 import { clientIp, createLimiter } from "@/lib/hr-rate-limit";
@@ -27,6 +27,8 @@ async function processForgot(email: string, ip: string) {
 
 // Luôn trả { ok: true } ngay; việc tra DB + gửi mail chạy sau response để thời gian phản hồi không lộ email tồn tại.
 export async function POST(req: Request) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
   const body = await req.json().catch(() => null);
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   const ip = clientIp(req.headers);

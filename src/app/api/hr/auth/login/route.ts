@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { verifyPassword } from "@/lib/hr-crypto";
-import { createSession, sessionCookie } from "@/lib/hr-session";
+import { createSession, sessionCookie, rejectCrossOrigin } from "@/lib/hr-session";
 import { clientIp, createLimiter } from "@/lib/hr-rate-limit";
 
 const BAD = "Email hoặc mật khẩu không đúng";
@@ -15,6 +15,8 @@ const ipLimit = createLimiter(30, WINDOW);
 const emailLimit = createLimiter(20, WINDOW);
 
 export async function POST(req: Request) {
+  const csrf = rejectCrossOrigin(req);
+  if (csrf) return csrf;
   const body = await req.json().catch(() => null);
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body?.password === "string" ? body.password : "";
