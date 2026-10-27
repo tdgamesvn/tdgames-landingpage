@@ -86,7 +86,9 @@ export function resolveCc(
   const out = new Set<string>();
   for (const u of staff) {
     if (u.disabled) continue;
-    const hit = u.role === "leader" ? roles.includes("leader") && jobLeaderId !== null && u.id === jobLeaderId : (roles as string[]).includes(u.role);
+    // "leader" = người được gán phụ trách job (vai Leader hoặc Sếp kiêm Leader); vai khác theo role.
+    const isJobLeader = roles.includes("leader") && jobLeaderId !== null && u.id === jobLeaderId;
+    const hit = isJobLeader || (u.role !== "leader" && (roles as string[]).includes(u.role));
     if (!hit || !isValidEmail(u.email)) continue;
     const e = u.email.trim().toLowerCase();
     if (e !== sender) out.add(e);

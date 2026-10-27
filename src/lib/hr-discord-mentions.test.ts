@@ -34,3 +34,9 @@ test("Không ai có ID → @everyone; trùng ID chỉ tag 1 lần", () => {
   const dup = [...staff, { id: "x", role: "hr" as const, disabled: false, discord_user_id: "100000000000000002" }];
   assert.equal(buildMentions(dup, ["hr"], null), "<@100000000000000002>");
 });
+
+test("Sếp được gán làm Leader của job → được tag như Leader", () => {
+  assert.equal(buildMentions(staff, ["hr", "leader"], "b"), "<@100000000000000001> <@100000000000000002>");
+  // Không phải leader của job thì Sếp không bị tag ở thông báo chỉ dành cho HR + Leader.
+  assert.equal(buildMentions(staff, ["hr", "leader"], "l1"), "<@100000000000000002> <@100000000000000004>");
+});

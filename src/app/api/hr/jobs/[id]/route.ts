@@ -51,7 +51,7 @@ export async function PATCH(
 
   const supabase = getSupabaseAdmin();
 
-  // Gán Leader: phải là tài khoản vai leader chưa khoá, hoặc null để bỏ gán.
+  // Gán Leader: tài khoản vai Leader hoặc Sếp (Sếp kiêm Leader) chưa khoá, hoặc null để bỏ gán.
   if (hasLeader && body.leader_user_id !== null) {
     const target = typeof body.leader_user_id === "string" ? body.leader_user_id : "";
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(target);
@@ -59,8 +59,8 @@ export async function PATCH(
       ? await supabase.from("hr_users").select("role, disabled").eq("id", target).maybeSingle()
       : { data: null, error: null };
     if (uErr) return NextResponse.json({ error: uErr.message }, { status: 500 });
-    if (!u || u.role !== "leader" || u.disabled) {
-      return NextResponse.json({ error: "Leader phải là tài khoản vai Leader đang hoạt động" }, { status: 400 });
+    if (!u || (u.role !== "leader" && u.role !== "boss") || u.disabled) {
+      return NextResponse.json({ error: "Leader phải là tài khoản vai Leader hoặc Sếp đang hoạt động" }, { status: 400 });
     }
   }
 

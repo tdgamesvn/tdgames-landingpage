@@ -246,3 +246,8 @@ test("resolveCc test mode: cc rỗng nhưng ccPreview đầy đủ", () => {
 test("CC_ROLES phủ mọi kind", () => {
   for (const k of CANDIDATE_EMAIL_KINDS) assert.ok(CC_ROLES[k].length > 0, k);
 });
+
+test("resolveCc: Sếp là Leader của job → được CC ở mail mời PV", () => {
+  const r = resolveCc(liveCfg, "interview_invite", staff, "b1", "x@td.com");
+  assert.deepEqual(r.ccPreview, ["boss@td.com", "hr1@td.com"]);
+});

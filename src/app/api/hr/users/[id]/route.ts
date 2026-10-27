@@ -97,7 +97,9 @@ export async function PATCH(req: Request, ctxRoute: { params: Promise<{ id: stri
       const { error } = await supabase.from("hr_sessions").delete().eq("user_id", id);
       if (error) return NextResponse.json({ error: `Đã khoá nhưng xoá phiên lỗi: ${error.message}` }, { status: 500 });
     }
-    if (change.role !== undefined && t.role === "leader" && change.role !== "leader") {
+    // Rời vai được phụ trách job (Leader / Sếp) → gỡ khỏi các job đang phụ trách.
+    const canLead = (r: string) => r === "leader" || r === "boss";
+    if (change.role !== undefined && canLead(t.role) && !canLead(change.role)) {
       const { error } = await supabase.from("jobs").update({ leader_user_id: null }).eq("leader_user_id", id);
       if (error) return NextResponse.json({ error: `Đã đổi vai nhưng gỡ Leader khỏi job lỗi: ${error.message}` }, { status: 500 });
     }
