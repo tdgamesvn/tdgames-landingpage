@@ -57,6 +57,13 @@ test("redactApplication leader mặc định", () => {
   assert.equal(JSON.stringify(app), before);
 });
 
+test("leader giữ message, mất referred_by/source", () => {
+  const a = { ...app, message: "m", available_hours_per_week: 20, referred_by: "r", source: "s" };
+  const out = redactApplication(a, effectivePermissions("leader", []));
+  assert.ok("message" in out && "available_hours_per_week" in out);
+  assert.ok(!("referred_by" in out) && !("source" in out));
+});
+
 test("có view_ai thì giữ key ai_* / rank* lạ", () => {
   const out = redactApplication(app, new Set<PermissionKey>(["apps.view_ai"]));
   assert.ok("ai_custom" in out && "rank_score" in out && !("email" in out));
