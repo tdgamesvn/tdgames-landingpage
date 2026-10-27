@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser } from "@/lib/hr-session";
 import { getVapid, sendHrPush } from "@/lib/hr-push";
 import { isPushSubscriptionInput } from "@/lib/hr-push-payload";
 
@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 
 /** Khoá công khai VAPID để trình duyệt đăng ký nhận thông báo. */
 export async function GET(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "push.receive");
+  if ("response" in auth) return auth.response;
   const vapid = getVapid();
   return NextResponse.json({ publicKey: vapid?.publicKey ?? null });
 }
@@ -20,8 +20,8 @@ export async function GET(request: Request) {
  * `{ action: "test", endpoint }` → gửi thử 1 thông báo tới đúng thiết bị đó.
  */
 export async function POST(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "push.receive");
+  if ("response" in auth) return auth.response;
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: "Body không hợp lệ" }, { status: 400 });
 
@@ -49,6 +49,7 @@ export async function POST(request: Request) {
         p256dh: s.keys.p256dh,
         auth: s.keys.auth,
         label,
+        user_id: auth.ctx.user.id, // tài khoản cũ (mật khẩu chung) → null
         user_agent: (request.headers.get("user-agent") ?? "").slice(0, 300) || null,
       },
       { onConflict: "endpoint" },
@@ -59,8 +60,8 @@ export async function POST(request: Request) {
 
 /** `{ endpoint }` → máy này thôi nhận thông báo. */
 export async function DELETE(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "push.receive");
+  if ("response" in auth) return auth.response;
   const body = (await request.json().catch(() => null)) as { endpoint?: unknown } | null;
   if (typeof body?.endpoint !== "string") return NextResponse.json({ error: "Thiếu endpoint" }, { status: 400 });
   const { error } = await getSupabaseAdmin().from("hr_push_subscriptions").delete().eq("endpoint", body.endpoint);

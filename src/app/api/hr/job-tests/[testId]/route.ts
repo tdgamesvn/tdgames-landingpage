@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, jobInScope } from "@/lib/hr-session";
 import { deleteFromR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -10,9 +10,17 @@ type Ctx = { params: Promise<{ testId: string }> };
 
 /** Sửa tiêu đề / ghi chú / thứ tự đề test. */
 export async function PATCH(request: Request, { params }: Ctx) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "jobs.manage");
+  if ("response" in auth) return auth.response;
   const { testId } = await params;
+
+  // Đề test thuộc job ngoài phạm vi (Leader chỉ job mình) → 404.
+  const { data: owner, error: ownerErr } = await getSupabaseAdmin().from("job_tests").select("job_id").eq("id", testId).maybeSingle();
+  if (ownerErr) return NextResponse.json({ error: ownerErr.message }, { status: 500 });
+  if (!owner) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const inScopeJob = await jobInScope(auth.ctx, String(owner.job_id)).catch(() => undefined);
+  if (inScopeJob === undefined) return NextResponse.json({ error: "Không đọc được job" }, { status: 500 });
+  if (!inScopeJob) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   let body: Record<string, unknown>;
   try {
@@ -41,9 +49,17 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
 /** Xoá đề test (+ file trên R2 nếu có). */
 export async function DELETE(request: Request, { params }: Ctx) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "jobs.manage");
+  if ("response" in auth) return auth.response;
   const { testId } = await params;
+
+  // Đề test thuộc job ngoài phạm vi (Leader chỉ job mình) → 404.
+  const { data: owner, error: ownerErr } = await getSupabaseAdmin().from("job_tests").select("job_id").eq("id", testId).maybeSingle();
+  if (ownerErr) return NextResponse.json({ error: ownerErr.message }, { status: 500 });
+  if (!owner) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const inScopeJob = await jobInScope(auth.ctx, String(owner.job_id)).catch(() => undefined);
+  if (inScopeJob === undefined) return NextResponse.json({ error: "Không đọc được job" }, { status: 500 });
+  if (!inScopeJob) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { data, error } = await getSupabaseAdmin()
     .from("job_tests")

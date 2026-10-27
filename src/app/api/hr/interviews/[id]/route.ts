@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
-import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
+import { requireHrUser, loadScopedApplication, loadScopedInterview } from "@/lib/hr-session";
 import { redactInterview } from "@/lib/hr-scope";
 import { deleteFromR2 } from "@/lib/r2";
 import { discordNotify } from "@/lib/discord-notify";
@@ -53,10 +52,13 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "interviews.manage");
+  if ("response" in auth) return auth.response;
 
   const { id } = await params;
+  const owned = await loadScopedInterview(auth.ctx, id).catch(() => undefined);
+  if (owned === undefined) return NextResponse.json({ error: "Không đọc được phiên PV" }, { status: 500 });
+  if (!owned) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   let body: Record<string, unknown>;
   try {
@@ -195,10 +197,13 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "interviews.manage");
+  if ("response" in auth) return auth.response;
 
   const { id } = await params;
+  const owned = await loadScopedInterview(auth.ctx, id).catch(() => undefined);
+  if (owned === undefined) return NextResponse.json({ error: "Không đọc được phiên PV" }, { status: 500 });
+  if (!owned) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const supabase = getSupabaseAdmin();
 
   // Lấy key TRƯỚC khi xoá dòng — xoá xong là mất đường tìm lại file trên R2.

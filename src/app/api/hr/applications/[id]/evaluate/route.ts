@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { HR_SIGNALS_RULES, aiBackendErrorMessage, extractCvText, hrSignals } from "@/lib/interview-ai";
 import { PORTFOLIO_RULES, portfolioPreview } from "@/lib/portfolio-preview";
 
@@ -23,8 +23,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "ai.run");
+  if ("response" in auth) return auth.response;
 
   const baseUrl = process.env.AI_BASE_URL;
   const apiKey = process.env.AI_API_KEY;
@@ -38,6 +38,10 @@ export async function POST(
 
   const { id } = await params;
   const supabase = getSupabaseAdmin();
+
+  const scoped = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
+  if (scoped === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
+  if (!scoped) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { data: app, error } = await supabase
     .from("applications")

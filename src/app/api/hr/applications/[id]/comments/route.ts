@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { notifyNewComment } from "@/lib/hr-notify";
 
@@ -39,11 +38,16 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.comment");
+  if ("response" in auth) return auth.response;
+  const { ctx } = auth;
 
   const { id } = await params;
   const supabase = getSupabaseAdmin();
+
+  const scoped = await loadScopedApplication(ctx, id).catch(() => undefined);
+  if (scoped === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
+  if (!scoped) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   let body: { author_name?: string; content?: string };
   try {
@@ -52,14 +56,10 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const authorName = (body.author_name ?? "").trim();
+  // Tên tác giả lấy từ tài khoản; author_name client gửi bị bỏ qua.
+  const authorName = ctx.user.displayName;
   const content = (body.content ?? "").trim();
 
-  if (!authorName)
-    return NextResponse.json(
-      { error: "author_name is required" },
-      { status: 400 },
-    );
   if (!content)
     return NextResponse.json(
       { error: "content is required" },
@@ -69,7 +69,7 @@ export async function POST(
   // Insert comment
   const { data, error } = await supabase
     .from("application_comments")
-    .insert({ application_id: id, author_name: authorName, content })
+    .insert({ application_id: id, author_name: authorName, author_user_id: ctx.user.id, content })
     .select()
     .single();
 

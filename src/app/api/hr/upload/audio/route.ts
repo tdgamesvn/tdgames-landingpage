@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser } from "@/lib/hr-session";
 import { uploadToR2 } from "@/lib/r2";
 import { audioFileError } from "@/lib/interview-audio";
 
@@ -19,8 +19,8 @@ function sanitize(name: string) {
 }
 
 export async function POST(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "interviews.manage");
+  if ("response" in auth) return auth.response;
 
   const formData = await request.formData();
   const file = formData.get("file");

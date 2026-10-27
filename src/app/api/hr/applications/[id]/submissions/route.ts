@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken, readTestInput } from "@/lib/hr-tests";
 import { deleteFromR2 } from "@/lib/r2";
@@ -41,16 +40,13 @@ export async function GET(request: Request, { params }: Ctx) {
  * - multipart file / JSON `{ url, note }` → HR lưu hộ bài làm
  */
 export async function POST(request: Request, { params }: Ctx) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.edit");
+  if ("response" in auth) return auth.response;
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
-  const { data: app } = await supabase
-    .from("applications")
-    .select("id, test_token")
-    .eq("id", id)
-    .maybeSingle();
+  const app = await loadScopedApplication(auth.ctx, id, "id, test_token").catch(() => undefined);
+  if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const isJson = (request.headers.get("content-type") ?? "").includes("application/json");

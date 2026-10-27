@@ -195,3 +195,27 @@ export async function loadScopedApplication(
   });
   return ok ? row : null;
 }
+
+/** Đọc 1 phiên PV theo id + kiểm phạm vi qua hồ sơ chủ. null nếu không có / ngoài phạm vi. `columns` luôn kèm application_id. */
+export async function loadScopedInterview(
+  ctx: HrContext,
+  interviewId: string,
+  columns = "id",
+): Promise<Record<string, unknown> | null> {
+  const cols = columns === "*" ? "*" : [...new Set([...columns.split(",").map((c) => c.trim()), "id", "application_id"])].join(", ");
+  const { data, error } = await getSupabaseAdmin().from("interview_sessions").select(cols).eq("id", interviewId).maybeSingle();
+  if (error) throw new Error(`loadScopedInterview: ${error.message}`);
+  if (!data) return null;
+  const row = data as unknown as Record<string, unknown>;
+  const app = await loadScopedApplication(ctx, String(row.application_id));
+  return app ? row : null;
+}
+
+/** Job có tồn tại và nằm trong phạm vi không. Leader chỉ thấy job mình phụ trách; vai khác thấy mọi job. */
+export async function jobInScope(ctx: HrContext, jobId: string): Promise<boolean> {
+  const { data, error } = await getSupabaseAdmin().from("jobs").select("id, leader_user_id").eq("id", jobId).maybeSingle();
+  if (error) throw new Error(`jobInScope: ${error.message}`);
+  if (!data) return false;
+  if (ctx.role === "leader") return !!ctx.user.id && data.leader_user_id === ctx.user.id;
+  return true;
+}

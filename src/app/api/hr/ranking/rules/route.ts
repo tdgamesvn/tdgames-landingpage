@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
 import { requireHrUser } from "@/lib/hr-session";
 import { RULES_KEY, loadRankingRules } from "@/lib/candidate-ranking";
 
@@ -15,8 +14,8 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "jobs.manage");
+  if ("response" in auth) return auth.response;
   let body: { rules?: unknown };
   try {
     body = await request.json();

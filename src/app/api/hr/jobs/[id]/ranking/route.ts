@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
-import { requireHrUser, loadScope } from "@/lib/hr-session";
+import { requireHrUser, loadScope, jobInScope } from "@/lib/hr-session";
 import { inScope } from "@/lib/hr-scope";
 import { AiError } from "@/lib/interview-ai";
 import {
@@ -157,9 +156,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
  * - {step:"final"}: so sánh lại top đầu với nhau, chốt bảng.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "ai.run");
+  if ("response" in auth) return auth.response;
   const { id } = await params;
+
+  const inScopeJob = await jobInScope(auth.ctx, id).catch(() => undefined);
+  if (inScopeJob === undefined) return NextResponse.json({ error: "Không đọc được job" }, { status: 500 });
+  if (!inScopeJob) return NextResponse.json({ error: "Job not found" }, { status: 404 });
 
   let body: { step?: string; ids?: unknown };
   try {

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
 import { requireHrUser } from "@/lib/hr-session";
 
 export const runtime = "nodejs";
@@ -55,8 +54,8 @@ export async function GET(request: Request) {
 
 /** Tạo status mới: { label, color?, kind?, remind_days? } — thêm vào trước cột "lost" cuối. */
 export async function POST(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "jobs.manage");
+  if ("response" in auth) return auth.response;
 
   const body = await readJson(request);
   if (!body || typeof body.label !== "string" || !body.label.trim()) {
@@ -97,8 +96,8 @@ export async function POST(request: Request) {
  * Dùng cho đổi tên/màu và kéo đổi thứ tự (gửi lại position cho mọi cột).
  */
 export async function PATCH(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "jobs.manage");
+  if ("response" in auth) return auth.response;
 
   const body = await readJson(request);
   const list = Array.isArray(body?.statuses) ? (body!.statuses as Record<string, unknown>[]) : null;
@@ -125,8 +124,8 @@ export async function PATCH(request: Request) {
 
 /** Xoá: ?key=xxx&move_to=yyy — nếu còn ứng viên trong cột thì bắt buộc move_to. */
 export async function DELETE(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "jobs.manage");
+  if ("response" in auth) return auth.response;
 
   const url = new URL(request.url);
   const key = url.searchParams.get("key");
