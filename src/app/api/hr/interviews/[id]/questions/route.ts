@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedInterview } from "@/lib/hr-session";
+import { redactInterview } from "@/lib/hr-scope";
 import {
   AiError,
   JOB_SELECT,
@@ -123,5 +124,5 @@ export async function POST(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ session: updated });
+  return NextResponse.json({ session: redactInterview(updated, auth.ctx.perms) });
 }

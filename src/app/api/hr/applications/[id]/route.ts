@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { checkAppPatch, OFFER_STATUSES } from "@/lib/hr-app-patch";
 import { notifyApplicationUpdate } from "@/lib/hr-notify";
+import { redactApplication } from "@/lib/hr-scope";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -126,7 +127,8 @@ export async function PATCH(
     })();
   }
 
-  return NextResponse.json({ application: data });
+  // Gỡ field thiếu quyền khỏi response (vd. Kế toán không thấy email/lương mong muốn).
+  return NextResponse.json({ application: redactApplication(data, ctx.perms) });
 }
 
 export async function DELETE(

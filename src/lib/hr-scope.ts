@@ -120,7 +120,7 @@ export function redactEmailRow<T extends Record<string, unknown>>(row: T, perms:
   const out: Record<string, unknown> = { ...row };
   if (!perms.has("apps.view_contact")) {
     for (const k of ["to_email", "sent_to", "cc_emails"]) delete out[k];
-    if (typeof out.subject === "string") out.subject = out.subject.replace(/^\[TEST → [^\]]*\] /, "[TEST] ");
+    if (typeof out.subject === "string") out.subject = out.subject.replace(/^\[TEST → \S*\] /, "[TEST] ");
   }
   if (!perms.has("apps.view_tests") && out.kind === "test_assignment") {
     for (const k of ["body_text", "body_html"]) {

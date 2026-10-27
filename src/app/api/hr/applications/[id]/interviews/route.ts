@@ -68,5 +68,5 @@ export async function POST(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ session: data });
+  return NextResponse.json({ session: redactInterview(data as Record<string, unknown>, auth.ctx.perms) });
 }

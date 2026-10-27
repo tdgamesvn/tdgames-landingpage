@@ -145,3 +145,11 @@ test("redactEmailRow: thiếu view_tests → che token trong test_assignment", (
   const other = redactEmailRow({ ...mailRow, kind: "rejection" }, without("apps.view_tests"));
   assert.equal(other.body_text, mailRow.body_text);
 });
+
+test("redactEmailRow: email ứng viên chứa ']' vẫn gỡ hết địa chỉ khỏi subject", () => {
+  const r = redactEmailRow(
+    { ...mailRow, kind: "rejection", subject: '[TEST → "a]b"@x.com] Kết quả ứng tuyển' },
+    without("apps.view_contact"),
+  ) as Record<string, unknown>;
+  assert.equal(r.subject, "[TEST] Kết quả ứng tuyển");
+});

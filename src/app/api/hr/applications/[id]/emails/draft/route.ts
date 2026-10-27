@@ -20,8 +20,8 @@ export async function GET(request: Request, { params }: Ctx) {
   const { id } = await params;
   const url = new URL(request.url);
   const kind = url.searchParams.get("kind");
-  // Xác thực một lần, rồi kiểm quyền theo kind.
-  const auth = await requireHrUser(request, "apps.view_emails");
+  // Xác thực một lần, rồi kiểm quyền GỬI theo kind (nháp không cần apps.view_emails — đó là quyền xem lịch sử).
+  const auth = await requireHrUser(request);
   if ("response" in auth) return auth.response;
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
   const forbidden = () => NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });

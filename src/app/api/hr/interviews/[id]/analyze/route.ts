@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedInterview } from "@/lib/hr-session";
+import { redactInterview } from "@/lib/hr-scope";
 import {
   AiError,
   JOB_SELECT,
@@ -189,7 +190,7 @@ export async function POST(
 
   const startedAt = session.analysis_started_at ? new Date(session.analysis_started_at).getTime() : 0;
   if (session.analysis_status === "running" && Date.now() - startedAt < STALE_MS) {
-    return NextResponse.json({ session }, { status: 202 });
+    return NextResponse.json({ session: redactInterview(session, auth.ctx.perms) }, { status: 202 });
   }
 
   const { data: running, error } = await supabase
@@ -215,5 +216,5 @@ export async function POST(
         .eq("id", id);
     });
 
-  return NextResponse.json({ session: running }, { status: 202 });
+  return NextResponse.json({ session: redactInterview(running, auth.ctx.perms) }, { status: 202 });
 }

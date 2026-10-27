@@ -198,7 +198,7 @@ export async function PATCH(
     }
   }
 
-  return NextResponse.json({ session: data });
+  return NextResponse.json({ session: redactInterview(data as Record<string, unknown>, auth.ctx.perms) });
 }
 
 /** 1 vòng PV — client hỏi lại khi đang phân tích nền (analysis_status = "running"). */
