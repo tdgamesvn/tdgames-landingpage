@@ -9,6 +9,7 @@ import {
   hashToken,
   isTokenUsable,
   sessionUserIsActive,
+  readCookie,
 } from "./hr-crypto.ts";
 
 test("hash rồi verify đúng → true", async () => {
@@ -49,4 +50,13 @@ test("sessionUserIsActive", () => {
   assert.equal(sessionUserIsActive({ disabled: true }), false);
   assert.equal(sessionUserIsActive(null), false);
   assert.equal(sessionUserIsActive({ disabled: false }), true);
+});
+
+test("readCookie", () => {
+  assert.equal(readCookie(null, "hr_session"), null);
+  assert.equal(readCookie("a=1; hr_session=abc", "hr_session"), "abc");
+  assert.equal(readCookie("xhr_session=bad; hr_session_x=bad2", "hr_session"), null);
+  assert.equal(readCookie("hr_session=a=b==", "hr_session"), "a=b==");
+  assert.equal(readCookie("hr_session=%E0%A4%A", "hr_session"), "%E0%A4%A");
+  assert.equal(readCookie("hr_session=a%20b", "hr_session"), "a b");
 });

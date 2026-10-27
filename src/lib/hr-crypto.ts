@@ -56,3 +56,20 @@ export function isTokenUsable(row: { expires_at: string; used_at: string | null 
 export function sessionUserIsActive(u: { disabled: boolean } | null): boolean {
   return !!u && !u.disabled;
 }
+
+/** Đọc 1 cookie theo tên chính xác từ header Cookie. */
+export function readCookie(header: string | null, name: string): string | null {
+  if (!header) return null;
+  for (const part of header.split(";")) {
+    const i = part.indexOf("=");
+    if (i < 0) continue;
+    if (part.slice(0, i).trim() !== name) continue;
+    const v = part.slice(i + 1).trim();
+    try {
+      return decodeURIComponent(v);
+    } catch {
+      return v;
+    }
+  }
+  return null;
+}

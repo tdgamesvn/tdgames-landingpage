@@ -3,8 +3,8 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "./supabase-admin";
 import { getHRSecret } from "./hr-auth";
-import { effectivePermissions, type HrRole, type PermissionKey } from "./hr-permissions";
-import { newToken, hashToken, sessionUserIsActive } from "./hr-crypto";
+import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "./hr-permissions";
+import { hashToken, newToken, readCookie, sessionUserIsActive } from "./hr-crypto";
 
 export const SESSION_COOKIE = "hr_session";
 const SESSION_DAYS = 30;
@@ -16,56 +16,50 @@ export type HrContext = {
   legacy: boolean;
 };
 
-function readCookie(req: Request, name: string): string | null {
-  const raw = req.headers.get("cookie");
-  if (!raw) return null;
-  for (const part of raw.split(";")) {
-    const i = part.indexOf("=");
-    if (i < 0) continue;
-    if (part.slice(0, i).trim() === name) {
-      const v = part.slice(i + 1).trim();
-      try {
-        return decodeURIComponent(v);
-      } catch {
-        return v;
-      }
-    }
-  }
-  return null;
-}
-
 /** Đọc ghi đè quyền theo vai từ DB → effectivePermissions. */
-async function loadPerms(role: HrRole): Promise<Set<PermissionKey>> {
+async function loadPerms(role: HrRole): Promise<Set<PermissionKey> | null> {
   if (role === "boss") return effectivePermissions("boss", []);
-  const { data } = await getSupabaseAdmin()
+  const { data, error } = await getSupabaseAdmin()
     .from("hr_role_permissions")
     .select("permission, allowed")
     .eq("role", role);
+  if (error) {
+    // Fail closed: không trả quyền mặc định khi không đọc được phần ghi đè (tránh khôi phục quyền đã thu hồi).
+    console.error("[hr-session] loadPerms lỗi:", error.message);
+    return null;
+  }
   const overrides = (data ?? []).map((r) => ({ role, permission: String(r.permission), allowed: !!r.allowed }));
   return effectivePermissions(role, overrides);
 }
 
 export async function getHrContext(req: Request): Promise<HrContext | null> {
-  const cookieToken = readCookie(req, SESSION_COOKIE);
+  const cookieToken = readCookie(req.headers.get("cookie"), SESSION_COOKIE);
   if (cookieToken) {
     const supabase = getSupabaseAdmin();
-    const { data: session } = await supabase
+    const { data: session, error: sessionError } = await supabase
       .from("hr_sessions")
       .select("expires_at, user:hr_users(id, email, display_name, role, disabled)")
       .eq("token_hash", hashToken(cookieToken))
       .maybeSingle();
+    if (sessionError) {
+      console.error("[hr-session] đọc phiên lỗi:", sessionError.message);
+      return null; // fail closed
+    }
     const user = Array.isArray(session?.user) ? session.user[0] : session?.user;
     if (
       session &&
       new Date(session.expires_at).getTime() > Date.now() &&
       user &&
-      sessionUserIsActive(user)
+      sessionUserIsActive(user) &&
+      (HR_ROLES as readonly string[]).includes(user.role)
     ) {
       const role = user.role as HrRole;
+      const perms = await loadPerms(role);
+      if (!perms) return null;
       return {
         user: { id: user.id, email: user.email, displayName: user.display_name },
         role,
-        perms: await loadPerms(role),
+        perms,
         legacy: false,
       };
     }
