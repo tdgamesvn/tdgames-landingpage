@@ -6,6 +6,7 @@
  */
 
 import { GOOGLE_MAPS_URL, OFFICE_ADDRESS } from "./company-location.ts";
+import type { HrRole } from "./hr-permissions.ts";
 
 export const CANDIDATE_EMAIL_KINDS = [
   "interview_invite",
@@ -13,6 +14,7 @@ export const CANDIDATE_EMAIL_KINDS = [
   "interview_cancel",
   "test_assignment",
   "rejection",
+  "offer",
 ] as const;
 
 export type CandidateEmailKind = (typeof CANDIDATE_EMAIL_KINDS)[number];
@@ -23,6 +25,7 @@ export const KIND_LABEL: Record<CandidateEmailKind, string> = {
   interview_cancel: "Huỷ lịch phỏng vấn",
   test_assignment: "Gửi bài test",
   rejection: "Báo kết quả (không phù hợp)",
+  offer: "Gửi offer",
 };
 
 export function isCandidateEmailKind(v: unknown): v is CandidateEmailKind {
@@ -57,6 +60,41 @@ export function resolveRecipient(cfg: HrEmailConfig, candidateEmail: string, sub
   return { to: cfg.testTo, subject: `[TEST → ${candidateEmail}] ${subject}`, testMode: true };
 }
 
+/** Vai được tự CC theo loại mail. "leader" = Leader của job ứng viên; vai khác = mọi tài khoản active vai đó. */
+export const CC_ROLES: Record<CandidateEmailKind, ("hr" | "leader" | "accountant" | "boss")[]> = {
+  interview_invite: ["hr", "leader"],
+  interview_reschedule: ["hr", "leader"],
+  interview_cancel: ["hr", "leader"],
+  test_assignment: ["hr", "leader"],
+  rejection: ["hr"],
+  offer: ["accountant", "hr", "boss"],
+};
+
+/**
+ * Danh sách CC nội bộ. `ccPreview` luôn đầy đủ (để UI hiển thị); `cc` thực gửi chỉ có ở chế độ live.
+ * Loại người gửi + tài khoản disabled, lower-case, gộp trùng, bỏ email sai.
+ */
+export function resolveCc(
+  cfg: HrEmailConfig,
+  kind: CandidateEmailKind,
+  staff: { email: string; role: HrRole; disabled: boolean; id: string }[],
+  jobLeaderId: string | null,
+  senderEmail: string,
+): { cc: string[]; ccPreview: string[] } {
+  const roles = CC_ROLES[kind];
+  const sender = senderEmail.trim().toLowerCase();
+  const out = new Set<string>();
+  for (const u of staff) {
+    if (u.disabled) continue;
+    const hit = u.role === "leader" ? roles.includes("leader") && jobLeaderId !== null && u.id === jobLeaderId : (roles as string[]).includes(u.role);
+    if (!hit || !isValidEmail(u.email)) continue;
+    const e = u.email.trim().toLowerCase();
+    if (e !== sender) out.add(e);
+  }
+  const ccPreview = [...out];
+  return { cc: cfg.mode === "live" ? ccPreview : [], ccPreview };
+}
+
 const VN_TZ = "Asia/Ho_Chi_Minh";
 const WEEKDAY_LONG: Record<string, string> = {
   Mon: "Thứ Hai", Tue: "Thứ Ba", Wed: "Thứ Tư", Thu: "Thứ Năm", Fri: "Thứ Sáu", Sat: "Thứ Bảy", Sun: "Chủ Nhật",
@@ -85,6 +123,8 @@ export type DraftInput = {
   testUrl?: string | null;
   /** Hồ sơ đã có kết quả MBTI → mail mời PV không nhắc làm trắc nghiệm nữa. */
   hasMbti?: boolean;
+  /** Mail offer: lương + ngày bắt đầu (trống → "…" để người gửi điền). */
+  offer?: { salary: string; startDate: string } | null;
 };
 
 /** Trắc nghiệm MBTI gửi ứng viên trước buổi PV (sếp chọn, 2026-10-26). */
@@ -170,6 +210,17 @@ export function buildDraft(input: DraftInput): { subject: string; text: string }
         "Chúc bạn nhiều thành công trên con đường sắp tới.",
       ];
       break;
+    case "offer": {
+      const salary = input.offer?.salary.trim() || "…";
+      const startDate = input.offer?.startDate.trim() || "…";
+      subject = `Thư mời làm việc — ${job} | TD Games`;
+      body = [
+        `Cảm ơn bạn đã dành thời gian tham gia phỏng vấn vị trí ${job} tại TD Games. Chúng tôi rất vui được gửi tới bạn lời mời làm việc:`,
+        [`- Vị trí: ${job}`, `- Mức lương: ${salary}`, `- Ngày bắt đầu dự kiến: ${startDate}`].join("\n"),
+        "Bạn vui lòng trả lời email này để xác nhận nhận offer, hoặc gửi lại bất kỳ câu hỏi nào — chúng tôi luôn sẵn sàng giải đáp.",
+      ];
+      break;
+    }
   }
 
   return { subject, text: [hello, ...body, SIGNATURE].join("\n\n") };

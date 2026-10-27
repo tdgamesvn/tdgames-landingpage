@@ -113,3 +113,35 @@ test("kế toán: status đảo thứ tự theo position; thiếu interview + of
   assert.equal(inScope(s2, { job_id: "j", status: "offer" }), false);
   assert.equal(inScope(s2, { job_id: "j", status: "offer", offer_status: "accepted" }), true);
 });
+
+// ── redactEmailRow ──
+import { redactEmailRow } from "./hr-scope.ts";
+
+const allPerms = new Set<PermissionKey>(HR_PERMISSIONS.map((p) => p.key));
+const without = (...ks: PermissionKey[]) => new Set<PermissionKey>([...allPerms].filter((k) => !ks.includes(k)));
+
+const mailRow = {
+  id: "m1", kind: "test_assignment", to_email: "c@x.com", sent_to: "tony@td.com", cc_emails: ["a@td.com"],
+  subject: "[TEST → c@x.com] Bài test", body_text: "Link: https://tdgamestudio.com/test/abc123_-X. Hết",
+  body_html: '<a href="https://tdgamestudio.com/test/abc123_-X">m</a>',
+};
+
+test("redactEmailRow: đủ quyền → nguyên bản", () => {
+  assert.deepEqual(redactEmailRow(mailRow, allPerms), mailRow);
+});
+
+test("redactEmailRow: thiếu view_contact → gỡ địa chỉ + subject [TEST]", () => {
+  const r = redactEmailRow(mailRow, without("apps.view_contact")) as Record<string, unknown>;
+  assert.ok(!("to_email" in r) && !("sent_to" in r) && !("cc_emails" in r));
+  assert.equal(r.subject, "[TEST] Bài test");
+  assert.equal(r.body_text, mailRow.body_text);
+});
+
+test("redactEmailRow: thiếu view_tests → che token trong test_assignment", () => {
+  const r = redactEmailRow(mailRow, without("apps.view_tests")) as Record<string, string>;
+  assert.equal(r.body_text, "Link: https://tdgamestudio.com/test/…. Hết");
+  assert.equal(r.body_html, '<a href="https://tdgamestudio.com/test/…">m</a>');
+  assert.equal(r.to_email, "c@x.com");
+  const other = redactEmailRow({ ...mailRow, kind: "rejection" }, without("apps.view_tests"));
+  assert.equal(other.body_text, mailRow.body_text);
+});

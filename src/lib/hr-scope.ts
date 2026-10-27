@@ -110,3 +110,22 @@ export function redactInterview<T extends Record<string, unknown>>(
   for (const k of INTERVIEW_BASE_FIELDS) if (k in row) out[k] = row[k];
   return out as Partial<T>;
 }
+
+/**
+ * Gỡ dữ liệu nhạy cảm khỏi 1 dòng lịch sử mail theo quyền (thuần):
+ * - thiếu apps.view_contact: bỏ to_email/sent_to/cc_emails, subject `[TEST → …] ` → `[TEST] `;
+ * - thiếu apps.view_tests: mail test_assignment che token trong đường dẫn `/test/<token>` → `/test/…`.
+ */
+export function redactEmailRow<T extends Record<string, unknown>>(row: T, perms: Set<PermissionKey>): Partial<T> {
+  const out: Record<string, unknown> = { ...row };
+  if (!perms.has("apps.view_contact")) {
+    for (const k of ["to_email", "sent_to", "cc_emails"]) delete out[k];
+    if (typeof out.subject === "string") out.subject = out.subject.replace(/^\[TEST → [^\]]*\] /, "[TEST] ");
+  }
+  if (!perms.has("apps.view_tests") && out.kind === "test_assignment") {
+    for (const k of ["body_text", "body_html"]) {
+      if (typeof out[k] === "string") out[k] = (out[k] as string).replace(/\/test\/[A-Za-z0-9_-]+/g, "/test/…");
+    }
+  }
+  return out as Partial<T>;
+}

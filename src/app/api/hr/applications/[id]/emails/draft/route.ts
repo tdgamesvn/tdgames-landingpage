@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken } from "@/lib/hr-tests";
+import { resolveCcForApplication } from "@/lib/hr-email-send";
 import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isValidEmail } from "@/lib/hr-email";
 
 export const runtime = "nodejs";
@@ -24,8 +25,7 @@ export async function GET(request: Request, { params }: Ctx) {
   if ("response" in auth) return auth.response;
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
   const forbidden = () => NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
-  // Nhánh "offer" chỉ chạy khi Task 8 thêm kind này vào CANDIDATE_EMAIL_KINDS.
-  if (!auth.ctx.perms.has((kind as string) === "offer" ? "emails.send_offer" : "emails.send")) return forbidden();
+  if (!auth.ctx.perms.has(kind === "offer" ? "emails.send_offer" : "emails.send")) return forbidden();
   // Nháp bài test tạo token + lộ link test → cần thêm quyền xem test, kiểm TRƯỚC khi tạo token.
   if (kind === "test_assignment" && !auth.ctx.perms.has("apps.view_tests")) return forbidden();
   const scoped = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
@@ -89,7 +89,14 @@ export async function GET(request: Request, { params }: Ctx) {
     prevScheduledAt,
     testUrl,
     hasMbti: Boolean(app.mbti_type || app.mbti_url),
+    offer: kind === "offer" ? { salary: url.searchParams.get("salary")?.slice(0, 100) ?? "", startDate: url.searchParams.get("start_date")?.slice(0, 100) ?? "" } : null,
   });
+  let ccPreview: string[];
+  try {
+    ccPreview = (await resolveCcForApplication(cfg, kind, auth.ctx, (app.job_id as string | null) ?? null)).ccPreview;
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Không đọc được danh sách CC" }, { status: 500 });
+  }
 
   const { data: last } = await supabase
     .from("candidate_emails")
@@ -105,6 +112,7 @@ export async function GET(request: Request, { params }: Ctx) {
     ...(auth.ctx.perms.has("apps.view_contact") ? { to: app.email } : {}),
     subject: draft.subject,
     text: draft.text,
+    cc_preview: ccPreview,
     last_sent_at: last?.created_at ?? null,
   });
 }

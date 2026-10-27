@@ -172,3 +172,77 @@ test("mời PV: đã có MBTI → không nhắc làm lại; mail khác không c�
   const r = buildDraft({ ...base, kind: "rejection", hasMbti: false });
   assert.ok(!r.text.includes("topcv.vn/mbti"));
 });
+
+// ── Task 8: mail offer + tự CC nội bộ ──
+
+import { resolveCc, CC_ROLES, KIND_LABEL } from "./hr-email.ts";
+
+test("offer: nháp chứa lương, ngày bắt đầu, tên job", () => {
+  const d = buildDraft({
+    kind: "offer",
+    candidateName: "Lan",
+    jobTitle: "Unity Dev",
+    offer: { salary: "15.000.000đ", startDate: "01/11/2026" },
+  });
+  assert.ok(d.text.includes("15.000.000đ"));
+  assert.ok(d.text.includes("01/11/2026"));
+  assert.ok(d.text.includes("Unity Dev"));
+  assert.ok(d.text.includes("Chào Lan,"));
+  assert.equal(KIND_LABEL.offer, "Gửi offer");
+});
+
+test("offer: thiếu lương/ngày → giữ dòng với …", () => {
+  const d = buildDraft({ kind: "offer", candidateName: "Lan", jobTitle: "Unity Dev" });
+  assert.ok(d.text.includes("- Mức lương: …"));
+  assert.ok(d.text.includes("- Ngày bắt đầu dự kiến: …"));
+});
+
+const staff = [
+  { id: "b1", email: "Boss@td.com", role: "boss" as const, disabled: false },
+  { id: "h1", email: "hr1@td.com", role: "hr" as const, disabled: false },
+  { id: "h2", email: "hr2@td.com", role: "hr" as const, disabled: true },
+  { id: "h3", email: "HR1@td.com", role: "hr" as const, disabled: false },
+  { id: "a1", email: "acc@td.com", role: "accountant" as const, disabled: false },
+  { id: "l1", email: "lead1@td.com", role: "leader" as const, disabled: false },
+  { id: "l2", email: "lead2@td.com", role: "leader" as const, disabled: false },
+];
+
+test("resolveCc live + rejection: chỉ HR active, không trùng", () => {
+  const r = resolveCc(liveCfg, "rejection", staff, "l1", "x@td.com");
+  assert.deepEqual(r.ccPreview, ["hr1@td.com"]);
+  assert.deepEqual(r.cc, ["hr1@td.com"]);
+});
+
+test("resolveCc offer: kế toán + HR + boss, không người gửi, không disabled", () => {
+  const r = resolveCc(liveCfg, "offer", staff, null, "hr1@td.com");
+  assert.deepEqual([...r.ccPreview].sort(), ["acc@td.com", "boss@td.com"]);
+  const r2 = resolveCc(liveCfg, "offer", staff, null, "someone@td.com");
+  assert.deepEqual([...r2.ccPreview].sort(), ["acc@td.com", "boss@td.com", "hr1@td.com"]);
+  assert.ok(!r2.ccPreview.includes("hr2@td.com"));
+});
+
+test("resolveCc invite: có leader của job, không có leader khác", () => {
+  const r = resolveCc(liveCfg, "interview_invite", staff, "l1", "x@td.com");
+  assert.ok(r.ccPreview.includes("lead1@td.com"));
+  assert.ok(!r.ccPreview.includes("lead2@td.com"));
+  assert.ok(r.ccPreview.includes("hr1@td.com"));
+  assert.deepEqual(resolveCc(liveCfg, "interview_invite", staff, null, "x@td.com").ccPreview, ["hr1@td.com"]);
+});
+
+test("resolveCc: leader bị disabled hoặc email sai bị loại", () => {
+  const s = [
+    { id: "l9", email: "l9@td.com", role: "leader" as const, disabled: true },
+    { id: "h9", email: "not-an-email", role: "hr" as const, disabled: false },
+  ];
+  assert.deepEqual(resolveCc(liveCfg, "interview_invite", s, "l9", "").ccPreview, []);
+});
+
+test("resolveCc test mode: cc rỗng nhưng ccPreview đầy đủ", () => {
+  const r = resolveCc(testCfg, "offer", staff, null, "");
+  assert.deepEqual(r.cc, []);
+  assert.deepEqual([...r.ccPreview].sort(), ["acc@td.com", "boss@td.com", "hr1@td.com"]);
+});
+
+test("CC_ROLES phủ mọi kind", () => {
+  for (const k of CANDIDATE_EMAIL_KINDS) assert.ok(CC_ROLES[k].length > 0, k);
+});
