@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { notifyNewComment } from "@/lib/hr-notify";
 
 export const runtime = "nodejs";
@@ -11,11 +12,15 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.comment");
+  if ("response" in auth) return auth.response;
 
   const { id } = await params;
   const supabase = getSupabaseAdmin();
+
+  const app = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
+  if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
+  if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { data, error } = await supabase
     .from("application_comments")

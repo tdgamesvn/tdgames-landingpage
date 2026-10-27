@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScope } from "@/lib/hr-session";
+import { inScope } from "@/lib/hr-scope";
 import { AiError } from "@/lib/interview-ai";
 import {
   APP_SELECT,
@@ -85,13 +87,32 @@ function changesSince(e: Entry | undefined, curP: string, curD: string, now: HrC
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.view_ai");
+  if ("response" in auth) return auth.response;
+  const { ctx: user } = auth;
   const { id } = await params;
+
+  const scope = await loadScope(user).catch(() => null);
+  if (!scope) return NextResponse.json({ error: "Không đọc được phạm vi dữ liệu" }, { status: 500 });
+  // Leader chỉ xem xếp hạng job mình phụ trách.
+  if (user.role === "leader" && !scope.leaderJobIds.includes(id)) {
+    return NextResponse.json({ error: "Job not found" }, { status: 404 });
+  }
 
   const ctx = await loadPool(id);
   if (!ctx) return NextResponse.json({ error: "Job not found" }, { status: 404 });
-  const { rules, jh, pool, entryMap, meta } = ctx;
+  const { rules, jh, pool: fullPool, entryMap, meta } = ctx;
+
+  // Pool xếp hạng gồm hồ sơ mọi job → lọc theo phạm vi (kế toán cần offer_status, APP_SELECT không có).
+  let offerById = new Map<string, string | null>();
+  if (user.role === "accountant") {
+    const { data: offers } = await ctx.supabase.from("applications").select("id, offer_status").in("id", fullPool.map((x) => String(x.a.id)));
+    offerById = new Map((offers ?? []).map((o) => [String(o.id), (o.offer_status as string | null) ?? null]));
+  }
+  const pool = fullPool.filter(({ a }) =>
+    inScope(scope, { job_id: String(a.job_id), status: String(a.status), offer_status: offerById.get(String(a.id)) ?? null }),
+  );
+  const canNotes = user.perms.has("apps.view_notes");
 
   const rows = pool.map(({ a, d, appliedFor, curP, curD }) => {
     const e = entryMap.get(String(a.id));
@@ -107,9 +128,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       score: e?.score ?? null,
       tier: e?.tier ?? null,
       reason: e?.reason ?? null,
-      blocked: e?.blocked ?? false,
-      block_reason: e?.block_reason ?? null,
-      rejection_reason: a.rejection_reason || null,
+      // Cờ loại cứng + lý do loại thuộc nhóm ghi chú nội bộ.
+      ...(canNotes
+        ? { blocked: e?.blocked ?? false, block_reason: e?.block_reason ?? null, rejection_reason: a.rejection_reason || null }
+        : {}),
       scored_at: e?.scored_at ?? null,
       basis: evidenceBasis(a, d),
       profile: p
@@ -123,7 +145,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     };
   });
   // Đủ điều kiện (theo điểm) → bị loại cứng → chưa chấm.
-  const group = (r: (typeof rows)[number]) => (r.score == null ? 2 : r.blocked ? 1 : 0);
+  const group = (r: (typeof rows)[number]) => (r.score == null ? 2 : "blocked" in r && r.blocked ? 1 : 0);
   rows.sort((x, y) => group(x) - group(y) || (y.score ?? -1) - (x.score ?? -1));
 
   return NextResponse.json({

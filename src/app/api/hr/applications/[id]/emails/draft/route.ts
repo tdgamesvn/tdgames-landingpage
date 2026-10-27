@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken } from "@/lib/hr-tests";
 import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isValidEmail } from "@/lib/hr-email";
 
@@ -16,12 +16,18 @@ const SITE = "https://tdgamestudio.com";
  * Lỗi nghiệp vụ trả 200 `{ error, message }` để UI quyết định (vd. no_test → chỉ báo nhỏ).
  */
 export async function GET(request: Request, { params }: Ctx) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
   const { id } = await params;
   const url = new URL(request.url);
   const kind = url.searchParams.get("kind");
+  // Xác thực trước (401) rồi mới kiểm kind; perm phụ thuộc kind: offer cần emails.send_offer, còn lại emails.send.
+  const base = await requireHrUser(request, "apps.view_emails");
+  if ("response" in base) return base.response;
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
+  const auth = await requireHrUser(request, (kind as string) === "offer" ? "emails.send_offer" : "emails.send");
+  if ("response" in auth) return auth.response;
+  const scoped = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
+  if (scoped === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
+  if (!scoped) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const interviewId = url.searchParams.get("interview_id");
   const prevScheduledAt = url.searchParams.get("prev_scheduled_at");
 

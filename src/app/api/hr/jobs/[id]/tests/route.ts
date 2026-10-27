@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScope } from "@/lib/hr-session";
 import { readTestInput } from "@/lib/hr-tests";
 import { deleteFromR2 } from "@/lib/r2";
 
@@ -11,9 +12,16 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /** Danh sách đề test của job. */
 export async function GET(request: Request, { params }: Ctx) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.view_tests");
+  if ("response" in auth) return auth.response;
   const { id } = await params;
+
+  // Leader chỉ xem đề của job mình; ngoài phạm vi → 404.
+  if (auth.ctx.role === "leader") {
+    const scope = await loadScope(auth.ctx).catch(() => null);
+    if (!scope) return NextResponse.json({ error: "Không đọc được phạm vi dữ liệu" }, { status: 500 });
+    if (!scope.leaderJobIds.includes(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   const { data, error } = await getSupabaseAdmin()
     .from("job_tests")

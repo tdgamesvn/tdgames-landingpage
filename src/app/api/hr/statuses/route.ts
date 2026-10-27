@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser } from "@/lib/hr-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,8 +41,8 @@ async function readJson(request: Request): Promise<Record<string, unknown> | nul
 }
 
 export async function GET(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request);
+  if ("response" in auth) return auth.response;
 
   const { data, error } = await getSupabaseAdmin()
     .from("application_statuses")

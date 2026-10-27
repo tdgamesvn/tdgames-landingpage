@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "./supabase-admin";
 import { getHRSecret } from "./hr-auth";
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "./hr-permissions";
 import { hashToken, newToken, readCookie, sessionUserIsActive } from "./hr-crypto";
+import { inScope, type ScopeInput } from "./hr-scope";
 
 export const SESSION_COOKIE = "hr_session";
 const SESSION_DAYS = 30;
@@ -150,4 +151,44 @@ export async function issueToken(userId: string, purpose: "invite" | "reset"): P
 /** Gốc URL công khai cho link trong email. KHÔNG lấy từ request (chống Host header injection). Dev: đặt HR_PUBLIC_ORIGIN=http://localhost:3000. */
 export function hrPublicOrigin(): string {
   return (process.env.HR_PUBLIC_ORIGIN?.trim() || "https://tdgamestudio.com").replace(/\/+$/, "");
+}
+
+/** Phạm vi dữ liệu của người dùng: status pipeline + job mình làm Leader. boss/hr không cần truy vấn job. */
+export async function loadScope(ctx: HrContext): Promise<ScopeInput> {
+  const supabase = getSupabaseAdmin();
+  const { data: st, error: stErr } = await supabase.from("application_statuses").select("key, position, kind");
+  if (stErr) throw new Error(`loadScope: ${stErr.message}`);
+  let leaderJobIds: string[] = [];
+  if (ctx.role === "leader" && ctx.user.id) {
+    const { data: jobs, error } = await supabase.from("jobs").select("id").eq("leader_user_id", ctx.user.id);
+    if (error) throw new Error(`loadScope: ${error.message}`);
+    leaderJobIds = (jobs ?? []).map((j) => String(j.id));
+  }
+  return {
+    role: ctx.role,
+    userId: ctx.user.id,
+    leaderJobIds,
+    statuses: (st ?? []).map((r) => ({ key: String(r.key), position: Number(r.position), kind: r.kind as "open" | "won" | "lost" })),
+  };
+}
+
+/** Đọc 1 hồ sơ; null nếu không tồn tại HOẶC ngoài phạm vi (route trả 404 như nhau). `columns` luôn được bổ sung job_id/status/offer_status để kiểm phạm vi. */
+export async function loadScopedApplication(
+  ctx: HrContext,
+  appId: string,
+  columns = "id",
+): Promise<Record<string, unknown> | null> {
+  const needed = ["id", "job_id", "status", "offer_status"];
+  const cols = columns === "*" ? "*" : [...new Set([...columns.split(",").map((c) => c.trim()), ...needed])].join(", ");
+  const { data, error } = await getSupabaseAdmin().from("applications").select(cols).eq("id", appId).maybeSingle();
+  if (error) throw new Error(`loadScopedApplication: ${error.message}`);
+  if (!data) return null;
+  const row = data as unknown as Record<string, unknown>;
+  const scope = await loadScope(ctx);
+  const ok = inScope(scope, {
+    job_id: String(row.job_id),
+    status: String(row.status),
+    offer_status: (row.offer_status as string | null | undefined) ?? null,
+  });
+  return ok ? row : null;
 }

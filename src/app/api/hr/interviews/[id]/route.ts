@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
+import { redactInterview } from "@/lib/hr-scope";
 import { deleteFromR2 } from "@/lib/r2";
 import { discordNotify } from "@/lib/discord-notify";
 import { formatInterviewTime, isMeetUrl, modeLabel } from "@/lib/interview-schedule";
@@ -176,13 +178,17 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.view_interviews");
+  if ("response" in auth) return auth.response;
   const { id } = await params;
   const { data, error } = await getSupabaseAdmin().from("interview_sessions").select("*").eq("id", id).maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ session: data });
+  // Phiên PV thuộc hồ sơ ngoài phạm vi → 404 như không tồn tại.
+  const app = await loadScopedApplication(auth.ctx, String(data.application_id)).catch(() => undefined);
+  if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
+  if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json({ session: redactInterview(data as Record<string, unknown>, auth.ctx.perms) });
 }
 
 export async function DELETE(

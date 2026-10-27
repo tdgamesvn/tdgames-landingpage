@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser } from "@/lib/hr-session";
 import { RULES_KEY, loadRankingRules } from "@/lib/candidate-ranking";
 
 export const runtime = "nodejs";
@@ -8,8 +9,8 @@ export const dynamic = "force-dynamic";
 
 /** Tiêu chí loại cứng khi xếp hạng — mỗi dòng 1 tiêu chí, áp cho mọi job. */
 export async function GET(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.view_ai");
+  if ("response" in auth) return auth.response;
   return NextResponse.json({ rules: await loadRankingRules(getSupabaseAdmin()) });
 }
 

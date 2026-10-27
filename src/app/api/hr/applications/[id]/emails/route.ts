@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { getHrEmailConfig, isCandidateEmailKind, isValidEmail, resolveRecipient, textToHtml } from "@/lib/hr-email";
 import { sendViaResend } from "@/lib/hr-email-send";
 
@@ -11,9 +12,12 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /** Lịch sử mail đã gửi cho ứng viên, mới nhất trước. */
 export async function GET(request: Request, { params }: Ctx) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.view_emails");
+  if ("response" in auth) return auth.response;
   const { id } = await params;
+  const app = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
+  if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
+  if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const { data, error } = await getSupabaseAdmin()
     .from("candidate_emails")
     .select("*")
