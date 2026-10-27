@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "./supabase-admin";
+import { legacyRouteAllowed } from "./hr-permissions";
 
 /**
  * Returns the active HR secret.
@@ -27,5 +28,10 @@ export async function getHRSecret(): Promise<string> {
 export async function requireHR(req: Request): Promise<NextResponse | null> {
   const { requireHrUser } = await import("./hr-session");
   const r = await requireHrUser(req);
-  return "response" in r ? r.response : null;
+  if ("response" in r) return r.response;
+  // requireHR là cổng chuyển tiếp: leader/kế toán chỉ được vào route đã chuyển sang requireHrUser(perm).
+  if (!legacyRouteAllowed(r.ctx.role)) {
+    return NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
+  }
+  return null;
 }
