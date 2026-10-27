@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { Ban, FolderOpen, ImageIcon, MapPin, PenLine, RefreshCw, TriangleAlert, Trophy } from "lucide-react";
+import { hrFetch, useHrSession } from "./HrSession";
 
 /**
  * Bảng xếp hạng ứng viên phù hợp nhất với 1 job (toàn bộ ứng viên trong DB,
@@ -74,19 +75,20 @@ async function runPool<T>(items: T[], n: number, fn: (x: T) => Promise<void>) {
 
 export default function RankingPanel({
   jobId,
-  hrKey,
   statusLabel,
   statusColor,
   isLost,
   onOpen,
 }: {
   jobId: string;
-  hrKey: string;
   statusLabel: (key: string) => string;
   statusColor: (key: string) => string;
   isLost: (key: string) => boolean;
   onOpen: (applicationId: string) => void;
 }) {
+  const { can } = useHrSession();
+  const canRun = can("ai.run");
+  const canRules = can("jobs.manage");
   const [data, setData] = useState<Ranking | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ phase: string; done: number; total: number } | null>(null);
@@ -100,9 +102,9 @@ export default function RankingPanel({
     if (rulesDraft == null) return;
     setSavingRules(true);
     try {
-      const res = await fetch("/api/hr/ranking/rules", {
+      const res = await hrFetch("/api/hr/ranking/rules", {
         method: "PUT",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ rules: rulesDraft }),
       });
       if (res.ok) { setRulesDraft(null); await load(); }
@@ -113,7 +115,7 @@ export default function RankingPanel({
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/hr/jobs/${jobId}/ranking`, { headers: { "x-hr-key": hrKey } });
+      const res = await hrFetch(`/api/hr/jobs/${jobId}/ranking`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setLoadError(null);
@@ -123,15 +125,15 @@ export default function RankingPanel({
       setLoadError(e instanceof Error ? e.message : "Load failed");
       return null;
     }
-  }, [jobId, hrKey]);
+  }, [jobId]);
 
   // Tải lần đầu sau khi mount (qua microtask — không setState đồng bộ trong effect).
   useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   async function post(url: string, body: unknown) {
-    const res = await fetch(url, {
+    const res = await hrFetch(url, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-hr-key": hrKey },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
     const json = await res.json().catch(() => ({}));
@@ -140,7 +142,7 @@ export default function RankingPanel({
   }
 
   async function run(all: boolean) {
-    if (!data || progress) return;
+    if (!canRun || !data || progress) return;
     const errs: string[] = [];
     const name = new Map(data.rows.map((r) => [r.application_id, r.full_name]));
     try {
@@ -216,6 +218,7 @@ export default function RankingPanel({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {canRules && (
           <button
             onClick={() => setRulesDraft(rulesDraft == null ? data.rules : null)}
             className="rounded-lg border border-white/15 px-3 py-1 text-[11px] text-white/60 hover:bg-white/5"
@@ -223,10 +226,13 @@ export default function RankingPanel({
           >
             <Ban className="hr-ico" />Tiêu chí loại
           </button>
+          )}
           <label className="flex items-center gap-1 text-[10px] text-white/50">
             <input type="checkbox" checked={hideLost} onChange={(e) => setHideLost(e.target.checked)} />
             Ẩn Rejected
           </label>
+          {canRun && (
+          <>
           <button
             onClick={() => void run(false)}
             disabled={!!progress || pending === 0}
@@ -242,11 +248,13 @@ export default function RankingPanel({
           >
             Tính lại toàn bộ
           </button>
+          </>
+          )}
         </div>
       </div>
 
       {/* Tiêu chí loại cứng */}
-      {rulesDraft != null && (
+      {canRules && rulesDraft != null && (
         <div className="space-y-2 rounded-lg border border-red-500/30 bg-red-500/5 p-3">
           <p className="text-[11px] text-white/70">
             Tiêu chí loại cứng — mỗi dòng 1 tiêu chí, áp cho <b>mọi job</b>. Ai vi phạm bị đẩy xuống cuối bảng kèm lý do.

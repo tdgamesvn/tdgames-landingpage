@@ -9,7 +9,9 @@ import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, u
 import type { CandidateEmail } from "@/app/admin/_lib/types";
 import { createPortal } from "react-dom";
 import { CircleAlert, Mail, Send, X } from "lucide-react";
+import { hrFetch, useHrSession } from "./HrSession";
 import { KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
+import type { PermissionKey } from "@/lib/hr-permissions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
 export type MailPromptRequest = {
@@ -44,9 +46,15 @@ export function useCandidateMail() {
   return useContext(CandidateMailContext);
 }
 
-const AUTHOR_KEY = "tdg.hr.comment.author";
+/** Quyền cần để gửi từng loại mail (khớp POST /api/hr/applications/[id]/emails). */
+function canSendKind(can: (p: PermissionKey) => boolean, kind: CandidateEmailKind) {
+  if (kind === "offer") return can("emails.send_offer");
+  if (kind === "test_assignment") return can("emails.send") && can("apps.view_tests");
+  return can("emails.send");
+}
 
-export function CandidateMailProvider({ hrKey, children }: { hrKey: string; children: React.ReactNode }) {
+export function CandidateMailProvider({ children }: { children: React.ReactNode }) {
+  const { can } = useHrSession();
   // Hàng đợi: nhiều thao tác liên tiếp (kéo A sang Test rồi B sang Rejected) không đè hộp thoại của nhau.
   const [queue, setQueue] = useState<(MailPromptRequest & { qid: number })[]>([]);
   const req = queue[0] ?? null;
@@ -60,10 +68,12 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
 
   const prompt = useCallback(
     (r: MailPromptRequest) => {
+      // Không có quyền gửi loại mail này → không hỏi (thao tác gốc vẫn đã lưu).
+      if (!canSendKind(can, r.kind)) return;
       // Bài test: job chưa có đề thì chỉ báo nhỏ, không mở hộp thoại.
       if (r.kind === "test_assignment") {
         void (async () => {
-          const d = await fetchDraft(hrKey, r).catch(() => null);
+          const d = await fetchDraft(r).catch(() => null);
           if (d?.error === "no_test") setNotice(d.message ?? "Job chưa có đề test — chưa gửi mail");
           else enqueue(r);
         })();
@@ -71,7 +81,7 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
       }
       enqueue(r);
     },
-    [hrKey, enqueue],
+    [can, enqueue],
   );
 
   useEffect(() => {
@@ -90,7 +100,6 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
         <MailDialog
           key={req.qid}
           req={req}
-          hrKey={hrKey}
           onClose={dequeue}
           onSent={() => {
             dequeue();
@@ -109,11 +118,11 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
   );
 }
 
-async function fetchDraft(hrKey: string, r: MailPromptRequest): Promise<Draft> {
+async function fetchDraft(r: MailPromptRequest): Promise<Draft> {
   const q = new URLSearchParams({ kind: r.kind });
   if (r.interviewId) q.set("interview_id", r.interviewId);
   if (r.prevScheduledAt) q.set("prev_scheduled_at", r.prevScheduledAt);
-  const res = await fetch(`/api/hr/applications/${r.appId}/emails/draft?${q}`, { headers: { "x-hr-key": hrKey } });
+  const res = await hrFetch(`/api/hr/applications/${r.appId}/emails/draft?${q}`);
   const j = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
   return j as Draft;
@@ -121,12 +130,10 @@ async function fetchDraft(hrKey: string, r: MailPromptRequest): Promise<Draft> {
 
 function MailDialog({
   req,
-  hrKey,
   onClose,
   onSent,
 }: {
   req: MailPromptRequest;
-  hrKey: string;
   onClose: () => void;
   onSent: () => void;
 }) {
@@ -139,7 +146,7 @@ function MailDialog({
 
   useEffect(() => {
     let alive = true;
-    fetchDraft(hrKey, req)
+    fetchDraft(req)
       .then((d) => {
         if (!alive) return;
         setDraft(d);
@@ -151,7 +158,7 @@ function MailDialog({
     return () => {
       alive = false;
     };
-  }, [hrKey, req]);
+  }, [req]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -165,15 +172,14 @@ function MailDialog({
     setSending(true);
     setSendError(null);
     try {
-      const res = await fetch(`/api/hr/applications/${req.appId}/emails`, {
+      const res = await hrFetch(`/api/hr/applications/${req.appId}/emails`, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           kind: req.kind,
           interview_id: req.interviewId ?? null,
           subject,
           text,
-          sent_by: localStorage.getItem(AUTHOR_KEY),
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -227,9 +233,11 @@ function MailDialog({
                 Đã gửi mail “{KIND_LABEL[req.kind]}” cho ứng viên này lúc {formatInterviewTime(draft.last_sent_at)}.
               </div>
             )}
-            <div className="text-xs text-white/50">
-              Người nhận: <span className="font-semibold text-white/80">{draft.to}</span>
-            </div>
+            {draft.to && (
+              <div className="text-xs text-white/50">
+                Người nhận: <span className="font-semibold text-white/80">{draft.to}</span>
+              </div>
+            )}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Tiêu đề</label>
               <input
@@ -276,29 +284,31 @@ type ScheduledRound = { id: string; round: number; scheduled_at: string | null }
 export function CandidateMailSection({
   appId,
   candidateName,
-  hrKey,
   rounds,
 }: {
   appId: string;
   candidateName: string;
-  hrKey: string;
   rounds: ScheduledRound[];
 }) {
   const { prompt, lastSentAt } = useCandidateMail();
+  const { can } = useHrSession();
+  const canView = can("apps.view_emails");
+  const canSend = can("emails.send");
   const [emails, setEmails] = useState<CandidateEmail[] | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!canView) return;
     let alive = true;
-    fetch(`/api/hr/applications/${appId}/emails`, { headers: { "x-hr-key": hrKey } })
+    hrFetch(`/api/hr/applications/${appId}/emails`)
       .then((r) => r.json())
       .then((j) => alive && setEmails(j.emails ?? []))
       .catch(() => alive && setEmails([]));
     return () => {
       alive = false;
     };
-  }, [appId, hrKey, lastSentAt]);
+  }, [appId, lastSentAt, canView]);
 
   const scheduled = rounds.filter((r) => r.scheduled_at).sort((a, b) => a.round - b.round);
   const pick = (kind: CandidateEmailKind, interviewId?: string) => {
@@ -306,12 +316,15 @@ export function CandidateMailSection({
     prompt({ appId, candidateName, kind, interviewId });
   };
 
+  if (!canView && !canSend) return null;
+
   return (
     <section className="hr-group px-4 py-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <h4 className="hr-section-title">
           Mail ứng viên <span className="font-normal text-white/50">{emails?.length ?? ""}</span>
         </h4>
+        {canSend && (
         <div className="relative">
           <button type="button" onClick={() => setMenuOpen((v) => !v)} className="hr-secondary-btn" aria-haspopup="menu" aria-expanded={menuOpen}>
             <Mail className="hr-ico" />Gửi mail
@@ -331,14 +344,17 @@ export function CandidateMailSection({
                   </button>
                 </Fragment>
               ))}
-              <button role="menuitem" onClick={() => pick("test_assignment")} className="hr-menu-item">{KIND_LABEL.test_assignment}</button>
+              {can("apps.view_tests") && (
+                <button role="menuitem" onClick={() => pick("test_assignment")} className="hr-menu-item">{KIND_LABEL.test_assignment}</button>
+              )}
               <button role="menuitem" onClick={() => pick("rejection")} className="hr-menu-item">{KIND_LABEL.rejection}</button>
             </div>
           )}
         </div>
+        )}
       </div>
 
-      {emails === null && <p className="text-[13px] text-white/50">Đang tải…</p>}
+      {canView && emails === null && <p className="text-[13px] text-white/50">Đang tải…</p>}
       {emails?.length === 0 && <p className="text-[13px] text-white/50">Chưa gửi mail nào.</p>}
       {emails && emails.length > 0 && (
         <ul className="space-y-1.5">
@@ -350,7 +366,8 @@ export function CandidateMailSection({
                   <span className="ml-1.5 rounded border border-amber-500/40 px-1 text-[10px] font-bold text-amber-300">TEST</span>
                 )}
                 <span className="block text-[12px] text-white/50">
-                  {formatInterviewTime(e.created_at)} · tới {e.sent_to}
+                  {formatInterviewTime(e.created_at)}
+                  {e.sent_to ? ` · tới ${e.sent_to}` : ""}
                   {e.sent_by ? ` · ${e.sent_by}` : ""}
                 </span>
               </button>

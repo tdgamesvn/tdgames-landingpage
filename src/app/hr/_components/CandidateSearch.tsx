@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Sparkles, X } from "lucide-react";
+import { hrFetch, useHrSession } from "./HrSession";
 
 /**
  * Ô tìm ứng viên toàn DB: gõ là tìm nhanh (so chữ, không tốn token);
@@ -19,16 +20,16 @@ type Hit = {
 };
 
 export default function CandidateSearch({
-  hrKey,
   statusLabel,
   statusColor,
   onOpen,
 }: {
-  hrKey: string;
   statusLabel: (key: string) => string;
   statusColor: (key: string) => string;
   onOpen: (applicationId: string) => void;
 }) {
+  const { can } = useHrSession();
+  const canAi = can("ai.run");
   const [q, setQ] = useState("");
   const [mode, setMode] = useState<"quick" | "ai">("quick");
   const [hits, setHits] = useState<Hit[] | null>(null);
@@ -42,7 +43,7 @@ export default function CandidateSearch({
     const t = setTimeout(async () => {
       if (query.length < 2) { setHits(null); return; }
       try {
-        const res = await fetch(`/api/hr/search?q=${encodeURIComponent(query)}`, { headers: { "x-hr-key": hrKey } });
+        const res = await hrFetch(`/api/hr/search?q=${encodeURIComponent(query)}`);
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
         setError(null);
@@ -52,18 +53,18 @@ export default function CandidateSearch({
       }
     }, 300);
     return () => clearTimeout(t);
-  }, [q, mode, hrKey]);
+  }, [q, mode]);
 
   async function askAi() {
-    if (q.trim().length < 3 || busy) return;
+    if (!canAi || q.trim().length < 3 || busy) return;
     setMode("ai");
     setBusy(true);
     setError(null);
     setHits(null);
     try {
-      const res = await fetch("/api/hr/search", {
+      const res = await hrFetch("/api/hr/search", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ q: q.trim() }),
       });
       const json = await res.json();
@@ -90,9 +91,10 @@ export default function CandidateSearch({
           value={q}
           onChange={(e) => { setQ(e.target.value); setMode("quick"); }}
           onKeyDown={(e) => { if (e.key === "Enter") void askAi(); if (e.key === "Escape") clear(); }}
-          placeholder='Tìm ứng viên: tên, SĐT, kỹ năng, "lương cao"… — hoặc mô tả rồi bấm Hỏi AI (Enter)'
+          placeholder={canAi ? 'Tìm ứng viên: tên, SĐT, kỹ năng, "lương cao"… — hoặc mô tả rồi bấm Hỏi AI (Enter)' : "Tìm ứng viên theo tên…"}
           className="min-w-0 flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none"
         />
+        {canAi && (
         <button
           onClick={() => void askAi()}
           disabled={busy || q.trim().length < 3}
@@ -101,6 +103,7 @@ export default function CandidateSearch({
         >
           {busy ? "AI đang tìm…" : <><Sparkles className="hr-ico" />Hỏi AI</>}
         </button>
+        )}
         {(q || hits) && (
           <button onClick={clear} className="rounded-lg border border-white/15 px-3 py-2 text-xs text-white/50 hover:bg-white/5" aria-label="Xoá tìm kiếm"><X className="hr-ico-solo" /></button>
         )}
@@ -112,7 +115,7 @@ export default function CandidateSearch({
         <div className="max-h-[60vh] overflow-y-auto rounded-lg border border-white/10 bg-white/[0.03]">
           <p className="border-b border-white/10 px-3 py-1.5 text-[10px] text-white/40">
             {mode === "ai" ? "AI tìm" : "Tìm nhanh"} · {hits.length} kết quả
-            {mode === "quick" && hits.length === 0 && " — thử mô tả bằng lời rồi bấm Hỏi AI"}
+            {mode === "quick" && hits.length === 0 && canAi && " — thử mô tả bằng lời rồi bấm Hỏi AI"}
           </p>
           {hits.map((h) => (
             <div key={h.id} className="border-b border-white/5 px-3 py-2 last:border-0">
@@ -124,7 +127,7 @@ export default function CandidateSearch({
                 <span className="text-[10px] text-white/40">{h.job} · {new Date(h.created_at).toLocaleDateString("vi-VN")}</span>
               </div>
               {h.why && <p className="mt-1 text-[11px] text-white/70">{h.why}</p>}
-              {h.quotes.map((x, i) => (
+              {(h.quotes ?? []).map((x, i) => (
                 <p key={i} className="mt-0.5 text-[11px] italic text-white/45">“{x}”</p>
               ))}
             </div>

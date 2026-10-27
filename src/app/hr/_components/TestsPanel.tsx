@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { JobTest, TestReview, TestSubmission } from "@/app/admin/_lib/types";
 import { Check, ClipboardCheck, Clock, Link2, Paperclip, PenLine, X } from "lucide-react";
+import { hrFetch, useHrSession } from "./HrSession";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
 const INPUT =
@@ -35,12 +36,10 @@ async function copyText(text: string) {
  */
 function AddItemForm<T>({
   endpoint,
-  hrKey,
   withTitle,
   onAdded,
 }: {
   endpoint: string;
-  hrKey: string;
   withTitle: boolean;
   onAdded: (item: T) => void;
 }) {
@@ -64,18 +63,18 @@ function AddItemForm<T>({
       fd.append("file", file);
       fd.append("title", title);
       fd.append("note", note);
-      init = { method: "POST", headers: { "x-hr-key": hrKey }, body: fd };
+      init = { method: "POST", body: fd };
     } else {
       if (!url.trim()) return setErr("Dán link trước");
       init = {
         method: "POST",
-        headers: { "x-hr-key": hrKey, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: url.trim(), title, note }),
       };
     }
     setBusy(true);
     try {
-      const res = await fetch(endpoint, init);
+      const res = await hrFetch(endpoint, init);
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       onAdded((json.test ?? json.submission) as T);
@@ -152,7 +151,8 @@ function ItemRow({
   url: string;
   sub: string;
   note: string | null;
-  onDelete: () => void;
+  /** Không truyền = không có quyền xoá → ẩn nút. */
+  onDelete?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -168,9 +168,11 @@ function ItemRow({
         >
           {copied ? <Check className="hr-ico-solo" /> : "Copy"}
         </button>
-        <button onClick={onDelete} className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400">
-          <X className="hr-ico-solo" />
-        </button>
+        {onDelete && (
+          <button onClick={onDelete} className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400">
+            <X className="hr-ico-solo" />
+          </button>
+        )}
       </div>
       {note && <p className="mt-1 whitespace-pre-wrap text-[11px] text-white/50">{note}</p>}
     </div>
@@ -178,26 +180,26 @@ function ItemRow({
 }
 
 // ── Đề test của job (tab Jobs) ─────────────────────────────────────────────────
-export function JobTestsPanel({ jobId, hrKey }: { jobId: string; hrKey: string }) {
+export function JobTestsPanel({ jobId }: { jobId: string }) {
   const [tests, setTests] = useState<JobTest[] | null>(null);
   const [err, setErr] = useState("");
 
   useEffect(() => {
     let alive = true;
-    fetch(`/api/hr/jobs/${jobId}/tests`, { headers: { "x-hr-key": hrKey } })
+    hrFetch(`/api/hr/jobs/${jobId}/tests`)
       .then((r) => r.json())
       .then((j) => {
         if (!alive) return;
         if (j.error) setErr(j.error);
-        else setTests(j.tests);
+        else setTests(j.tests ?? []);
       })
       .catch(() => alive && setErr("Không tải được"));
     return () => { alive = false; };
-  }, [jobId, hrKey]);
+  }, [jobId]);
 
   async function remove(t: JobTest) {
     if (!confirm(`Xoá "${t.title}"?`)) return;
-    const res = await fetch(`/api/hr/job-tests/${t.id}`, { method: "DELETE", headers: { "x-hr-key": hrKey } });
+    const res = await hrFetch(`/api/hr/job-tests/${t.id}`, { method: "DELETE" });
     if (res.ok) setTests((l) => l?.filter((x) => x.id !== t.id) ?? null);
   }
 
@@ -220,7 +222,6 @@ export function JobTestsPanel({ jobId, hrKey }: { jobId: string; hrKey: string }
       ))}
       <AddItemForm<JobTest>
         endpoint={`/api/hr/jobs/${jobId}/tests`}
-        hrKey={hrKey}
         withTitle
         onAdded={(t) => setTests((l) => [...(l ?? []), t])}
       />
@@ -235,18 +236,18 @@ const VERDICTS: { key: TestReview["verdict"]; label: string; cls: string }[] = [
   { key: "fail", label: "Không đạt", cls: "border-red-500/40 bg-red-500/15 text-red-300" },
 ];
 
-/** Leader chấm bài test ngay trong /hr. Tên người chấm lấy theo tên đang dùng để comment. */
+/** Leader chấm bài test ngay trong /hr. Tên người chấm do server ghi theo tài khoản đăng nhập. */
 function LeaderReview({
   appId,
-  hrKey,
   review,
   onReview,
 }: {
   appId: string;
-  hrKey: string;
   review: TestReview | null;
   onReview: (r: TestReview | null) => void;
 }) {
+  const { can } = useHrSession();
+  const canReview = can("apps.review_test");
   const [editing, setEditing] = useState(false);
   const [verdict, setVerdict] = useState<TestReview["verdict"] | null>(review?.verdict ?? null);
   const [score, setScore] = useState<number | null>(review?.score ?? null);
@@ -258,9 +259,9 @@ function LeaderReview({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/hr/applications/${appId}`, {
+      const res = await hrFetch(`/api/hr/applications/${appId}`, {
         method: "PATCH",
-        headers: { "x-hr-key": hrKey, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ test_review: payload }),
       });
       const j = await res.json().catch(() => ({}));
@@ -289,9 +290,11 @@ function LeaderReview({
       <div className="space-y-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
         <div className="flex items-center justify-between gap-2">
           <p className={LABEL}>Leader chấm bài</p>
-          <button onClick={startEdit} className={BTN_AMBER}>
-            {review ? "Sửa đánh giá" : <><PenLine className="hr-ico" />Chấm bài</>}
-          </button>
+          {canReview && (
+            <button onClick={startEdit} className={BTN_AMBER}>
+              {review ? "Sửa đánh giá" : <><PenLine className="hr-ico" />Chấm bài</>}
+            </button>
+          )}
         </div>
         {review ? (
           <>
@@ -299,7 +302,7 @@ function LeaderReview({
               {v && <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${v.cls}`}>{v.label}</span>}
               <span className="text-sm font-bold text-white/90">{review.score}/10</span>
               <span className="text-[10px] text-white/35">
-                {review.reviewer} · {new Date(review.reviewed_at).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+                {review.reviewer ? `${review.reviewer} · ` : ""}{new Date(review.reviewed_at).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
               </span>
             </div>
             {review.comment && <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-white/70">{review.comment}</p>}
@@ -351,10 +354,7 @@ function LeaderReview({
       />
       <div className="flex items-center gap-1.5">
         <button
-          onClick={() => {
-            const reviewer = localStorage.getItem("tdg.hr.comment.author") ?? "";
-            void save({ verdict, score, comment, reviewer });
-          }}
+          onClick={() => void save({ verdict, score, comment })}
           disabled={busy || !verdict || !score}
           className={BTN_AMBER}
         >
@@ -379,15 +379,17 @@ function LeaderReview({
 
 export function SubmissionsPanel({
   appId,
-  hrKey,
   review = null,
   onReview,
 }: {
   appId: string;
-  hrKey: string;
   review?: TestReview | null;
   onReview?: (r: TestReview | null) => void;
 }) {
+  const { can } = useHrSession();
+  const canView = can("apps.view_tests");
+  // Lưu/xoá bài làm, tạo link test: server đòi apps.edit.
+  const canEdit = can("apps.edit");
   const [subs, setSubs] = useState<TestSubmission[]>([]);
   const [tests, setTests] = useState<JobTest[]>([]);
   const [token, setToken] = useState<string | null>(null);
@@ -397,28 +399,29 @@ export function SubmissionsPanel({
   const [showAdd, setShowAdd] = useState(false);
 
   useEffect(() => {
+    if (!canView) return;
     let alive = true;
-    fetch(`/api/hr/applications/${appId}/submissions`, { headers: { "x-hr-key": hrKey } })
+    hrFetch(`/api/hr/applications/${appId}/submissions`)
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (!alive || !j) return;
-        setSubs(j.submissions);
-        setTests(j.tests);
-        setToken(j.token);
+        setSubs(j.submissions ?? []);
+        setTests(j.tests ?? []);
+        setToken(j.token ?? null);
         // "Quá hạn" tính 1 lần lúc mở modal (Date.now trong render bị lint cấm).
         setEta(j.eta ? { at: j.eta, setAt: j.etaSetAt, overdue: Date.now() > new Date(j.eta).getTime() } : null);
         setLoaded(true);
       })
       .catch(() => {});
     return () => { alive = false; };
-  }, [appId, hrKey]);
+  }, [appId, canView]);
 
   async function copyTestLink() {
     let t = token;
     if (!t) {
-      const res = await fetch(`/api/hr/applications/${appId}/submissions`, {
+      const res = await hrFetch(`/api/hr/applications/${appId}/submissions`, {
         method: "POST",
-        headers: { "x-hr-key": hrKey, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "token" }),
       });
       const j = await res.json().catch(() => ({}));
@@ -433,19 +436,21 @@ export function SubmissionsPanel({
 
   async function remove(s: TestSubmission) {
     if (!confirm("Xoá bài làm này?")) return;
-    const res = await fetch(`/api/hr/submissions/${s.id}`, { method: "DELETE", headers: { "x-hr-key": hrKey } });
+    const res = await hrFetch(`/api/hr/submissions/${s.id}`, { method: "DELETE" });
     if (res.ok) setSubs((l) => l.filter((x) => x.id !== s.id));
   }
 
-  if (!loaded) return null;
+  if (!canView || !loaded) return null;
 
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between gap-2 px-1">
         <h4 className="hr-section-title">Bài test {subs.length > 0 && <span className="font-normal text-white/50">{subs.length} bài nộp</span>}</h4>
-        <button onClick={() => void copyTestLink()} className={BTN_AMBER} title="Link cho ứng viên xem đề + nộp bài">
-          {copied ? <><Check className="hr-ico" />Đã copy</> : <><Link2 className="hr-ico" />Copy link test</>}
-        </button>
+        {(token || canEdit) && (
+          <button onClick={() => void copyTestLink()} className={BTN_AMBER} title="Link cho ứng viên xem đề + nộp bài">
+            {copied ? <><Check className="hr-ico" />Đã copy</> : <><Link2 className="hr-ico" />Copy link test</>}
+          </button>
+        )}
       </div>
 
       {(() => {
@@ -497,18 +502,17 @@ export function SubmissionsPanel({
           url={s.url}
           sub={`${s.submitted_by === "hr" ? "HR lưu" : "Ứng viên nộp"} · ${new Date(s.created_at).toLocaleDateString("vi-VN")}${s.file_size ? ` · ${fmtSize(s.file_size)}` : ""}`}
           note={s.note}
-          onDelete={() => void remove(s)}
+          onDelete={canEdit ? () => void remove(s) : undefined}
         />
       ))}
 
       {(subs.length > 0 || review) && onReview && (
-        <LeaderReview appId={appId} hrKey={hrKey} review={review} onReview={onReview} />
+        <LeaderReview appId={appId} review={review} onReview={onReview} />
       )}
 
-      {showAdd ? (
+      {!canEdit ? null : showAdd ? (
         <AddItemForm<TestSubmission>
           endpoint={`/api/hr/applications/${appId}/submissions`}
-          hrKey={hrKey}
           withTitle={false}
           onAdded={(s) => { setSubs((l) => [...l, s]); setShowAdd(false); }}
         />
