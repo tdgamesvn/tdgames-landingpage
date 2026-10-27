@@ -7,6 +7,13 @@ import { isPushSubscriptionInput } from "@/lib/hr-push-payload";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Có tài khoản thì chỉ thao tác endpoint của mình hoặc chưa gắn user (legacy: không giới hạn). */
+async function endpointUsable(userId: string | null, endpoint: string): Promise<boolean> {
+  if (!userId) return true;
+  const { data } = await getSupabaseAdmin().from("hr_push_subscriptions").select("user_id").eq("endpoint", endpoint).maybeSingle();
+  return !data || data.user_id === null || data.user_id === userId;
+}
+
 /** Khoá công khai VAPID để trình duyệt đăng ký nhận thông báo. */
 export async function GET(request: Request) {
   const auth = await requireHrUser(request, "push.receive");
@@ -27,6 +34,9 @@ export async function POST(request: Request) {
 
   if (body.action === "test") {
     if (typeof body.endpoint !== "string") return NextResponse.json({ error: "Thiếu endpoint" }, { status: 400 });
+    if (!(await endpointUsable(auth.ctx.user.id, body.endpoint))) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     const r = await sendHrPush(
       { title: "🔔 Thông báo HR đã bật", body: "Máy này sẽ nhận nhắc lịch PV trước giờ hẹn ~60 phút.", url: "/hr", tag: "hr-test" },
       body.endpoint,
@@ -64,7 +74,10 @@ export async function DELETE(request: Request) {
   if ("response" in auth) return auth.response;
   const body = (await request.json().catch(() => null)) as { endpoint?: unknown } | null;
   if (typeof body?.endpoint !== "string") return NextResponse.json({ error: "Thiếu endpoint" }, { status: 400 });
-  const { error } = await getSupabaseAdmin().from("hr_push_subscriptions").delete().eq("endpoint", body.endpoint);
+  let del = getSupabaseAdmin().from("hr_push_subscriptions").delete().eq("endpoint", body.endpoint);
+  // Có tài khoản → chỉ xoá thiết bị của mình hoặc thiết bị chưa gắn tài khoản.
+  if (auth.ctx.user.id) del = del.or(`user_id.eq.${auth.ctx.user.id},user_id.is.null`);
+  const { error } = await del;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

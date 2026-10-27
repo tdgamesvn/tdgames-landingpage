@@ -5,6 +5,13 @@ import { requireHrUser, jobInScope } from "@/lib/hr-session";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Cột HR được sửa (không id / slug / created_at / updated_at).
+const EDITABLE_JOB_COLUMNS = [
+  "title", "type", "location", "level", "salary", "rate_per_hour", "summary", "description",
+  "categories", "requirements", "responsibilities", "nice_to_have", "skills", "image_url", "is_active",
+  "leader_user_id",
+] as const;
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -22,7 +29,12 @@ export async function PATCH(
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
 
+  const unknownKey = Object.keys(body).find((k) => !(EDITABLE_JOB_COLUMNS as readonly string[]).includes(k));
+  if (unknownKey) return NextResponse.json({ error: `Không được sửa trường ${unknownKey}` }, { status: 400 });
   const keys = Object.keys(body);
   const hasLeader = "leader_user_id" in body;
   const hasOther = keys.some((k) => k !== "leader_user_id");

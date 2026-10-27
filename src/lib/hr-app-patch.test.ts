@@ -34,3 +34,15 @@ test("hr/boss: mọi key đều được", () => {
   assert.equal(checkAppPatch(ctx("hr"), "new", { status: "rejected", admin_notes: "x", foo: 1 }), null);
   assert.equal(checkAppPatch(ctx("boss"), "new", { status: "rejected" }), null);
 });
+test("leader: {status:offer} bị chặn", () => {
+  assert.ok(checkAppPatch(ctx("leader"), "interview", { status: "offer" }));
+});
+test("kế toán: interview → offer kèm offer_status declined được phép", () => {
+  assert.equal(checkAppPatch(ctx("accountant"), "interview", { status: "offer", offer_status: "declined" }), null);
+});
+test("kế toán: test_review bị chặn (không có apps.review_test)", () => {
+  assert.ok(checkAppPatch(ctx("accountant"), "offer", { test_review: { score: 5 } }));
+});
+test("kế toán: offer_status khi hồ sơ chưa ở offer bị chặn", () => {
+  assert.ok(checkAppPatch(ctx("accountant"), "interview", { offer_status: "accepted" }));
+});

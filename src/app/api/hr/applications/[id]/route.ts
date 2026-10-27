@@ -24,6 +24,9 @@ export async function PATCH(
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
   // Snapshot old values before update (for diff in notification) + kiểm phạm vi (ngoài phạm vi = 404)
   const oldApp = (await loadScopedApplication(

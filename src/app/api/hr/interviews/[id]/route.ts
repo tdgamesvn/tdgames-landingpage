@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication, loadScopedInterview } from "@/lib/hr-session";
 import { redactInterview } from "@/lib/hr-scope";
-import { deleteFromR2 } from "@/lib/r2";
+import { deleteFromR2, r2PublicUrl } from "@/lib/r2";
+import { isInterviewAudioKey } from "@/lib/interview-audio";
 import { discordNotify } from "@/lib/discord-notify";
 import { formatInterviewTime, isMeetUrl, modeLabel } from "@/lib/interview-schedule";
 
@@ -75,6 +76,31 @@ export async function PATCH(
   if ("transcript" in body) allowed.transcript_source = "manual";
 
   const supabase = getSupabaseAdmin();
+
+  // ── Ghi âm: key phải do server sinh, chưa thuộc phiên khác, và URL phải đúng URL công khai của key
+  // (chặn xoá file R2 tuỳ ý / gắn ghi âm của ứng viên khác / SSRF qua audio_url).
+  if ("audio_key" in body || "audio_url" in body) {
+    const clearing = body.audio_key === null && body.audio_url === null;
+    if (!clearing) {
+      const key = body.audio_key;
+      if (typeof key !== "string" || !isInterviewAudioKey(key)) {
+        return NextResponse.json({ error: "audio_key không hợp lệ" }, { status: 400 });
+      }
+      if (body.audio_url !== r2PublicUrl(key)) {
+        return NextResponse.json({ error: "audio_url không khớp audio_key" }, { status: 400 });
+      }
+      const { data: dup, error: dupErr } = await supabase
+        .from("interview_sessions")
+        .select("id")
+        .eq("audio_key", key)
+        .neq("id", id)
+        .limit(1);
+      if (dupErr) return NextResponse.json({ error: dupErr.message }, { status: 500 });
+      if (dup && dup.length > 0) {
+        return NextResponse.json({ error: "Ghi âm này đã gắn cho phiên khác" }, { status: 400 });
+      }
+    }
+  }
 
   // ── Lịch PV: giờ hẹn + hình thức. Online bắt buộc có link Meet; offline thì bỏ link.
   const scheduleKeys = ["scheduled_at", "mode", "meet_url"].filter((k) => k in body);
@@ -219,7 +245,7 @@ export async function DELETE(
 
   // Ghi âm phỏng vấn là dữ liệu riêng tư — HR bấm xoá thì phải biến mất khỏi CDN
   // luôn, không chỉ khuất khỏi giao diện.
-  if (prev?.audio_key) await deleteFromR2(prev.audio_key);
+  if (prev?.audio_key && isInterviewAudioKey(prev.audio_key)) await deleteFromR2(prev.audio_key);
 
   return NextResponse.json({ ok: true });
 }
