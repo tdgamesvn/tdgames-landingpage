@@ -115,7 +115,8 @@ export async function PATCH(req: Request, ctxRoute: { params: Promise<{ id: stri
           displayName: current.display_name,
           roleLabel: ROLE_LABEL[current.role],
           link,
-          invitedBy: ctx.user.displayName,
+          // Đăng nhập bằng mật khẩu chung thì không có tên người mời → "Bạn được mời…".
+        invitedBy: ctx.legacy ? "" : ctx.user.displayName,
         }),
       );
       if ("error" in sent) throw new Error(sent.error);

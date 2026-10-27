@@ -240,7 +240,9 @@ function escapeHtml(s: string) {
 
 // ── HTML mail (layout bảng, inline style — chạy được trên Gmail/Outlook/Apple Mail) ──
 
-const LOGO_URL = "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td2.png"; // icon cam + chữ trắng
+// Header là ẢNH có sẵn nền #0a0a0a + logo (600×84, vẽ x2). Gmail chế độ tối đảo màu nền ô nhưng không
+// đảo ảnh → nếu để nền bằng CSS + logo chữ trắng thì nền thành sáng và chữ logo biến mất.
+const HEADER_URL = "https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark.png";
 const ACCENT = "#ea580c";
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 const URL_RE = /https?:\/\/[^\s<&]+(?:&amp;[^\s<&]+)*/g;
@@ -267,6 +269,7 @@ function ctaLabel(url: string): string | null {
   if (/^https:\/\/meet\.google\.com\//.test(url)) return "Tham gia Google Meet";
   if (/^https:\/\/(www\.)?tdgamestudio\.com\/test\//.test(url)) return "Mở đề bài &amp; nộp bài";
   if (url === MBTI_TEST_URL) return "Làm trắc nghiệm MBTI";
+  if (/^https:\/\/(www\.)?tdgamestudio\.com\/hr\/set-password\?/.test(url)) return "Đặt mật khẩu";
   return null;
 }
 
@@ -328,7 +331,7 @@ export function textToHtml(text: string, opts?: { footerNote?: string }): string
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${preheader}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5"><tr><td align="center" style="padding:32px 12px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;overflow:hidden">
-<tr><td style="background:#0a0a0a;padding:22px 32px"><img src="${LOGO_URL}" width="150" alt="TD Games Studio" style="display:block;border:0;width:150px;height:auto"></td></tr>
+<tr><td style="background:#0a0a0a;padding:0;line-height:0;font-size:0"><img src="${HEADER_URL}" width="600" alt="TD Games Studio" style="display:block;border:0;width:100%;max-width:600px;height:auto"></td></tr>
 <tr><td style="height:4px;line-height:4px;font-size:0;background:${ACCENT}">&nbsp;</td></tr>
 <tr><td style="padding:32px;font-family:${FONT};font-size:15px;line-height:1.65;color:#27272a">
 ${body}

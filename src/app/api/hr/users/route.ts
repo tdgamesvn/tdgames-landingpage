@@ -77,7 +77,8 @@ export async function POST(req: Request) {
         displayName,
         roleLabel: ROLE_LABEL[role as HrRole],
         link,
-        invitedBy: ctx.user.displayName,
+        // Đăng nhập bằng mật khẩu chung thì không có tên người mời → "Bạn được mời…".
+        invitedBy: ctx.legacy ? "" : ctx.user.displayName,
       }),
     );
     if ("error" in sent) throw new Error(sent.error);

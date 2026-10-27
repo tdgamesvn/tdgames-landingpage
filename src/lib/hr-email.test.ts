@@ -130,7 +130,7 @@ test("textToHtml: dấu câu ngay sau URL không dính vào link", () => {
 
 test("email design: header logo, footer địa chỉ, preheader ẩn", () => {
   const html = textToHtml("Chào A,\n\nCảm ơn bạn đã ứng tuyển.\n\nTrân trọng,\nTD Games Studio — Phòng Nhân sự");
-  assert.ok(html.includes("https://cdn.tdgamestudio.com/landing/logoCompany/logo_td2.png"));
+  assert.ok(html.includes("https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark.png"));
   assert.ok(html.includes("505 Minh Khai"));
   assert.ok(/display:none[^>]*>[^<]*Chào A/.test(html), "preheader");
 });
@@ -252,4 +252,16 @@ test("CC_ROLES phủ mọi kind", () => {
 test("resolveCc: Sếp là Leader của job → được CC ở mail mời PV", () => {
   const r = resolveCc(liveCfg, "interview_invite", staff, "b1", "x@td.com");
   assert.deepEqual(r.ccPreview, ["boss@td.com", "hr1@td.com"]);
+});
+
+test("textToHtml: header là ảnh banner nền tối (không mất logo khi Gmail đảo màu ở chế độ tối)", () => {
+  const html = textToHtml("Chào bạn");
+  assert.ok(html.includes("https://cdn.tdgamestudio.com/landing/logoCompany/mail-header-dark.png"));
+  assert.ok(!html.includes("logo_td2.png"));
+});
+
+test("textToHtml: link đặt mật khẩu /hr thành nút 'Đặt mật khẩu'", () => {
+  const html = textToHtml("Bấm link:\n\nhttps://tdgamestudio.com/hr/set-password?token=abc_DEF-123");
+  assert.ok(html.includes(">Đặt mật khẩu</a>"));
+  assert.ok(html.includes('href="https://tdgamestudio.com/hr/set-password?token=abc_DEF-123"'));
 });
