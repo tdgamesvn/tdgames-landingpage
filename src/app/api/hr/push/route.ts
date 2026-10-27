@@ -7,11 +7,12 @@ import { isPushSubscriptionInput } from "@/lib/hr-push-payload";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Có tài khoản thì chỉ thao tác endpoint của mình hoặc chưa gắn user (legacy: không giới hạn). */
+/** Endpoint phải tồn tại; có tài khoản thì chỉ thao tác endpoint của mình hoặc chưa gắn user (legacy: không giới hạn). */
 async function endpointUsable(userId: string | null, endpoint: string): Promise<boolean> {
-  if (!userId) return true;
   const { data } = await getSupabaseAdmin().from("hr_push_subscriptions").select("user_id").eq("endpoint", endpoint).maybeSingle();
-  return !data || data.user_id === null || data.user_id === userId;
+  if (!data) return false; // không có thiết bị nào với endpoint này
+  if (!userId) return true; // phiên mật khẩu chung cũ: không giới hạn theo user
+  return data.user_id === null || data.user_id === userId;
 }
 
 /** Khoá công khai VAPID để trình duyệt đăng ký nhận thông báo. */
@@ -33,13 +34,13 @@ export async function POST(request: Request) {
   if (!body) return NextResponse.json({ error: "Body không hợp lệ" }, { status: 400 });
 
   if (body.action === "test") {
-    if (typeof body.endpoint !== "string") return NextResponse.json({ error: "Thiếu endpoint" }, { status: 400 });
+    if (typeof body.endpoint !== "string" || !body.endpoint) return NextResponse.json({ error: "Thiếu endpoint" }, { status: 400 });
     if (!(await endpointUsable(auth.ctx.user.id, body.endpoint))) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     const r = await sendHrPush(
       { title: "🔔 Thông báo HR đã bật", body: "Máy này sẽ nhận nhắc lịch PV trước giờ hẹn ~60 phút.", url: "/hr", tag: "hr-test" },
-      body.endpoint,
+      { onlyEndpoint: body.endpoint },
     );
     if (r.disabled) return NextResponse.json({ error: "Server chưa cấu hình khoá VAPID" }, { status: 500 });
     if (r.sent === 0) return NextResponse.json({ error: "Không gửi được — thử tắt rồi bật lại thông báo" }, { status: 502 });

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "./supabase-admin";
 import { getHRSecret } from "./hr-auth";
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "./hr-permissions";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { hashToken, newToken, readCookie, sessionUserIsActive } from "./hr-crypto";
 import { inScope, type ScopeInput } from "./hr-scope";
 
@@ -91,6 +92,22 @@ export async function requireHrUser(req: Request, perm?: PermissionKey): Promise
     return { response: NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 }) };
   }
   return { ctx };
+}
+
+/** So khớp bí mật cron: băm sha256 rồi timingSafeEqual; HR_CRON_SECRET rỗng/chưa đặt thì không bao giờ khớp. */
+function cronKeyMatches(provided: string | null): boolean {
+  const secret = process.env.HR_CRON_SECRET ?? "";
+  if (!secret || !provided) return false;
+  const a = createHash("sha256").update(provided).digest();
+  const b = createHash("sha256").update(secret).digest();
+  return timingSafeEqual(a, b);
+}
+
+/** Cổng cho 2 route remind: cron gửi `x-hr-cron-key`, còn người dùng phải đăng nhập và có quyền `jobs.manage`. */
+export async function requireCronOrHr(req: Request): Promise<NextResponse | null> {
+  if (cronKeyMatches(req.headers.get("x-hr-cron-key"))) return null;
+  const auth = await requireHrUser(req, "jobs.manage");
+  return "response" in auth ? auth.response : null;
 }
 
 export async function requireBoss(req: Request): Promise<HrAuthResult> {

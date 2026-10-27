@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireCronOrHr } from "@/lib/hr-session";
 import { discordNotify, getDiscordUrl } from "@/lib/discord-notify";
 import { formatInterviewTime, modeLabel, vnDateKey } from "@/lib/interview-schedule";
 
@@ -21,7 +21,7 @@ function formatApp(app: { full_name: string; jobs: { title: string }[] | null; r
 }
 
 export async function GET(request: Request) {
-  const authError = await requireHR(request);
+  const authError = await requireCronOrHr(request);
   if (authError) return authError;
 
   const supabase = getSupabaseAdmin();

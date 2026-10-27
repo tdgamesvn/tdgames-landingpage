@@ -15,19 +15,25 @@ export function getVapid() {
 type SubRow = { id: string; endpoint: string; p256dh: string; auth: string };
 
 /**
- * Gửi 1 thông báo tới mọi thiết bị đã bật (hoặc chỉ 1 endpoint nếu truyền `onlyEndpoint`).
+ * Gửi 1 thông báo tới mọi thiết bị đã bật (hoặc chỉ 1 endpoint / chỉ các `userIds` nếu truyền).
  * Endpoint trình duyệt báo hết hạn (404/410) thì xoá. Không throw.
  */
 export async function sendHrPush(
   payload: PushPayload,
-  onlyEndpoint?: string,
+  opts?: { onlyEndpoint?: string; userIds?: string[] },
 ): Promise<{ sent: number; failed: number; removed: number; disabled?: true }> {
   const vapid = getVapid();
   if (!vapid) return { sent: 0, failed: 0, removed: 0, disabled: true };
 
+  const onlyEndpoint = opts?.onlyEndpoint;
+  const userIds = opts?.userIds;
+  // Rỗng = không gửi cho ai (tuyệt đối không rơi về phát cho tất cả).
+  if (onlyEndpoint === "" || (userIds && userIds.length === 0)) return { sent: 0, failed: 0, removed: 0 };
+
   const supabase = getSupabaseAdmin();
   let q = supabase.from("hr_push_subscriptions").select("id, endpoint, p256dh, auth");
-  if (onlyEndpoint) q = q.eq("endpoint", onlyEndpoint);
+  if (onlyEndpoint !== undefined) q = q.eq("endpoint", onlyEndpoint);
+  if (userIds) q = q.in("user_id", userIds); // user_id null (thiết bị trước tài khoản) không khớp .in
   const { data } = await q;
   const subs = (data ?? []) as SubRow[];
 
