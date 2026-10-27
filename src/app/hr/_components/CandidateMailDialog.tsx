@@ -29,6 +29,8 @@ type Draft = {
   subject?: string;
   text?: string;
   last_sent_at?: string | null;
+  /** Những người sẽ được CC (server tính; chế độ test thì chỉ để xem trước, không CC thật). */
+  cc_preview?: string[];
   error?: string;
   message?: string;
 };
@@ -118,8 +120,12 @@ export function CandidateMailProvider({ children }: { children: React.ReactNode 
   );
 }
 
-async function fetchDraft(r: MailPromptRequest): Promise<Draft> {
+async function fetchDraft(r: MailPromptRequest, offer?: { salary: string; startDate: string }): Promise<Draft> {
   const q = new URLSearchParams({ kind: r.kind });
+  if (r.kind === "offer" && offer) {
+    if (offer.salary.trim()) q.set("salary", offer.salary.trim());
+    if (offer.startDate.trim()) q.set("start_date", offer.startDate.trim());
+  }
   if (r.interviewId) q.set("interview_id", r.interviewId);
   if (r.prevScheduledAt) q.set("prev_scheduled_at", r.prevScheduledAt);
   const res = await hrFetch(`/api/hr/applications/${r.appId}/emails/draft?${q}`);
@@ -143,6 +149,30 @@ function MailDialog({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  // CC: chip từ cc_preview, bấm × để bỏ (server chỉ nhận tập con của danh sách nó tính).
+  const [cc, setCc] = useState<string[]>([]);
+  // Mail offer: mức lương / ngày bắt đầu → điền vào nháp qua nút "Điền vào nháp".
+  const [salary, setSalary] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [refilling, setRefilling] = useState(false);
+
+  async function refillOffer() {
+    setRefilling(true);
+    setLoadError(null);
+    try {
+      const d = await fetchDraft(req, { salary, startDate });
+      if (d.error) {
+        setLoadError(d.message ?? d.error);
+        return;
+      }
+      setSubject(d.subject ?? "");
+      setText(d.text ?? "");
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "Không tải được bản nháp");
+    } finally {
+      setRefilling(false);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -153,6 +183,7 @@ function MailDialog({
         if (d.error) setLoadError(d.message ?? d.error);
         setSubject(d.subject ?? "");
         setText(d.text ?? "");
+        setCc(d.cc_preview ?? []);
       })
       .catch((e) => alive && setLoadError(e instanceof Error ? e.message : "Không tải được bản nháp"));
     return () => {
@@ -180,6 +211,8 @@ function MailDialog({
           interview_id: req.interviewId ?? null,
           subject,
           text,
+          // Chế độ test: server không CC ai; chip chỉ là xem trước.
+          cc: draft?.mode === "live" ? cc : [],
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -236,6 +269,58 @@ function MailDialog({
             {draft.to && (
               <div className="text-xs text-white/50">
                 Người nhận: <span className="font-semibold text-white/80">{draft.to}</span>
+              </div>
+            )}
+            {draft.mode === "test" ? (
+              (draft.cc_preview?.length ?? 0) > 0 && (
+                <div className="text-xs text-white/50">
+                  Chế độ test — khi bật thật sẽ CC: <span className="font-semibold text-white/80">{draft.cc_preview!.join(", ")}</span>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5 text-xs text-white/50">
+                <span>CC:</span>
+                {cc.length === 0 && <span className="text-white/40">không có</span>}
+                {cc.map((e) => (
+                  <span key={e} className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 py-0.5 pl-2 pr-1 text-white/80" data-testid="cc-chip">
+                    {e}
+                    <button
+                      type="button"
+                      onClick={() => setCc((l) => l.filter((x) => x !== e))}
+                      aria-label={`Bỏ CC ${e}`}
+                      className="rounded-full p-0.5 text-white/40 hover:text-white"
+                    >
+                      <X className="hr-ico-solo" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {req.kind === "offer" && (
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Mức lương
+                  <input
+                    value={salary}
+                    onChange={(e) => setSalary(e.target.value)}
+                    maxLength={100}
+                    placeholder="vd. 25.000.000 VND/tháng"
+                    className="mt-1 block w-56 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-normal normal-case tracking-normal text-white focus:outline-none"
+                  />
+                </label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Ngày bắt đầu
+                  <input
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    maxLength={100}
+                    placeholder="vd. 01/12/2026"
+                    className="mt-1 block w-44 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-normal normal-case tracking-normal text-white focus:outline-none"
+                  />
+                </label>
+                <button type="button" onClick={() => void refillOffer()} disabled={refilling || sending} className="hr-secondary-btn">
+                  {refilling ? "Đang điền…" : "Điền vào nháp"}
+                </button>
               </div>
             )}
             <div>
@@ -369,6 +454,7 @@ export function CandidateMailSection({
                   {formatInterviewTime(e.created_at)}
                   {e.sent_to ? ` · tới ${e.sent_to}` : ""}
                   {e.sent_by ? ` · ${e.sent_by}` : ""}
+                  {e.cc_emails && e.cc_emails.length > 0 ? ` · CC ${e.cc_emails.join(", ")}` : ""}
                 </span>
               </button>
               {openId === e.id && (

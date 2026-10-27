@@ -6,6 +6,7 @@ import type { Application, ApplicationComment, ApplicationStatus, Job, JobType, 
 import InterviewPanel from "./InterviewPanel";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
+import AccountsPanel from "./AccountsPanel";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
 import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
@@ -859,6 +860,8 @@ function CandidateModal({
                 })
               }
             />
+
+            <OfferSection app={app} onPatch={onPatch} />
 
             <CandidateMailSection
               appId={app.id}
@@ -2016,6 +2019,41 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [testsId, setTestsId] = useState<string | null>(null);
+  // Leader phụ trách: danh sách lấy từ endpoint riêng (HR không gọi được /api/hr/users).
+  const canAssignLeader = can("jobs.assign_leader");
+  const [leaders, setLeaders] = useState<{ id: string; display_name: string }[]>([]);
+  const [leaderBusy, setLeaderBusy] = useState<string | null>(null);
+  const [leaderError, setLeaderError] = useState("");
+  useEffect(() => {
+    if (!canAssignLeader) return;
+    let alive = true;
+    hrFetch("/api/hr/users/leaders")
+      .then((r) => (r.ok ? r.json() : { leaders: [] }))
+      .then((j) => alive && setLeaders(j.leaders ?? []))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [canAssignLeader]);
+
+  async function assignLeader(job: Job, leaderId: string) {
+    setLeaderBusy(job.id);
+    setLeaderError("");
+    try {
+      const res = await hrFetch(`/api/hr/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ leader_user_id: leaderId || null }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      onUpdate({ ...job, leader_user_id: json.job?.leader_user_id ?? (leaderId || null) });
+    } catch (e) {
+      setLeaderError(e instanceof Error ? e.message : "Không gán được Leader");
+    } finally {
+      setLeaderBusy(null);
+    }
+  }
 
   function saveRefCode(val: string) {
     setRefCode(val);
@@ -2109,6 +2147,8 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
         <p className="py-10 text-center text-sm text-white/30">No jobs yet — create one above.</p>
       )}
 
+      {leaderError && <p role="alert" className="text-[13px] text-red-400">{leaderError}</p>}
+
       <div className="space-y-2">
         {jobs.map((job) => (
           <div key={job.id} className="rounded-xl border border-white/10 bg-white/[0.03]">
@@ -2128,6 +2168,29 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-2">
+                {/* Leader phụ trách */}
+                {canAssignLeader && (
+                  <label className="flex items-center gap-1.5 text-[10px] text-white/50">
+                    Leader phụ trách
+                    <select
+                      aria-label={`Leader phụ trách ${job.title}`}
+                      value={job.leader_user_id ?? ""}
+                      disabled={leaderBusy === job.id}
+                      onChange={(e) => void assignLeader(job, e.target.value)}
+                      className="rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[11px] text-white focus:outline-none disabled:opacity-50"
+                    >
+                      <option value="">Chưa gán</option>
+                      {leaders.map((l) => (
+                        <option key={l.id} value={l.id}>{l.display_name}</option>
+                      ))}
+                      {/* Leader đã bị khoá/đổi vai vẫn hiện để select không nhảy về "Chưa gán" sai sự thật. */}
+                      {job.leader_user_id && !leaders.some((l) => l.id === job.leader_user_id) && (
+                        <option value={job.leader_user_id}>(tài khoản không còn là Leader)</option>
+                      )}
+                    </select>
+                  </label>
+                )}
+
                 {/* Toggle active */}
                 <button
                   onClick={() => void toggleActive(job)}
@@ -2537,9 +2600,79 @@ function QuickAction({
   );
 }
 
+const OFFER_CHOICES = [
+  { key: "pending", label: "Chờ trả lời" },
+  { key: "accepted", label: "Đã nhận" },
+  { key: "declined", label: "Từ chối" },
+] as const;
+
+/** Khối "Offer" trong hồ sơ: ghi kết quả offer + gửi mail offer. Chỉ hiện khi hồ sơ ở Offer hoặc đã có kết quả. */
+function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
+  const { can } = useHrSession();
+  const { prompt } = useCandidateMail();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const canSetResult = can("apps.offer");
+  const canMail = can("emails.send_offer");
+  if (app.status !== "offer" && !app.offer_status) return null;
+  if (!canSetResult && !canMail && !app.offer_status) return null;
+
+  async function setResult(v: (typeof OFFER_CHOICES)[number]["key"]) {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ offer_status: v }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+      onPatch({ offer_status: j.application?.offer_status ?? v });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Không lưu được kết quả offer");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="space-y-2" aria-label="Offer">
+      <h4 className="hr-section-title px-1">Offer</h4>
+      <div className="hr-group space-y-2 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="hr-segmented" role="group" aria-label="Kết quả offer">
+            {OFFER_CHOICES.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                aria-pressed={app.offer_status === c.key}
+                disabled={!canSetResult || saving}
+                onClick={() => void setResult(c.key)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          {canMail && (
+            <button
+              type="button"
+              onClick={() => prompt({ appId: app.id, candidateName: app.full_name, kind: "offer" })}
+              className="hr-secondary-btn"
+            >
+              Gửi mail offer
+            </button>
+          )}
+        </div>
+        {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
+      </div>
+    </section>
+  );
+}
+
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type View = "pipeline" | "kpi" | "jobs" | "data";
+type View = "pipeline" | "kpi" | "jobs" | "data" | "accounts";
 
 type ThemeState = readonly [HrThemePref, (p: HrThemePref) => void];
 
@@ -2781,6 +2914,8 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     "data",
     ...(can("apps.view_notes") ? (["kpi"] as View[]) : []),
     ...(can("jobs.manage") ? (["jobs"] as View[]) : []),
+    // Tài khoản & quyền: chỉ Sếp.
+    ...(me?.role === "boss" ? (["accounts"] as View[]) : []),
   ];
   const activeView: View = views.includes(view) ? view : "pipeline";
 
@@ -2807,7 +2942,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <div className="hr-segmented order-last w-full md:order-none md:w-auto" role="group" aria-label="Chế độ xem">
             {views.map((v) => (
               <button key={v} type="button" aria-pressed={activeView === v} onClick={() => setView(v)}>
-                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : "Jobs"}
+                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
               </button>
             ))}
           </div>
@@ -2867,6 +3002,8 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <DataView apps={apps} jobs={jobs} onUpdate={updateApp} onDelete={deleteApp} />
         ) : activeView === "kpi" ? (
           <KPIView apps={apps} />
+        ) : activeView === "accounts" ? (
+          <AccountsPanel />
         ) : (
           <JobsView
             jobs={jobs}

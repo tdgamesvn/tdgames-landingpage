@@ -125,6 +125,8 @@ export type Job = {
   skills: string[];
   is_active: boolean;
   created_at: string;
+  /** Tài khoản Leader phụ trách job (hr_users.id). */
+  leader_user_id?: string | null;
 };
 
 /** Đề test của job (file R2 hoặc link ngoài). */
@@ -194,6 +196,8 @@ export type Application = {
   mbti_type: string | null;
   mbti_url: string | null;
   test_review: TestReview | null;
+  /** Kết quả offer; null = chưa ghi. */
+  offer_status?: "pending" | "accepted" | "declined" | null;
   created_at: string;
   jobs?: { title: string; slug: string };
   /** /api/hr/applications join sẵn để card biết có bài nộp chờ Leader chấm. */
@@ -306,6 +310,7 @@ export type CandidateEmail = {
   kind: import("@/lib/hr-email").CandidateEmailKind;
   to_email: string;
   sent_to: string;
+  cc_emails?: string[] | null;
   test_mode: boolean;
   subject: string;
   body_text: string;
