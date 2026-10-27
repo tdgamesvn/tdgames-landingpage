@@ -42,3 +42,12 @@ test("Sếp được gán làm Leader của job → được tag như Leader", (
   const off = staff.map((u) => (u.role === "boss" ? { ...u, disabled: true } : u));
   assert.equal(buildMentions(off, ["hr"], null), "<@100000000000000002>");
 });
+
+test("allowedMentionsFor: chỉ id được tag; fallback @everyone giữ parse everyone", async () => {
+  const { allowedMentionsFor } = await import("./hr-discord-mentions.ts");
+  assert.deepEqual(allowedMentionsFor("<@12345678901234567> <@12345678901234568> <@12345678901234567>"), {
+    parse: [],
+    users: ["12345678901234567", "12345678901234568"],
+  });
+  assert.deepEqual(allowedMentionsFor("@everyone"), { parse: ["everyone"], users: [] });
+});

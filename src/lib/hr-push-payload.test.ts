@@ -71,3 +71,8 @@ test("mentionPayload: tiêu đề, body cắt 120, url, tag", () => {
   assert.equal(p.tag, "hr-mention-c1");
   assert.equal(mentionPayload({ authorName: "T", candidateName: "N", content: "ngắn", commentId: "c", applicationId: "a" }).body, "N: ngắn");
 });
+
+test("mentionPayload: cắt theo code point, không làm vỡ emoji", () => {
+  const p = mentionPayload({ authorName: "T", candidateName: "N", content: "😀".repeat(200), commentId: "c", applicationId: "a" });
+  assert.equal(p.body, `N: ${"😀".repeat(119)}…`);
+});

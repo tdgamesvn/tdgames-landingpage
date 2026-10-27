@@ -6,7 +6,7 @@ import { formatInterviewTime, modeLabel } from "@/lib/interview-schedule";
 import { sendHrPush } from "@/lib/hr-push";
 import { interviewReminderPayload } from "@/lib/hr-push-payload";
 import { pushRecipientUserIds } from "@/lib/hr-push-recipients";
-import { buildMentions } from "@/lib/hr-discord-mentions";
+import { allowedMentionsFor, buildMentions } from "@/lib/hr-discord-mentions";
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "@/lib/hr-permissions";
 
 export const runtime = "nodejs";
@@ -93,6 +93,7 @@ export async function GET(request: Request) {
     if (!hasDiscord) continue;
     const tag = recipientsOk ? buildMentions(mentionStaff, ["hr", "leader"], job?.leader_user_id ?? null) : "@everyone";
     await discordNotify("hr", {
+      allowed_mentions: allowedMentionsFor(tag),
       content: `${tag} ⏰ **Sắp PV** — ${app.full_name} sau ~${mins} phút`,
       embeds: [
         {

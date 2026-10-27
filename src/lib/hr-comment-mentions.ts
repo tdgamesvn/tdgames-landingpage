@@ -19,10 +19,13 @@ export function mentionableUsers(
   app: { job_id: string; status: string; offer_status?: string | null },
   statuses: ScopeInput["statuses"],
   jobLeaderId: string | null,
+  rolesWithComment: Set<HrRole>,
 ): MentionMember[] {
   const out: MentionMember[] = [];
   for (const u of users) {
     if (u.disabled) continue;
+    // Vai không có quyền apps.comment thì không đọc được comment → không tag (boss luôn có).
+    if (u.role !== "boss" && !rolesWithComment.has(u.role)) continue;
     let ok = false;
     if (u.role === "boss" || u.role === "hr") ok = true;
     else if (u.role === "leader") ok = jobLeaderId !== null && u.id === jobLeaderId;
@@ -73,11 +76,17 @@ export function keptMentionIds(
   ids: string[],
   members: { id: string; display_name: string }[],
 ): string[] {
+  // Khớp theo mọi tên đã biết, tên dài trước ("@An Binh" không tính là "@An").
+  const found = new Set(
+    splitMentions(content, members.map((m) => m.display_name))
+      .filter((p) => p.mention)
+      .map((p) => p.text.slice(1)),
+  );
   const out: string[] = [];
   for (const id of ids) {
     if (out.includes(id)) continue;
     const m = members.find((x) => x.id === id);
-    if (m && splitMentions(content, [m.display_name]).some((p) => p.mention)) out.push(id);
+    if (m && found.has(m.display_name)) out.push(id);
   }
   return out;
 }

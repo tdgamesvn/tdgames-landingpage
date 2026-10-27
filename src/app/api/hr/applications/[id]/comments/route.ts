@@ -43,13 +43,20 @@ export async function GET(
     const { data: users } = await supabase.from("hr_users").select("id, role").in("id", authorIds);
     for (const u of users ?? []) roleById.set(String(u.id), String(u.role));
   }
+  // Tên người được tag (độc lập với phạm vi/khoá hiện tại) để client vẫn tô màu @Tên.
+  const mentionIds = [...new Set((data ?? []).flatMap((c) => (Array.isArray(c.mentions) ? (c.mentions as string[]) : [])))];
+  const mentionNames: Record<string, string> = {};
+  if (mentionIds.length) {
+    const { data: us } = await supabase.from("hr_users").select("id, display_name").in("id", mentionIds);
+    for (const u of us ?? []) mentionNames[String(u.id)] = String(u.display_name);
+  }
   const comments = (data ?? []).map((c) => ({
     ...c,
     mentions: Array.isArray(c.mentions) ? c.mentions : [],
     author_role: c.author_user_id ? (roleById.get(c.author_user_id) ?? null) : null,
   }));
 
-  return NextResponse.json({ comments });
+  return NextResponse.json({ comments, mention_names: mentionNames });
 }
 
 /** POST /api/hr/applications/:id/comments — create a new comment */
@@ -135,27 +142,32 @@ export async function POST(
         jobTitle = job?.title ?? undefined;
       }
 
-      await notifyNewComment(
-        app?.full_name ?? "Unknown",
-        authorName,
-        content,
-        jobTitle,
-        app?.job_id ?? null,
-        mentions,
-      );
-
-      if (mentions.length) {
-        await sendHrPush(
-          mentionPayload({
-            authorName,
-            candidateName: app?.full_name ?? "Ứng viên",
-            content,
-            commentId: String(data.id),
-            applicationId: id,
-          }),
-          { userIds: mentions.filter((u) => u !== ctx.user.id) },
-        );
-      }
+      // Discord và push độc lập: một bên lỗi không chặn bên kia.
+      const results = await Promise.allSettled([
+        notifyNewComment(
+          app?.full_name ?? "Unknown",
+          authorName,
+          content,
+          jobTitle,
+          app?.job_id ?? null,
+          mentions,
+        ),
+        mentions.length
+          ? sendHrPush(
+              mentionPayload({
+                authorName,
+                candidateName: app?.full_name ?? "Ứng viên",
+                content,
+                commentId: String(data.id),
+                applicationId: id,
+              }),
+              { userIds: mentions.filter((u) => u !== ctx.user.id) },
+            )
+          : Promise.resolve(null),
+      ]);
+      results.forEach((r, i) => {
+        if (r.status === "rejected") console.error(`[hr-comments] ${i === 0 ? "Discord" : "push"} lỗi:`, r.reason);
+      });
     } catch {
       // Silently ignore — DB insert already succeeded
     }

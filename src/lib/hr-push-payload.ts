@@ -37,7 +37,8 @@ export function mentionPayload(i: {
   commentId: string;
   applicationId: string;
 }): PushPayload {
-  const text = i.content.length > 120 ? `${i.content.slice(0, 119)}…` : i.content;
+  const chars = Array.from(i.content); // theo code point, không cắt đôi emoji
+  const text = chars.length > 120 ? `${chars.slice(0, 119).join("")}…` : i.content;
   return {
     title: `💬 ${i.authorName} nhắc bạn`,
     body: `${i.candidateName}: ${text}`,

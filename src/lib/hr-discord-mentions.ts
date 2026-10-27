@@ -20,3 +20,12 @@ export function buildMentions(staff: MentionStaff[], roles: HrRole[], jobLeaderI
   }
   return ids.length ? ids.map((id) => `<@${id}>`).join(" ") : "@everyone";
 }
+
+/**
+ * `allowed_mentions` cho webhook: chỉ ping đúng các `<@id>` ta chủ động tag.
+ * Tag là "@everyone" (fallback) → cho phép everyone; tên ứng viên/nội dung có @everyone, <@&role> không ping được.
+ */
+export function allowedMentionsFor(tag: string): { parse: ("everyone")[]; users: string[] } {
+  const users = [...new Set([...tag.matchAll(/<@(\d{17,20})>/g)].map((m) => m[1]))];
+  return { parse: tag.includes("@everyone") ? ["everyone"] : [], users };
+}

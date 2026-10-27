@@ -56,6 +56,7 @@ function CommentBody({ content, names }: { content: string; names: string[] }) {
 const MAX_COMPOSER_PX = 6 * 20 + 8;
 
 export default function CommentThread({ appId, listMaxH = "max-h-60" }: { appId: string; listMaxH?: string }) {
+  const [mentionNames, setMentionNames] = useState<Record<string, string>>({});
   const [comments, setComments] = useState<ApplicationComment[]>([]);
   const [members, setMembers] = useState<MentionMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +93,7 @@ export default function CommentThread({ appId, listMaxH = "max-h-60" }: { appId:
       if (res.ok) {
         const data = await res.json();
         setComments(data.comments ?? []);
+        setMentionNames(data.mention_names ?? {});
       }
     } catch {
       // ignore
@@ -125,12 +127,12 @@ export default function CommentThread({ appId, listMaxH = "max-h-60" }: { appId:
 
   // id → tên, để tô màu @Tên trong comment (thành viên, mình, và người từng bình luận).
   const nameById = useMemo(() => {
-    const m = new Map<string, string>();
+    const m = new Map<string, string>(Object.entries(mentionNames));
     for (const c of comments) if (c.author_user_id) m.set(c.author_user_id, c.author_name);
     for (const x of members) m.set(x.id, x.display_name);
     if (me?.user.id) m.set(me.user.id, me.user.displayName);
     return m;
-  }, [comments, members, me]);
+  }, [comments, members, me, mentionNames]);
 
   const matches = useMemo(() => (pop ? filterMembers(members, pop.query) : []), [pop, members]);
 
@@ -237,12 +239,13 @@ export default function CommentThread({ appId, listMaxH = "max-h-60" }: { appId:
           <div className="relative min-w-0 flex-1">
             {pop && matches.length > 0 && (
               <ul
+                id="mention-listbox"
                 role="listbox"
                 aria-label="Nhắc thành viên"
                 className="absolute bottom-full left-0 z-20 mb-1.5 max-h-48 w-full max-w-[280px] overflow-y-auto rounded-xl bg-[var(--hr-raised)] p-1 shadow-[var(--hr-surface-shadow)] ring-1 ring-[var(--hr-hair)]"
               >
                 {matches.map((m, i) => (
-                  <li key={m.id} role="option" aria-selected={i === active}>
+                  <li key={m.id} id={`mention-opt-${i}`} role="option" aria-selected={i === active}>
                     <button
                       type="button"
                       // mousedown để textarea không mất focus trước khi chèn
@@ -274,6 +277,12 @@ export default function CommentThread({ appId, listMaxH = "max-h-60" }: { appId:
                 onClick={(e) => detectMention(content, e.currentTarget.selectionStart ?? content.length)}
                 onBlur={() => setPop(null)}
                 onKeyDown={(e) => {
+                  if (e.nativeEvent.isComposing) return; // đang gõ IME (tiếng Việt)
+                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    void submit();
+                    return;
+                  }
                   if (pop && matches.length > 0) {
                     if (e.key === "ArrowDown") {
                       e.preventDefault();
@@ -294,16 +303,16 @@ export default function CommentThread({ appId, listMaxH = "max-h-60" }: { appId:
                   if (pop && e.key === "Escape") {
                     e.preventDefault();
                     setPop(null);
-                    return;
-                  }
-                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault();
-                    void submit();
                   }
                 }}
                 placeholder="Viết bình luận… gõ @ để nhắc ai đó"
                 rows={1}
                 aria-label="Viết bình luận"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={!!pop && matches.length > 0}
+                aria-controls="mention-listbox"
+                aria-activedescendant={pop && matches.length > 0 ? `mention-opt-${active}` : undefined}
                 className="block w-full resize-none bg-transparent px-1 py-0.5 text-[13px] leading-5 text-[var(--hr-ink)] placeholder:text-[var(--hr-ink-3)] focus:outline-none"
               />
               <div className="mt-1 flex items-center justify-between gap-2">

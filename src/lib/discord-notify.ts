@@ -18,6 +18,7 @@ export type DiscordChannel = keyof typeof CHANNEL_ENV;
 
 export interface DiscordPayload {
   content?: string;
+  allowed_mentions?: { parse?: string[]; users?: string[] };
   embeds?: Array<{
     title?: string;
     description?: string;

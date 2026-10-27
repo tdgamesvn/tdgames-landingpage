@@ -12,6 +12,7 @@ const statuses = [
   { key: "offer", position: 60, kind: "won" as const },
   { key: "rejected", position: 70, kind: "lost" as const },
 ];
+const allRoles = new Set<"boss" | "hr" | "leader" | "accountant">(["hr", "leader", "accountant"]);
 const users = [
   { id: "b", display_name: "Sếp", role: "boss" as const, disabled: false },
   { id: "h", display_name: "Phương", role: "hr" as const, disabled: false },
@@ -27,7 +28,7 @@ test("foldVi bỏ dấu, đ→d, hạ chữ", () => {
 
 test("mentionableUsers: boss+hr luôn; leader chỉ của job; kế toán theo phạm vi; bỏ khoá", () => {
   const ids = (app: { job_id: string; status: string; offer_status?: string | null }, lead: string | null) =>
-    mentionableUsers(users, app, statuses, lead).map((u) => u.id);
+    mentionableUsers(users, app, statuses, lead, allRoles).map((u) => u.id);
   assert.deepEqual(ids({ job_id: "j", status: "new" }, "l1"), ["b", "h", "l1"]);
   assert.deepEqual(ids({ job_id: "j", status: "interview" }, null), ["b", "h", "a"]);
   assert.deepEqual(ids({ job_id: "j", status: "rejected", offer_status: "declined" }, "l2"), ["b", "h", "l2", "a"]);
@@ -80,4 +81,16 @@ test("relativeTimeVi", () => {
 test("avatarColorIndex ổn định, trong khoảng", () => {
   assert.equal(avatarColorIndex("abc", 8), avatarColorIndex("abc", 8));
   assert.ok(avatarColorIndex("Toàn", 8) >= 0 && avatarColorIndex("Toàn", 8) < 8);
+});
+
+test("mentionableUsers: vai thiếu apps.comment bị loại, boss luôn có", () => {
+  const app = { job_id: "j", status: "interview" };
+  const r = mentionableUsers(users, app, statuses, "l1", new Set(["leader"])).map((u) => u.id);
+  assert.deepEqual(r, ["b", "l1"]);
+});
+
+test("keptMentionIds: @An Binh không tính là @An", () => {
+  const m = [{ id: "1", display_name: "An" }, { id: "2", display_name: "An Binh" }];
+  assert.deepEqual(keptMentionIds("gửi @An Binh nhé", ["1", "2"], m), ["2"]);
+  assert.deepEqual(keptMentionIds("@An Binh và @An", ["1", "2"], m), ["1", "2"]);
 });

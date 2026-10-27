@@ -7,7 +7,7 @@
 
 import { discordNotify } from "@/lib/discord-notify";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { buildMentions, type MentionStaff } from "@/lib/hr-discord-mentions";
+import { allowedMentionsFor, buildMentions, type MentionStaff } from "@/lib/hr-discord-mentions";
 import { HR_ROLES, type HrRole } from "@/lib/hr-permissions";
 
 /**
@@ -80,6 +80,7 @@ export async function notifyNewComment(
     }
   }
   await discordNotify("hr", {
+    allowed_mentions: allowedMentionsFor(tag),
     content: `${tag} 💬 **${applicantName}** — new comment by ${authorName}`,
     embeds: [
       {
@@ -152,7 +153,8 @@ export async function notifyApplicationUpdate(
       fields.push({ name: "Reason", value: reason, inline: false });
 
     await discordNotify("hr", {
-      content: `${statusTag} ${emoji} **${name}** — status updated`,
+      allowed_mentions: allowedMentionsFor(statusTag),
+    content: `${statusTag} ${emoji} **${name}** — status updated`,
       embeds: [
         {
           title: `${emoji} ${isRejected ? "Rejected" : newStatus === "offer" ? "Offer!" : "Status Update"} — ${name}`,
@@ -184,7 +186,8 @@ export async function notifyApplicationUpdate(
 
       const noteTag = await hrMentions(["hr", "leader"], oldApp.job_id);
       await discordNotify("hr", {
-        content: `${noteTag} 💬 **${name}** — note updated`,
+        allowed_mentions: allowedMentionsFor(noteTag),
+    content: `${noteTag} 💬 **${name}** — note updated`,
         embeds: [
           {
             title: `💬 Note — ${name}`,
@@ -230,7 +233,8 @@ export async function notifyApplicationUpdate(
 
     const reviewTag = await hrMentions(["hr"], oldApp.job_id);
     await discordNotify("hr", {
-      content: `${reviewTag} 📝 **${name}** — ${review.reviewer} đã chấm bài test: ${v.emoji} ${v.label} (${review.score}/10)`,
+      allowed_mentions: allowedMentionsFor(reviewTag),
+    content: `${reviewTag} 📝 **${name}** — ${review.reviewer} đã chấm bài test: ${v.emoji} ${v.label} (${review.score}/10)`,
       embeds: [
         {
           title: `📝 Chấm bài test — ${name}`,

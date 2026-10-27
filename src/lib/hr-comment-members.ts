@@ -1,22 +1,24 @@
 import "server-only";
 
 import { getSupabaseAdmin } from "./supabase-admin";
-import { HR_ROLES, type HrRole } from "./hr-permissions";
+import { HR_ROLES, effectivePermissions, type HrRole } from "./hr-permissions";
 import { mentionableUsers, type MentionMember } from "./hr-comment-mentions";
 
 /** Tài khoản chưa khoá xem được hồ sơ `app` (đã đọc từ DB: cần job_id, status, offer_status). Ném lỗi nếu không đọc được DB. */
 export async function loadMentionableMembers(app: Record<string, unknown>): Promise<MentionMember[]> {
   const supabase = getSupabaseAdmin();
   const jobId = app.job_id ? String(app.job_id) : null;
-  const [users, st, job] = await Promise.all([
+  const [users, st, job, rp] = await Promise.all([
     supabase.from("hr_users").select("id, display_name, role, disabled"),
     supabase.from("application_statuses").select("key, position, kind"),
     jobId
       ? supabase.from("jobs").select("leader_user_id").eq("id", jobId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    supabase.from("hr_role_permissions").select("role, permission, allowed"),
   ]);
   if (users.error) throw new Error(`loadMentionableMembers: ${users.error.message}`);
   if (st.error) throw new Error(`loadMentionableMembers: ${st.error.message}`);
+  if (rp.error) throw new Error(`loadMentionableMembers: ${rp.error.message}`);
   if (job.error) throw new Error(`loadMentionableMembers: ${job.error.message}`);
   const list = (users.data ?? [])
     .filter((u) => (HR_ROLES as readonly string[]).includes(u.role))
@@ -27,6 +29,10 @@ export async function loadMentionableMembers(app: Record<string, unknown>): Prom
     kind: r.kind as "open" | "won" | "lost",
   }));
   const leaderId = (job.data as { leader_user_id: string | null } | null)?.leader_user_id ?? null;
+  const overrides = (rp.data ?? []).map((r) => ({ role: String(r.role), permission: String(r.permission), allowed: !!r.allowed }));
+  const rolesWithComment = new Set<HrRole>(
+    HR_ROLES.filter((r) => effectivePermissions(r, overrides).has("apps.comment")),
+  );
   return mentionableUsers(
     list,
     {
@@ -36,5 +42,6 @@ export async function loadMentionableMembers(app: Record<string, unknown>): Prom
     },
     statuses,
     leaderId,
+    rolesWithComment,
   );
 }
