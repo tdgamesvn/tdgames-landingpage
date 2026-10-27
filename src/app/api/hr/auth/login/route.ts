@@ -8,11 +8,11 @@ const BAD = "Email hoặc mật khẩu không đúng";
 const TOO_MANY = "Thử quá nhiều lần, vui lòng đợi 15 phút.";
 const WINDOW = 15 * 60 * 1000;
 // Đặt chỗ (tryHit) TRƯỚC khi tốn scrypt để request song song không lách được hạn mức.
-// Theo cặp email|IP (kẻ ở IP khác không khoá được người thật): 10 / 15 phút; theo IP: 30; theo email toàn cục: 50 (chốt chặn).
+// Theo cặp email|IP (kẻ ở IP khác không khoá được người thật): 10 / 15 phút; theo IP: 30; theo email toàn cục: 20 (chốt chặn).
 // Đăng nhập thành công thì hoàn lại lượt IP + email toàn cục và xoá bộ đếm cặp.
 const pairLimit = createLimiter(10, WINDOW);
 const ipLimit = createLimiter(30, WINDOW);
-const emailLimit = createLimiter(50, WINDOW);
+const emailLimit = createLimiter(20, WINDOW);
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   const ip = clientIp(req.headers);
   const pairKey = `${email}|${ip}`;
-  // Không dùng && ngắn mạch: mỗi limiter phải được ghi nhận; nếu có cái từ chối thì hoàn lại các cái đã ghi.
+  // Đặt chỗ lần lượt; dừng ở limiter đầu tiên từ chối rồi hoàn lại các lượt đã đặt trước đó.
   const took: Array<[typeof pairLimit, string]> = [];
   let allowed = true;
   for (const [lim, key] of [[pairLimit, pairKey], [ipLimit, ip], [emailLimit, email]] as const) {

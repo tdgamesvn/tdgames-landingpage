@@ -30,14 +30,11 @@ export function createLimiter(
     return arr;
   }
 
-  function enforceCap() {
-    if (hits.size <= maxKeys) return;
-    // Bỏ key hết hạn trước, còn vượt thì xoá key chèn sớm nhất (thứ tự chèn của Map).
+  /** Chỉ dọn key hết hạn; trả true nếu còn chỗ cho 1 key mới. Không bao giờ xoá key còn hiệu lực. */
+  function hasRoom(): boolean {
+    if (hits.size < maxKeys) return true;
     for (const k of [...hits.keys()]) live(k);
-    for (const k of hits.keys()) {
-      if (hits.size <= maxKeys) break;
-      hits.delete(k);
-    }
+    return hits.size < maxKeys;
   }
 
   return {
@@ -45,9 +42,11 @@ export function createLimiter(
     tryHit(key) {
       const arr = live(key);
       if (arr.length >= max) return false;
+      // Key mới mà bộ nhớ đã đầy key còn hiệu lực → fail closed (coi như bị giới hạn), không chèn.
+      if (arr.length === 0 && !hasRoom()) return false;
       arr.push(now());
+      hits.delete(key); // đưa key lên cuối thứ tự chèn
       hits.set(key, arr);
-      enforceCap();
       return true;
     },
     undo(key) {
