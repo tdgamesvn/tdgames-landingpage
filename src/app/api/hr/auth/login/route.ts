@@ -7,18 +7,31 @@ import { clientIp, createLimiter } from "@/lib/hr-rate-limit";
 const BAD = "Email hoặc mật khẩu không đúng";
 const TOO_MANY = "Thử quá nhiều lần, vui lòng đợi 15 phút.";
 const WINDOW = 15 * 60 * 1000;
-// Chỉ đếm lần đăng nhập thất bại: 10 / email, 30 / IP trong 15 phút.
-const emailFails = createLimiter(10, WINDOW);
-const ipFails = createLimiter(30, WINDOW);
+// Đặt chỗ (tryHit) TRƯỚC khi tốn scrypt để request song song không lách được hạn mức.
+// Theo cặp email|IP (kẻ ở IP khác không khoá được người thật): 10 / 15 phút; theo IP: 30; theo email toàn cục: 50 (chốt chặn).
+// Đăng nhập thành công thì hoàn lại lượt IP + email toàn cục và xoá bộ đếm cặp.
+const pairLimit = createLimiter(10, WINDOW);
+const ipLimit = createLimiter(30, WINDOW);
+const emailLimit = createLimiter(50, WINDOW);
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body?.password === "string" ? body.password : "";
-  if (!email || !password || password.length > 200) return NextResponse.json({ error: BAD }, { status: 401 });
+  if (!email || !password || password.length > 200 || email.length > 320) return NextResponse.json({ error: BAD }, { status: 401 });
 
-  const ip = clientIp(req.headers.get("x-forwarded-for"));
-  if (emailFails.blocked(email) || ipFails.blocked(ip)) {
+  const ip = clientIp(req.headers);
+  const pairKey = `${email}|${ip}`;
+  // Không dùng && ngắn mạch: mỗi limiter phải được ghi nhận; nếu có cái từ chối thì hoàn lại các cái đã ghi.
+  const took: Array<[typeof pairLimit, string]> = [];
+  let allowed = true;
+  for (const [lim, key] of [[pairLimit, pairKey], [ipLimit, ip], [emailLimit, email]] as const) {
+    if (!allowed) break;
+    if (lim.tryHit(key)) took.push([lim, key]);
+    else allowed = false;
+  }
+  if (!allowed) {
+    for (const [lim, key] of took) lim.undo(key);
     return NextResponse.json({ error: TOO_MANY }, { status: 429 });
   }
 
@@ -30,16 +43,17 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (error) {
     console.error("[hr-login] đọc user lỗi:", error.message);
+    pairLimit.undo(pairKey);
+    ipLimit.undo(ip);
+    emailLimit.undo(email);
     return NextResponse.json({ error: "Không đăng nhập được, thử lại sau" }, { status: 500 });
   }
   // verifyPassword tự tính scrypt giả khi không có hash → thời gian phản hồi không lộ email tồn tại.
   const ok = await verifyPassword(password, user?.password_hash ?? null);
-  if (!user || user.disabled || !ok) {
-    emailFails.hit(email);
-    ipFails.hit(ip);
-    return NextResponse.json({ error: BAD }, { status: 401 });
-  }
-  emailFails.reset(email);
+  if (!user || user.disabled || !ok) return NextResponse.json({ error: BAD }, { status: 401 });
+  pairLimit.reset(pairKey);
+  ipLimit.undo(ip);
+  emailLimit.undo(email);
 
   const { token, expires } = await createSession(user.id);
   await supabase.from("hr_users").update({ last_login_at: new Date().toISOString() }).eq("id", user.id);
