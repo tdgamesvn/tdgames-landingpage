@@ -348,3 +348,12 @@ Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau 
 - /hr là PWA riêng (scope /hr), SW chỉ làm push — không cache để dữ liệu HR luôn mới.
 - Mọi thiết bị đã bật đều nhận (HR dùng chung key, không có user riêng). Nhắc cùng lúc Discord (~60' trước).
 - Endpoint push bắt buộc thuộc dịch vụ push chính thức (allowlist host) để server không POST tới địa chỉ tuỳ ý.
+
+## 2026-10-27 — /hr: tài khoản tự quản (không dùng Supabase Auth), quyền theo vai, lọc ở server
+- Mật khẩu scrypt + phiên trong `hr_sessions` (cookie httpOnly) + token mời/đặt lại tự quản: link mời được 7 ngày (Supabase OTP tối đa 24h), khoá tài khoản có hiệu lực ngay, không đụng cấu hình signup Supabase.
+- Không có trang đăng ký; chỉ Sếp tạo/khoá tài khoản và sửa bảng quyền. Vai Sếp luôn toàn quyền.
+- Bảng quyền = 1 danh sách trong code (`hr-permissions.ts`), DB chỉ lưu ô khác mặc định. Thêm chức năng = thêm 1 dòng quyền.
+- Phạm vi dữ liệu + ẩn field ép ở server (allowlist: cột mới mặc định bị ẩn với Leader/Kế toán). Ngoài phạm vi trả 404.
+- Ghi chống CSRF bằng kiểm Origin/Sec-Fetch-Site (cookie SameSite=Lax không chặn được subdomain cdn.*). File bài test: content-type theo đuôi, cấm svg/html, lưu attachment.
+- Rate limit đăng nhập/quên mật khẩu trong bộ nhớ (PM2 1 process).
+- Push nhắc PV chỉ tới thiết bị gắn tài khoản có quyền (Leader chỉ job mình).

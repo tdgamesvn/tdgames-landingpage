@@ -16,7 +16,7 @@ jobs:
         run: |
           STATUS=$(curl -s -o /tmp/remind_body.txt -w "%{http_code}" \
             -X GET \
-            -H "x-hr-key: ${{ secrets.HR_SECRET }}" \
+            -H "x-hr-cron-key: ${{ secrets.HR_CRON_SECRET }}" \
             "https://tdgamestudio.com/api/hr/interviews/remind")
           echo "HTTP $STATUS"
           cat /tmp/remind_body.txt

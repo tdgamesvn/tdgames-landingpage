@@ -6,10 +6,15 @@ import type { Application, ApplicationComment, ApplicationStatus, Job, JobType, 
 import InterviewPanel from "./InterviewPanel";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
+import AccountsPanel from "./AccountsPanel";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
 import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
-import ThemeToggle, { useHrTheme } from "./ThemeToggle";
+import ThemeToggle, { useHrTheme, type HrThemePref } from "./ThemeToggle";
+import { HrSessionProvider, hrFetch, useHrSession } from "./HrSession";
+import HrAuthCard, { AUTH_INPUT, AUTH_LINK } from "./HrAuthCard";
+import { accountantStatusKeys } from "@/lib/hr-scope";
+import type { PermissionKey } from "@/lib/hr-permissions";
 import PushToggle from "./PushToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { formatInterviewTime } from "@/lib/interview-schedule";
@@ -67,25 +72,48 @@ const WIDE_MQ = "(min-width: 1024px)";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** PATCH status tự do sang bất kỳ cột nào (không ép thứ tự). Trả về true nếu OK. */
+/**
+ * Field server tự đặt khi đổi status (vd. sang Offer → offer_status = "pending") — gộp vào state local
+ * để khối Offer hiện ngay, không cần tải lại.
+ */
+async function serverSideFields(res: Response): Promise<Partial<Application>> {
+  const j = await res.json().catch(() => null);
+  const a = j?.application as Partial<Application> | undefined;
+  if (!a) return {};
+  const out: Partial<Application> = {};
+  if ("offer_status" in a) out.offer_status = a.offer_status;
+  return out;
+}
+
+/** PATCH status tự do sang bất kỳ cột nào (không ép thứ tự). Trả về field server đặt thêm nếu OK, null nếu lỗi. */
 async function patchStatus(
-  hrKey: string,
   id: string,
   status: ApplicationStatus,
   rejection_reason?: string,
-): Promise<boolean> {
-  const body: Record<string, unknown> = {
-    status,
-    // Rời Rejected thì xoá lý do; vào Rejected thì ghi lý do.
-    rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null,
-  };
-  const res = await fetch(`/api/hr/applications/${id}`, {
+  /** Có apps.edit — người chỉ có apps.offer không được gửi rejection_reason (server 403). */
+  canEdit = true,
+): Promise<Partial<Application> | null> {
+  const body: Record<string, unknown> = { status };
+  // Rời Rejected thì xoá lý do; vào Rejected thì ghi lý do.
+  if (canEdit) body.rejection_reason = status === "rejected" ? (rejection_reason ?? null) : null;
+  const res = await hrFetch(`/api/hr/applications/${id}`, {
     method: "PATCH",
-    headers: { "content-type": "application/json", "x-hr-key": hrKey },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
-  return res.ok;
+  return res.ok ? serverSideFields(res) : null;
 }
+
+type Can = (p: PermissionKey) => boolean;
+
+/** Được chuyển hồ sơ from → to không: apps.edit thì mọi hướng; apps.offer chỉ Interview → Offer (khớp checkAppPatch ở server). */
+function canMove(can: Can, from: ApplicationStatus, to: ApplicationStatus): boolean {
+  if (from === to) return false;
+  if (can("apps.edit")) return true;
+  return can("apps.offer") && from === "interview" && to === "offer";
+}
+
+const MOVE_DENIED = "Bạn chỉ được chuyển hồ sơ từ Interview sang Offer";
 
 /** Sau khi đổi status thành công: Test → hỏi gửi bài test, Rejected → hỏi gửi mail báo kết quả. */
 function promptMailForStatus(
@@ -221,13 +249,12 @@ function DetailRow({ label, value, href }: { label: string; value?: string | num
 /** MBTI do HR nhập (loại + link kết quả). AI đọc khi chấm hồ sơ — chỉ tham khảo, không cộng/trừ điểm. */
 function MbtiField({
   app,
-  hrKey,
   onPatch,
 }: {
   app: Application;
-  hrKey: string;
   onPatch: (patch: Partial<Application>) => void;
 }) {
+  const canEdit = useHrSession().can("apps.edit");
   const [editing, setEditing] = useState(false);
   const [type, setType] = useState(app.mbti_type ?? "");
   const [url, setUrl] = useState(app.mbti_url ?? "");
@@ -238,9 +265,9 @@ function MbtiField({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/hr/applications/${app.id}`, {
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, {
         method: "PATCH",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ mbti_type: type, mbti_url: url }),
       });
       const j = await res.json().catch(() => ({}));
@@ -270,6 +297,7 @@ function MbtiField({
             </a>
           )}
           {!app.mbti_type && !app.mbti_url && <span className="text-white/30">Chưa có</span>}
+          {canEdit && (
           <button
             onClick={() => {
               setType(app.mbti_type ?? "");
@@ -281,6 +309,7 @@ function MbtiField({
           >
             {app.mbti_type || app.mbti_url ? "Sửa" : "+ Thêm"}
           </button>
+          )}
         </div>
       </div>
     );
@@ -327,25 +356,14 @@ function MbtiField({
   );
 }
 
-const COMMENT_AUTHOR_KEY = "tdg.hr.comment.author";
-
-function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string; hrKey: string; listMaxH?: string }) {
+function CommentThread({ appId, listMaxH = "max-h-60" }: { appId: string; listMaxH?: string }) {
   const [comments, setComments] = useState<ApplicationComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [content, setContent] = useState("");
-  const [author, setAuthor] = useState(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem(COMMENT_AUTHOR_KEY) ?? ""
-      : "",
-  );
-  // Whether the author name is confirmed (persisted) vs. still being typed.
-  // Gating the "name input" vs. "Commenting as" display on `author` truthiness
-  // (instead of this separate flag) unmounted the input after the first
-  // keystroke, since `author` became truthy immediately on every change.
-  const [authorLocked, setAuthorLocked] = useState(
-    () => typeof window !== "undefined" && !!localStorage.getItem(COMMENT_AUTHOR_KEY),
-  );
+  // Tên người bình luận do server lấy từ tài khoản đăng nhập.
+  const { me, can } = useHrSession();
+  const canComment = can("apps.comment");
   const listRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
@@ -357,10 +375,9 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
   }, [content]);
 
   const fetchComments = useCallback(async () => {
+    if (!canComment) return;
     try {
-      const res = await fetch(`/api/hr/applications/${appId}/comments`, {
-        headers: { "x-hr-key": hrKey },
-      });
+      const res = await hrFetch(`/api/hr/applications/${appId}/comments`);
       if (res.ok) {
         const data = await res.json();
         setComments(data.comments ?? []);
@@ -370,10 +387,11 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
     } finally {
       setLoading(false);
     }
-  }, [appId, hrKey]);
+  }, [appId, canComment]);
 
+  // Qua microtask — không setState đồng bộ trong effect.
   useEffect(() => {
-    void fetchComments();
+    void Promise.resolve().then(fetchComments);
   }, [fetchComments]);
 
   // Chỉ cuộn khung danh sách comment — scrollIntoView cuộn cả mọi khung cha
@@ -384,27 +402,15 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
   }, [comments.length]);
 
   async function submit() {
-    const trimAuthor = author.trim();
     const trimContent = content.trim();
-    if (!trimAuthor || !trimContent) return;
-
-    // Persist author name
-    localStorage.setItem(COMMENT_AUTHOR_KEY, trimAuthor);
-    setAuthor(trimAuthor);
-    setAuthorLocked(true);
+    if (!trimContent) return;
 
     setSending(true);
     try {
-      const res = await fetch(`/api/hr/applications/${appId}/comments`, {
+      const res = await hrFetch(`/api/hr/applications/${appId}/comments`, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-hr-key": hrKey,
-        },
-        body: JSON.stringify({
-          author_name: trimAuthor,
-          content: trimContent,
-        }),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ content: trimContent }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -415,6 +421,8 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
       setSending(false);
     }
   }
+
+  if (!canComment) return null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -448,28 +456,9 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
 
       {/* New comment form */}
       <div className="space-y-2 border-t border-white/10 pt-3">
-        {/* Author input (only until name is confirmed) */}
-        {!authorLocked && (
-          <input
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            placeholder="Tên của bạn"
-            className="hr-pill-input w-full px-4 py-2 text-[13px] text-white placeholder:text-white/30"
-          />
-        )}
-        {authorLocked && (
+        {me && (
           <p className="px-1 text-[12px] text-white/50">
-            Bình luận với tên <span className="font-semibold text-white/80">{author}</span>{" "}
-            <button
-              onClick={() => {
-                setAuthor("");
-                setAuthorLocked(false);
-                localStorage.removeItem(COMMENT_AUTHOR_KEY);
-              }}
-              className="text-amber-400 hover:underline"
-            >
-              Đổi tên
-            </button>
+            Bình luận với tên <span className="font-semibold text-white/80">{me.user.displayName}</span>
           </p>
         )}
         <div className="hr-pill-input flex items-end gap-2 py-1.5 pl-4 pr-1.5">
@@ -478,7 +467,7 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && content.trim() && author.trim()) {
+              if (e.key === "Enter" && !e.shiftKey && content.trim()) {
                 e.preventDefault();
                 void submit();
               }
@@ -489,7 +478,7 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
           />
           <button
             onClick={submit}
-            disabled={sending || !content.trim() || !author.trim()}
+            disabled={sending || !content.trim()}
             aria-label="Gửi bình luận"
             className="hr-send-btn"
           >
@@ -501,7 +490,7 @@ function CommentThread({ appId, hrKey, listMaxH = "max-h-60" }: { appId: string;
   );
 }
 
-function AppDetail({ app, hrKey, comments = true }: { app: Application; hrKey: string; comments?: boolean }) {
+function AppDetail({ app, comments = true }: { app: Application; comments?: boolean }) {
   return (
     <div className="space-y-2 border-t border-white/10 pt-3 mt-2">
       <DetailRow label="Email" value={app.email} href={`mailto:${app.email}`} />
@@ -538,7 +527,7 @@ function AppDetail({ app, hrKey, comments = true }: { app: Application; hrKey: s
       {/* Comment thread */}
       {comments && (
         <div className="pt-3 mt-2 border-t border-white/8">
-          <CommentThread appId={app.id} hrKey={hrKey} />
+          <CommentThread appId={app.id} />
         </div>
       )}
     </div>
@@ -549,7 +538,6 @@ function AppDetail({ app, hrKey, comments = true }: { app: Application; hrKey: s
 
 function CandidateModal({
   app,
-  hrKey,
   saving,
   onMove,
   onDeleteApp,
@@ -558,7 +546,6 @@ function CandidateModal({
   onClose,
 }: {
   app: Application;
-  hrKey: string;
   saving: boolean;
   onMove: (status: ApplicationStatus, reason?: string) => void;
   onDeleteApp: () => void;
@@ -567,6 +554,9 @@ function CandidateModal({
   onClose: () => void;
 }) {
   const S = useStatuses();
+  const { can } = useHrSession();
+  const canEdit = can("apps.edit");
+  const canComment = can("apps.comment");
   const [showRejectModal, setShowRejectModal] = useState(false);
   // Xem CV cạnh hồ sơ (màn ≥1024px). Nhớ lựa chọn để mở ứng viên khác vẫn giữ.
   const cvEmbed = cvViewerUrl(app.cv_url);
@@ -606,9 +596,8 @@ function CandidateModal({
     setEvaluating(true);
     setAiError(null);
     try {
-      const res = await fetch(`/api/hr/applications/${app.id}/evaluate`, {
+      const res = await hrFetch(`/api/hr/applications/${app.id}/evaluate`, {
         method: "POST",
-        headers: { "x-hr-key": hrKey },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
@@ -639,7 +628,9 @@ function CandidateModal({
   // Bố cục theo "Inspector" của styleguide TD Games Work: header trắng (danh tính + trạng thái
   // + hành động), thân nền canvas chia nhóm thẻ trắng, cột phải là bình luận.
   const ev = app.ai_evaluation;
-  const next = app.status !== "rejected" ? S.next(app.status) : undefined;
+  const nextRaw = app.status !== "rejected" ? S.next(app.status) : undefined;
+  // Không có apps.edit: chỉ còn nút Interview → Offer (nếu có apps.offer).
+  const next = nextRaw && canMove(can, app.status, nextRaw) ? nextRaw : undefined;
   const facts = ([
     ["Kinh nghiệm", app.years_experience ? `${app.years_experience} năm` : null],
     ["Lương mong muốn", app.expected_salary],
@@ -679,18 +670,25 @@ function CandidateModal({
           </div>
 
           <div className="mt-3.5 flex flex-wrap items-center gap-2 md:pl-[52px]">
-            <StatusMenu
-              status={app.status}
-              saving={saving}
-              onMove={onMove}
-              onReject={() => setShowRejectModal(true)}
-            />
+            {canEdit ? (
+              <StatusMenu
+                status={app.status}
+                saving={saving}
+                onMove={onMove}
+                onReject={() => setShowRejectModal(true)}
+              />
+            ) : (
+              <span className="hr-status-trigger cursor-default" title="Trạng thái">
+                <span className="text-white/50">Trạng thái</span>
+                <span className={S.color(app.status)}>{S.label(app.status)}</span>
+              </span>
+            )}
             {next && (
               <button onClick={() => onMove(next)} disabled={saving} className="hr-primary-btn hr-primary-btn--sm">
                 Chuyển sang {S.label(next)}
               </button>
             )}
-            {app.status !== "rejected" ? (
+            {canEdit && (app.status !== "rejected" ? (
               <button onClick={() => setShowRejectModal(true)} disabled={saving} className="hr-secondary-btn text-red-400">
                 <X className="hr-ico" />Reject
               </button>
@@ -698,7 +696,7 @@ function CandidateModal({
               <button onClick={() => onMove("new")} disabled={saving} className="hr-secondary-btn">
                 <RotateCcw className="hr-ico" />Mở lại hồ sơ
               </button>
-            )}
+            ))}
             {cvLink && (
               <button
                 onClick={toggleCv}
@@ -711,19 +709,23 @@ function CandidateModal({
                 <span className="hidden lg:inline">{showCv ? "Ẩn CV" : "Xem CV"}</span>
               </button>
             )}
-            <MoreMenu>
-              <button role="menuitem" onClick={onDeleteApp} disabled={saving} className="hr-menu-item text-red-400">
-                <Trash2 className="hr-ico" />Xoá hồ sơ
-              </button>
-            </MoreMenu>
+            {can("apps.delete") && (
+              <MoreMenu>
+                <button role="menuitem" onClick={onDeleteApp} disabled={saving} className="hr-menu-item text-red-400">
+                  <Trash2 className="hr-ico" />Xoá hồ sơ
+                </button>
+              </MoreMenu>
+            )}
           </div>
         </div>
 
         {/* Body */}
         {/* Mobile: 1 cột, cả thân modal cuộn chung. Desktop: 2 cột cuộn riêng. */}
         <div
-          className={`grid min-h-0 flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:grid-cols-[1fr_360px] md:overflow-hidden ${
-            showCv ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_340px]" : ""
+          className={`grid min-h-0 flex-1 grid-cols-1 overflow-y-auto overscroll-contain md:overflow-hidden ${
+            canComment ? "md:grid-cols-[1fr_360px]" : ""
+          } ${
+            showCv ? (canComment ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_340px]" : "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]") : ""
           }`}
         >
           {/* CV ứng viên — chỉ màn rộng; màn hẹp nút "Xem CV" mở tab mới */}
@@ -758,12 +760,15 @@ function CandidateModal({
             )}
 
             {/* Đánh giá AI */}
+            {can("apps.view_ai") && (
             <section className="space-y-2">
               <div className="flex items-center justify-between gap-2 px-1">
                 <h4 className="hr-section-title">Đánh giá AI</h4>
-                <button onClick={() => void evaluate()} disabled={evaluating} className="hr-secondary-btn hr-secondary-btn--sm">
-                  {evaluating ? "Đang chấm…" : ev ? <><RefreshCw className="hr-ico" />Chấm lại</> : <><Sparkles className="hr-ico" />Chấm bằng AI</>}
-                </button>
+                {can("ai.run") && (
+                  <button onClick={() => void evaluate()} disabled={evaluating} className="hr-secondary-btn hr-secondary-btn--sm">
+                    {evaluating ? "Đang chấm…" : ev ? <><RefreshCw className="hr-ico" />Chấm lại</> : <><Sparkles className="hr-ico" />Chấm bằng AI</>}
+                  </button>
+                )}
               </div>
               {aiError && <p className="px-1 text-[12px] text-red-400">{aiError}</p>}
               {ev ? (
@@ -814,11 +819,15 @@ function CandidateModal({
                   )}
                 </div>
               ) : (
-                <p className="hr-group px-4 py-3 text-[13px] text-white/50">Chưa chấm. Bấm “Chấm bằng AI” để AI đọc CV và portfolio.</p>
+                <p className="hr-group px-4 py-3 text-[13px] text-white/50">
+                  {can("ai.run") ? "Chưa chấm. Bấm “Chấm bằng AI” để AI đọc CV và portfolio." : "Chưa chấm."}
+                </p>
               )}
             </section>
+            )}
 
             {/* Ghi chú nội bộ */}
+            {can("apps.view_notes") && (
             <section className="space-y-2">
               <h4 className="hr-section-title px-1">Ghi chú</h4>
               <div className="hr-group px-4 py-3">
@@ -830,9 +839,10 @@ function CandidateModal({
                   rows={2}
                   className="hr-bare-input w-full resize-none text-[14px] leading-relaxed text-white placeholder:text-white/30"
                   style={{ maxHeight: "60vh" }}
-                  placeholder="Ghi chú cho team về ứng viên này…"
+                  readOnly={!canEdit}
+                  placeholder={canEdit ? "Ghi chú cho team về ứng viên này…" : "Chưa có ghi chú."}
                 />
-                {note !== (app.admin_notes ?? "") && (
+                {canEdit && note !== (app.admin_notes ?? "") && (
                   <div className="mt-2 flex justify-end gap-2">
                     <button onClick={() => setNote(app.admin_notes ?? "")} disabled={saving} className="hr-secondary-btn">
                       Huỷ
@@ -844,17 +854,16 @@ function CandidateModal({
                 )}
               </div>
             </section>
+            )}
 
             <SubmissionsPanel
               appId={app.id}
-              hrKey={hrKey}
               review={app.test_review}
               onReview={(test_review) => onPatch({ test_review })}
             />
 
             <InterviewPanel
               appId={app.id}
-              hrKey={hrKey}
               candidateName={app.full_name}
               onSessionsChange={(list) =>
                 onPatch({
@@ -865,10 +874,11 @@ function CandidateModal({
               }
             />
 
+            <OfferSection app={app} onPatch={onPatch} />
+
             <CandidateMailSection
               appId={app.id}
               candidateName={app.full_name}
-              hrKey={hrKey}
               rounds={app.interview_sessions ?? []}
             />
 
@@ -876,13 +886,13 @@ function CandidateModal({
             <section className="space-y-2">
               <h4 className="hr-section-title px-1">Liên hệ & hồ sơ</h4>
               <div className="hr-group hr-rows">
-                <InfoRow label="Email"><InfoLink href={`mailto:${app.email}`}>{app.email}</InfoLink></InfoRow>
+                {app.email && <InfoRow label="Email"><InfoLink href={`mailto:${app.email}`}>{app.email}</InfoLink></InfoRow>}
                 {app.phone && <InfoRow label="Điện thoại"><InfoLink href={`tel:${app.phone}`}>{app.phone}</InfoLink></InfoRow>}
                 {app.cv_url && <InfoRow label="CV"><InfoLink href={app.cv_url}>Mở CV</InfoLink></InfoRow>}
                 {app.portfolio_url && <InfoRow label="Portfolio"><InfoLink href={app.portfolio_url}>{app.portfolio_url}</InfoLink></InfoRow>}
                 {app.linkedin_url && <InfoRow label="LinkedIn"><InfoLink href={app.linkedin_url}>{app.linkedin_url}</InfoLink></InfoRow>}
                 {app.website_url && <InfoRow label="Website"><InfoLink href={app.website_url}>{app.website_url}</InfoLink></InfoRow>}
-                <MbtiField app={app} hrKey={hrKey} onPatch={onPatch} />
+                {can("apps.view_ai") && <MbtiField app={app} onPatch={onPatch} />}
                 {app.source && <InfoRow label="Nguồn">{app.source}</InfoRow>}
                 {app.referred_by && <InfoRow label="Người giới thiệu">{app.referred_by}</InfoRow>}
                 <InfoRow label="Ngày nộp">{appliedAt}</InfoRow>
@@ -898,9 +908,11 @@ function CandidateModal({
           </div>
 
           {/* Right: comments */}
-          <div className="flex min-w-0 flex-col border-t border-white/10 px-4 py-4 md:overflow-hidden md:border-l md:border-t-0 md:px-5">
-            <CommentThread appId={app.id} hrKey={hrKey} listMaxH="max-h-[52vh] md:max-h-none md:flex-1" />
-          </div>
+          {canComment && (
+            <div className="flex min-w-0 flex-col border-t border-white/10 px-4 py-4 md:overflow-hidden md:border-l md:border-t-0 md:px-5">
+              <CommentThread appId={app.id} listMaxH="max-h-[52vh] md:max-h-none md:flex-1" />
+            </div>
+          )}
         </div>
 
         {/* Reject modal (inside stopPropagation container) */}
@@ -1052,17 +1064,17 @@ function MoreMenu({ children }: { children: React.ReactNode }) {
 
 function AppCard({
   app,
-  hrKey,
   onUpdate,
   onDelete,
 }: {
   app: Application;
-  hrKey: string;
   onUpdate: (id: string, patch: Partial<Application>) => void;
   onDelete: (id: string) => void;
 }) {
   const S = useStatuses();
   const mail = useCandidateMail();
+  const { can } = useHrSession();
+  const canEdit = can("apps.edit");
   const [saving, setSaving] = useState(false);
   const [showNote, setShowNote] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -1073,8 +1085,9 @@ function AppCard({
     if (status === app.status) return;
     setSaving(true);
     try {
-      if (await patchStatus(hrKey, app.id, status, rejection_reason)) {
-        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+      const extra = await patchStatus(app.id, status, rejection_reason, can("apps.edit"));
+      if (extra) {
+        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null, ...extra } as Partial<Application>);
         promptMailForStatus(mail.prompt, app, status);
       }
     } finally {
@@ -1086,9 +1099,8 @@ function AppCard({
     if (!confirm(`Delete application from "${app.full_name}"? This cannot be undone.`)) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/hr/applications/${app.id}`, {
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, {
         method: "DELETE",
-        headers: { "x-hr-key": hrKey },
       });
       if (res.ok) onDelete(app.id);
     } finally {
@@ -1099,9 +1111,9 @@ function AppCard({
   async function saveNote(newNote: string) {
     setSaving(true);
     try {
-      await fetch(`/api/hr/applications/${app.id}`, {
+      await hrFetch(`/api/hr/applications/${app.id}`, {
         method: "PATCH",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ admin_notes: newNote }),
       });
       onUpdate(app.id, { admin_notes: newNote });
@@ -1111,7 +1123,8 @@ function AppCard({
     }
   }
 
-  const nextStatus = S.next(app.status);
+  const nextRaw = S.next(app.status);
+  const nextStatus = nextRaw && canMove(can, app.status, nextRaw) ? nextRaw : undefined;
   // Vòng PV sắp tới gần nhất (giữ hiển thị tới 2 tiếng sau giờ hẹn — đang PV dở).
   const [now] = useState(() => Date.now());
   const nextInterview = (app.interview_sessions ?? [])
@@ -1120,7 +1133,9 @@ function AppCard({
   const [dragging, setDragging] = useState(false);
   // Modal/note editor là DOM con của card — tắt draggable khi chúng mở, kẻo
   // bôi đen text trong textarea bị trình duyệt hiểu thành kéo cả card.
-  const canDrag = !saving && !showNote && !showModal && !showRejectModal;
+  // Không có apps.edit: chỉ kéo được thẻ Interview (sang Offer) nếu có apps.offer.
+  const mayMove = canEdit || (can("apps.offer") && app.status === "interview");
+  const canDrag = mayMove && !saving && !showNote && !showModal && !showRejectModal;
 
   return (
     <div
@@ -1162,7 +1177,7 @@ function AppCard({
                   ? "border-red-500/40 bg-red-500/10 text-red-300"
                   : "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
             }`}
-            title={`Leader: ${app.test_review.reviewer}`}
+            title={app.test_review.reviewer ? `Leader: ${app.test_review.reviewer}` : undefined}
           >
             <ClipboardCheck className="hr-ico" />Test {app.test_review.score}/10
           </span>
@@ -1260,7 +1275,8 @@ function AppCard({
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons (ẩn cả hàng khi không có quyền thao tác nào) */}
+      {(nextStatus || canEdit || can("apps.delete")) && (
       <div className="flex flex-wrap gap-1 pt-0.5">
         {nextStatus && (
           <button
@@ -1271,7 +1287,7 @@ function AppCard({
             → {S.label(nextStatus)}
           </button>
         )}
-        {app.status !== "rejected" && (
+        {canEdit && app.status !== "rejected" && (
           <button
             onClick={() => setShowRejectModal(true)}
             disabled={saving}
@@ -1280,7 +1296,7 @@ function AppCard({
             <X className="hr-ico" />Reject
           </button>
         )}
-        {app.status === "rejected" && (
+        {canEdit && app.status === "rejected" && (
           <button
             onClick={() => move("new")}
             disabled={saving}
@@ -1289,27 +1305,31 @@ function AppCard({
             <RotateCcw className="hr-ico" />Reopen
           </button>
         )}
-        <button
-          onClick={() => setShowNote((v) => !v)}
-          className="rounded border border-white/15 px-2 py-0.5 text-[10px] text-white/50 hover:bg-white/5"
-        >
-          {showNote ? <X className="hr-ico-solo" /> : <MessageSquare className="hr-ico-solo" />}
-        </button>
-        <button
-          onClick={deleteApp}
-          disabled={saving}
-          className="rounded border border-white/10 px-2 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors disabled:opacity-40"
-          title="Delete application"
-        >
-          <Trash2 className="hr-ico-solo" />
-        </button>
+        {canEdit && can("apps.view_notes") && (
+          <button
+            onClick={() => setShowNote((v) => !v)}
+            className="rounded border border-white/15 px-2 py-0.5 text-[10px] text-white/50 hover:bg-white/5"
+          >
+            {showNote ? <X className="hr-ico-solo" /> : <MessageSquare className="hr-ico-solo" />}
+          </button>
+        )}
+        {can("apps.delete") && (
+          <button
+            onClick={deleteApp}
+            disabled={saving}
+            className="rounded border border-white/10 px-2 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400 transition-colors disabled:opacity-40"
+            title="Delete application"
+          >
+            <Trash2 className="hr-ico-solo" />
+          </button>
+        )}
       </div>
+      )}
 
       {/* Candidate modal */}
       {showModal && (
         <CandidateModal
           app={app}
-          hrKey={hrKey}
           saving={saving}
           onMove={(status, reason) => void move(status, reason)}
           onDeleteApp={() => void deleteApp()}
@@ -1337,26 +1357,26 @@ function AppCard({
 /** Mở CandidateModal ngoài pipeline (vd. từ bảng xếp hạng) — tự lo move / note / xoá. */
 function CandidateModalHost({
   app,
-  hrKey,
   onUpdate,
   onDelete,
   onClose,
 }: {
   app: Application;
-  hrKey: string;
   onUpdate: (id: string, patch: Partial<Application>) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 }) {
   const mail = useCandidateMail();
+  const { can } = useHrSession();
   const [saving, setSaving] = useState(false);
 
   async function move(status: ApplicationStatus, rejection_reason?: string) {
     if (status === app.status) return;
     setSaving(true);
     try {
-      if (await patchStatus(hrKey, app.id, status, rejection_reason)) {
-        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+      const extra = await patchStatus(app.id, status, rejection_reason, can("apps.edit"));
+      if (extra) {
+        onUpdate(app.id, { status, rejection_reason: status === "rejected" ? (rejection_reason ?? null) : null, ...extra } as Partial<Application>);
         promptMailForStatus(mail.prompt, app, status);
       }
     } finally {
@@ -1368,7 +1388,7 @@ function CandidateModalHost({
     if (!confirm(`Delete application from "${app.full_name}"? This cannot be undone.`)) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/hr/applications/${app.id}`, { method: "DELETE", headers: { "x-hr-key": hrKey } });
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, { method: "DELETE" });
       if (res.ok) { onDelete(app.id); onClose(); }
     } finally {
       setSaving(false);
@@ -1378,9 +1398,9 @@ function CandidateModalHost({
   async function saveNote(newNote: string) {
     setSaving(true);
     try {
-      await fetch(`/api/hr/applications/${app.id}`, {
+      await hrFetch(`/api/hr/applications/${app.id}`, {
         method: "PATCH",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ admin_notes: newNote }),
       });
       onUpdate(app.id, { admin_notes: newNote });
@@ -1392,7 +1412,6 @@ function CandidateModalHost({
   return (
     <CandidateModal
       app={app}
-      hrKey={hrKey}
       saving={saving}
       onMove={(status, reason) => void move(status, reason)}
       onDeleteApp={() => void deleteApp()}
@@ -1407,22 +1426,28 @@ function CandidateModalHost({
 
 function PipelineView({
   apps,
-  hrKey,
   onUpdate,
   onDelete,
 }: {
   apps: Application[];
-  hrKey: string;
   onUpdate: (id: string, patch: Partial<Application>) => void;
   onDelete: (id: string) => void;
 }) {
   const S = useStatuses();
   const mail = useCandidateMail();
+  const { me, can } = useHrSession();
+  // Kế toán chỉ thấy cột từ Interview trở đi (trừ nhóm loại) + cột nào đang có thẻ của mình (vd. đã có offer_status).
+  const columnKeys = useMemo(() => {
+    if (me?.role !== "accountant") return S.keys;
+    const allowed = new Set<string>(accountantStatusKeys(S.list));
+    for (const a of apps) allowed.add(a.status);
+    return S.keys.filter((k) => allowed.has(k));
+  }, [me?.role, S, apps]);
   const [overCol, setOverCol] = useState<ApplicationStatus | null>(null);
   const [pendingReject, setPendingReject] = useState<Application | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Cột thu gọn — nhớ qua localStorage, mặc định thu gọn Rejected (cột dài nhất).
-  // PipelineView chỉ render phía client sau khi đăng nhập (hrKey set trong effect) → đọc localStorage ngay được.
+  // PipelineView chỉ render phía client sau khi đăng nhập (sau khi có phiên) → đọc localStorage ngay được.
   const [collapsed, setCollapsed] = useState<ApplicationStatus[]>(() => {
     try {
       const raw = localStorage.getItem(COLLAPSED_KEY);
@@ -1446,16 +1471,17 @@ function PipelineView({
       rejection_reason: status === "rejected" ? (reason ?? null) : null,
     } as Partial<Application>);
     setError(null);
-    let ok = false;
+    let extra: Partial<Application> | null = null;
     try {
-      ok = await patchStatus(hrKey, app.id, status, reason);
+      extra = await patchStatus(app.id, status, reason, can("apps.edit"));
     } catch {
-      ok = false;
+      extra = null;
     }
-    if (!ok) {
+    if (!extra) {
       onUpdate(app.id, prev as Partial<Application>);
       setError(`Không chuyển được "${app.full_name}" sang ${S.label(status)} — thử lại.`);
     } else {
+      if (Object.keys(extra).length) onUpdate(app.id, extra);
       promptMailForStatus(mail.prompt, app, status);
     }
   }
@@ -1466,6 +1492,11 @@ function PipelineView({
     const id = e.dataTransfer.getData(DRAG_MIME);
     const app = apps.find((a) => a.id === id);
     if (!app || app.status === status) return;
+    // Chặn sớm ở client hướng kéo không có quyền (server vẫn kiểm lại).
+    if (!canMove(can, app.status, status)) {
+      setError(MOVE_DENIED);
+      return;
+    }
     // Vào Rejected vẫn hỏi lý do (KPI rejection cần dữ liệu này).
     if (status === "rejected") setPendingReject(app);
     else void moveTo(app, status);
@@ -1482,7 +1513,7 @@ function PipelineView({
     {/* Kiểu ClickUp: 1 hàng ngang cuộn được, cột rộng cố định, mỗi cột tự cuộn dọc.
         Thêm bao nhiêu status cũng không rớt hàng. Cột có thể thu gọn thành dải hẹp. */}
     <div className="-mx-1 flex h-[calc(100dvh-150px)] min-h-[420px] snap-x snap-mandatory scroll-px-1 gap-3 overflow-x-auto overflow-y-hidden px-1 pb-3 sm:h-[calc(100vh-180px)] sm:snap-none">
-      {S.keys.map((status) => {
+      {columnKeys.map((status) => {
         const col = apps.filter((a) => a.status === status);
         const isCollapsed = collapsed.includes(status);
         const dropProps = {
@@ -1553,7 +1584,7 @@ function PipelineView({
                 </div>
               )}
               {col.map((app) => (
-                <AppCard key={app.id} app={app} hrKey={hrKey} onUpdate={onUpdate} onDelete={onDelete} />
+                <AppCard key={app.id} app={app} onUpdate={onUpdate} onDelete={onDelete} />
               ))}
             </div>
           </div>
@@ -1758,9 +1789,9 @@ const labelCls = "block text-[10px] font-bold uppercase tracking-wider text-whit
 const inputCls = "w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/25 focus:border-amber-500/50 focus:outline-none";
 
 function JobImageUpload({
-  currentUrl, hrKey, onUploaded,
+  currentUrl, onUploaded,
 }: {
-  currentUrl: string; hrKey: string; onUploaded: (url: string) => void;
+  currentUrl: string; onUploaded: (url: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -1772,9 +1803,8 @@ function JobImageUpload({
     const data = new FormData();
     data.append("file", file);
     try {
-      const res = await fetch("/api/hr/upload", {
+      const res = await hrFetch("/api/hr/upload", {
         method: "POST",
-        headers: { "x-hr-key": hrKey },
         body: data,
       });
       const json = await res.json();
@@ -1836,9 +1866,9 @@ function JobImageUpload({
 }
 
 function JobForm({
-  initial, hrKey, onSave, onCancel,
+  initial, onSave, onCancel,
 }: {
-  initial: JobDraft; hrKey: string;
+  initial: JobDraft;
   onSave: (job: Job) => void; onCancel: () => void;
 }) {
   const [d, setD] = useState<JobDraft>(initial);
@@ -1859,8 +1889,8 @@ function JobForm({
       const id: string | undefined = (initial as JobDraft & { id?: string }).id;
       const url = id ? `/api/hr/jobs/${id}` : "/api/hr/jobs";
       const method = id ? "PATCH" : "POST";
-      const res = await fetch(url, {
-        method, headers: { "content-type": "application/json", "x-hr-key": hrKey },
+      const res = await hrFetch(url, {
+        method, headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
       const json = await res.json();
@@ -1951,7 +1981,6 @@ function JobForm({
             <label className={labelCls}>Job Image</label>
             <JobImageUpload
               currentUrl={d.image_url}
-              hrKey={hrKey}
               onUploaded={(url) => set("image_url", url)}
             />
             <input className={`${inputCls} mt-2`} value={d.image_url} onChange={(e) => set("image_url", e.target.value)} placeholder="https://cdn.tdgamestudio.com/… (or upload above)" />
@@ -1986,14 +2015,15 @@ function JobForm({
 const REFCODE_KEY = "tdg.hr.refcode";
 const BASE_URL = typeof window !== "undefined" ? window.location.origin : "https://www.tdgamestudio.com";
 
-function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDeleteApp }: {
-  jobs: Job[]; hrKey: string;
+function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDeleteApp }: {
+  jobs: Job[];
   onUpdate: (j: Job) => void; onCreate: (j: Job) => void; onDelete: (id: string) => void;
   apps: Application[];
   onUpdateApp: (id: string, patch: Partial<Application>) => void;
   onDeleteApp: (id: string) => void;
 }) {
   const S = useStatuses();
+  const { can } = useHrSession();
   const [rankingId, setRankingId] = useState<string | null>(null);
   const [openAppId, setOpenAppId] = useState<string | null>(null);
   const openApp = openAppId ? apps.find((a) => a.id === openAppId) : undefined;
@@ -2005,6 +2035,41 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [testsId, setTestsId] = useState<string | null>(null);
+  // Leader phụ trách: danh sách lấy từ endpoint riêng (HR không gọi được /api/hr/users).
+  const canAssignLeader = can("jobs.assign_leader");
+  const [leaders, setLeaders] = useState<{ id: string; display_name: string }[]>([]);
+  const [leaderBusy, setLeaderBusy] = useState<string | null>(null);
+  const [leaderError, setLeaderError] = useState("");
+  useEffect(() => {
+    if (!canAssignLeader) return;
+    let alive = true;
+    hrFetch("/api/hr/users/leaders")
+      .then((r) => (r.ok ? r.json() : { leaders: [] }))
+      .then((j) => alive && setLeaders(j.leaders ?? []))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [canAssignLeader]);
+
+  async function assignLeader(job: Job, leaderId: string) {
+    setLeaderBusy(job.id);
+    setLeaderError("");
+    try {
+      const res = await hrFetch(`/api/hr/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ leader_user_id: leaderId || null }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      onUpdate({ ...job, leader_user_id: json.job?.leader_user_id ?? (leaderId || null) });
+    } catch (e) {
+      setLeaderError(e instanceof Error ? e.message : "Không gán được Leader");
+    } finally {
+      setLeaderBusy(null);
+    }
+  }
 
   function saveRefCode(val: string) {
     setRefCode(val);
@@ -2029,9 +2094,9 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
   async function toggleActive(job: Job) {
     setToggling(job.id);
     try {
-      const res = await fetch(`/api/hr/jobs/${job.id}`, {
+      const res = await hrFetch(`/api/hr/jobs/${job.id}`, {
         method: "PATCH",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ is_active: !job.is_active }),
       });
       const json = await res.json();
@@ -2041,8 +2106,8 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
 
   async function deleteJob(id: string) {
     if (!confirm("Delete this job? This cannot be undone.")) return;
-    const res = await fetch(`/api/hr/jobs/${id}`, {
-      method: "DELETE", headers: { "x-hr-key": hrKey },
+    const res = await hrFetch(`/api/hr/jobs/${id}`, {
+      method: "DELETE",
     });
     if (res.ok) onDelete(id);
   }
@@ -2088,7 +2153,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
 
       {/* Create form */}
       {showCreate && (
-        <JobForm initial={EMPTY_DRAFT} hrKey={hrKey}
+        <JobForm initial={EMPTY_DRAFT}
           onSave={(j) => { onCreate(j); setShowCreate(false); }}
           onCancel={() => setShowCreate(false)} />
       )}
@@ -2097,6 +2162,8 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
       {jobs.length === 0 && !showCreate && (
         <p className="py-10 text-center text-sm text-white/30">No jobs yet — create one above.</p>
       )}
+
+      {leaderError && <p role="alert" className="text-[13px] text-red-400">{leaderError}</p>}
 
       <div className="space-y-2">
         {jobs.map((job) => (
@@ -2117,6 +2184,29 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
 
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-2">
+                {/* Leader phụ trách */}
+                {canAssignLeader && (
+                  <label className="flex items-center gap-1.5 text-[10px] text-white/50">
+                    Leader phụ trách
+                    <select
+                      aria-label={`Leader phụ trách ${job.title}`}
+                      value={job.leader_user_id ?? ""}
+                      disabled={leaderBusy === job.id}
+                      onChange={(e) => void assignLeader(job, e.target.value)}
+                      className="rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[11px] text-white focus:outline-none disabled:opacity-50"
+                    >
+                      <option value="">Chưa gán</option>
+                      {leaders.map((l) => (
+                        <option key={l.id} value={l.id}>{l.display_name}</option>
+                      ))}
+                      {/* Leader đã bị khoá/đổi vai vẫn hiện để select không nhảy về "Chưa gán" sai sự thật. */}
+                      {job.leader_user_id && !leaders.some((l) => l.id === job.leader_user_id) && (
+                        <option value={job.leader_user_id}>(tài khoản không còn là Leader)</option>
+                      )}
+                    </select>
+                  </label>
+                )}
+
                 {/* Toggle active */}
                 <button
                   onClick={() => void toggleActive(job)}
@@ -2153,6 +2243,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
                 </button>
 
                 {/* Xếp hạng ứng viên phù hợp (AI) */}
+                {can("apps.view_ai") && (
                 <button
                   onClick={() => setRankingId(rankingId === job.id ? null : job.id)}
                   className={`rounded-lg border px-3 py-1 text-[10px] transition-colors ${
@@ -2162,6 +2253,7 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
                   }`}>
                   <Trophy className="hr-ico" />Xếp hạng
                 </button>
+                )}
 
                 {/* Bài test */}
                 <button
@@ -2194,7 +2286,6 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
               <div className="border-t border-white/10 px-4 py-4">
                 <JobForm
                   initial={{ ...jobToDraft(job), ...{ id: job.id } } as JobDraft & { id: string }}
-                  hrKey={hrKey}
                   onSave={(j) => { onUpdate(j); setEditingId(null); }}
                   onCancel={() => setEditingId(null)} />
               </div>
@@ -2203,16 +2294,15 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
             {/* Bài test của job */}
             {testsId === job.id && (
               <div className="border-t border-white/10 px-4 py-4">
-                <JobTestsPanel jobId={job.id} hrKey={hrKey} />
+                <JobTestsPanel jobId={job.id} />
               </div>
             )}
 
             {/* Bảng xếp hạng */}
-            {rankingId === job.id && (
+            {rankingId === job.id && can("apps.view_ai") && (
               <div className="border-t border-white/10 px-3 py-4 sm:px-4">
                 <RankingPanel
                   jobId={job.id}
-                  hrKey={hrKey}
                   statusLabel={(k) => S.label(k as ApplicationStatus)}
                   statusColor={(k) => S.color(k as ApplicationStatus)}
                   isLost={(k) => S.list.find((st) => st.key === k)?.kind === "lost"}
@@ -2227,7 +2317,6 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
       {openApp && (
         <CandidateModalHost
           app={openApp}
-          hrKey={hrKey}
           onUpdate={onUpdateApp}
           onDelete={onDeleteApp}
           onClose={() => setOpenAppId(null)}
@@ -2242,17 +2331,16 @@ function JobsView({ jobs, hrKey, onUpdate, onCreate, onDelete, apps, onUpdateApp
 function DataView({
   apps,
   jobs,
-  hrKey,
   onUpdate,
   onDelete,
 }: {
   apps: Application[];
   jobs: Job[];
-  hrKey: string;
   onUpdate: (id: string, patch: Partial<Application>) => void;
   onDelete: (id: string) => void;
 }) {
   const S = useStatuses();
+  const { can } = useHrSession();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterJob, setFilterJob] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
@@ -2283,7 +2371,7 @@ function DataView({
       list = list.filter(
         (a) =>
           a.full_name.toLowerCase().includes(q) ||
-          a.email.toLowerCase().includes(q) ||
+          (a.email ?? "").toLowerCase().includes(q) ||
           (a.phone ?? "").toLowerCase().includes(q) ||
           (a.referred_by ?? "").toLowerCase().includes(q),
       );
@@ -2296,24 +2384,24 @@ function DataView({
   // Chi tiết + thao tác nhanh — dùng chung cho bảng (desktop) và thẻ (mobile).
   const renderDetail = (app: Application) => (
     <>
-      <AppDetail app={app} hrKey={hrKey} />
+      <AppDetail app={app} />
       {/* Quick actions */}
       <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
-        {S.next(app.status) && (
-          <QuickAction app={app} hrKey={hrKey} targetStatus={S.next(app.status)!} onUpdate={onUpdate} />
+        {S.next(app.status) && canMove(can, app.status, S.next(app.status)!) && (
+          <QuickAction app={app} targetStatus={S.next(app.status)!} onUpdate={onUpdate} />
         )}
-        {app.status !== "rejected" && (
-          <QuickAction app={app} hrKey={hrKey} targetStatus="rejected" onUpdate={onUpdate} variant="reject" />
+        {can("apps.edit") && app.status !== "rejected" && (
+          <QuickAction app={app} targetStatus="rejected" onUpdate={onUpdate} variant="reject" />
         )}
-        {app.status === "rejected" && (
-          <QuickAction app={app} hrKey={hrKey} targetStatus="new" onUpdate={onUpdate} variant="reopen" />
+        {can("apps.edit") && app.status === "rejected" && (
+          <QuickAction app={app} targetStatus="new" onUpdate={onUpdate} variant="reopen" />
         )}
+        {can("apps.delete") && (
         <button
           onClick={async () => {
             if (!confirm(`Delete application from "${app.full_name}"? This cannot be undone.`)) return;
-            const res = await fetch(`/api/hr/applications/${app.id}`, {
+            const res = await hrFetch(`/api/hr/applications/${app.id}`, {
               method: "DELETE",
-              headers: { "x-hr-key": hrKey },
             });
             if (res.ok) onDelete(app.id);
           }}
@@ -2321,6 +2409,7 @@ function DataView({
         >
           <Trash2 className="hr-ico" />Delete
         </button>
+        )}
       </div>
     </>
   );
@@ -2332,7 +2421,7 @@ function DataView({
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name, email, phone..."
+          placeholder={can("apps.view_contact") ? "Search name, email, phone..." : "Search name..."}
           className="w-56 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-amber-500/50 focus:outline-none"
         />
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={selectCls}>
@@ -2420,7 +2509,7 @@ function DataView({
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-center text-xs text-white/50">{app.work_type}</td>
-                    <td className="px-3 py-2.5 text-xs text-white/50">{app.email}</td>
+                    <td className="px-3 py-2.5 text-xs text-white/50">{app.email ?? "—"}</td>
                     <td className="px-3 py-2.5 text-center text-xs text-white/40">{app.source ?? "—"}</td>
                     <td className="px-3 py-2.5 text-center">
                       {app.referred_by ? (
@@ -2464,14 +2553,15 @@ function DataView({
 }
 
 function QuickAction({
-  app, hrKey, targetStatus, onUpdate, variant,
+  app, targetStatus, onUpdate, variant,
 }: {
-  app: Application; hrKey: string; targetStatus: ApplicationStatus;
+  app: Application; targetStatus: ApplicationStatus;
   onUpdate: (id: string, patch: Partial<Application>) => void;
   variant?: "reject" | "reopen";
 }) {
   const S = useStatuses();
   const mail = useCandidateMail();
+  const { can } = useHrSession();
   const [saving, setSaving] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
 
@@ -2480,14 +2570,15 @@ function QuickAction({
     try {
       const body: Record<string, unknown> = { status: targetStatus };
       if (rejection_reason !== undefined) body.rejection_reason = rejection_reason;
-      if (targetStatus !== "rejected") body.rejection_reason = null;
-      const res = await fetch(`/api/hr/applications/${app.id}`, {
+      if (targetStatus !== "rejected" && can("apps.edit")) body.rejection_reason = null;
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, {
         method: "PATCH",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        onUpdate(app.id, { status: targetStatus, rejection_reason: targetStatus === "rejected" ? (rejection_reason ?? null) : null } as Partial<Application>);
+        const extra = await serverSideFields(res);
+        onUpdate(app.id, { status: targetStatus, rejection_reason: targetStatus === "rejected" ? (rejection_reason ?? null) : null, ...extra } as Partial<Application>);
         promptMailForStatus(mail.prompt, app, targetStatus);
       }
     } finally { setSaving(false); }
@@ -2526,35 +2617,265 @@ function QuickAction({
   );
 }
 
+const OFFER_CHOICES = [
+  { key: "pending", label: "Chờ trả lời" },
+  { key: "accepted", label: "Đã nhận" },
+  { key: "declined", label: "Từ chối" },
+] as const;
+
+/** Khối "Offer" trong hồ sơ: ghi kết quả offer + gửi mail offer. Chỉ hiện khi hồ sơ ở Offer hoặc đã có kết quả. */
+function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
+  const { can } = useHrSession();
+  const { prompt } = useCandidateMail();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const canSetResult = can("apps.offer");
+  const canMail = can("emails.send_offer");
+  if (app.status !== "offer" && !app.offer_status) return null;
+  if (!canSetResult && !canMail && !app.offer_status) return null;
+
+  async function setResult(v: (typeof OFFER_CHOICES)[number]["key"]) {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ offer_status: v }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+      onPatch({ offer_status: j.application?.offer_status ?? v });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Không lưu được kết quả offer");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="space-y-2" aria-label="Offer">
+      <h4 className="hr-section-title px-1">Offer</h4>
+      <div className="hr-group space-y-2 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="hr-segmented" role="group" aria-label="Kết quả offer">
+            {OFFER_CHOICES.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                aria-pressed={app.offer_status === c.key}
+                disabled={!canSetResult || saving}
+                onClick={() => void setResult(c.key)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          {canMail && (
+            <button
+              type="button"
+              onClick={() => prompt({ appId: app.id, candidateName: app.full_name, kind: "offer" })}
+              className="hr-secondary-btn"
+            >
+              Gửi mail offer
+            </button>
+          )}
+        </div>
+        {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
+      </div>
+    </section>
+  );
+}
+
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type View = "pipeline" | "kpi" | "jobs" | "data";
+type View = "pipeline" | "kpi" | "jobs" | "data" | "accounts";
 
-const HR_KEY_STORAGE = "tdg.hr.key";
+type ThemeState = readonly [HrThemePref, (p: HrThemePref) => void];
 
 export default function HRDashboard() {
-  const [hrKey, setHrKey] = useState("");
-  const [inputKey, setInputKey] = useState("");
-  const [authError, setAuthError] = useState("");
+  return (
+    <HrSessionProvider>
+      <HrGate />
+    </HrSessionProvider>
+  );
+}
+
+/** Chưa biết phiên → nền trống; chưa đăng nhập → form; có phiên → bàn làm việc. */
+function HrGate() {
+  const { me, loading, connError, refresh } = useHrSession();
+  // Giữ theme ở đây (1 chỗ) để đổi qua lại form ↔ bàn làm việc không bị gỡ data-hr-theme.
+  const theme = useHrTheme();
+  const [retrying, setRetrying] = useState(false);
+  // Server lỗi (502 lúc pm2 restart) khi chưa có phiên → tự hỏi lại mỗi 5 giây.
+  const waiting = !loading && !me && !!connError;
+  useEffect(() => {
+    if (!waiting) return;
+    const t = setInterval(() => void refresh(), 5000);
+    return () => clearInterval(t);
+  }, [waiting, refresh]);
+  if (loading) return <div className="hr-app min-h-screen" />;
+  if (waiting) {
+    return (
+      <HrAuthCard theme={theme} subtitle="Mất kết nối">
+        <div className="space-y-4">
+          <p className="text-[14px] leading-relaxed text-white/80">{connError}</p>
+          <button
+            type="button"
+            disabled={retrying}
+            onClick={() => {
+              setRetrying(true);
+              void refresh().finally(() => setRetrying(false));
+            }}
+            className="hr-primary-btn w-full py-2.5"
+          >
+            {retrying ? "Đang thử lại…" : "Thử lại"}
+          </button>
+        </div>
+      </HrAuthCard>
+    );
+  }
+  if (!me) return <HrLogin theme={theme} />;
+  return <HrWorkspace key={`${me.user.id ?? "legacy"}:${me.role}`} theme={theme} />;
+}
+
+type LoginMode = "login" | "forgot" | "forgot-sent" | "legacy";
+
+function HrLogin({ theme }: { theme: ThemeState }) {
+  const { signIn, signInLegacy } = useHrSession();
+  const [mode, setMode] = useState<LoginMode>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [legacyKey, setLegacyKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  function go(next: LoginMode) {
+    setError("");
+    setMode(next);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setError("");
+    setBusy(true);
+    try {
+      if (mode === "login") {
+        const err = await signIn(email.trim(), password);
+        if (err) setError(err);
+      } else if (mode === "legacy") {
+        const err = await signInLegacy(legacyKey);
+        if (err) setError(err);
+      } else if (mode === "forgot") {
+        // Server luôn trả ok — không lộ email nào có tài khoản.
+        await hrFetch("/api/hr/auth/forgot", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        }).catch(() => null);
+        setMode("forgot-sent");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (mode === "forgot-sent") {
+    return (
+      <HrAuthCard theme={theme} subtitle="Quên mật khẩu">
+        <div className="space-y-4">
+          <p className="text-[14px] leading-relaxed text-white/80">Nếu email có tài khoản, link đặt lại đã được gửi.</p>
+          <button type="button" onClick={() => go("login")} className="hr-primary-btn w-full py-2.5">
+            Quay lại đăng nhập
+          </button>
+        </div>
+      </HrAuthCard>
+    );
+  }
+
+  return (
+    <HrAuthCard theme={theme} subtitle={mode === "forgot" ? "Quên mật khẩu" : "TD Games Studio"}>
+      <form onSubmit={(e) => void submit(e)} className="space-y-3">
+        {mode === "legacy" ? (
+          <input
+            type="password"
+            value={legacyKey}
+            onChange={(e) => setLegacyKey(e.target.value)}
+            placeholder="Mật khẩu chung"
+            aria-label="Mật khẩu chung"
+            autoFocus
+            className={AUTH_INPUT}
+          />
+        ) : (
+          <>
+            {mode === "forgot" && (
+              <p className="text-[13px] leading-relaxed text-white/60">Nhập email tài khoản, hệ thống gửi link đặt lại mật khẩu (hạn 1 giờ).</p>
+            )}
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              aria-label="Email"
+              autoComplete="username"
+              autoFocus
+              className={AUTH_INPUT}
+            />
+            {mode === "login" && (
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mật khẩu"
+                aria-label="Mật khẩu"
+                autoComplete="current-password"
+                className={AUTH_INPUT}
+              />
+            )}
+          </>
+        )}
+        {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
+        <button
+          type="submit"
+          disabled={
+            busy ||
+            (mode === "legacy" ? !legacyKey : !email.trim() || (mode === "login" && !password))
+          }
+          className="hr-primary-btn w-full py-2.5"
+        >
+          {busy
+            ? mode === "forgot" ? "Đang gửi…" : "Đang đăng nhập…"
+            : mode === "forgot" ? "Gửi link đặt lại" : "Đăng nhập"}
+        </button>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          {mode === "login" ? (
+            <button type="button" onClick={() => go("forgot")} className={AUTH_LINK}>Quên mật khẩu?</button>
+          ) : (
+            <button type="button" onClick={() => go("login")} className={AUTH_LINK}>Đăng nhập bằng email</button>
+          )}
+          {/* Giai đoạn chuyển tiếp — gỡ ở Task 12. */}
+          {mode !== "legacy" && (
+            <button type="button" onClick={() => go("legacy")} className="text-[12px] text-white/40 hover:text-white/70 hover:underline">
+              Đăng nhập bằng mật khẩu chung
+            </button>
+          )}
+        </div>
+      </form>
+    </HrAuthCard>
+  );
+}
+
+function HrWorkspace({ theme }: { theme: ThemeState }) {
+  const { me, can, refresh: refreshSession, signOut } = useHrSession();
+  const [themePref, setThemePref] = theme;
   const [view, setView] = useState<View>("pipeline");
   const [apps, setApps] = useState<Application[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [reminding, setReminding] = useState(false);
   const [remindMsg, setRemindMsg] = useState("");
-  const [themePref, setThemePref] = useHrTheme();
-
-  // Auto-login from localStorage on mount
-  useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem(HR_KEY_STORAGE) : null;
-    if (!saved) return;
-    setLoading(true);
-    loadData(saved)
-      .then(() => setHrKey(saved))
-      .catch(() => localStorage.removeItem(HR_KEY_STORAGE)) // stale / key changed
-      .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const [statuses, setStatuses] = useState<StatusDef[]>(DEFAULT_STATUSES);
   const statusApi = useMemo(() => buildStatusApi(statuses), [statuses]);
@@ -2562,49 +2883,45 @@ export default function HRDashboard() {
   const [searchOpenId, setSearchOpenId] = useState<string | null>(null);
   const searchOpenApp = searchOpenId ? apps.find((a) => a.id === searchOpenId) : undefined;
 
-  async function loadData(key: string) {
+  const loadData = useCallback(async () => {
     const [appsRes, jobsRes, stRes] = await Promise.all([
-      fetch("/api/hr/applications", { headers: { "x-hr-key": key } }),
-      fetch("/api/hr/jobs",         { headers: { "x-hr-key": key } }),
-      fetch("/api/hr/statuses",     { headers: { "x-hr-key": key } }).catch(() => null),
+      hrFetch("/api/hr/applications"),
+      hrFetch("/api/hr/jobs"),
+      hrFetch("/api/hr/statuses").catch(() => null),
     ]);
-    if (!appsRes.ok) throw new Error("Invalid key");
-    const [appsData, jobsData] = await Promise.all([appsRes.json(), jobsRes.json()]);
+    // Phiên hết hạn / bị khoá giữa chừng → hỏi lại phiên, về form đăng nhập.
+    if (appsRes.status === 401) {
+      await refreshSession();
+      return;
+    }
+    if (!appsRes.ok) throw new Error(`HTTP ${appsRes.status}`);
+    const [appsData, jobsData] = await Promise.all([appsRes.json(), jobsRes.ok ? jobsRes.json() : { jobs: [] }]);
     setApps(appsData.applications ?? []);
     setJobs(jobsData.jobs ?? []);
-    // Không chặn đăng nhập nếu bảng statuses lỗi/chưa migrate → giữ DEFAULT_STATUSES.
+    setLoadError("");
+    // Không chặn nếu bảng statuses lỗi/chưa migrate → giữ DEFAULT_STATUSES.
     if (stRes?.ok) {
       const st = await stRes.json().catch(() => null);
       if (Array.isArray(st?.statuses) && st.statuses.length > 0) setStatuses(st.statuses);
     }
-  }
+  }, [refreshSession]);
 
-  async function signIn() {
-    setAuthError("");
-    setLoading(true);
-    try {
-      await loadData(inputKey);
-      setHrKey(inputKey);
-      localStorage.setItem(HR_KEY_STORAGE, inputKey);
-    } catch {
-      setAuthError("Invalid key. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function signOut() {
-    setHrKey("");
-    setApps([]);
-    setJobs([]);
-    setInputKey("");
-    localStorage.removeItem(HR_KEY_STORAGE);
-  }
+  useEffect(() => {
+    let alive = true;
+    // Qua microtask — không setState đồng bộ trong effect.
+    Promise.resolve()
+      .then(loadData)
+      .catch(() => alive && setLoadError("Không tải được dữ liệu — bấm tải lại."))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [loadData]);
 
   async function refresh() {
-    if (!hrKey) return;
     setLoading(true);
-    try { await loadData(hrKey); }
+    try { await loadData(); }
+    catch { setLoadError("Không tải được dữ liệu — bấm tải lại."); }
     finally { setLoading(false); }
   }
 
@@ -2612,11 +2929,11 @@ export default function HRDashboard() {
     setReminding(true);
     setRemindMsg("");
     try {
-      const res = await fetch("/api/hr/remind", {
-        headers: { "x-hr-key": hrKey },
-      });
+      const res = await hrFetch("/api/hr/remind");
       const data = await res.json();
-      if (data.sent) {
+      if (!res.ok) {
+        setRemindMsg(data.error ?? `HTTP ${res.status}`);
+      } else if (data.sent) {
         setRemindMsg(`Sent — ${data.staleCount} stale application(s) reported to Discord`);
       } else {
         setRemindMsg(`${data.reason ?? "Nothing to report"}`);
@@ -2636,37 +2953,16 @@ export default function HRDashboard() {
     setApps((prev) => prev.filter((a) => a.id !== id));
   }
 
-  // ── Auth gate ──────────────────────────────────────────────────────────────
-  if (!hrKey) {
-    return (
-      <div className="hr-app relative flex min-h-screen items-center justify-center px-4">
-        <div className="absolute right-4 top-4">
-          <ThemeToggle pref={themePref} onChange={setThemePref} />
-        </div>
-        <div className="w-full max-w-sm space-y-6 rounded-2xl border border-white/10 bg-white/[0.03] p-8">
-          <div className="text-center">
-            <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-white">HR Dashboard</h1>
-            <p className="mt-1.5 text-[15px] text-white/50">TD Games Studio</p>
-          </div>
-          <div className="space-y-3">
-            <input
-              type="password"
-              value={inputKey}
-              onChange={(e) => setInputKey(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && inputKey) void signIn(); }}
-              placeholder="HR key"
-              autoFocus
-              className="w-full rounded-lg border border-white/15 bg-white/5 px-3.5 py-2.5 text-[15px] text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none"
-            />
-            {authError && <p className="text-[13px] text-red-400">{authError}</p>}
-            <button onClick={signIn} disabled={!inputKey || loading} className="hr-primary-btn w-full py-2.5">
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Tab theo quyền: Jobs = quản lý job; KPI dựa trên người giới thiệu + lý do loại (apps.view_notes).
+  const views: View[] = [
+    "pipeline",
+    "data",
+    ...(can("apps.view_notes") ? (["kpi"] as View[]) : []),
+    ...(can("jobs.manage") ? (["jobs"] as View[]) : []),
+    // Tài khoản & quyền: chỉ Sếp.
+    ...(me?.role === "boss" ? (["accounts"] as View[]) : []),
+  ];
+  const activeView: View = views.includes(view) ? view : "pipeline";
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
   const lostKeys = new Set(statuses.filter((st) => st.kind === "lost").map((st) => st.key));
@@ -2677,7 +2973,7 @@ export default function HRDashboard() {
 
   return (
     <StatusContext.Provider value={statusApi}>
-    <CandidateMailProvider hrKey={hrKey}>
+    <CandidateMailProvider>
     <div className="hr-app min-h-screen text-white">
       {/* Thanh công cụ kiểu macOS: tiêu đề trái, segmented control giữa, nút văn bản phải.
           Mobile: hàng 1 = tiêu đề + nút, hàng 2 = segmented full ngang. */}
@@ -2689,32 +2985,41 @@ export default function HRDashboard() {
           </div>
 
           <div className="hr-segmented order-last w-full md:order-none md:w-auto" role="group" aria-label="Chế độ xem">
-            {(["pipeline", "data", "kpi", "jobs"] as View[]).map((v) => (
-              <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}>
-                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : "Jobs"}
+            {views.map((v) => (
+              <button key={v} type="button" aria-pressed={activeView === v} onClick={() => setView(v)}>
+                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
               </button>
             ))}
           </div>
 
           <div className="flex items-center gap-0.5">
-            <button onClick={() => setShowStatusMgr(true)} title="Thêm / bớt / sửa status pipeline" className="hr-toolbar-btn">
-              Statuses
-            </button>
-            <button onClick={sendReminder} disabled={reminding} title="Send stale-application reminder to Discord now" className="hr-toolbar-btn">
-              {reminding ? "Đang gửi…" : "Remind"}
-            </button>
+            {can("jobs.manage") && (
+              <>
+                <button onClick={() => setShowStatusMgr(true)} title="Thêm / bớt / sửa status pipeline" className="hr-toolbar-btn">
+                  Statuses
+                </button>
+                <button onClick={sendReminder} disabled={reminding} title="Send stale-application reminder to Discord now" className="hr-toolbar-btn">
+                  {reminding ? "Đang gửi…" : "Remind"}
+                </button>
+              </>
+            )}
             <button onClick={refresh} disabled={loading} title="Tải lại dữ liệu" aria-label="Tải lại dữ liệu" className="hr-toolbar-btn">
               <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={loading ? "animate-spin" : undefined}>
                 <path d="M16.5 10a6.5 6.5 0 1 1-1.9-4.6" />
                 <path d="M16.5 3.5v3.6h-3.6" />
               </svg>
             </button>
-            <PushToggle hrKey={hrKey} />
+            <PushToggle />
             <div className="mx-1 sm:mx-1.5">
               <ThemeToggle pref={themePref} onChange={setThemePref} />
             </div>
-            <button onClick={signOut} title="Sign out" className="hr-toolbar-btn hr-toolbar-btn--danger">
-              Sign out
+            {me && (
+              <span className="hidden max-w-[220px] truncate px-1.5 text-[13px] text-white/80 sm:inline" title={me.user.email || me.user.displayName}>
+                {me.user.displayName} <span className="text-white/50">· {me.roleLabel}</span>
+              </span>
+            )}
+            <button onClick={() => void signOut()} title={me ? `Đăng xuất (${me.user.displayName})` : "Đăng xuất"} className="hr-toolbar-btn hr-toolbar-btn--danger">
+              Đăng xuất
             </button>
           </div>
         </div>
@@ -2729,23 +3034,24 @@ export default function HRDashboard() {
       {/* Body */}
       <main className={`mx-auto ${pageWidth} px-3 py-4 sm:px-6 sm:py-6 lg:px-10`}>
         <CandidateSearch
-          hrKey={hrKey}
           statusLabel={(k) => statusApi.label(k as ApplicationStatus)}
           statusColor={(k) => statusApi.color(k as ApplicationStatus)}
           onOpen={setSearchOpenId}
         />
+        {loadError && <p className="mb-3 text-[13px] text-red-400">{loadError}</p>}
         {loading && apps.length === 0 ? (
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
-        ) : view === "pipeline" ? (
-          <PipelineView apps={apps} hrKey={hrKey} onUpdate={updateApp} onDelete={deleteApp} />
-        ) : view === "data" ? (
-          <DataView apps={apps} jobs={jobs} hrKey={hrKey} onUpdate={updateApp} onDelete={deleteApp} />
-        ) : view === "kpi" ? (
+        ) : activeView === "pipeline" ? (
+          <PipelineView apps={apps} onUpdate={updateApp} onDelete={deleteApp} />
+        ) : activeView === "data" ? (
+          <DataView apps={apps} jobs={jobs} onUpdate={updateApp} onDelete={deleteApp} />
+        ) : activeView === "kpi" ? (
           <KPIView apps={apps} />
+        ) : activeView === "accounts" ? (
+          <AccountsPanel />
         ) : (
           <JobsView
             jobs={jobs}
-            hrKey={hrKey}
             onUpdate={(j) => setJobs((prev) => prev.map((x) => x.id === j.id ? j : x))}
             onCreate={(j) => setJobs((prev) => [j, ...prev])}
             onDelete={(id) => setJobs((prev) => prev.filter((x) => x.id !== id))}
@@ -2758,15 +3064,13 @@ export default function HRDashboard() {
       {searchOpenApp && (
         <CandidateModalHost
           app={searchOpenApp}
-          hrKey={hrKey}
           onUpdate={updateApp}
           onDelete={deleteApp}
           onClose={() => setSearchOpenId(null)}
         />
       )}
-      {showStatusMgr && (
+      {showStatusMgr && can("jobs.manage") && (
         <StatusManager
-          hrKey={hrKey}
           statuses={statuses}
           counts={apps.reduce<Record<string, number>>((m, a) => ({ ...m, [a.status]: (m[a.status] ?? 0) + 1 }), {})}
           onChange={setStatuses}

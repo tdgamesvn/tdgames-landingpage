@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireCronOrHr } from "@/lib/hr-session";
 import { discordNotify, getDiscordUrl } from "@/lib/discord-notify";
 import { formatInterviewTime, modeLabel } from "@/lib/interview-schedule";
 import { sendHrPush } from "@/lib/hr-push";
 import { interviewReminderPayload } from "@/lib/hr-push-payload";
+import { pushRecipientUserIds } from "@/lib/hr-push-recipients";
+import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "@/lib/hr-permissions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +17,7 @@ export const dynamic = "force-dynamic";
 const LEAD_MINUTES = 60;
 
 export async function GET(request: Request) {
-  const authError = await requireHR(request);
+  const authError = await requireCronOrHr(request);
   if (authError) return authError;
 
   const supabase = getSupabaseAdmin();
@@ -24,7 +26,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("interview_sessions")
-    .select("id, application_id, round, title, scheduled_at, mode, meet_url, applications(full_name, status, jobs(title))")
+    .select("id, application_id, round, title, scheduled_at, mode, meet_url, applications(full_name, status, jobs(title, leader_user_id))")
     .is("reminded_at", null)
     .gt("scheduled_at", now.toISOString())
     .lte("scheduled_at", until.toISOString())
@@ -44,14 +46,28 @@ export async function GET(request: Request) {
 
   if (due.length === 0) return NextResponse.json({ sent: 0 });
   const hasDiscord = Boolean(getDiscordUrl("hr"));
+
+  // Người nhận push: tài khoản chưa khoá có quyền push.receive; Leader chỉ nhận PV job mình phụ trách.
+  // Lỗi đọc DB → không đẩy ai (fail closed), Discord vẫn chạy.
+  const [{ data: userRows, error: usersErr }, { data: permRows, error: permsErr }] = await Promise.all([
+    supabase.from("hr_users").select("id, role, disabled"),
+    supabase.from("hr_role_permissions").select("role, permission, allowed"),
+  ]);
+  const recipientsOk = !usersErr && !permsErr;
+  const pushUsers = (userRows ?? []).flatMap((u) =>
+    (HR_ROLES as readonly string[]).includes(u.role) ? [{ id: String(u.id), role: u.role as HrRole, disabled: !!u.disabled }] : [],
+  );
+  const overrides = (permRows ?? []).map((r) => ({ role: String(r.role), permission: String(r.permission), allowed: !!r.allowed }));
+  const permsByRole = new Map<HrRole, Set<PermissionKey>>(HR_ROLES.map((r) => [r, effectivePermissions(r, overrides)]));
   let pushed = 0;
 
   for (const s of due) {
     const app = one(s.applications)!;
-    const job = one(app.jobs as { title: string } | { title: string }[] | null);
+    const job = one(app.jobs as { title: string; leader_user_id: string | null } | { title: string; leader_user_id: string | null }[] | null);
     const mins = Math.max(0, Math.round((new Date(s.scheduled_at!).getTime() - now.getTime()) / 60_000));
 
     // Thông báo đẩy tới điện thoại đã cài app PWA /hr (song song với Discord).
+    const userIds = recipientsOk ? pushRecipientUserIds(pushUsers, permsByRole, job?.leader_user_id ?? null) : [];
     const push = await sendHrPush(
       interviewReminderPayload({
         candidateName: app.full_name,
@@ -64,6 +80,7 @@ export async function GET(request: Request) {
         interviewId: s.id,
         applicationId: s.application_id,
       }),
+      { userIds },
     );
     pushed += push.sent;
 

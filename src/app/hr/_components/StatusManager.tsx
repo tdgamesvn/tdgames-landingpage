@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { StatusDef, StatusKind } from "@/app/admin/_lib/types";
 import { STATUS_PALETTE } from "./status-palette";
 import { Trash2, X } from "lucide-react";
+import { hrFetch } from "./HrSession";
 
 const KIND_LABEL: Record<StatusKind, string> = {
   open: "Đang xử lý",
@@ -16,14 +17,12 @@ const KIND_LABEL: Record<StatusKind, string> = {
  * Thêm & xoá gọi API ngay; sửa & đổi thứ tự gom lại, bấm "Lưu" mới gửi PATCH.
  */
 export default function StatusManager({
-  hrKey,
   statuses,
   counts,
   onChange,
   onMoved,
   onClose,
 }: {
-  hrKey: string;
   statuses: StatusDef[];
   counts: Record<string, number>;
   onChange: (list: StatusDef[]) => void;
@@ -37,7 +36,7 @@ export default function StatusManager({
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<{ key: string; moveTo: string } | null>(null);
 
-  const headers = { "Content-Type": "application/json", "x-hr-key": hrKey };
+  const headers = { "Content-Type": "application/json" };
   const dirty = JSON.stringify(draft) !== JSON.stringify([...statuses].sort((a, b) => a.position - b.position));
 
   function patchRow(key: string, patch: Partial<StatusDef>) {
@@ -60,7 +59,7 @@ export default function StatusManager({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/hr/statuses", {
+      const res = await hrFetch("/api/hr/statuses", {
         method: "PATCH",
         headers,
         body: JSON.stringify({
@@ -86,7 +85,7 @@ export default function StatusManager({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/hr/statuses", { method: "POST", headers, body: JSON.stringify({ label }) });
+      const res = await hrFetch("/api/hr/statuses", { method: "POST", headers, body: JSON.stringify({ label }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Thêm thất bại");
       const created = data.status as StatusDef;
@@ -106,7 +105,7 @@ export default function StatusManager({
     setError(null);
     try {
       const qs = new URLSearchParams({ key, ...(moveTo ? { move_to: moveTo } : {}) });
-      const res = await fetch(`/api/hr/statuses?${qs}`, { method: "DELETE", headers });
+      const res = await hrFetch(`/api/hr/statuses?${qs}`, { method: "DELETE", headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Xoá thất bại");
       if (moveTo && data.moved > 0) onMoved(key, moveTo);

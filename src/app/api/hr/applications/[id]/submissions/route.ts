@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken, readTestInput } from "@/lib/hr-tests";
 import { deleteFromR2 } from "@/lib/r2";
 
@@ -11,21 +11,18 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /** Bài làm của ứng viên + đề test của job + token link test (nếu đã tạo). */
 export async function GET(request: Request, { params }: Ctx) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.view_tests");
+  if ("response" in auth) return auth.response;
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
-  const { data: app } = await supabase
-    .from("applications")
-    .select("id, job_id, test_token, test_eta, test_eta_set_at")
-    .eq("id", id)
-    .maybeSingle();
+  const app = await loadScopedApplication(auth.ctx, id, "id, job_id, test_token, test_eta, test_eta_set_at").catch(() => undefined);
+  if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const [subs, tests] = await Promise.all([
     supabase.from("test_submissions").select("*").eq("application_id", id).order("created_at"),
-    supabase.from("job_tests").select("*").eq("job_id", app.job_id).order("sort_order").order("created_at"),
+    supabase.from("job_tests").select("*").eq("job_id", String(app.job_id)).order("sort_order").order("created_at"),
   ]);
   if (subs.error) return NextResponse.json({ error: subs.error.message }, { status: 500 });
 
@@ -43,16 +40,13 @@ export async function GET(request: Request, { params }: Ctx) {
  * - multipart file / JSON `{ url, note }` → HR lưu hộ bài làm
  */
 export async function POST(request: Request, { params }: Ctx) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.edit");
+  if ("response" in auth) return auth.response;
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
-  const { data: app } = await supabase
-    .from("applications")
-    .select("id, test_token")
-    .eq("id", id)
-    .maybeSingle();
+  const app = await loadScopedApplication(auth.ctx, id, "id, test_token").catch(() => undefined);
+  if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const isJson = (request.headers.get("content-type") ?? "").includes("application/json");

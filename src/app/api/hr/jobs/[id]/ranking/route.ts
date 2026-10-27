@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScope, jobInScope } from "@/lib/hr-session";
+import { inScope } from "@/lib/hr-scope";
 import { AiError } from "@/lib/interview-ai";
 import {
   APP_SELECT,
@@ -44,7 +45,7 @@ async function loadPool(jobId: string) {
   const supabase = getSupabaseAdmin();
   const [{ data: job }, { data: apps, error }, { data: entries }, { data: meta }, rules] = await Promise.all([
     supabase.from("jobs").select(RANK_JOB_SELECT).eq("id", jobId).single(),
-    supabase.from("applications").select(APP_SELECT),
+    supabase.from("applications").select(`${APP_SELECT}, offer_status`),
     supabase.from("job_ranking_entries").select("*").eq("job_id", jobId),
     supabase.from("job_rankings").select("*").eq("job_id", jobId).maybeSingle(),
     loadRankingRules(supabase),
@@ -85,13 +86,27 @@ function changesSince(e: Entry | undefined, curP: string, curD: string, now: HrC
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "apps.view_ai");
+  if ("response" in auth) return auth.response;
+  const { ctx: user } = auth;
   const { id } = await params;
+
+  const scope = await loadScope(user).catch(() => null);
+  if (!scope) return NextResponse.json({ error: "Không đọc được phạm vi dữ liệu" }, { status: 500 });
+  // Leader chỉ xem xếp hạng job mình phụ trách.
+  if (user.role === "leader" && !scope.leaderJobIds.includes(id)) {
+    return NextResponse.json({ error: "Job not found" }, { status: 404 });
+  }
 
   const ctx = await loadPool(id);
   if (!ctx) return NextResponse.json({ error: "Job not found" }, { status: 404 });
-  const { rules, jh, pool, entryMap, meta } = ctx;
+  const { rules, jh, pool: fullPool, entryMap, meta } = ctx;
+
+  // Pool xếp hạng gồm hồ sơ mọi job → lọc theo phạm vi.
+  const pool = fullPool.filter(({ a }) =>
+    inScope(scope, { job_id: String(a.job_id), status: String(a.status), offer_status: (a.offer_status as string | null) ?? null }),
+  );
+  const canNotes = user.perms.has("apps.view_notes");
 
   const rows = pool.map(({ a, d, appliedFor, curP, curD }) => {
     const e = entryMap.get(String(a.id));
@@ -107,9 +122,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       score: e?.score ?? null,
       tier: e?.tier ?? null,
       reason: e?.reason ?? null,
-      blocked: e?.blocked ?? false,
-      block_reason: e?.block_reason ?? null,
-      rejection_reason: a.rejection_reason || null,
+      // Cờ loại cứng + lý do loại thuộc nhóm ghi chú nội bộ.
+      ...(canNotes
+        ? { blocked: e?.blocked ?? false, block_reason: e?.block_reason ?? null, rejection_reason: a.rejection_reason || null }
+        : {}),
       scored_at: e?.scored_at ?? null,
       basis: evidenceBasis(a, d),
       profile: p
@@ -123,7 +139,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     };
   });
   // Đủ điều kiện (theo điểm) → bị loại cứng → chưa chấm.
-  const group = (r: (typeof rows)[number]) => (r.score == null ? 2 : r.blocked ? 1 : 0);
+  const group = (r: (typeof rows)[number]) => (r.score == null ? 2 : "blocked" in r && r.blocked ? 1 : 0);
   rows.sort((x, y) => group(x) - group(y) || (y.score ?? -1) - (x.score ?? -1));
 
   return NextResponse.json({
@@ -140,9 +156,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
  * - {step:"final"}: so sánh lại top đầu với nhau, chốt bảng.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "ai.run");
+  if ("response" in auth) return auth.response;
   const { id } = await params;
+
+  const inScopeJob = await jobInScope(auth.ctx, id).catch(() => undefined);
+  if (inScopeJob === undefined) return NextResponse.json({ error: "Không đọc được job" }, { status: 500 });
+  if (!inScopeJob) return NextResponse.json({ error: "Job not found" }, { status: 404 });
 
   let body: { step?: string; ids?: unknown };
   try {

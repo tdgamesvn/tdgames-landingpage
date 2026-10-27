@@ -96,6 +96,8 @@ export async function uploadToR2(params: {
   contentType: string;
   /** true = giữ nguyên bytes + tên file (spine atlas: .atlas tham chiếu cứng tên .png) */
   skipCompress?: boolean;
+  /** vd. "attachment": trình duyệt tải về thay vì mở inline (file do người ngoài upload). */
+  contentDisposition?: string;
 }) {
   let { key, body, contentType } = params;
 
@@ -130,6 +132,7 @@ export async function uploadToR2(params: {
       Key: key,
       Body: body,
       ContentType: contentType,
+      ...(params.contentDisposition ? { ContentDisposition: params.contentDisposition } : {}),
     }),
   );
 

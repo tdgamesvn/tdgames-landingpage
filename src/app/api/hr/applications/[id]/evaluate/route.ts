@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
+import { redactApplication } from "@/lib/hr-scope";
 import { HR_SIGNALS_RULES, aiBackendErrorMessage, extractCvText, hrSignals } from "@/lib/interview-ai";
 import { PORTFOLIO_RULES, portfolioPreview } from "@/lib/portfolio-preview";
 
@@ -23,8 +24,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "ai.run");
+  if ("response" in auth) return auth.response;
 
   const baseUrl = process.env.AI_BASE_URL;
   const apiKey = process.env.AI_API_KEY;
@@ -38,6 +39,10 @@ export async function POST(
 
   const { id } = await params;
   const supabase = getSupabaseAdmin();
+
+  const scoped = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
+  if (scoped === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
+  if (!scoped) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { data: app, error } = await supabase
     .from("applications")
@@ -146,7 +151,8 @@ export async function POST(
     if (Number.isNaN(evaluation.score)) throw new Error("bad score");
   } catch {
     return NextResponse.json(
-      { error: "AI returned unparseable output", raw: text.slice(0, 500) },
+      // raw là đầu ra AI → chỉ trả khi có quyền xem AI.
+      { error: "AI returned unparseable output", ...(auth.ctx.perms.has("apps.view_ai") ? { raw: text.slice(0, 500) } : {}) },
       { status: 502 }
     );
   }
@@ -167,5 +173,6 @@ export async function POST(
   if (updateError)
     return NextResponse.json({ error: updateError.message }, { status: 500 });
 
-  return NextResponse.json({ application: updated });
+  // Gỡ field thiếu quyền (ai.run không kéo theo apps.view_ai / view_contact…).
+  return NextResponse.json({ application: redactApplication(updated, auth.ctx.perms) });
 }

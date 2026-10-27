@@ -7,12 +7,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, BellOff, BellRing } from "lucide-react";
+import { hrFetch, useHrSession } from "./HrSession";
 
 type State = "loading" | "unsupported" | "ios-install" | "denied" | "off" | "on";
 
 const SW_URL = "/hr-sw.js";
 const SW_SCOPE = "/hr";
-const AUTHOR_KEY = "tdg.hr.comment.author";
 
 function isIos() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -28,7 +28,8 @@ function b64ToBytes(b64: string) {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
 
-export default function PushToggle({ hrKey }: { hrKey: string }) {
+export default function PushToggle() {
+  const { me, can } = useHrSession();
   const [state, setState] = useState<State>("loading");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -37,16 +38,16 @@ export default function PushToggle({ hrKey }: { hrKey: string }) {
 
   const api = useCallback(
     async (method: "GET" | "POST" | "DELETE", body?: unknown) => {
-      const res = await fetch("/api/hr/push", {
+      const res = await hrFetch("/api/hr/push", {
         method,
-        headers: { "x-hr-key": hrKey, ...(body ? { "content-type": "application/json" } : {}) },
+        headers: { ...(body ? { "content-type": "application/json" } : {}) },
         body: body ? JSON.stringify(body) : undefined,
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
       return j;
     },
-    [hrKey],
+    [],
   );
 
   useEffect(() => {
@@ -67,6 +68,22 @@ export default function PushToggle({ hrKey }: { hrKey: string }) {
       alive = false;
     };
   }, []);
+
+  // Máy đã bật thông báo từ trước (vd. thời mật khẩu chung, user_id = null) → khi đăng nhập tài khoản,
+  // gửi lại subscription im lặng để server gắn user_id (nhắc PV theo người). Phiên mật khẩu chung: bỏ qua.
+  const userId = me?.user.id ?? null;
+  const canPush = can("push.receive");
+  const resynced = useRef<string | null>(null);
+  useEffect(() => {
+    if (state !== "on" || !userId || !canPush || resynced.current === userId) return;
+    resynced.current = userId;
+    (async () => {
+      const reg = await navigator.serviceWorker.getRegistration(SW_SCOPE).catch(() => undefined);
+      const sub = await reg?.pushManager.getSubscription().catch(() => null);
+      if (!sub) return;
+      await api("POST", { subscription: sub.toJSON(), label: me?.user.displayName ?? null }).catch(() => {});
+    })();
+  }, [state, userId, canPush, api, me?.user.displayName]);
 
   useEffect(() => {
     if (!open) return;
@@ -94,7 +111,7 @@ export default function PushToggle({ hrKey }: { hrKey: string }) {
         (await reg.pushManager.getSubscription()) ??
         (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(publicKey) }));
       const json = sub.toJSON();
-      await api("POST", { subscription: json, label: localStorage.getItem(AUTHOR_KEY) });
+      await api("POST", { subscription: json, label: me?.user.displayName ?? null });
       setState("on");
       await api("POST", { action: "test", endpoint: json.endpoint });
       setMsg("Đã bật. Máy này vừa nhận 1 thông báo thử.");
@@ -139,7 +156,8 @@ export default function PushToggle({ hrKey }: { hrKey: string }) {
     }
   }
 
-  if (state === "loading") return null;
+  // Không có quyền nhận nhắc lịch PV → ẩn chuông (server cũng chặn /api/hr/push).
+  if (state === "loading" || !can("push.receive")) return null;
   const Icon = state === "on" ? BellRing : state === "denied" || state === "unsupported" ? BellOff : Bell;
 
   return (

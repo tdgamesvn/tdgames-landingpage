@@ -6,6 +6,7 @@
  */
 
 import { planParts } from "@/lib/interview-audio";
+import { hrFetch, hrLegacyHeaders } from "./HrSession";
 
 const API = "/api/hr/upload/audio/multipart";
 const STALL_MS = 30_000;
@@ -13,10 +14,10 @@ const MAX_TRIES = 5;
 
 type Uploaded = { url: string; key: string; bytes: number };
 
-async function postJson(hrKey: string, body: unknown) {
-  const res = await fetch(API, {
+async function postJson(body: unknown) {
+  const res = await hrFetch(API, {
     method: "POST",
-    headers: { "x-hr-key": hrKey, "content-type": "application/json" },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
   const j = await res.json().catch(() => ({}));
@@ -24,7 +25,7 @@ async function postJson(hrKey: string, body: unknown) {
   return j;
 }
 
-function putPart(url: string, hrKey: string, blob: Blob, onLoaded: (n: number) => void): Promise<string> {
+function putPart(url: string, blob: Blob, onLoaded: (n: number) => void): Promise<string> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     let stall: ReturnType<typeof setTimeout>;
@@ -33,7 +34,8 @@ function putPart(url: string, hrKey: string, blob: Blob, onLoaded: (n: number) =
       stall = setTimeout(() => xhr.abort(), STALL_MS);
     };
     xhr.open("PUT", url);
-    xhr.setRequestHeader("x-hr-key", hrKey);
+    // Cookie phiên tự đi theo (cùng origin); mật khẩu chung (giai đoạn chuyển tiếp) gắn header.
+    for (const [k, v] of Object.entries(hrLegacyHeaders())) xhr.setRequestHeader(k, v);
     xhr.setRequestHeader("content-type", "application/octet-stream");
     xhr.upload.onprogress = (e) => {
       arm();
@@ -62,10 +64,9 @@ function putPart(url: string, hrKey: string, blob: Blob, onLoaded: (n: number) =
 
 export async function uploadAudioChunked(
   file: File,
-  hrKey: string,
   onProgress: (p: { loaded: number; total: number; retry?: string }) => void,
 ): Promise<Uploaded> {
-  const { key, uploadId } = await postJson(hrKey, { action: "init", name: file.name, type: file.type, size: file.size });
+  const { key, uploadId } = await postJson({ action: "init", name: file.name, type: file.type, size: file.size });
   const done: { partNumber: number; etag: string }[] = [];
   let sent = 0;
   try {
@@ -74,7 +75,7 @@ export async function uploadAudioChunked(
       let lastErr: Error | null = null;
       for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
         try {
-          const etag = await putPart(url, hrKey, file.slice(p.start, p.end), (n) =>
+          const etag = await putPart(url, file.slice(p.start, p.end), (n) =>
             onProgress({ loaded: sent + n, total: file.size }),
           );
           done.push({ partNumber: p.partNumber, etag });
@@ -90,10 +91,10 @@ export async function uploadAudioChunked(
       sent = p.end;
       onProgress({ loaded: sent, total: file.size });
     }
-    const out = await postJson(hrKey, { action: "complete", key, uploadId, size: file.size, parts: done });
+    const out = await postJson({ action: "complete", key, uploadId, size: file.size, parts: done });
     return { url: out.url, key: out.key, bytes: file.size };
   } catch (e) {
-    void postJson(hrKey, { action: "abort", key, uploadId }).catch(() => {});
+    void postJson({ action: "abort", key, uploadId }).catch(() => {});
     throw e;
   }
 }

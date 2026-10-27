@@ -2,6 +2,8 @@
 
 ## Doing
 
+- [ ] HR: đăng nhập theo tài khoản + phân quyền theo vai (2026-10-27) — ĐÃ DEPLOY. Còn: sếp đặt mật khẩu tài khoản Sếp → tạo tài khoản HR/Leader/Kế toán, gán Leader cho job → báo em gỡ mật khẩu chung (Task 12B trong plan). Minor tồn: clientIp nên ưu tiên x-real-ip (nginx ghi đè) trước cf-connecting-ip; nút ghi trong GET (remind, draft test token); file R2 cũ svg chưa chuyển; /api/hr/upload + upload-cv vẫn tin content-type trình duyệt. LOG 2026-10-27
+
 - [ ] HR: app PWA /hr + thông báo đẩy nhắc lịch PV (2026-10-26) — đã deploy, chờ sếp cài lên điện thoại + bật chuông để thử. LOG 2026-10-26
 
 - [ ] HR: gửi mail ứng viên từ /hr qua Resend (hr@), hộp thoại xác nhận, chế độ test mặc định (2026-10-26) — đã deploy prod ở chế độ test (53db1a4, 2026-10-26), chờ sếp thử rồi bật HR_EMAIL_MODE=live. LOG 2026-10-26

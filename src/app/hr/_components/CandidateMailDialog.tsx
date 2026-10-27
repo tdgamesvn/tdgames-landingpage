@@ -9,7 +9,9 @@ import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, u
 import type { CandidateEmail } from "@/app/admin/_lib/types";
 import { createPortal } from "react-dom";
 import { CircleAlert, Mail, Send, X } from "lucide-react";
+import { hrFetch, useHrSession } from "./HrSession";
 import { KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
+import type { PermissionKey } from "@/lib/hr-permissions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
 export type MailPromptRequest = {
@@ -27,6 +29,8 @@ type Draft = {
   subject?: string;
   text?: string;
   last_sent_at?: string | null;
+  /** Những người sẽ được CC (server tính; chế độ test thì chỉ để xem trước, không CC thật). */
+  cc_preview?: string[];
   error?: string;
   message?: string;
 };
@@ -44,9 +48,15 @@ export function useCandidateMail() {
   return useContext(CandidateMailContext);
 }
 
-const AUTHOR_KEY = "tdg.hr.comment.author";
+/** Quyền cần để gửi từng loại mail (khớp POST /api/hr/applications/[id]/emails). */
+function canSendKind(can: (p: PermissionKey) => boolean, kind: CandidateEmailKind) {
+  if (kind === "offer") return can("emails.send_offer");
+  if (kind === "test_assignment") return can("emails.send") && can("apps.view_tests");
+  return can("emails.send");
+}
 
-export function CandidateMailProvider({ hrKey, children }: { hrKey: string; children: React.ReactNode }) {
+export function CandidateMailProvider({ children }: { children: React.ReactNode }) {
+  const { can } = useHrSession();
   // Hàng đợi: nhiều thao tác liên tiếp (kéo A sang Test rồi B sang Rejected) không đè hộp thoại của nhau.
   const [queue, setQueue] = useState<(MailPromptRequest & { qid: number })[]>([]);
   const req = queue[0] ?? null;
@@ -60,10 +70,12 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
 
   const prompt = useCallback(
     (r: MailPromptRequest) => {
+      // Không có quyền gửi loại mail này → không hỏi (thao tác gốc vẫn đã lưu).
+      if (!canSendKind(can, r.kind)) return;
       // Bài test: job chưa có đề thì chỉ báo nhỏ, không mở hộp thoại.
       if (r.kind === "test_assignment") {
         void (async () => {
-          const d = await fetchDraft(hrKey, r).catch(() => null);
+          const d = await fetchDraft(r).catch(() => null);
           if (d?.error === "no_test") setNotice(d.message ?? "Job chưa có đề test — chưa gửi mail");
           else enqueue(r);
         })();
@@ -71,7 +83,7 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
       }
       enqueue(r);
     },
-    [hrKey, enqueue],
+    [can, enqueue],
   );
 
   useEffect(() => {
@@ -90,7 +102,6 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
         <MailDialog
           key={req.qid}
           req={req}
-          hrKey={hrKey}
           onClose={dequeue}
           onSent={() => {
             dequeue();
@@ -109,11 +120,15 @@ export function CandidateMailProvider({ hrKey, children }: { hrKey: string; chil
   );
 }
 
-async function fetchDraft(hrKey: string, r: MailPromptRequest): Promise<Draft> {
+async function fetchDraft(r: MailPromptRequest, offer?: { salary: string; startDate: string }): Promise<Draft> {
   const q = new URLSearchParams({ kind: r.kind });
+  if (r.kind === "offer" && offer) {
+    if (offer.salary.trim()) q.set("salary", offer.salary.trim());
+    if (offer.startDate.trim()) q.set("start_date", offer.startDate.trim());
+  }
   if (r.interviewId) q.set("interview_id", r.interviewId);
   if (r.prevScheduledAt) q.set("prev_scheduled_at", r.prevScheduledAt);
-  const res = await fetch(`/api/hr/applications/${r.appId}/emails/draft?${q}`, { headers: { "x-hr-key": hrKey } });
+  const res = await hrFetch(`/api/hr/applications/${r.appId}/emails/draft?${q}`);
   const j = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
   return j as Draft;
@@ -121,12 +136,10 @@ async function fetchDraft(hrKey: string, r: MailPromptRequest): Promise<Draft> {
 
 function MailDialog({
   req,
-  hrKey,
   onClose,
   onSent,
 }: {
   req: MailPromptRequest;
-  hrKey: string;
   onClose: () => void;
   onSent: () => void;
 }) {
@@ -136,22 +149,47 @@ function MailDialog({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  // CC: chip từ cc_preview, bấm × để bỏ (server chỉ nhận tập con của danh sách nó tính).
+  const [cc, setCc] = useState<string[]>([]);
+  // Mail offer: mức lương / ngày bắt đầu → điền vào nháp qua nút "Điền vào nháp".
+  const [salary, setSalary] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [refilling, setRefilling] = useState(false);
+
+  async function refillOffer() {
+    setRefilling(true);
+    setLoadError(null);
+    try {
+      const d = await fetchDraft(req, { salary, startDate });
+      if (d.error) {
+        setLoadError(d.message ?? d.error);
+        return;
+      }
+      setSubject(d.subject ?? "");
+      setText(d.text ?? "");
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "Không tải được bản nháp");
+    } finally {
+      setRefilling(false);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
-    fetchDraft(hrKey, req)
+    fetchDraft(req)
       .then((d) => {
         if (!alive) return;
         setDraft(d);
         if (d.error) setLoadError(d.message ?? d.error);
         setSubject(d.subject ?? "");
         setText(d.text ?? "");
+        setCc(d.cc_preview ?? []);
       })
       .catch((e) => alive && setLoadError(e instanceof Error ? e.message : "Không tải được bản nháp"));
     return () => {
       alive = false;
     };
-  }, [hrKey, req]);
+  }, [req]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -165,15 +203,16 @@ function MailDialog({
     setSending(true);
     setSendError(null);
     try {
-      const res = await fetch(`/api/hr/applications/${req.appId}/emails`, {
+      const res = await hrFetch(`/api/hr/applications/${req.appId}/emails`, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-hr-key": hrKey },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           kind: req.kind,
           interview_id: req.interviewId ?? null,
           subject,
           text,
-          sent_by: localStorage.getItem(AUTHOR_KEY),
+          // Chế độ test: server không CC ai; chip chỉ là xem trước.
+          cc: draft?.mode === "live" ? cc : [],
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -227,9 +266,63 @@ function MailDialog({
                 Đã gửi mail “{KIND_LABEL[req.kind]}” cho ứng viên này lúc {formatInterviewTime(draft.last_sent_at)}.
               </div>
             )}
-            <div className="text-xs text-white/50">
-              Người nhận: <span className="font-semibold text-white/80">{draft.to}</span>
-            </div>
+            {draft.to && (
+              <div className="text-xs text-white/50">
+                Người nhận: <span className="font-semibold text-white/80">{draft.to}</span>
+              </div>
+            )}
+            {draft.mode === "test" ? (
+              (draft.cc_preview?.length ?? 0) > 0 && (
+                <div className="text-xs text-white/50">
+                  Chế độ test — khi bật thật sẽ CC: <span className="font-semibold text-white/80">{draft.cc_preview!.join(", ")}</span>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5 text-xs text-white/50">
+                <span>CC:</span>
+                {cc.length === 0 && <span className="text-white/40">không có</span>}
+                {cc.map((e) => (
+                  <span key={e} className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 py-0.5 pl-2 pr-1 text-white/80" data-testid="cc-chip">
+                    {e}
+                    <button
+                      type="button"
+                      onClick={() => setCc((l) => l.filter((x) => x !== e))}
+                      aria-label={`Bỏ CC ${e}`}
+                      className="rounded-full p-0.5 text-white/40 hover:text-white"
+                    >
+                      <X className="hr-ico-solo" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {req.kind === "offer" && (
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Mức lương
+                  <input
+                    value={salary}
+                    onChange={(e) => setSalary(e.target.value)}
+                    maxLength={100}
+                    placeholder="vd. 25.000.000 VND/tháng"
+                    className="mt-1 block w-56 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-normal normal-case tracking-normal text-white focus:outline-none"
+                  />
+                </label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  Ngày bắt đầu
+                  <input
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    maxLength={100}
+                    placeholder="vd. 01/12/2026"
+                    className="mt-1 block w-44 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-normal normal-case tracking-normal text-white focus:outline-none"
+                  />
+                </label>
+                <button type="button" onClick={() => void refillOffer()} disabled={refilling || sending} className="hr-secondary-btn">
+                  {refilling ? "Đang điền…" : "Điền vào nháp"}
+                </button>
+              </div>
+            )}
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">Tiêu đề</label>
               <input
@@ -276,29 +369,31 @@ type ScheduledRound = { id: string; round: number; scheduled_at: string | null }
 export function CandidateMailSection({
   appId,
   candidateName,
-  hrKey,
   rounds,
 }: {
   appId: string;
   candidateName: string;
-  hrKey: string;
   rounds: ScheduledRound[];
 }) {
   const { prompt, lastSentAt } = useCandidateMail();
+  const { can } = useHrSession();
+  const canView = can("apps.view_emails");
+  const canSend = can("emails.send");
   const [emails, setEmails] = useState<CandidateEmail[] | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!canView) return;
     let alive = true;
-    fetch(`/api/hr/applications/${appId}/emails`, { headers: { "x-hr-key": hrKey } })
+    hrFetch(`/api/hr/applications/${appId}/emails`)
       .then((r) => r.json())
       .then((j) => alive && setEmails(j.emails ?? []))
       .catch(() => alive && setEmails([]));
     return () => {
       alive = false;
     };
-  }, [appId, hrKey, lastSentAt]);
+  }, [appId, lastSentAt, canView]);
 
   const scheduled = rounds.filter((r) => r.scheduled_at).sort((a, b) => a.round - b.round);
   const pick = (kind: CandidateEmailKind, interviewId?: string) => {
@@ -306,12 +401,15 @@ export function CandidateMailSection({
     prompt({ appId, candidateName, kind, interviewId });
   };
 
+  if (!canView && !canSend) return null;
+
   return (
     <section className="hr-group px-4 py-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <h4 className="hr-section-title">
           Mail ứng viên <span className="font-normal text-white/50">{emails?.length ?? ""}</span>
         </h4>
+        {canSend && (
         <div className="relative">
           <button type="button" onClick={() => setMenuOpen((v) => !v)} className="hr-secondary-btn" aria-haspopup="menu" aria-expanded={menuOpen}>
             <Mail className="hr-ico" />Gửi mail
@@ -331,14 +429,17 @@ export function CandidateMailSection({
                   </button>
                 </Fragment>
               ))}
-              <button role="menuitem" onClick={() => pick("test_assignment")} className="hr-menu-item">{KIND_LABEL.test_assignment}</button>
+              {can("apps.view_tests") && (
+                <button role="menuitem" onClick={() => pick("test_assignment")} className="hr-menu-item">{KIND_LABEL.test_assignment}</button>
+              )}
               <button role="menuitem" onClick={() => pick("rejection")} className="hr-menu-item">{KIND_LABEL.rejection}</button>
             </div>
           )}
         </div>
+        )}
       </div>
 
-      {emails === null && <p className="text-[13px] text-white/50">Đang tải…</p>}
+      {canView && emails === null && <p className="text-[13px] text-white/50">Đang tải…</p>}
       {emails?.length === 0 && <p className="text-[13px] text-white/50">Chưa gửi mail nào.</p>}
       {emails && emails.length > 0 && (
         <ul className="space-y-1.5">
@@ -350,8 +451,10 @@ export function CandidateMailSection({
                   <span className="ml-1.5 rounded border border-amber-500/40 px-1 text-[10px] font-bold text-amber-300">TEST</span>
                 )}
                 <span className="block text-[12px] text-white/50">
-                  {formatInterviewTime(e.created_at)} · tới {e.sent_to}
+                  {formatInterviewTime(e.created_at)}
+                  {e.sent_to ? ` · tới ${e.sent_to}` : ""}
                   {e.sent_by ? ` · ${e.sent_by}` : ""}
+                  {e.cc_emails && e.cc_emails.length > 0 ? ` · CC ${e.cc_emails.join(", ")}` : ""}
                 </span>
               </button>
               {openId === e.id && (

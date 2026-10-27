@@ -133,3 +133,14 @@ Kết quả gần nhất: changedFiles=22, changedRefs=178
 - `POST /api/hr/applications/[id]/emails` `{ kind, interview_id?, subject, text, sent_by? }` → gửi qua Resend + ghi `candidate_emails`. Người nhận lấy từ DB; `HR_EMAIL_MODE` ≠ `live` ⇒ gửi về `HR_EMAIL_TEST_TO` với tiêu đề `[TEST → <email>]`.
 - `GET /api/hr/applications/[id]/emails` → `{ emails }` mới nhất trước.
 - Env: `RESEND_API_KEY` (bắt buộc), `HR_EMAIL_MODE`, `HR_EMAIL_TEST_TO`, `HR_EMAIL_FROM`, `HR_EMAIL_REPLY_TO`.
+
+## HR — tài khoản & phân quyền (2026-10-27)
+Auth: cookie httpOnly `hr_session` (đăng nhập tài khoản). `x-hr-key` (mật khẩu chung) vẫn nhận như vai Sếp **trong giai đoạn chuyển** — sẽ gỡ.
+Mọi request ghi (POST/PATCH/PUT/DELETE) phải cùng nguồn: header `Origin` = https://tdgamestudio.com (chặn CSRF từ cdn.*).
+- `POST /api/hr/auth/login {email,password}` · `POST /api/hr/auth/logout` · `GET /api/hr/auth/me` → `{user,role,roleLabel,perms,legacy}`
+- `POST /api/hr/auth/forgot {email}` (luôn 200) · `GET|POST /api/hr/auth/set-password` (`?token=` / `{token,password}`)
+- Chỉ Sếp: `GET|POST /api/hr/users`, `PATCH /api/hr/users/[id] {display_name?,role?,disabled?,resend_invite?}`, `PUT /api/hr/permissions {role,permission,allowed}`
+- `GET /api/hr/permissions` (mọi user) · `GET /api/hr/users/leaders` (quyền jobs.assign_leader)
+- Cron: `GET /api/hr/remind`, `/api/hr/interviews/remind` header `x-hr-cron-key: $HR_CRON_SECRET` (GitHub secret + VPS .env.local).
+- Quyền theo vai: `src/lib/hr-permissions.ts`; phạm vi + ẩn field: `src/lib/hr-scope.ts` (Leader: job có `leader_user_id` = mình; Kế toán: status từ Interview trở đi hoặc có `offer_status`).
+- Tạo tài khoản Sếp đầu tiên: `node --env-file=.env.local scripts/hr-create-boss.mjs --email … --name …` (in link đặt mật khẩu).

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScopedInterview } from "@/lib/hr-session";
+import { redactInterview } from "@/lib/hr-scope";
 import {
   AiError,
   JOB_SELECT,
@@ -165,10 +166,13 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "interviews.manage");
+  if ("response" in auth) return auth.response;
 
   const { id } = await params;
+  const owned = await loadScopedInterview(auth.ctx, id).catch(() => undefined);
+  if (owned === undefined) return NextResponse.json({ error: "Không đọc được phiên PV" }, { status: 500 });
+  if (!owned) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const supabase = getSupabaseAdmin();
 
   const { data: session } = await supabase
@@ -186,7 +190,7 @@ export async function POST(
 
   const startedAt = session.analysis_started_at ? new Date(session.analysis_started_at).getTime() : 0;
   if (session.analysis_status === "running" && Date.now() - startedAt < STALE_MS) {
-    return NextResponse.json({ session }, { status: 202 });
+    return NextResponse.json({ session: redactInterview(session, auth.ctx.perms) }, { status: 202 });
   }
 
   const { data: running, error } = await supabase
@@ -212,5 +216,5 @@ export async function POST(
         .eq("id", id);
     });
 
-  return NextResponse.json({ session: running }, { status: 202 });
+  return NextResponse.json({ session: redactInterview(running, auth.ctx.perms) }, { status: 202 });
 }

@@ -7,6 +7,7 @@ import { useCandidateMail } from "./CandidateMailDialog";
 import { audioFileError, formatProgress } from "@/lib/interview-audio";
 import { uploadAudioChunked } from "./upload-audio";
 import { CalendarDays, Check, ChevronRight, RefreshCw, Sparkles } from "lucide-react";
+import { hrFetch, useHrSession } from "./HrSession";
 
 const LABEL = "text-[10px] font-bold uppercase tracking-wider text-white/35";
 const CARD = "rounded-lg border border-white/10 bg-white/[0.03] p-3";
@@ -66,17 +67,16 @@ function toLocalInput(iso: string | null) {
 /** Lịch PV của một vòng: giờ hẹn + offline/online (online bắt buộc link Meet). */
 function ScheduleBlock({
   session,
-  hrKey,
   candidateName,
   onChange,
 }: {
   session: InterviewSession;
-  hrKey: string;
   candidateName: string;
   onChange: (s: InterviewSession) => void;
 }) {
   const mail = useCandidateMail();
-  const [editing, setEditing] = useState(!session.scheduled_at);
+  const canManage = useHrSession().can("interviews.manage");
+  const [editing, setEditing] = useState(canManage && !session.scheduled_at);
   const [when, setWhen] = useState(toLocalInput(session.scheduled_at));
   const [mode, setMode] = useState<"offline" | "online">(session.mode ?? "offline");
   const [meet, setMeet] = useState(session.meet_url ?? "");
@@ -92,9 +92,9 @@ function ScheduleBlock({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/hr/interviews/${session.id}`, {
+      const res = await hrFetch(`/api/hr/interviews/${session.id}`, {
         method: "PATCH",
-        headers: { "x-hr-key": hrKey, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
@@ -157,7 +157,7 @@ function ScheduleBlock({
     <div className="space-y-1.5 border-t border-white/8 pt-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[13px] font-semibold text-white/85">Lịch phỏng vấn</span>
-        {!editing && (
+        {!editing && canManage && (
           <div className="flex gap-1.5">
             {session.mode === "offline" && (
               <button
@@ -182,6 +182,8 @@ function ScheduleBlock({
       </div>
 
       {error && <p className={ERR}>{error}</p>}
+
+      {!editing && !session.scheduled_at && <p className="text-[12px] text-white/45">Chưa hẹn giờ.</p>}
 
       {!editing && session.scheduled_at && (
         <div className="flex flex-wrap items-center gap-2 text-[12px]">
@@ -214,7 +216,7 @@ function ScheduleBlock({
         </div>
       )}
 
-      {editing && (
+      {editing && canManage && (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -306,17 +308,19 @@ function Fold({
 
 function SessionCard({
   session,
-  hrKey,
   candidateName,
   onChange,
   onDelete,
 }: {
   session: InterviewSession;
-  hrKey: string;
   candidateName: string;
   onChange: (s: InterviewSession) => void;
   onDelete: () => void;
 }) {
+  const { can } = useHrSession();
+  const canManage = can("interviews.manage");
+  // Gỡ băng / phân tích / câu hỏi chỉ có trong JSON khi có quyền xem phân tích.
+  const canAnalysis = can("apps.view_interview_analysis");
   const [busy, setBusy] = useState<null | "questions" | "upload" | "analyze" | "save">(null);
   const [uploadProgress, setUploadProgress] = useState<{ loaded: number; total: number } | null>(null);
   const [uploadRetry, setUploadRetry] = useState<string | null>(null);
@@ -360,9 +364,8 @@ function SessionCard({
 
   const genQuestions = () =>
     call("questions", () =>
-      fetch(`/api/hr/interviews/${session.id}/questions`, {
+      hrFetch(`/api/hr/interviews/${session.id}/questions`, {
         method: "POST",
-        headers: { "x-hr-key": hrKey },
       }),
     );
 
@@ -371,27 +374,26 @@ function SessionCard({
   const analyzing = session.analysis_status === "running";
   const analyze = () =>
     call("analyze", () =>
-      fetch(`/api/hr/interviews/${session.id}/analyze`, {
+      hrFetch(`/api/hr/interviews/${session.id}/analyze`, {
         method: "POST",
-        headers: { "x-hr-key": hrKey },
       }),
     );
 
   useEffect(() => {
     if (!analyzing) return;
     const t = setInterval(async () => {
-      const res = await fetch(`/api/hr/interviews/${session.id}`, { headers: { "x-hr-key": hrKey } }).catch(() => null);
+      const res = await hrFetch(`/api/hr/interviews/${session.id}`).catch(() => null);
       const data = res?.ok ? await res.json().catch(() => null) : null;
       if (data?.session && data.session.analysis_status !== "running") onChange(data.session);
     }, 5000);
     return () => clearInterval(t);
-  }, [analyzing, session.id, hrKey, onChange]);
+  }, [analyzing, session.id, onChange]);
 
   const saveTranscript = () =>
     call("save", () =>
-      fetch(`/api/hr/interviews/${session.id}`, {
+      hrFetch(`/api/hr/interviews/${session.id}`, {
         method: "PATCH",
-        headers: { "x-hr-key": hrKey, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ transcript }),
       }),
     );
@@ -408,14 +410,14 @@ function SessionCard({
     setUploadProgress({ loaded: 0, total: file.size });
     try {
       // Chia phần 5MB + gửi lại phần bị kẹt: 1 request 47MB từng đứng ở 37% trên mạng chập chờn.
-      const json = await uploadAudioChunked(file, hrKey, (p) => {
+      const json = await uploadAudioChunked(file, (p) => {
         setUploadProgress({ loaded: p.loaded, total: p.total });
         setUploadRetry(p.retry ?? null);
       });
 
-      const res = await fetch(`/api/hr/interviews/${session.id}`, {
+      const res = await hrFetch(`/api/hr/interviews/${session.id}`, {
         method: "PATCH",
-        headers: { "x-hr-key": hrKey, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           audio_url: json.url,
           audio_key: json.key,
@@ -464,16 +466,19 @@ function SessionCard({
             </span>
           )}
         </div>
-        <button onClick={onDelete} className={BTN_RED} disabled={busy !== null}>
-          Xoá vòng
-        </button>
+        {canManage && (
+          <button onClick={onDelete} className={BTN_RED} disabled={busy !== null}>
+            Xoá vòng
+          </button>
+        )}
       </div>
 
       {error && <p className={ERR}>{error}</p>}
 
-      <ScheduleBlock session={session} hrKey={hrKey} candidateName={candidateName} onChange={onChange} />
+      <ScheduleBlock session={session} candidateName={candidateName} onChange={onChange} />
 
       {/* ── Câu hỏi PV (tuỳ chọn, cho Lead) ── */}
+      {(canManage || (canAnalysis && session.questions)) && (
       <Fold
         title="Câu hỏi PV cho Lead"
         hint={questionCount > 0 ? `${questionCount} câu đã soạn` : "Tuỳ chọn, chỉ soạn khi Lead cần"}
@@ -487,13 +492,15 @@ function SessionCard({
                 {copied ? <><Check className="hr-ico" />Đã copy</> : "Copy"}
               </button>
             )}
-            <button onClick={genQuestions} className={BTN_AMBER} disabled={busy !== null}>
-              {busy === "questions"
-                ? "Đang soạn…"
-                : session.questions
-                  ? <><RefreshCw className="hr-ico" />Soạn lại</>
-                  : <><Sparkles className="hr-ico" />Soạn câu hỏi bằng AI</>}
-            </button>
+            {canManage && (
+              <button onClick={genQuestions} className={BTN_AMBER} disabled={busy !== null}>
+                {busy === "questions"
+                  ? "Đang soạn…"
+                  : session.questions
+                    ? <><RefreshCw className="hr-ico" />Soạn lại</>
+                    : <><Sparkles className="hr-ico" />Soạn câu hỏi bằng AI</>}
+              </button>
+            )}
           </div>
         </div>
         {!session.questions && busy !== "questions" && (
@@ -520,8 +527,10 @@ function SessionCard({
           </div>
         ))}
       </Fold>
+      )}
 
       {/* ── Sau buổi PV: ghi âm, transcript, phân tích (tuỳ chọn) ── */}
+      {(canManage || canAnalysis) && (
       <Fold
         title="Sau buổi PV"
         hint={ev ? `Đã phân tích · ${ev.score} điểm` : "Ghi âm, transcript, AI phân tích"}
@@ -533,6 +542,8 @@ function SessionCard({
 
         {session.audio_url ? (
           <audio controls src={session.audio_url} className="w-full" preload="none" />
+        ) : !canManage ? (
+          <p className="text-[11px] text-white/35">Chưa có ghi âm.</p>
         ) : (
           <div
             onClick={() => fileRef.current?.click()}
@@ -579,10 +590,11 @@ function SessionCard({
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               rows={8}
+              readOnly={!canManage}
               placeholder="Dán transcript buổi PV vào đây nếu không dùng gỡ băng tự động…"
               className={TEXTAREA}
             />
-            {transcript !== (session.transcript ?? "") && (
+            {canManage && transcript !== (session.transcript ?? "") && (
               <button onClick={saveTranscript} className={BTN_PLAIN} disabled={busy !== null}>
                 {busy === "save" ? "Đang lưu…" : "Lưu transcript"}
               </button>
@@ -595,13 +607,15 @@ function SessionCard({
       <div className="space-y-1.5 border-t border-white/8 pt-3">
         <div className="flex items-center justify-between gap-2">
           <span className={LABEL}>Phân tích sau phỏng vấn</span>
-          <button onClick={analyze} className={BTN_AMBER} disabled={busy !== null || analyzing || !canAnalyze}>
-            {busy === "analyze" || analyzing
-              ? "Đang phân tích…"
-              : ev
-                ? <><RefreshCw className="hr-ico" />Phân tích lại</>
-                : <><Sparkles className="hr-ico" />Phân tích</>}
-          </button>
+          {canManage && (
+            <button onClick={analyze} className={BTN_AMBER} disabled={busy !== null || analyzing || !canAnalyze}>
+              {busy === "analyze" || analyzing
+                ? "Đang phân tích…"
+                : ev
+                  ? <><RefreshCw className="hr-ico" />Phân tích lại</>
+                  : <><Sparkles className="hr-ico" />Phân tích</>}
+            </button>
+          )}
         </div>
 
         {analyzing && (
@@ -613,7 +627,7 @@ function SessionCard({
           <p className="text-[11px] text-red-400">Phân tích lỗi: {session.analysis_error}</p>
         )}
 
-        {!canAnalyze && (
+        {canManage && !canAnalyze && (
           <p className="text-[10px] text-white/35">
             Cần file ghi âm hoặc transcript trước khi phân tích.
           </p>
@@ -678,38 +692,39 @@ function SessionCard({
         )}
       </div>
       </Fold>
+      )}
     </div>
   );
 }
 
 export default function InterviewPanel({
   appId,
-  hrKey,
   candidateName = "",
   onSessionsChange,
 }: {
   appId: string;
-  hrKey: string;
   /** Tên ứng viên — hiện trong hộp thoại gửi mail mời/đổi/huỷ lịch PV. */
   candidateName?: string;
   /** Báo ra ngoài để card ở kanban cập nhật chip lịch PV mà không cần tải lại. */
   onSessionsChange?: (sessions: InterviewSession[]) => void;
 }) {
+  const { can } = useHrSession();
+  const canView = can("apps.view_interviews");
+  const canManage = can("interviews.manage");
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!canView) return;
     let alive = true;
     (async () => {
       try {
-        const res = await fetch(`/api/hr/applications/${appId}/interviews`, {
-          headers: { "x-hr-key": hrKey },
-        });
+        const res = await hrFetch(`/api/hr/applications/${appId}/interviews`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
-        if (alive) setSessions(data.sessions);
+        if (alive) setSessions(data.sessions ?? []);
       } catch (e) {
         if (alive) setError(e instanceof Error ? e.message : "Không tải được vòng PV");
       } finally {
@@ -719,7 +734,7 @@ export default function InterviewPanel({
     return () => {
       alive = false;
     };
-  }, [appId, hrKey]);
+  }, [appId, canView]);
 
   // Callback của cha đổi identity mỗi render → giữ trong ref, chỉ báo khi sessions đổi.
   const notifyRef = useRef(onSessionsChange);
@@ -734,9 +749,9 @@ export default function InterviewPanel({
     setCreating(true);
     setError(null);
     try {
-      const res = await fetch(`/api/hr/applications/${appId}/interviews`, {
+      const res = await hrFetch(`/api/hr/applications/${appId}/interviews`, {
         method: "POST",
-        headers: { "x-hr-key": hrKey, "content-type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({}),
       });
       const data = await res.json();
@@ -754,9 +769,8 @@ export default function InterviewPanel({
     const prev = sessions;
     setSessions((s) => s.filter((x) => x.id !== id)); // optimistic
     try {
-      const res = await fetch(`/api/hr/interviews/${id}`, {
+      const res = await hrFetch(`/api/hr/interviews/${id}`, {
         method: "DELETE",
-        headers: { "x-hr-key": hrKey },
       });
       if (!res.ok) throw new Error();
     } catch {
@@ -765,13 +779,17 @@ export default function InterviewPanel({
     }
   }
 
+  if (!canView) return null;
+
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between gap-2 px-1">
         <h4 className="hr-section-title">Phỏng vấn</h4>
-        <button onClick={addRound} className={BTN_PLAIN} disabled={creating}>
-          {creating ? "Đang tạo…" : sessions.length === 0 ? "+ Đặt lịch PV" : "+ Thêm vòng PV"}
-        </button>
+        {canManage && (
+          <button onClick={addRound} className={BTN_PLAIN} disabled={creating}>
+            {creating ? "Đang tạo…" : sessions.length === 0 ? "+ Đặt lịch PV" : "+ Thêm vòng PV"}
+          </button>
+        )}
       </div>
 
       {error && <p className={ERR}>{error}</p>}
@@ -779,7 +797,9 @@ export default function InterviewPanel({
 
       {!loading && sessions.length === 0 && (
         <p className="hr-group px-4 py-3 text-[13px] text-white/50">
-          Chưa có lịch PV. Bấm “Đặt lịch PV” để hẹn giờ: hệ thống báo kênh HR trên Discord và nhắc trước khoảng 1 tiếng.
+          {canManage
+            ? "Chưa có lịch PV. Bấm “Đặt lịch PV” để hẹn giờ: hệ thống báo kênh HR trên Discord và nhắc trước khoảng 1 tiếng."
+            : "Chưa có lịch PV."}
         </p>
       )}
 
@@ -787,7 +807,6 @@ export default function InterviewPanel({
         <SessionCard
           key={s.id}
           session={s}
-          hrKey={hrKey}
           candidateName={candidateName}
           onChange={(next) => setSessions((prev) => prev.map((x) => (x.id === next.id ? next : x)))}
           onDelete={() => removeRound(s.id)}

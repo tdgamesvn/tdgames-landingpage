@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser } from "@/lib/hr-session";
 import { abortR2Multipart, completeR2Multipart, createR2Multipart, uploadR2Part } from "@/lib/r2";
 import { AUDIO_PART_BYTES, audioFileError, isInterviewAudioKey } from "@/lib/interview-audio";
 
@@ -28,8 +28,8 @@ function validUploadId(v: unknown): v is string {
 }
 
 export async function POST(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "interviews.manage");
+  if ("response" in auth) return auth.response;
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: "Body không hợp lệ" }, { status: 400 });
 
@@ -78,8 +78,8 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "interviews.manage");
+  if ("response" in auth) return auth.response;
   const url = new URL(request.url);
   const key = url.searchParams.get("key") ?? "";
   const uploadId = url.searchParams.get("uploadId");

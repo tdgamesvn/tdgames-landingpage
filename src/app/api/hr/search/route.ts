@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { requireHR } from "@/lib/hr-auth";
+import { requireHrUser, loadScope } from "@/lib/hr-session";
 import { AiError } from "@/lib/interview-ai";
 import { aiSearch, quickSearch } from "@/lib/candidate-search";
 
@@ -10,11 +10,12 @@ export const maxDuration = 100;
 
 /** GET ?q= — tìm nhanh (không tốn token). */
 export async function GET(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request);
+  if ("response" in auth) return auth.response;
   const q = (new URL(request.url).searchParams.get("q") ?? "").trim().slice(0, 200);
   try {
-    return NextResponse.json({ results: await quickSearch(getSupabaseAdmin(), q) });
+    const scope = await loadScope(auth.ctx);
+    return NextResponse.json({ results: await quickSearch(getSupabaseAdmin(), q, { scope, perms: auth.ctx.perms }) });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Search failed" }, { status: 500 });
   }
@@ -22,8 +23,8 @@ export async function GET(request: Request) {
 
 /** POST {q} — hỏi AI bằng câu tự nhiên. */
 export async function POST(request: Request) {
-  const authError = await requireHR(request);
-  if (authError) return authError;
+  const auth = await requireHrUser(request, "ai.run");
+  if ("response" in auth) return auth.response;
   let body: { q?: unknown };
   try {
     body = await request.json();
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
   const q = String(body.q ?? "").trim().slice(0, 500);
   if (q.length < 3) return NextResponse.json({ error: "Câu hỏi quá ngắn" }, { status: 400 });
   try {
-    return NextResponse.json({ results: await aiSearch(getSupabaseAdmin(), q) });
+    const scope = await loadScope(auth.ctx);
+    return NextResponse.json({ results: await aiSearch(getSupabaseAdmin(), q, { scope, perms: auth.ctx.perms }) });
   } catch (e) {
     const status = e instanceof AiError ? e.status : 500;
     return NextResponse.json({ error: e instanceof Error ? e.message : "Search failed" }, { status });
