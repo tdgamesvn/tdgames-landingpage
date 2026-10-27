@@ -3,6 +3,7 @@ import "server-only";
 import { randomBytes, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { deleteFromR2, uploadToR2 } from "@/lib/r2";
+import { testFileContentType } from "@/lib/hr-upload-type";
 
 /** Đề test + bài làm: tối đa 50 MB/file (nginx cho 100M nên lọt). */
 export const TEST_MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -11,8 +12,9 @@ export const MAX_SUBMISSION_ITEMS = 10;
 /** Tổng dung lượng 1 lần nộp — nginx client_max_body_size 100M. */
 export const MAX_SUBMISSION_TOTAL = 95 * 1024 * 1024;
 
-const ALLOWED_EXT =
-  /\.(pdf|zip|rar|7z|tar|gz|docx?|xlsx?|pptx?|txt|md|csv|json|psd|psb|ai|fig|sketch|xd|blend|fbx|obj|glb|gltf|unitypackage|atlas|skel|spine|png|jpe?g|webp|gif|svg|mp4|mov|webm|mp3|wav)$/i;
+// Danh sách đuôi cho phép + content type: xem hr-upload-type.ts (không tin type trình duyệt gửi).
+// Lưu kèm Content-Disposition: attachment → mở link trên CDN là tải về, không render inline.
+const TEST_FILE_DISPOSITION = "attachment";
 
 const MAX_TEXT = 2000;
 
@@ -71,13 +73,15 @@ export async function readTestInput(
     if (!(file instanceof File) || file.size === 0) return bad("file is required");
     if (file.size > TEST_MAX_FILE_SIZE) return bad("File too large (max 50 MB)");
     const original = file.name || "upload";
-    if (!ALLOWED_EXT.test(original)) return bad("File type not supported");
+    const contentType = testFileContentType(original);
+    if (!contentType) return bad("File type not supported");
 
     const key = `${prefix}/${randomUUID()}-${sanitizeFileName(original)}`;
     const uploaded = await uploadToR2({
       key,
       body: Buffer.from(await file.arrayBuffer()),
-      contentType: file.type || "application/octet-stream",
+      contentType,
+      contentDisposition: TEST_FILE_DISPOSITION,
       skipCompress: true, // giữ nguyên file đề/bài làm
     });
     return {
@@ -145,7 +149,7 @@ export async function readSubmissionBatch(
   let total = 0;
   for (const f of files) {
     if (f.size > TEST_MAX_FILE_SIZE) return bad(`${f.name}: file too large (max 50 MB)`);
-    if (!ALLOWED_EXT.test(f.name || "")) return bad(`${f.name}: file type not supported`);
+    if (!testFileContentType(f.name || "")) return bad(`${f.name}: file type not supported`);
     total += f.size;
   }
   if (total > MAX_SUBMISSION_TOTAL) return bad("Files too large in total (max 95 MB) — please use a link instead");
@@ -157,7 +161,8 @@ export async function readSubmissionBatch(
       const uploaded = await uploadToR2({
         key: `${prefix}/${randomUUID()}-${sanitizeFileName(original)}`,
         body: Buffer.from(await f.arrayBuffer()),
-        contentType: f.type || "application/octet-stream",
+        contentType: testFileContentType(original) ?? "application/octet-stream",
+        contentDisposition: TEST_FILE_DISPOSITION,
         skipCompress: true,
       });
       items.push({
