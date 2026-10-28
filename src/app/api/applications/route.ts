@@ -4,6 +4,7 @@ import { escapeTelegramHtml, sanitizeApplicationInput } from "@/lib/application-
 import { autoAssigneeFor, canonicalRefCode, DEFAULT_ASSIGNEE_KEY, normalizeRefCode, resolveRefOwner } from "@/lib/hr-ref-codes";
 import { HR_ROLES, type HrRole } from "@/lib/hr-permissions";
 import { notifyCandidate } from "@/lib/hr-notify";
+import { clientIp, createLimiter } from "@/lib/hr-rate-limit";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
 import { sendApplicationAck } from "@/lib/hr-auto-ack-send";
 
@@ -18,6 +19,9 @@ function cvHost() {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** Tối đa 5 đơn / IP / giờ (in-memory) — form công khai không được thành máy phát mail. */
+const applyLimiter = createLimiter(5, 3600_000);
 
 export async function POST(request: Request) {
   const supabase = getSupabaseAdmin();
@@ -34,6 +38,11 @@ export async function POST(request: Request) {
   if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
   const input = parsed.data;
   const { job_id, full_name, email, work_type } = input;
+
+  const ip = clientIp(request.headers);
+  if (!applyLimiter.tryHit(ip)) {
+    return NextResponse.json({ error: "Bạn đã gửi quá nhiều đơn, vui lòng thử lại sau" }, { status: 429 });
+  }
 
   // Mã ref: chuẩn hoá; khớp mã của tài khoản /hr (chưa khoá) → lưu mã chính + giao người đó support.
   // Không khớp (ref của người chưa có tài khoản / không có ref) → giao "người support mặc định" (cài đặt),
@@ -86,14 +95,13 @@ export async function POST(request: Request) {
   // Mail "Cảm ơn ứng tuyển" tự động (nền, sau khi trả lời) — mọi lỗi chỉ log, không ảnh hưởng việc nộp đơn.
   after(async () => {
     try {
-      const { data: j } = await supabase.from("jobs").select("title").eq("id", job_id).maybeSingle();
       const res = await sendApplicationAck({
         applicationId: String(data.id),
         jobId: String(job_id),
         email: String(email),
         fullName: String(full_name),
-        jobTitle: (j?.title as string | undefined) ?? "",
         assigneeId,
+        ip,
       });
       if (!res.sent) console.log(`[auto-ack] bỏ qua (${res.reason}) application ${data.id}`);
     } catch (e) {

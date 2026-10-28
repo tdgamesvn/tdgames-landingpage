@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { AUTO_ACK_KEY, isAutoAckEnabled, shouldSendAck } from "./hr-auto-ack.ts";
+import { AUTO_ACK_HOURLY_CAP, AUTO_ACK_KEY, isAutoAckEnabled, isStrictAckEmail, sanitizeAckName, shouldSendAck } from "./hr-auto-ack.ts";
 import { buildDraft, getHrEmailConfig, resolveRecipient, CANDIDATE_EMAIL_KINDS, KIND_LABEL } from "./hr-email.ts";
 import { isSystemOnlyKind } from "./hr-email-base.ts";
 import { KIND_VARS, validateTemplate, DEFAULT_TEMPLATES } from "./hr-email-templates.ts";
@@ -50,4 +50,27 @@ test("mẫu mặc định render đúng văn bản sếp duyệt, test mode đ�
   const r = resolveRecipient(getHrEmailConfig({}), "lan@x.vn", d.subject);
   assert.equal(r.testMode, true);
   assert.equal(r.subject, "[TEST → lan@x.vn] [TD Games] Đã nhận hồ sơ ứng tuyển — 2D Artist");
+});
+
+test("shouldSendAck: job không hoạt động, trần giờ", () => {
+  const ok = { enabled: true, email: "a@b.co", recentCount: 0 };
+  assert.deepEqual(shouldSendAck({ ...ok, jobActive: false }), { send: false, reason: "job_inactive" });
+  assert.deepEqual(shouldSendAck({ ...ok, jobActive: true, hourlyCount: AUTO_ACK_HOURLY_CAP - 1 }), { send: true });
+  assert.deepEqual(shouldSendAck({ ...ok, jobActive: true, hourlyCount: AUTO_ACK_HOURLY_CAP }), { send: false, reason: "hourly_cap" });
+});
+
+test("isStrictAckEmail", () => {
+  assert.equal(isStrictAckEmail("lan.nguyen+x@gmail.com"), true);
+  for (const bad of ["a@b.co,c@d.co", "a@b.co;c@d.co", "a@b.co c@d.co", "<a@b.co>", 'a"@b.co', "o'x@b.co", "a@b.co\n", " ", "", null, undefined, "x".repeat(250) + "@b.co"]) {
+    assert.equal(isStrictAckEmail(bad as string), bad === "a@b.co\n" ? true : false, String(bad));
+  }
+});
+
+test("sanitizeAckName", () => {
+  assert.equal(sanitizeAckName("Nguyễn Văn A"), "Nguyễn Văn A");
+  for (const bad of ["Click http://evil.com", "www.x.vn", "a@b.co", "visit evil.xyz now", "promo.com", "", "  "]) {
+    assert.equal(sanitizeAckName(bad), "bạn", bad);
+  }
+  assert.equal(sanitizeAckName("An\u0000\n  Bình"), "An Bình");
+  assert.equal(sanitizeAckName("x".repeat(100)).length, 60);
 });
