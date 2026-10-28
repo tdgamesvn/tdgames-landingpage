@@ -29,10 +29,21 @@ export async function GET(request: Request) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Hồ sơ có thư mời đang chờ Sếp duyệt → nhãn "Chờ duyệt offer" trên thẻ. Lỗi đọc (vd. chưa áp migration) → bỏ nhãn, không chặn danh sách.
+  const pendingOffers = new Set<string>();
+  {
+    const { data: pend, error: pendErr } = await supabase
+      .from("offer_letters")
+      .select("application_id")
+      .eq("approval_status", "pending");
+    if (pendErr) console.error("applications: đọc offer_letters pending lỗi:", pendErr.message);
+    for (const r of pend ?? []) pendingOffers.add(String(r.application_id));
+  }
+
   const rows = ((data ?? []) as unknown as Record<string, unknown>[])
     .filter((a) => inScope(scope, { job_id: String(a.job_id), status: String(a.status), offer_status: (a.offer_status as string | null) ?? null }))
     // Gỡ field theo quyền (kể cả interview_sessions lồng bên trong).
-    .map((a) => redactApplication(a, ctx.perms));
+    .map((a) => redactApplication({ ...a, offer_approval_status: pendingOffers.has(String(a.id)) ? "pending" : null }, ctx.perms));
 
   return NextResponse.json({ applications: rows, total: rows.length });
 }

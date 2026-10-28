@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { offerTotal, sanitizeOfferLetter, validateOfferLetter } from "@/lib/offer-letter";
-import { loadOfferLetterForApp, saveOfferLetter, readJsonBody } from "@/lib/offer-letter-store";
+import { approvalForClient, EMPTY_APPROVAL, loadOfferLetterForApp, saveOfferLetter, readJsonBody } from "@/lib/offer-letter-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +24,8 @@ export async function GET(request: Request, { params }: Ctx) {
       updated_by: row?.updated_by ?? null,
       updated_at: row?.updated_at ?? null,
       total: offerTotal(data),
+      // Trạng thái Sếp duyệt (thư chưa lưu → draft).
+      approval: approvalForClient(row?.approval ?? EMPTY_APPROVAL),
       // Lương mong muốn để tham khảo khi điền (chỉ khi có quyền xem lương).
       expected_salary: auth.ctx.perms.has("apps.view_salary") ? ((app.expected_salary as string | null) ?? null) : null,
     });
@@ -32,7 +34,7 @@ export async function GET(request: Request, { params }: Ctx) {
   }
 }
 
-/** Lưu thư mời (body = OfferLetterData). */
+/** Lưu thư mời (body = OfferLetterData). Sếp lưu → đã duyệt; người khác sửa nội dung → về draft (xem nextApprovalOnSave). */
 export async function PUT(request: Request, { params }: Ctx) {
   const auth = await requireHrUser(request, "emails.send_offer");
   if ("response" in auth) return auth.response;
@@ -48,7 +50,14 @@ export async function PUT(request: Request, { params }: Ctx) {
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
   try {
     const row = await saveOfferLetter(auth.ctx, id, data);
-    return NextResponse.json({ data: row.data, saved: true, updated_by: row.updated_by, updated_at: row.updated_at, total: offerTotal(data) });
+    return NextResponse.json({
+      data: row.data,
+      saved: true,
+      updated_by: row.updated_by,
+      updated_at: row.updated_at,
+      total: offerTotal(data),
+      approval: approvalForClient(row.approval),
+    });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Không lưu được thư mời" }, { status: 500 });
   }

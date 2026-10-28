@@ -56,5 +56,13 @@ Số tiền định dạng `5.310.000 VND`. Đánh số liền mạch (bản g�
 - Chế độ test: PDF vẫn đính kèm, mail về tony@.
 - Gửi mail offer bắt buộc đã lưu thư mời; thiếu trường bắt buộc (chức danh, ngày bắt đầu, lương cơ bản) → không cho gửi, báo rõ.
 
+## Duyệt thư mời (Sếp chốt 2026-10-28)
+- Người KHÔNG phải Sếp (Kế toán, HR…) soạn thư → **Gửi Sếp duyệt** → Sếp **Duyệt** hoặc **Yêu cầu sửa** (ghi chú bắt buộc, ≤ 500 ký tự) → chỉ khi **đã duyệt** mới gửi mail offer. Trạng thái: `draft` | `pending` | `approved` | `changes_requested` (cột `offer_letters.approval_status`, kèm submitted_*/reviewed_*/review_note).
+- Sếp tự lưu thư = đã duyệt. Người khác sửa nội dung thư đã gửi duyệt / đã duyệt → về `draft` (so JSON ổn định của dữ liệu đã sanitize; lưu lại y nguyên thì giữ trạng thái).
+- Chặn ở server: POST gửi mail `offer` và draft GET `offer` → 400 "Thư mời chưa được Sếp duyệt" (`code: offer_not_approved`).
+- Thông báo (không có lương): gửi duyệt → mọi Sếp (Discord tag Sếp có Discord ID, không ai có → @everyone; push); Sếp quyết định → người gửi duyệt + người support (push + Discord tag).
+- UI: khối Offer ① Soạn thư → ② Gửi Sếp duyệt (Sếp: Duyệt / Yêu cầu sửa / Xem thư) → ③ Gửi mail offer; dải trạng thái + xác nhận khi sửa thư đã duyệt trong hộp thoại thư; card pipeline nhãn "Chờ duyệt offer".
+- Code: thuần `src/lib/offer-letter-approval.ts` (nextApprovalOnSave, canSubmit/canReview/canSendOffer, validateReviewInput, offerApprovalRecipients); `notifyOfferApproval` (hr-notify.ts).
+
 ## Không làm
 - Ký số / chữ ký ảnh. File Word. Ứng viên bấm "chấp nhận" online (vẫn trả lời mail).

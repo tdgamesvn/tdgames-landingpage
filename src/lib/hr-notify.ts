@@ -17,6 +17,7 @@ import {
 } from "@/lib/hr-notify-recipients";
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "@/lib/hr-permissions";
 import type { ScopeInput } from "@/lib/hr-scope";
+import { offerApprovalRecipients } from "@/lib/offer-letter-approval";
 
 export type NotifyStaffCtx = {
   staff: (RecipientStaff & { display_name: string })[];
@@ -400,4 +401,62 @@ export async function notifyApplicationUpdate(
       },
     );
   }
+}
+
+/**
+ * Thông báo duyệt thư mời nhận việc (Discord tag + push). KHÔNG đưa lương vào nội dung.
+ * - submitted: tới mọi Sếp ("📝 X gửi thư mời … chờ duyệt"); không Sếp nào có Discord ID → @everyone.
+ * - reviewed: tới người gửi duyệt + người support (Sếp đã duyệt / yêu cầu sửa kèm ghi chú).
+ * Fire-and-forget: lỗi chỉ ghi log, không ảnh hưởng thao tác chính.
+ */
+export async function notifyOfferApproval(i: {
+  kind: "submitted" | "reviewed";
+  appId: string;
+  actorId: string | null;
+  actorName: string;
+  /** reviewed: người đã gửi duyệt (submitted_by_user_id). */
+  submitterId?: string | null;
+  decision?: "approve" | "changes";
+  note?: string;
+}): Promise<void> {
+  const [app, staffCtx] = await Promise.all([loadNotifyApp(i.appId), loadNotifyStaff()]);
+  const name = app?.full_name ?? "Ứng viên";
+  const who = app?.jobTitle ? `${name} (${app.jobTitle})` : name;
+  let content: string;
+  let title: string;
+  let body: string;
+  if (i.kind === "submitted") {
+    content = `📝 ${i.actorName} gửi thư mời nhận việc của ${who} chờ duyệt`;
+    title = `📝 ${i.actorName} gửi thư mời chờ duyệt — ${name}`;
+    body = app?.jobTitle ?? "Mở /hr để duyệt";
+  } else if (i.decision === "approve") {
+    content = `✅ Sếp đã duyệt thư mời nhận việc của ${who} — có thể gửi mail offer`;
+    title = `✅ Sếp đã duyệt thư mời — ${name}`;
+    body = "Có thể gửi mail offer";
+  } else {
+    const note = (i.note ?? "").trim();
+    content = `✏️ Sếp yêu cầu sửa thư mời nhận việc của ${who}: ${note}`;
+    title = `✏️ Sếp yêu cầu sửa thư mời — ${name}`;
+    body = note.length > 160 ? `${note.slice(0, 157)}...` : note;
+  }
+  const rec = staffCtx
+    ? offerApprovalRecipients({
+        kind: i.kind,
+        staff: staffCtx.staff,
+        submitterId: i.submitterId ?? null,
+        assigneeId: app?.assignee_user_id ?? null,
+        actorId: i.actorId,
+      })
+    : { userIds: [], everyone: i.kind === "submitted" };
+  const { tag, allowed_mentions } = discordTagFor(rec, staffCtx?.staff ?? []);
+  const tasks: Promise<unknown>[] = [discordNotify("hr", { allowed_mentions, content: withTag(tag, content) })];
+  if (app && staffCtx && rec.userIds.length) {
+    // Người nhận chủ động (Sếp / người gửi / người support) → luôn nhận push, vẫn cần xem được hồ sơ.
+    const targets = pushTargets(rec.userIds, staffCtx.staff, staffCtx.perms, app, staffCtx.statuses, app.jobLeaderId, rec.userIds);
+    tasks.push(sendHrPush({ title, body, url: "/hr", tag: `hr-offer_approval-${i.appId}` }, { userIds: targets }));
+  }
+  const results = await Promise.allSettled(tasks);
+  results.forEach((r, idx) => {
+    if (r.status === "rejected") console.error(`[hr-notify] offer_${i.kind} ${idx === 0 ? "Discord" : "push"} lỗi:`, r.reason);
+  });
 }

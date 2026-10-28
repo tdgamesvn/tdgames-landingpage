@@ -5,7 +5,8 @@ import { newTestToken } from "@/lib/hr-tests";
 import { resolveCcForApplication } from "@/lib/hr-email-send";
 import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail, type DraftInput } from "@/lib/hr-email";
 import { NO_OFFER_LETTER, offerDraftFields, offerFileName, validateOfferLetter } from "@/lib/offer-letter";
-import { loadOfferContact, loadOfferLetterRow } from "@/lib/offer-letter-store";
+import { loadOfferContact, loadOfferLetterRow, approvalForClient } from "@/lib/offer-letter-store";
+import { canSendOffer, OFFER_NOT_APPROVED } from "@/lib/offer-letter-approval";
 
 
 export const runtime = "nodejs";
@@ -87,6 +88,7 @@ export async function GET(request: Request, { params }: Ctx) {
   // Mail offer: bắt buộc đã lưu thư mời nhận việc (PDF đính kèm sinh từ dữ liệu này khi gửi).
   let offer: DraftInput["offer"] = null;
   let attachment: { filename: string } | null = null;
+  let approval: ReturnType<typeof approvalForClient> | null = null;
   // Thông báo nhỏ cho hộp thoại mail (vd. hạn xác nhận đã qua nên đã tự đổi).
   let notice: string | null = null;
   if (kind === "offer") {
@@ -102,6 +104,14 @@ export async function GET(request: Request, { params }: Ctx) {
     if (invalid) {
       return NextResponse.json({ ...meta, error: `Thư mời nhận việc chưa đủ: ${invalid}`, code: "offer_letter_invalid" }, { status: 400 });
     }
+    // Sếp phải duyệt thư trước khi soạn/gửi mail offer.
+    if (!canSendOffer(letter.approval.status)) {
+      return NextResponse.json(
+        { ...meta, error: OFFER_NOT_APPROVED, code: "offer_not_approved", approval: approvalForClient(letter.approval) },
+        { status: 400 },
+      );
+    }
+    approval = approvalForClient(letter.approval);
     const f = offerDraftFields(letter.data, contact, new Date());
     offer = f.fields;
     notice = f.notice;
@@ -168,6 +178,7 @@ export async function GET(request: Request, { params }: Ctx) {
     reply_to: replyTo,
     last_sent_at: last?.created_at ?? null,
     ...(attachment ? { attachment } : {}),
+    ...(approval ? { approval } : {}),
     ...(notice ? { notice } : {}),
   });
 }

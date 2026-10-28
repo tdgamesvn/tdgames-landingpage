@@ -7,6 +7,7 @@ import { redactEmailRow } from "@/lib/hr-scope";
 import { NO_OFFER_LETTER, offerFileName, validateOfferLetter, type OfferLetterData } from "@/lib/offer-letter";
 import { pdfErrorResponse, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
 import { loadOfferLetterRow, pdfUserKey } from "@/lib/offer-letter-store";
+import { canSendOffer, OFFER_NOT_APPROVED } from "@/lib/offer-letter-approval";
 
 
 export const runtime = "nodejs";
@@ -82,6 +83,10 @@ export async function POST(request: Request, { params }: Ctx) {
     if (!letter) return NextResponse.json({ error: NO_OFFER_LETTER }, { status: 400 });
     const invalid = validateOfferLetter(letter.data);
     if (invalid) return NextResponse.json({ error: `Thư mời nhận việc chưa đủ: ${invalid}` }, { status: 400 });
+    // Chặn ở server: chỉ gửi mail offer khi Sếp đã duyệt thư (hoặc Sếp tự lưu).
+    if (!canSendOffer(letter.approval.status)) {
+      return NextResponse.json({ error: OFFER_NOT_APPROVED, code: "offer_not_approved" }, { status: 400 });
+    }
     try {
       // Gửi mail: xếp hàng chờ slot render (429 chỉ khi vượt trần; UI hiện lỗi, người gửi bấm lại).
       const pdf = await renderOfferLetterPdf(letter.data, pdfUserKey(ctx), "wait");

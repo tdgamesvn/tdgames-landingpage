@@ -36,7 +36,7 @@ export function inScope(
 export const BASE_FIELDS: readonly string[] = Object.freeze([
   "id", "job_id", "jobs", "full_name", "work_type", "years_experience", "cv_url", "portfolio_url",
   "available_from", "status", "offer_status", "offer_status_at", "created_at", "updated_at",
-  "message", "available_hours_per_week", "assignee_user_id",
+  "message", "available_hours_per_week", "assignee_user_id", "offer_approval_status",
 ]);
 
 /** Nhóm field theo quyền; quyền không gắn field trên hồ sơ → []. Key không thuộc nhóm nào bị bỏ. */

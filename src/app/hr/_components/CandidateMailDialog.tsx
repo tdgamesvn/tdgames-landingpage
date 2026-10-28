@@ -45,8 +45,8 @@ type Draft = {
   message?: string;
 };
 
-/** Lỗi draft offer khi chưa có / chưa đủ thư mời → hiện nút mở hộp thoại soạn thư. */
-const OFFER_LETTER_CODES = new Set(["no_offer_letter", "offer_letter_invalid"]);
+/** Lỗi draft offer khi chưa có / chưa đủ / chưa được Sếp duyệt thư mời → hiện nút mở hộp thoại thư mời. */
+const OFFER_LETTER_CODES = new Set(["no_offer_letter", "offer_letter_invalid", "offer_not_approved"]);
 
 type Ctx = {
   prompt: (req: MailPromptRequest) => void;
@@ -176,7 +176,7 @@ async function fetchDraft(r: MailPromptRequest): Promise<Draft> {
 }
 
 /** Mở PDF thư mời đã lưu của hồ sơ (dữ liệu GET offer-letter → preview). */
-function openSavedOfferPdf(appId: string) {
+export function openSavedOfferPdf(appId: string) {
   return openPdfInNewTab(async () => {
     const res = await hrFetch(`/api/hr/applications/${appId}/offer-letter`);
     const j = (await res.json().catch(() => ({}))) as { data?: unknown; error?: string };
@@ -299,7 +299,7 @@ function MailDialog({
         )}
         {needsLetter && (
           <button type="button" onClick={composeLetter} className="hr-primary-btn inline-flex items-center gap-1.5 px-4 py-2">
-            <FileText className="hr-ico" /> Soạn thư mời nhận việc
+            <FileText className="hr-ico" /> {draft?.error === "offer_not_approved" ? "Mở thư mời nhận việc" : "Soạn thư mời nhận việc"}
           </button>
         )}
 

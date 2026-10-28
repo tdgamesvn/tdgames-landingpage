@@ -11,7 +11,7 @@ import EmailTemplatesPanel from "./EmailTemplatesPanel";
 import CommentThread from "./CommentThread";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
-import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
+import { CandidateMailProvider, CandidateMailSection, openSavedOfferPdf, useCandidateMail } from "./CandidateMailDialog";
 import ThemeToggle, { useHrTheme, type HrThemePref } from "./ThemeToggle";
 import { HrSessionProvider, hrFetch, useHrSession } from "./HrSession";
 import HrAuthCard, { AUTH_INPUT, AUTH_LINK } from "./HrAuthCard";
@@ -1192,6 +1192,14 @@ function AppCard({
             title={app.ai_evaluation ? VERDICT_LABEL[app.ai_evaluation.verdict] : undefined}
           >
             AI {app.ai_score}
+          </span>
+        )}
+        {app.offer_approval_status === "pending" && (
+          <span
+            className="rounded-full border border-orange-500/40 bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold text-orange-300"
+            title="Thư mời nhận việc đang chờ Sếp duyệt"
+          >
+            Chờ duyệt offer
           </span>
         )}
         {app.referred_by && (
@@ -2611,21 +2619,35 @@ const OFFER_CHOICES = [
   { key: "declined", label: "Từ chối" },
 ] as const;
 
+type OfferApprovalView = {
+  status: "draft" | "pending" | "approved" | "changes_requested";
+  submitted_by: string | null;
+  submitted_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+};
+
 /**
- * Khối "Offer" trong hồ sơ — luồng theo bước: ① soạn thư mời nhận việc (PDF) → ② gửi mail offer (đính kèm PDF)
+ * Khối "Offer" trong hồ sơ — luồng theo bước: ① soạn thư mời nhận việc (PDF) → ② Sếp duyệt (người không phải Sếp
+ * bấm "Gửi Sếp duyệt"; Sếp Duyệt / Yêu cầu sửa; Sếp tự lưu thư = đã duyệt) → ③ gửi mail offer (đính kèm PDF)
  * → kết quả offer. Nút chính (cam) đổi theo bước hiện tại. Chỉ hiện khi hồ sơ ở Offer hoặc đã có kết quả.
  */
 function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
-  const { can } = useHrSession();
+  const { can, me } = useHrSession();
   const { prompt, openOfferLetter, lastSentAt, dialogOpen } = useCandidateMail();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  // Trạng thái bước: thư mời đã lưu chưa (ai, lúc nào) + mail offer đã gửi chưa (lần gần nhất).
-  const [letter, setLetter] = useState<{ saved: boolean; by: string | null; at: string | null } | null>(null);
+  // Trạng thái bước: thư mời đã lưu chưa (ai, lúc nào, duyệt chưa) + mail offer đã gửi chưa (lần gần nhất).
+  const [letter, setLetter] = useState<{ saved: boolean; by: string | null; at: string | null; approval: OfferApprovalView } | null>(null);
   const [sentAt, setSentAt] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"" | "submit" | "approve" | "changes" | "pdf">("");
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [note, setNote] = useState("");
   const canSetResult = can("apps.offer");
   const canMail = can("emails.send_offer");
   const canSeeEmails = can("apps.view_emails");
+  const isBoss = me?.role === "boss";
   const visible = app.status === "offer" || !!app.offer_status;
 
   // Tải lại khi đóng hộp thoại thư mời / mail hoặc vừa gửi xong.
@@ -2634,7 +2656,19 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
     let alive = true;
     hrFetch(`/api/hr/applications/${app.id}/offer-letter`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((j) => alive && j && setLetter({ saved: !!j.saved, by: j.updated_by ?? null, at: j.updated_at ?? null }))
+      .then(
+        (j) =>
+          alive &&
+          j &&
+          setLetter({
+            saved: !!j.saved,
+            by: j.updated_by ?? null,
+            at: j.updated_at ?? null,
+            approval: (j.approval as OfferApprovalView | undefined) ?? {
+              status: "draft", submitted_by: null, submitted_at: null, reviewed_by: null, reviewed_at: null, review_note: null,
+            },
+          }),
+      )
       .catch(() => {});
     if (canSeeEmails) {
       hrFetch(`/api/hr/applications/${app.id}/emails`)
@@ -2673,17 +2707,55 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
     }
   }
 
+  /** POST submit / review rồi cập nhật trạng thái duyệt tại chỗ. */
+  async function postApproval(kind: "submit" | "approve" | "changes") {
+    setBusy(kind);
+    setError("");
+    try {
+      const res = await hrFetch(`/api/hr/applications/${app.id}/offer-letter/${kind === "submit" ? "submit" : "review"}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(kind === "submit" ? {} : kind === "approve" ? { decision: "approve" } : { decision: "changes", note: note.trim() }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+      setLetter((l) => (l ? { ...l, approval: j.approval as OfferApprovalView } : l));
+      setNoteOpen(false);
+      setNote("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Không thực hiện được");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function viewLetter() {
+    setBusy("pdf");
+    setError("");
+    const err = await openSavedOfferPdf(app.id);
+    if (err) setError(err);
+    setBusy("");
+  }
+
   const openLetter = () => openOfferLetter({ appId: app.id, candidateName: app.full_name });
   const openMail = () => prompt({ appId: app.id, candidateName: app.full_name, kind: "offer" });
-  const step: "loading" | "compose" | "send" | "sent" = !canMail
+  const ap = letter?.approval ?? null;
+  const step: "loading" | "compose" | "draft" | "pending" | "changes" | "send" | "sent" = !canMail
     ? "sent"
     : letter === null
       ? "loading"
       : !letter.saved
         ? "compose"
-        : sentAt
-          ? "sent"
-          : "send";
+        : ap?.status === "approved"
+          ? sentAt
+            ? "sent"
+            : "send"
+          : ap?.status === "pending"
+            ? "pending"
+            : ap?.status === "changes_requested"
+              ? "changes"
+              : "draft";
+  const at = (iso: string | null) => (iso ? `, ${formatInterviewTime(iso)}` : "");
 
   return (
     <section className="space-y-2" aria-label="Offer">
@@ -2693,22 +2765,80 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
           <div className="space-y-2">
             <p className="text-[13px] text-white/60">
               {step === "loading" && "Đang kiểm tra thư mời…"}
-              {step === "compose" && "Chưa có thư mời nhận việc. Soạn thư trước, rồi gửi mail offer (thư PDF tự đính kèm)."}
+              {step === "compose" && "Chưa có thư mời nhận việc. Soạn thư trước; thư cần Sếp duyệt rồi mới gửi mail offer (thư PDF tự đính kèm)."}
+              {step === "draft" &&
+                (isBoss
+                  ? `Thư mời đã lưu${letter?.by ? ` bởi ${letter.by}` : ""}${at(letter?.at ?? null)} — chưa duyệt. Mở thư và bấm Lưu để duyệt.`
+                  : `Thư mời đã lưu${letter?.by ? ` bởi ${letter.by}` : ""}${at(letter?.at ?? null)}. Bước tiếp: gửi Sếp duyệt.`)}
+              {step === "pending" &&
+                `⏳ Chờ Sếp duyệt${ap?.submitted_by ? ` (gửi bởi ${ap.submitted_by}${at(ap.submitted_at)})` : ""}.`}
+              {step === "changes" && `✏️ Sếp yêu cầu sửa: ${ap?.review_note ?? ""}`}
               {step === "send" &&
-                `✓ Thư mời đã lưu${letter?.by ? ` bởi ${letter.by}` : ""}${letter?.at ? `, ${formatInterviewTime(letter.at)}` : ""}. Bước tiếp: gửi mail offer.`}
+                `✓ Sếp đã duyệt${ap?.reviewed_by && !isBoss ? ` (${ap.reviewed_by})` : ""}${at(ap?.reviewed_at ?? null)}. Bước tiếp: gửi mail offer.`}
               {step === "sent" && sentAt && `✓ Đã gửi mail offer lúc ${formatInterviewTime(sentAt)}. Ghi kết quả khi ứng viên trả lời.`}
               {step === "sent" && !sentAt && "Thư mời đã lưu."}
             </p>
+            {sentAt && step !== "sent" && step !== "send" && step !== "compose" && step !== "loading" && (
+              <p className="text-[12px] text-white/45">Đã từng gửi mail offer lúc {formatInterviewTime(sentAt)}; thư đã sửa nên cần duyệt lại.</p>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               {step === "compose" && (
                 <button type="button" onClick={openLetter} className="hr-primary-btn h-9 px-4 text-[14px] font-semibold">
                   ① Soạn thư mời nhận việc
                 </button>
               )}
+              {step === "draft" && (
+                <>
+                  {isBoss ? (
+                    <button type="button" onClick={openLetter} className="hr-primary-btn h-9 px-4 text-[14px] font-semibold">
+                      Mở thư để duyệt
+                    </button>
+                  ) : (
+                    <>
+                      <button type="button" disabled={!!busy} onClick={() => void postApproval("submit")} className="hr-primary-btn h-9 px-4 text-[14px] font-semibold">
+                        {busy === "submit" ? "Đang gửi…" : "② Gửi Sếp duyệt"}
+                      </button>
+                      <button type="button" onClick={openLetter} className="hr-secondary-btn">
+                        Sửa thư mời
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+              {step === "pending" &&
+                (isBoss ? (
+                  <>
+                    <button type="button" disabled={!!busy} onClick={() => void postApproval("approve")} className="hr-primary-btn h-9 px-4 text-[14px] font-semibold">
+                      {busy === "approve" ? "Đang duyệt…" : "Duyệt"}
+                    </button>
+                    <button type="button" disabled={!!busy} onClick={() => setNoteOpen((o) => !o)} className="hr-secondary-btn" aria-expanded={noteOpen}>
+                      Yêu cầu sửa
+                    </button>
+                    <button type="button" disabled={busy === "pdf"} onClick={() => void viewLetter()} className="hr-secondary-btn">
+                      {busy === "pdf" ? "Đang tạo…" : "Xem thư (PDF)"}
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" onClick={openLetter} className="hr-secondary-btn">
+                    Sửa thư mời
+                  </button>
+                ))}
+              {step === "changes" && (
+                <>
+                  <button type="button" onClick={openLetter} className={isBoss ? "hr-primary-btn h-9 px-4 text-[14px] font-semibold" : "hr-secondary-btn"}>
+                    Sửa thư mời
+                  </button>
+                  {!isBoss && (
+                    <button type="button" disabled={!!busy} onClick={() => void postApproval("submit")} className="hr-primary-btn h-9 px-4 text-[14px] font-semibold">
+                      {busy === "submit" ? "Đang gửi…" : "Gửi duyệt lại"}
+                    </button>
+                  )}
+                </>
+              )}
               {step === "send" && (
                 <>
                   <button type="button" onClick={openMail} className="hr-primary-btn h-9 px-4 text-[14px] font-semibold">
-                    ② Gửi mail offer
+                    ③ Gửi mail offer
                   </button>
                   <button type="button" onClick={openLetter} className="hr-secondary-btn">
                     Sửa thư mời
@@ -2726,6 +2856,27 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
                 </>
               )}
             </div>
+            {step === "pending" && isBoss && noteOpen && (
+              <div className="space-y-2">
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  placeholder="Cần sửa gì? (bắt buộc, tối đa 500 ký tự)"
+                  aria-label="Ghi chú yêu cầu sửa thư mời"
+                  className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[13px] text-white placeholder:text-white/35"
+                />
+                <button
+                  type="button"
+                  disabled={!!busy || !note.trim()}
+                  onClick={() => void postApproval("changes")}
+                  className="hr-primary-btn h-9 px-4 text-[14px] font-semibold"
+                >
+                  {busy === "changes" ? "Đang gửi…" : "Gửi yêu cầu sửa"}
+                </button>
+              </div>
+            )}
           </div>
         )}
         {(canSetResult || app.offer_status) && (
