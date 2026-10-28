@@ -211,7 +211,9 @@ test("offerDraftFields: chuỗi đã định dạng cho mail; hạn trống → 
     contact: "KT · 09 · kt@x",
     fileName: "Thư mời nhận việc - Nguyễn Văn A.pdf",
   });
-  assert.equal(offerDraftFields(sample({ confirmBy: "" }), "", new Date("2026-10-30T03:00:00Z")).fields.confirmBy, "Thứ Tư 04/11/2026");
+  assert.equal(offerDraftFields(sample({ confirmBy: "", startDate: "2026-11-16" }), "", new Date("2026-10-30T03:00:00Z")).fields.confirmBy, "Thứ Tư 04/11/2026");
+  // Ngày bắt đầu 02/11 sớm hơn +3 ngày làm việc (04/11) → kẹp về 01/11.
+  assert.equal(offerDraftFields(sample({ confirmBy: "" }), "", new Date("2026-10-30T03:00:00Z")).fields.confirmBy, "Chủ Nhật 01/11/2026");
   assert.equal(offerDraftFields(d, "", new Date("2026-10-28T03:00:00Z")).notice, null);
 });
 
@@ -228,4 +230,28 @@ test("resolveConfirmBy: trống → +3 ngày làm việc; đã qua → tính l�
   });
   // Ranh giới ngày theo giờ VN: 17:30 UTC 27/10 = 00:30 28/10 VN → 27/10 đã qua.
   assert.ok(resolveConfirmBy("2026-10-27", new Date("2026-10-27T17:30:00Z")).notice);
+});
+
+test("resolveConfirmBy: hạn tự tính không vượt ngày bắt đầu", () => {
+  const now = new Date("2026-10-28T03:00:00Z"); // T4 28/10; +3 ngày làm việc = T2 02/11
+  // Ngày bắt đầu xa → giữ +3 ngày làm việc.
+  assert.equal(resolveConfirmBy("", now, "2026-11-16").date, "2026-11-02");
+  // Đúng bằng ngày bắt đầu vẫn được (≤ ngày bắt đầu).
+  assert.equal(resolveConfirmBy("", now, "2026-11-02").date, "2026-11-02");
+  // Ngày bắt đầu sớm hơn +3 ngày làm việc → ngày bắt đầu − 1.
+  assert.equal(resolveConfirmBy("", now, "2026-10-31").date, "2026-10-30");
+  // … nhưng không trước hôm nay.
+  assert.equal(resolveConfirmBy("", now, "2026-10-29").date, "2026-10-28");
+  // Ngày bắt đầu là hôm nay hoặc đã qua → hôm nay.
+  assert.equal(resolveConfirmBy("", now, "2026-10-28").date, "2026-10-28");
+  assert.equal(resolveConfirmBy("", now, "2026-10-01").date, "2026-10-28");
+  // Hạn đã lưu đã qua → tính lại, cũng bị kẹp, notice báo ngày sau khi kẹp.
+  assert.deepEqual(resolveConfirmBy("2026-10-20", now, "2026-10-31"), {
+    date: "2026-10-30",
+    notice: "Hạn xác nhận đã qua — đã tự đổi thành Thứ Sáu 30/10/2026",
+  });
+  // Hạn đã lưu còn hiệu lực → giữ nguyên (validate đã bắt ≤ ngày bắt đầu khi lưu).
+  assert.equal(resolveConfirmBy("2026-10-29", now, "2026-10-31").date, "2026-10-29");
+  // Ngày bắt đầu sai/trống → không kẹp.
+  assert.equal(resolveConfirmBy("", now, "abc").date, "2026-11-02");
 });

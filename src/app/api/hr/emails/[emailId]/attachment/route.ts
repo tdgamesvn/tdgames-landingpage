@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { sanitizeOfferLetter } from "@/lib/offer-letter";
-import { renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
+import { pdfErrorResponse, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
 import { pdfDisposition, pdfUserKey } from "@/lib/offer-letter-store";
 
 export const runtime = "nodejs";
@@ -38,7 +38,7 @@ export async function GET(request: Request, { params }: Ctx) {
   if (!att || att.kind !== "offer_letter" || !att.snapshot) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const filename = typeof att.filename === "string" && att.filename ? att.filename : "Thư mời nhận việc.pdf";
   try {
-    // Tải lại file đã gửi: chờ slot render (không 429) — xem renderOfferLetterPdf.
+    // Tải lại file đã gửi: xếp hàng chờ slot render (429 chỉ khi vượt trần) — xem renderOfferLetterPdf.
     const pdf = await renderOfferLetterPdf(sanitizeOfferLetter(att.snapshot), pdfUserKey(auth.ctx), "wait");
     return new NextResponse(new Uint8Array(pdf), {
       headers: {
@@ -48,6 +48,8 @@ export async function GET(request: Request, { params }: Ctx) {
       },
     });
   } catch (e) {
+    const known = pdfErrorResponse(e);
+    if (known) return NextResponse.json({ error: known.error }, { status: known.status });
     console.error("[offer-letter] render attachment lỗi:", e);
     return NextResponse.json({ error: "Không tạo được PDF" }, { status: 500 });
   }

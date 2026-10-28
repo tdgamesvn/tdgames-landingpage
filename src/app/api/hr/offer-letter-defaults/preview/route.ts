@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireHrUser } from "@/lib/hr-session";
 import { offerFileName, sanitizeOfferLetter, validateOfferLetterLimits } from "@/lib/offer-letter";
-import { PdfBusyError, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
+import { pdfErrorResponse, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
 import { pdfDisposition, pdfUserKey, readJsonBody } from "@/lib/offer-letter-store";
 
 export const runtime = "nodejs";
@@ -30,7 +30,8 @@ export async function POST(request: Request) {
       },
     });
   } catch (e) {
-    if (e instanceof PdfBusyError) return NextResponse.json({ error: e.message }, { status: 429 });
+    const known = pdfErrorResponse(e);
+    if (known) return NextResponse.json({ error: known.error }, { status: known.status });
     console.error("[offer-letter] render preview mẫu lỗi:", e);
     return NextResponse.json({ error: "Không tạo được PDF" }, { status: 500 });
   }

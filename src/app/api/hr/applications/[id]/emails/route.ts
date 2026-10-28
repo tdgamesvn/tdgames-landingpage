@@ -5,7 +5,7 @@ import { getHrEmailConfig, isCandidateEmailKind, isValidEmail, resolveRecipient,
 import { sendViaResend, resolveCcForApplication } from "@/lib/hr-email-send";
 import { redactEmailRow } from "@/lib/hr-scope";
 import { NO_OFFER_LETTER, offerFileName, validateOfferLetter, type OfferLetterData } from "@/lib/offer-letter";
-import { renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
+import { pdfErrorResponse, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
 import { loadOfferLetterRow, pdfUserKey } from "@/lib/offer-letter-store";
 
 
@@ -82,10 +82,12 @@ export async function POST(request: Request, { params }: Ctx) {
     const invalid = validateOfferLetter(letter.data);
     if (invalid) return NextResponse.json({ error: `Thư mời nhận việc chưa đủ: ${invalid}` }, { status: 400 });
     try {
-      // Gửi mail: chờ slot render (không 429) — xem renderOfferLetterPdf.
+      // Gửi mail: xếp hàng chờ slot render (429 chỉ khi vượt trần; UI hiện lỗi, người gửi bấm lại).
       const pdf = await renderOfferLetterPdf(letter.data, pdfUserKey(ctx), "wait");
       offerAttachment = { filename: offerFileName(letter.data.candidateName), content: pdf.toString("base64"), snapshot: letter.data };
     } catch (e) {
+      const known = pdfErrorResponse(e);
+      if (known) return NextResponse.json({ error: known.error }, { status: known.status });
       console.error("[offer-letter] render PDF khi gửi lỗi:", e);
       return NextResponse.json({ error: "Không tạo được PDF thư mời" }, { status: 500 });
     }

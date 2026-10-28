@@ -425,13 +425,27 @@ export function offerFileName(candidateName: string): string {
 
 export const NO_OFFER_LETTER = "Chưa soạn thư mời nhận việc — bấm “Soạn thư mời” trong khối Offer trước";
 
+/** Cộng n ngày lịch vào "YYYY-MM-DD". Ngày sai → trả nguyên. */
+export function addDays(date: string, n: number): string {
+  const d = parseDate(date);
+  if (!d) return date;
+  d.setUTCDate(d.getUTCDate() + n);
+  return toIsoDate(d);
+}
+
 /**
  * Hạn xác nhận dùng khi soạn mail: trống → hôm nay (giờ VN) + 3 ngày làm việc;
  * đã lưu nhưng đã qua → tính lại từ hôm nay và trả `notice` để báo người gửi.
+ * Hạn tự tính không vượt ngày bắt đầu: ngày bắt đầu sớm hơn → ngày bắt đầu − 1 (không trước hôm nay);
+ * ngày bắt đầu là hôm nay / đã qua → hôm nay.
  */
-export function resolveConfirmBy(saved: string, today: Date): { date: string; notice: string | null } {
+export function resolveConfirmBy(saved: string, today: Date, startDate = ""): { date: string; notice: string | null } {
   const todayVn = vnDateString(today);
-  const fresh = addWorkingDays(todayVn, 3);
+  let fresh = addWorkingDays(todayVn, 3);
+  if (isValidDate(startDate) && fresh > startDate) {
+    const dayBefore = addDays(startDate, -1);
+    fresh = startDate <= todayVn || dayBefore < todayVn ? todayVn : dayBefore;
+  }
   if (!isValidDate(saved)) return { date: fresh, notice: null };
   if (saved < todayVn) return { date: fresh, notice: `Hạn xác nhận đã qua — đã tự đổi thành ${formatDateVi(fresh)}` };
   return { date: saved, notice: null };
@@ -439,7 +453,7 @@ export function resolveConfirmBy(saved: string, today: Date): { date: string; no
 
 /** Chuỗi đã định dạng cho các biến mail offer (DraftInput.offer) + thông báo nếu hạn xác nhận bị đổi. */
 export function offerDraftFields(data: OfferLetterData, contact: string, today: Date) {
-  const confirm = resolveConfirmBy(data.confirmBy, today);
+  const confirm = resolveConfirmBy(data.confirmBy, today, data.startDate);
   return {
     fields: {
       title: data.jobTitle,

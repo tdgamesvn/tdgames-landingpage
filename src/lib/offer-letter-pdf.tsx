@@ -269,26 +269,37 @@ function OfferLetterDocument({ d }: { d: OfferLetterData }) {
   );
 }
 
-// ── Giới hạn render đồng thời (render ~0.5–1.5s CPU; chặn spam xem trước làm nghẽn server) ──
+// ── Giới hạn render đồng thời (render ~0.5–1.5s CPU; chặn spam làm nghẽn server) ──
 
-const slots = new RenderSlots(2);
-/** Gửi mail / tải lại file đã gửi chờ slot tối đa chừng này rồi vẫn render (không bao giờ 429). */
+const slots = new RenderSlots({ max: 2, maxQueue: 10, maxWaitPerUser: 2, maxOverrun: 2 });
+/** Gửi mail / tải lại file đã gửi chờ slot tối đa chừng này (xem RenderSlots.acquire). */
 const WAIT_MS = 15_000;
+/** Render quá lâu (dữ liệu lạ / máy quá tải) → bỏ, nhả slot, route trả 503. */
+const RENDER_TIMEOUT_MS = 20_000;
 
 export const PDF_BUSY_MESSAGE = "Đang tạo PDF khác, thử lại sau giây lát";
+export const PDF_TIMEOUT_MESSAGE = "Tạo PDF quá lâu, thử lại";
 
-/** Xem trước gặp lúc server bận (đủ 2 bản cùng lúc, hoặc người này đang có 1 bản chưa xong) → route trả 429. */
+/** Server đang bận tạo PDF (vượt giới hạn / trần hàng chờ) → route trả 429. */
 export class PdfBusyError extends Error {
   constructor() {
     super(PDF_BUSY_MESSAGE);
   }
 }
 
+/** Render quá RENDER_TIMEOUT_MS → route trả 503. */
+export class PdfTimeoutError extends Error {
+  constructor() {
+    super(PDF_TIMEOUT_MESSAGE);
+  }
+}
+
 /**
  * Sinh PDF thư mời từ dữ liệu (đã sanitize). Tối đa 2 bản cùng lúc toàn server (`userKey` = id/email tài khoản).
  * - `mode: "preview"` (mặc định): hết slot hoặc người này đang có 1 bản → PdfBusyError ngay.
- * - `mode: "wait"` (gửi mail offer, tải lại file đã gửi): không xét khoá theo người, xếp hàng chờ slot
- *   tối đa 15s rồi vẫn render — không bao giờ bị từ chối.
+ * - `mode: "wait"` (gửi mail offer, tải lại file đã gửi): xếp hàng chờ slot tối đa 15s; vượt trần
+ *   (2 việc chờ/người, hàng chờ 10, hết hạn mà đã chạy ≥ 4 bản) → PdfBusyError.
+ * Render quá 20s → PdfTimeoutError (slot được nhả; tiến trình render cũ không huỷ được, chạy nốt ở nền).
  */
 export async function renderOfferLetterPdf(
   data: OfferLetterData,
@@ -297,10 +308,22 @@ export async function renderOfferLetterPdf(
 ): Promise<Buffer> {
   const release = mode === "wait" ? await slots.acquire(userKey, WAIT_MS) : slots.tryAcquire(userKey);
   if (!release) throw new PdfBusyError();
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     ensureFonts();
-    return await renderToBuffer(<OfferLetterDocument d={data} />);
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new PdfTimeoutError()), RENDER_TIMEOUT_MS);
+    });
+    return await Promise.race([renderToBuffer(<OfferLetterDocument d={data} />), timeout]);
   } finally {
+    clearTimeout(timer);
     release();
   }
+}
+
+/** Lỗi render → response (429 bận, 503 quá lâu); lỗi khác → null để route tự xử lý. */
+export function pdfErrorResponse(e: unknown): { status: number; error: string } | null {
+  if (e instanceof PdfBusyError) return { status: 429, error: e.message };
+  if (e instanceof PdfTimeoutError) return { status: 503, error: e.message };
+  return null;
 }
