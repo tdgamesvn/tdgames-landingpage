@@ -32,6 +32,7 @@ export const KIND_VARS: Record<CandidateEmailKind, string[]> = {
     "chuc_danh", "ngay_bat_dau", "thoi_gian_lam_viec", "dia_diem", "han_xac_nhan", "nguoi_lien_he", "ten_file",
     "muc_luong",
   ],
+  application_received: [...COMMON_VARS],
 };
 
 /** Biến còn hợp lệ (mẫu cũ không lỗi) nhưng không gợi ý chèn trong tab Mẫu mail. */
@@ -124,6 +125,16 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
       "File đính kèm “{ten_file}”: mức lương, phụ cấp, thời gian thử việc, phúc lợi, giấy tờ cần chuẩn bị và lịch trình ngày đầu đi làm.",
       "Bạn vui lòng trả lời email này để xác nhận nhận offer trước {han_xac_nhan}. Nếu có câu hỏi về công việc, vị trí hay chế độ, bạn liên hệ:\n{nguoi_lien_he}",
       "TD Games rất mong được chào đón bạn trở thành một phần của đội ngũ!",
+      "{chu_ky}",
+    ].join("\n\n"),
+  },
+  application_received: {
+    subject: "[TD Games] Đã nhận hồ sơ ứng tuyển — {vi_tri}",
+    body: [
+      "Chào {ten_ung_vien},",
+      "Cảm ơn bạn đã quan tâm và ứng tuyển vị trí {vi_tri} tại TD Games. Chúng mình đã nhận được hồ sơ của bạn.",
+      "Bộ phận tuyển dụng sẽ xem xét hồ sơ và phản hồi bạn sớm nhất có thể. Trong thời gian này, nếu cần bổ sung thông tin (CV, portfolio…) hoặc có câu hỏi, bạn cứ trả lời trực tiếp email này nhé.",
+      "Chúc bạn một ngày tốt lành!",
       "{chu_ky}",
     ].join("\n\n"),
   },

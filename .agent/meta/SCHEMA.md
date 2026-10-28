@@ -152,3 +152,7 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 - `applications.assignee_user_id uuid → hr_users(id) ON DELETE SET NULL` + index `applications_assignee_user_id_idx` — người phụ trách (nhận mọi thông báo của hồ sơ). Hồ sơ mới có `?ref=` khớp mã tài khoản (chưa khoá) → `referred_by` = mã chính + `assignee_user_id` = chủ mã.
 - Backfill: `scripts/hr-backfill-ref.mjs` (dry-run mặc định, `--apply` ghi) — gộp ref_codes cho Phương/Dung/Toàn + chuẩn hoá referred_by + giao người phụ trách cho hồ sơ chưa có.
 
+
+## Mail cảm ơn ứng tuyển (2026-10-28, migration `20261028030000_application_received_mail` — chưa áp prod)
+- CHECK `kind` của `candidate_emails` (`candidate_emails_kind_check`) và `hr_email_templates` (`hr_email_templates_kind_check`) thêm `application_received`.
+- `app_settings` key `hr_auto_ack`: giá trị `off` = tắt tự gửi; không có dòng = bật.

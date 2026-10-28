@@ -55,6 +55,8 @@ export default function EmailTemplatesPanel() {
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  // Công tắc tự gửi mail "Cảm ơn ứng tuyển" (null = chưa tải).
+  const [autoAck, setAutoAck] = useState<boolean | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const subjectRef = useRef<HTMLInputElement>(null);
   const lastField = useRef<"subject" | "body">("body");
@@ -74,6 +76,42 @@ export default function EmailTemplatesPanel() {
   useEffect(() => {
     void Promise.resolve().then(load);
   }, [load]);
+
+  useEffect(() => {
+    let alive = true;
+    hrFetch("/api/hr/email-templates/auto-ack")
+      .then(readJson)
+      .then((j) => alive && typeof j.enabled === "boolean" && setAutoAck(j.enabled))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function toggleAutoAck() {
+    if (autoAck === null) return;
+    const next = !autoAck;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const res = await hrFetch("/api/hr/email-templates/auto-ack", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const j = await readJson(res);
+      if (!res.ok) {
+        setNotice({ kind: "error", text: String(j.error ?? `HTTP ${res.status}`) });
+        return;
+      }
+      setAutoAck(next);
+      setNotice({ kind: "ok", text: next ? "Đã bật tự động gửi" : "Đã tắt tự động gửi" });
+    } catch {
+      setNotice({ kind: "error", text: "Không kết nối được máy chủ" });
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const saved = data?.templates.find((t) => t.kind === kind) ?? null;
   // Sửa dở dang gắn với loại đang chọn; đổi loại thì bỏ (có hỏi nếu đang sửa dở).
@@ -230,6 +268,32 @@ export default function EmailTemplatesPanel() {
           )}
         </div>
       </div>
+
+      {!letterOpen && kind === "application_received" && (
+        <div className={`${surface} flex flex-wrap items-center justify-between gap-3 px-5 py-3`}>
+          <div className="min-w-0">
+            <p className="text-[14px] font-semibold text-[var(--hr-ink)]">
+              Tự động gửi khi ứng viên nộp đơn: {autoAck === null ? "…" : autoAck ? "Bật" : "Tắt"}
+            </p>
+            <p className="text-[12.5px] text-[var(--hr-ink-2)]">Mail tự động không CC; lưu trong lịch sử mail của hồ sơ.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={autoAck === true}
+            aria-label="Tự động gửi khi ứng viên nộp đơn"
+            disabled={busy || autoAck === null}
+            onClick={() => void toggleAutoAck()}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hr-orange)] ${
+              autoAck ? "bg-[var(--hr-orange)]" : "bg-[var(--hr-segment-bg)] ring-1 ring-[var(--hr-hair)]"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ${autoAck ? "left-[22px]" : "left-0.5"}`}
+            />
+          </button>
+        </div>
+      )}
 
       {letterOpen ? (
         <OfferLetterDefaultsPanel onDirtyChange={onLetterDirty} />

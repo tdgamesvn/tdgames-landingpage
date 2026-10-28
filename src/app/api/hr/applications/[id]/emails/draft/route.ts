@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken } from "@/lib/hr-tests";
 import { resolveCcForApplication } from "@/lib/hr-email-send";
-import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isValidEmail, type DraftInput } from "@/lib/hr-email";
+import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail, type DraftInput } from "@/lib/hr-email";
 import { NO_OFFER_LETTER, offerDraftFields, offerFileName, validateOfferLetter } from "@/lib/offer-letter";
 import { loadOfferContact, loadOfferLetterRow } from "@/lib/offer-letter-store";
 
@@ -27,6 +27,7 @@ export async function GET(request: Request, { params }: Ctx) {
   const auth = await requireHrUser(request);
   if ("response" in auth) return auth.response;
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
+  if (isSystemOnlyKind(kind)) return NextResponse.json({ error: "Loại mail này chỉ hệ thống tự động gửi" }, { status: 400 });
   const forbidden = () => NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
   if (!auth.ctx.perms.has(kind === "offer" ? "emails.send_offer" : "emails.send")) return forbidden();
   // Nháp bài test tạo token + lộ link test → cần thêm quyền xem test, kiểm TRƯỚC khi tạo token.

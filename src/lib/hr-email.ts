@@ -13,6 +13,7 @@ import {
   MBTI_TEST_URL,
   formatInterviewLong,
   isCandidateKind,
+  isSystemOnlyKind,
   type CandidateEmailKind,
   type DraftInput,
 } from "./hr-email-base.ts";
@@ -23,6 +24,7 @@ export { CANDIDATE_EMAIL_KINDS, KIND_LABEL, MBTI_TEST_URL, formatInterviewLong }
 export type { CandidateEmailKind, DraftInput };
 
 export const isCandidateEmailKind = isCandidateKind;
+export { isSystemOnlyKind };
 
 export type HrEmailConfig = {
   mode: "test" | "live";

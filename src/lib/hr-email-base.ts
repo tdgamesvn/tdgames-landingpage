@@ -13,6 +13,7 @@ export const CANDIDATE_EMAIL_KINDS = [
   "test_assignment",
   "rejection",
   "offer",
+  "application_received",
 ] as const;
 
 export type CandidateEmailKind = (typeof CANDIDATE_EMAIL_KINDS)[number];
@@ -24,7 +25,15 @@ export const KIND_LABEL: Record<CandidateEmailKind, string> = {
   test_assignment: "Gửi bài test",
   rejection: "Báo kết quả (không phù hợp)",
   offer: "Gửi offer",
+  application_received: "Cảm ơn ứng tuyển",
 };
+
+/** Loại mail chỉ hệ thống gửi (tự động khi ứng viên nộp đơn) — HR không gửi tay từ hồ sơ. */
+export const SYSTEM_ONLY_EMAIL_KINDS: readonly CandidateEmailKind[] = ["application_received"];
+
+export function isSystemOnlyKind(kind: CandidateEmailKind): boolean {
+  return SYSTEM_ONLY_EMAIL_KINDS.includes(kind);
+}
 
 const VN_TZ = "Asia/Ho_Chi_Minh";
 const WEEKDAY_LONG: Record<string, string> = {

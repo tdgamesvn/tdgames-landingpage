@@ -101,6 +101,14 @@ function legacyBuildDraft(input: DraftInput): { subject: string; text: string } 
         "Chúc bạn nhiều thành công trên con đường sắp tới.",
       ];
       break;
+    case "application_received":
+      subject = `[TD Games] Đã nhận hồ sơ ứng tuyển — ${job}`;
+      body = [
+        `Cảm ơn bạn đã quan tâm và ứng tuyển vị trí ${job} tại TD Games. Chúng mình đã nhận được hồ sơ của bạn.`,
+        "Bộ phận tuyển dụng sẽ xem xét hồ sơ và phản hồi bạn sớm nhất có thể. Trong thời gian này, nếu cần bổ sung thông tin (CV, portfolio…) hoặc có câu hỏi, bạn cứ trả lời trực tiếp email này nhé.",
+        "Chúc bạn một ngày tốt lành!",
+      ];
+      break;
     case "offer": {
       // Mẫu offer mới (2026-10-28, có thư mời PDF đính kèm) — thay đổi có chủ đích, không còn lương trong thân mail.
       const o = input.offer ?? null;

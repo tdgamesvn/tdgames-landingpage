@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
-import { getHrEmailConfig, isCandidateEmailKind, isValidEmail, resolveRecipient, textToHtml } from "@/lib/hr-email";
+import { getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail, resolveRecipient, textToHtml } from "@/lib/hr-email";
 import { sendViaResend, resolveCcForApplication } from "@/lib/hr-email-send";
 import { redactEmailRow } from "@/lib/hr-scope";
 import { NO_OFFER_LETTER, offerFileName, validateOfferLetter, type OfferLetterData } from "@/lib/offer-letter";
@@ -48,6 +48,7 @@ export async function POST(request: Request, { params }: Ctx) {
     return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
   }
   const kind = body.kind;
+  if (isSystemOnlyKind(kind)) return NextResponse.json({ error: "Loại mail này chỉ hệ thống tự động gửi" }, { status: 400 });
   if (!ctx.perms.has(kind === "offer" ? "emails.send_offer" : "emails.send")) {
     return NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
   }

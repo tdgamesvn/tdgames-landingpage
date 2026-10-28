@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { escapeTelegramHtml, sanitizeApplicationInput } from "@/lib/application-input";
 import { autoAssigneeFor, canonicalRefCode, DEFAULT_ASSIGNEE_KEY, normalizeRefCode, resolveRefOwner } from "@/lib/hr-ref-codes";
 import { HR_ROLES, type HrRole } from "@/lib/hr-permissions";
 import { notifyCandidate } from "@/lib/hr-notify";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
+import { sendApplicationAck } from "@/lib/hr-auto-ack-send";
 
 // CV hợp lệ = file đã upload qua /api/applications/upload-cv (R2 public base).
 function cvHost() {
@@ -81,6 +82,24 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Mail "Cảm ơn ứng tuyển" tự động (nền, sau khi trả lời) — mọi lỗi chỉ log, không ảnh hưởng việc nộp đơn.
+  after(async () => {
+    try {
+      const { data: j } = await supabase.from("jobs").select("title").eq("id", job_id).maybeSingle();
+      const res = await sendApplicationAck({
+        applicationId: String(data.id),
+        jobId: String(job_id),
+        email: String(email),
+        fullName: String(full_name),
+        jobTitle: (j?.title as string | undefined) ?? "",
+        assigneeId,
+      });
+      if (!res.sent) console.log(`[auto-ack] bỏ qua (${res.reason}) application ${data.id}`);
+    } catch (e) {
+      console.error("[auto-ack] lỗi:", e);
+    }
+  });
 
   // Fire-and-forget notifications (Telegram + Discord)
   const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
