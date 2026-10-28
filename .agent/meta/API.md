@@ -152,7 +152,7 @@ Mọi request ghi (POST/PATCH/PUT/DELETE) phải cùng nguồn: header `Origin` 
 - `GET .../comments` mỗi comment thêm `mentions: uuid[]`, `author_role`.
 
 ### Thư mời nhận việc PDF (2026-10-28, migration `20261028010000_offer_letters` đã áp prod)
-- Giới hạn chung: body > 200KB → 413 (kiểm Content-Length trước khi đọc); mỗi danh sách ≤ 15 mục, mỗi mục / trường ngắn ≤ 300 ký tự, đoạn văn ≤ 1500; số tiền 0…1e10. Tạo PDF: tối đa 2 bản cùng lúc toàn server + 1 bản/người → vượt trả **429** “Đang tạo PDF khác, thử lại sau giây lát” (áp cho mọi route sinh PDF, kể cả gửi mail offer).
+- Giới hạn chung: body > 200KB → 413 (kiểm Content-Length trước khi đọc); mỗi danh sách ≤ 15 mục, mỗi mục / trường ngắn ≤ 300 ký tự, đoạn văn ≤ 1500; số tiền 0…1e10. Tạo PDF: tối đa 2 bản cùng lúc toàn server. Hai route xem trước (offer-letter/preview, offer-letter-defaults/preview) thêm 1 bản/người và hết slot → **429** “Đang tạo PDF khác, thử lại sau giây lát”. Gửi mail offer + tải lại file đính kèm KHÔNG bao giờ 429: xếp hàng chờ slot tối đa 15s rồi vẫn render.
 - `GET /api/hr/applications/:id/offer-letter` (perm `emails.send_offer`, 404 ngoài phạm vi) → `{ data: OfferLetterData (mẫu công ty + đã lưu), saved, updated_by, updated_at, total, expected_salary }` — `expected_salary` chỉ có giá trị khi có `apps.view_salary` (tham khảo, không tự điền). `confirmBy` mặc định "" (tính lúc soạn mail).
 - `PUT` cùng route, body OfferLetterData → sanitize + validate (400 tiếng Việt: thiếu tên/chức danh/ngày bắt đầu/lương cơ bản; hạn xác nhận sau ngày bắt đầu; giới hạn) → upsert.
 - `POST /api/hr/applications/:id/offer-letter/preview` body OfferLetterData (chưa lưu; chỉ kiểm giới hạn) → `application/pdf` inline. Không ghi gì.

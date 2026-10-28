@@ -12,6 +12,7 @@ import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
 import { formatStartVi, formatVnd, offerTotal, type OfferLetterData } from "./offer-letter";
+import { RenderSlots } from "./render-slots";
 
 const ASSETS = path.join(process.cwd(), "src", "assets");
 const FAMILY = "NotoSerif";
@@ -268,15 +269,15 @@ function OfferLetterDocument({ d }: { d: OfferLetterData }) {
   );
 }
 
-// ── Giới hạn render đồng thời (render ~0.5–1s CPU; chặn spam xem trước làm nghẽn server) ──
+// ── Giới hạn render đồng thời (render ~0.5–1.5s CPU; chặn spam xem trước làm nghẽn server) ──
 
-const MAX_CONCURRENT = 2;
-let running = 0;
-const inFlightUsers = new Set<string>();
+const slots = new RenderSlots(2);
+/** Gửi mail / tải lại file đã gửi chờ slot tối đa chừng này rồi vẫn render (không bao giờ 429). */
+const WAIT_MS = 15_000;
 
 export const PDF_BUSY_MESSAGE = "Đang tạo PDF khác, thử lại sau giây lát";
 
-/** Server đang bận tạo PDF (quá 2 bản cùng lúc, hoặc người này đang có 1 bản chưa xong) → route trả 429. */
+/** Xem trước gặp lúc server bận (đủ 2 bản cùng lúc, hoặc người này đang có 1 bản chưa xong) → route trả 429. */
 export class PdfBusyError extends Error {
   constructor() {
     super(PDF_BUSY_MESSAGE);
@@ -284,18 +285,22 @@ export class PdfBusyError extends Error {
 }
 
 /**
- * Sinh PDF thư mời từ dữ liệu (đã sanitize). Tối đa 2 bản cùng lúc toàn server, mỗi người 1 bản;
- * vượt → PdfBusyError (không xếp hàng). `userKey` = id/email tài khoản.
+ * Sinh PDF thư mời từ dữ liệu (đã sanitize). Tối đa 2 bản cùng lúc toàn server (`userKey` = id/email tài khoản).
+ * - `mode: "preview"` (mặc định): hết slot hoặc người này đang có 1 bản → PdfBusyError ngay.
+ * - `mode: "wait"` (gửi mail offer, tải lại file đã gửi): không xét khoá theo người, xếp hàng chờ slot
+ *   tối đa 15s rồi vẫn render — không bao giờ bị từ chối.
  */
-export async function renderOfferLetterPdf(data: OfferLetterData, userKey: string): Promise<Buffer> {
-  if (running >= MAX_CONCURRENT || inFlightUsers.has(userKey)) throw new PdfBusyError();
-  running++;
-  inFlightUsers.add(userKey);
+export async function renderOfferLetterPdf(
+  data: OfferLetterData,
+  userKey: string,
+  mode: "preview" | "wait" = "preview",
+): Promise<Buffer> {
+  const release = mode === "wait" ? await slots.acquire(userKey, WAIT_MS) : slots.tryAcquire(userKey);
+  if (!release) throw new PdfBusyError();
   try {
     ensureFonts();
     return await renderToBuffer(<OfferLetterDocument d={data} />);
   } finally {
-    running--;
-    inFlightUsers.delete(userKey);
+    release();
   }
 }
