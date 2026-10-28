@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  allowedMentionsFor, candidateRecipients, discordTagFor, pushTargets, withTag, type RecipientStaff,
+  allowedMentionsFor, candidateRecipients, discordTagFor, pushBatches, pushTargets, withTag, type RecipientStaff,
 } from "./hr-notify-recipients.ts";
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "./hr-permissions.ts";
 
@@ -113,10 +113,10 @@ test("discordTagFor: không ai có ID, không cần everyone → không tag ai",
   assert.deepEqual(d.allowed_mentions, { parse: [], users: [] });
 });
 
-test("discordTagFor: everyone → thêm @everyone + parse everyone", () => {
-  const d = discordTagFor({ userIds: ["b"], everyone: true }, staff);
-  assert.equal(d.tag, "@everyone <@100000000000000001>");
-  assert.deepEqual(d.allowed_mentions, { parse: ["everyone"], users: ["100000000000000001"] });
+test("discordTagFor: everyone → chỉ @everyone (không tag lẻ từng người) + parse everyone", () => {
+  const d = discordTagFor({ userIds: ["b", "h1"], everyone: true }, staff);
+  assert.equal(d.tag, "@everyone");
+  assert.deepEqual(d.allowed_mentions, { parse: ["everyone"], users: [] });
   assert.equal(discordTagFor({ userIds: [], everyone: true }, []).tag, "@everyone");
 });
 
@@ -163,4 +163,64 @@ test("pushTargets: vai bị thu push.receive thì không nhận; kế toán đư
   p.set("accountant", effectivePermissions("accountant", [{ role: "accountant", permission: "push.receive", allowed: true }]));
   assert.deepEqual(pushTargets(["h1", "a1"], staff, p, { job_id: "j", status: "offer" }, statuses, null), ["a1"]);
   assert.deepEqual(pushTargets(["a1"], staff, p, { job_id: "j", status: "new" }, statuses, null), []);
+});
+
+test("pushTargets: người phụ trách / người được tag (direct) nhận dù vai không có push.receive, vẫn phải xem được hồ sơ", () => {
+  const p = new Map(perms);
+  p.set("hr", effectivePermissions("hr", [{ role: "hr", permission: "push.receive", allowed: false }]));
+  const app = { job_id: "j", status: "new" };
+  // h1 (direct) vẫn nhận; h2 (broadcast) không; kế toán direct nhưng ngoài phạm vi → không.
+  assert.deepEqual(pushTargets(["h1", "h2", "a1"], staff, p, app, statuses, "l1", ["h1", "a1"]), ["h1"]);
+  // direct bị khoá → không.
+  assert.deepEqual(pushTargets(["hOff"], staff, p, app, statuses, "l1", ["hOff"]), []);
+  // kế toán direct + trong phạm vi (offer) → nhận dù mặc định không có push.receive.
+  assert.deepEqual(pushTargets(["a1"], staff, perms, { job_id: "j", status: "offer" }, statuses, null, ["a1"]), ["a1"]);
+});
+
+const full = { title: "T", body: "nội dung nhạy cảm", url: "/hr", tag: "hr-note-x" };
+const restricted = { title: "T", body: "Có cập nhật mới ở hồ sơ N — mở /hr để xem", url: "/hr", tag: "hr-note-x" };
+const mFull = { title: "M", body: "N: @ai đó", url: "/hr", tag: "hr-mention-c" };
+const mRestricted = { title: "M", body: "Có cập nhật mới ở hồ sơ N — mở /hr để xem", url: "/hr", tag: "hr-mention-c" };
+
+test("pushBatches: thiếu quyền field → bản chung chung; đủ quyền → bản đầy đủ", () => {
+  const p = new Map(perms);
+  p.set("hr", effectivePermissions("hr", [{ role: "hr", permission: "apps.view_notes", allowed: false }]));
+  const out = pushBatches({ targets: ["b", "h1", "l1"], staff, perms: p, perm: "apps.view_notes", push: full, restricted });
+  assert.deepEqual(out, [
+    { payload: full, userIds: ["b"] },
+    { payload: restricted, userIds: ["h1", "l1"] },
+  ]);
+});
+
+test("pushBatches: không yêu cầu quyền → ai cũng bản đầy đủ; nhóm rỗng bị bỏ", () => {
+  assert.deepEqual(pushBatches({ targets: ["b", "l1"], staff, perms, perm: null, push: full, restricted }), [
+    { payload: full, userIds: ["b", "l1"] },
+  ]);
+  assert.deepEqual(pushBatches({ targets: [], staff, perms, perm: "apps.view_notes", push: full, restricted }), []);
+});
+
+test("pushBatches: người được tag nhận bản mention (đầy đủ / chung chung theo quyền), người khác bản thường", () => {
+  const p = new Map(perms);
+  p.set("leader", effectivePermissions("leader", [{ role: "leader", permission: "apps.comment", allowed: false }]));
+  const out = pushBatches({
+    targets: ["b", "h1", "l1", "h2"],
+    staff,
+    perms: p,
+    perm: "apps.comment",
+    push: full,
+    restricted,
+    mentionIds: ["h2", "l1"],
+    mentionPush: mFull,
+    mentionRestricted: mRestricted,
+  });
+  assert.deepEqual(out, [
+    { payload: mFull, userIds: ["h2"] },
+    { payload: mRestricted, userIds: ["l1"] },
+    { payload: full, userIds: ["b", "h1"] },
+  ]);
+});
+
+test("pushBatches: leader mặc định không có apps.view_notes → ghi chú ra bản chung chung", () => {
+  const out = pushBatches({ targets: ["l1"], staff, perms, perm: "apps.view_notes", push: full, restricted });
+  assert.deepEqual(out, [{ payload: restricted, userIds: ["l1"] }]);
 });

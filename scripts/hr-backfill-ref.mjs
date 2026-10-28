@@ -47,7 +47,9 @@ console.log(`\n== Tài khoản (${APPLY ? "GHI THẬT" : "dry-run"}${migrated ? 
 for (const p of PLAN) {
   const u = (users ?? []).find((x) => x.email === p.email);
   if (!u) fail(`Không tìm thấy tài khoản ${p.email} (${p.name})`);
-  const codes = [...new Set(p.ref_codes.map(normalizeRefCode).filter(Boolean))];
+  // Gộp: mã trong bảng duyệt đứng trước (mã chính = PLAN[0]), sau đó mã sẵn có khác, bỏ trùng — không xoá mã cũ.
+  const existing = migrated ? (refById.get(u.id) ?? []) : [];
+  const codes = [...new Set([...p.ref_codes, ...existing].map(normalizeRefCode).filter(Boolean))];
   owners.push({ id: u.id, display_name: u.display_name, email: u.email, ref_codes: codes });
   console.log(
     `  ${u.display_name.padEnd(26)} ${u.email.padEnd(34)} ${JSON.stringify(migrated ? refById.get(u.id) ?? [] : "(chưa có cột)")} → ${JSON.stringify(codes)}${u.disabled ? "  [ĐÃ KHOÁ]" : ""}`,
@@ -92,8 +94,9 @@ for (const a of apps ?? []) {
 
   const update = {};
   if (nextRef !== a.referred_by) update.referred_by = nextRef;
-  // Chỉ giao cho hồ sơ khớp; hồ sơ không khớp giữ nguyên người phụ trách (mặc định null).
-  if (owner && (!migrated || a.assignee_user_id !== nextAssignee)) update.assignee_user_id = nextAssignee;
+  // Chỉ giao cho hồ sơ khớp VÀ chưa có người phụ trách (không ghi đè người đã được giao tay).
+  // Hồ sơ không khớp giữ nguyên người phụ trách.
+  if (owner && (!migrated || a.assignee_user_id == null)) update.assignee_user_id = nextAssignee;
   if (Object.keys(update).length) changes.push({ app: a, update, owner });
 }
 
@@ -108,6 +111,7 @@ for (const c of changes) {
   const parts = [];
   if ("referred_by" in c.update) parts.push(`ref ${JSON.stringify(c.app.referred_by)} → ${JSON.stringify(c.update.referred_by)}`);
   if ("assignee_user_id" in c.update) parts.push(`phụ trách → ${c.owner?.display_name ?? "chưa giao"}`);
+  else if (c.owner && migrated && c.app.assignee_user_id) parts.push("(đã có người phụ trách — giữ nguyên)");
   console.log(`  ${c.app.id.slice(0, 8)}  ${String(c.app.full_name).slice(0, 30).padEnd(30)} ${parts.join(" · ")}`);
 }
 

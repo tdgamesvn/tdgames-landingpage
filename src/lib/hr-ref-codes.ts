@@ -1,5 +1,9 @@
 // Mã ref (người giới thiệu) của tài khoản /hr — thuần, không import server (dùng cả script backfill, client, test).
 
+import { canViewApplication } from "./hr-comment-mentions.ts";
+import type { HrRole } from "./hr-permissions.ts";
+import type { ScopeInput } from "./hr-scope.ts";
+
 export const MAX_REF_CODES = 10;
 export const MAX_REF_CODE_LEN = 40;
 
@@ -62,4 +66,18 @@ export function findRefConflict<T extends { id: string; ref_codes?: string[] | n
     if (owner) return { code, owner };
   }
   return null;
+}
+
+/**
+ * Hồ sơ mới khớp mã ref của `owner`: chỉ tự giao khi chủ mã xem được hồ sơ (vd. Leader job khác,
+ * Kế toán với hồ sơ "new" → không giao, vẫn lưu mã chính). Trả id người phụ trách hoặc null.
+ */
+export function autoAssigneeFor(
+  owner: { id: string; role: HrRole } | null,
+  app: { job_id: string; status: string },
+  statuses: ScopeInput["statuses"],
+  jobLeaderId: string | null,
+): string | null {
+  if (!owner) return null;
+  return canViewApplication(owner, app, statuses, jobLeaderId) ? owner.id : null;
 }

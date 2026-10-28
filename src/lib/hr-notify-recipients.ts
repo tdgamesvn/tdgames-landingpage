@@ -5,6 +5,7 @@
 import type { HrRole, PermissionKey } from "./hr-permissions.ts";
 import { canViewApplication } from "./hr-comment-mentions.ts";
 import type { ScopeInput } from "./hr-scope.ts";
+import type { PushPayload } from "./hr-push-payload.ts";
 
 export type NotifyEvent =
   | "comment"
@@ -93,7 +94,8 @@ export function discordTagFor(
     if (!u || u.disabled || !u.discord_user_id) continue;
     if (!discordIds.includes(u.discord_user_id)) discordIds.push(u.discord_user_id);
   }
-  const tag = [...(r.everyone ? ["@everyone"] : []), ...discordIds.map((d) => `<@${d}>`)].join(" ");
+  // everyone → chỉ "@everyone" (đã gồm mọi người, không tag lẻ thêm).
+  const tag = r.everyone ? "@everyone" : discordIds.map((d) => `<@${d}>`).join(" ");
   return { tag, allowed_mentions: allowedMentionsFor(tag) };
 }
 
@@ -103,8 +105,10 @@ export function withTag(tag: string, content: string): string {
 }
 
 /**
- * Ai trong danh sách nhận push app: tài khoản chưa khoá, vai có `push.receive`, và xem được hồ sơ
- * (cùng phạm vi như mentionableUsers: boss/hr luôn; leader của job; kế toán trong phạm vi).
+ * Ai trong danh sách nhận push app: tài khoản chưa khoá, xem được hồ sơ (cùng phạm vi như mentionableUsers:
+ * boss/hr luôn; leader của job; kế toán trong phạm vi), và
+ * - người nhận trực tiếp (`direct`: người phụ trách, người được @tag) → luôn nhận, không xét push.receive;
+ * - người nhận theo vai (Sếp, Leader job, Kế toán, mọi HR khi chưa giao) → cần quyền `push.receive`.
  */
 export function pushTargets(
   userIds: string[],
@@ -113,12 +117,50 @@ export function pushTargets(
   app: { job_id: string; status: string; offer_status?: string | null },
   statuses: ScopeInput["statuses"],
   jobLeaderId: string | null,
+  direct: string[] = [],
 ): string[] {
   const byId = new Map(staff.map((u) => [u.id, u]));
   return userIds.filter((id) => {
     const u = byId.get(id);
     if (!u || u.disabled) return false;
-    if (!perms.get(u.role)?.has("push.receive")) return false;
+    if (!direct.includes(id) && !perms.get(u.role)?.has("push.receive")) return false;
     return canViewApplication(u, app, statuses, jobLeaderId);
   });
+}
+
+/**
+ * Chia người nhận push thành các lô theo nội dung: người thiếu quyền xem field (`perm`, vd. apps.view_notes
+ * cho ghi chú) nhận bản chung chung (`restricted` / `mentionRestricted`) — vẫn được báo nhưng không lộ nội dung.
+ * Người trong `mentionIds` nhận bản mention thay bản thường. Lô rỗng bị bỏ.
+ */
+export function pushBatches(i: {
+  targets: string[];
+  staff: RecipientStaff[];
+  perms: Map<HrRole, Set<PermissionKey>>;
+  perm: PermissionKey | null;
+  push: PushPayload;
+  restricted: PushPayload;
+  mentionIds?: string[];
+  mentionPush?: PushPayload | null;
+  mentionRestricted?: PushPayload | null;
+}): { payload: PushPayload; userIds: string[] }[] {
+  const byId = new Map(i.staff.map((u) => [u.id, u]));
+  const allowed = (id: string) => {
+    if (!i.perm) return true;
+    const u = byId.get(id);
+    return !!u && !!i.perms.get(u.role)?.has(i.perm);
+  };
+  const tagged = i.mentionPush ? i.targets.filter((id) => i.mentionIds?.includes(id)) : [];
+  const rest = i.targets.filter((id) => !tagged.includes(id));
+  const out: { payload: PushPayload; userIds: string[] }[] = [];
+  const push = (payload: PushPayload, userIds: string[]) => {
+    if (userIds.length) out.push({ payload, userIds });
+  };
+  if (i.mentionPush) {
+    push(i.mentionPush, tagged.filter(allowed));
+    push(i.mentionRestricted ?? i.restricted, tagged.filter((id) => !allowed(id)));
+  }
+  push(i.push, rest.filter(allowed));
+  push(i.restricted, rest.filter((id) => !allowed(id)));
+  return out;
 }

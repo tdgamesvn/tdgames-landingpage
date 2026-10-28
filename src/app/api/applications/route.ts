@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { escapeTelegramHtml, sanitizeApplicationInput } from "@/lib/application-input";
-import { canonicalRefCode, normalizeRefCode, resolveRefOwner } from "@/lib/hr-ref-codes";
+import { autoAssigneeFor, canonicalRefCode, normalizeRefCode, resolveRefOwner } from "@/lib/hr-ref-codes";
+import { HR_ROLES, type HrRole } from "@/lib/hr-permissions";
 import { notifyCandidate } from "@/lib/hr-notify";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
 
@@ -39,14 +40,26 @@ export async function POST(request: Request) {
   let assigneeId: string | null = null;
   input.referred_by = ref;
   if (ref) {
-    const { data: staff, error: staffErr } = await supabase
-      .from("hr_users")
-      .select("id, ref_codes")
-      .eq("disabled", false);
-    const owner = staffErr ? null : resolveRefOwner(ref, (staff ?? []) as { id: string; ref_codes: string[] | null }[]);
+    const [{ data: staff, error: staffErr }, job, st] = await Promise.all([
+      supabase.from("hr_users").select("id, role, ref_codes").eq("disabled", false),
+      supabase.from("jobs").select("leader_user_id").eq("id", job_id).maybeSingle(),
+      supabase.from("application_statuses").select("key, position, kind"),
+    ]);
+    const owner = staffErr
+      ? null
+      : resolveRefOwner(ref, (staff ?? []) as { id: string; role: HrRole; ref_codes: string[] | null }[]);
     if (owner) {
       input.referred_by = canonicalRefCode(owner) ?? ref;
-      assigneeId = owner.id;
+      // Chỉ giao khi chủ mã xem được hồ sơ mới (status "new" của job này); không thì chỉ lưu mã chính.
+      if (!job.error && !st.error && (HR_ROLES as readonly string[]).includes(owner.role)) {
+        const statuses = (st.data ?? []).map((r) => ({
+          key: String(r.key),
+          position: Number(r.position),
+          kind: r.kind as "open" | "won" | "lost",
+        }));
+        const leaderId = (job.data as { leader_user_id: string | null } | null)?.leader_user_id ?? null;
+        assigneeId = autoAssigneeFor(owner, { job_id: String(job_id), status: "new" }, statuses, leaderId);
+      }
     }
   }
 
@@ -146,6 +159,18 @@ export async function POST(request: Request) {
             jobTitle,
             text: referredBy ? `via ${referredBy}` : null,
           }),
+          // Người giới thiệu thuộc nhóm apps.view_notes → người thiếu quyền nhận bản không có "via …".
+          ...(referredBy
+            ? {
+                pushPerm: "apps.view_notes" as const,
+                pushRestricted: candidatePushPayload({
+                  event: "new_application",
+                  appId: String(data.id),
+                  candidateName: String(full_name),
+                  jobTitle,
+                }),
+              }
+            : {}),
         };
       });
     } catch {

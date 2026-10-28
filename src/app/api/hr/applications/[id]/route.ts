@@ -124,7 +124,12 @@ export async function PATCH(
     if (v !== null) {
       let members: { id: string }[];
       try {
-        members = await loadAssignableMembers(oldApp as unknown as Record<string, unknown>);
+        // Phạm vi theo trạng thái SAU lần sửa này (đổi status cùng lúc thì xét status mới).
+        members = await loadAssignableMembers({
+          ...oldApp,
+          status: "status" in allowed ? allowed.status : oldApp.status,
+          offer_status: "offer_status" in allowed ? allowed.offer_status : oldApp.offer_status,
+        } as unknown as Record<string, unknown>);
       } catch {
         return NextResponse.json({ error: "Không đọc được danh sách tài khoản" }, { status: 500 });
       }

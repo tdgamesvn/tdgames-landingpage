@@ -93,7 +93,12 @@ export function candidatePushPayload(i: {
   return { title: titles[i.event], body: clip(body, 160), url: "/hr", tag: `hr-${i.event}-${i.appId}` };
 }
 
-export type PushSubscriptionInput ={ endpoint: string; keys: { p256dh: string; auth: string } };
+/** Bản chung chung cho người thiếu quyền xem nội dung: giữ tiêu đề/tag/url, body không lộ gì. */
+export function restrictedPushPayload(p: PushPayload, candidateName: string): PushPayload {
+  return { ...p, body: `Có cập nhật mới ở hồ sơ ${candidateName || "ứng viên"} — mở /hr để xem` };
+}
+
+export type PushSubscriptionInput = { endpoint: string; keys: { p256dh: string; auth: string } };
 
 // Server sẽ POST tới endpoint → chỉ nhận host của dịch vụ push chính thức (chặn SSRF).
 const PUSH_HOSTS = ["fcm.googleapis.com", "web.push.apple.com"];

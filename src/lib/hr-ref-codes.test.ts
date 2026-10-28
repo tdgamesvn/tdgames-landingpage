@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { canonicalRefCode, findRefConflict, normalizeRefCode, parseRefCodes, resolveRefOwner } from "./hr-ref-codes.ts";
+import { autoAssigneeFor, canonicalRefCode, findRefConflict, normalizeRefCode, parseRefCodes, resolveRefOwner } from "./hr-ref-codes.ts";
 
 test("normalizeRefCode: bỏ dấu, đ→d, lowercase, khoảng trắng/gạch dưới → -", () => {
   assert.equal(normalizeRefCode("minh-phương"), "minh-phuong");
@@ -82,4 +82,20 @@ test("findRefConflict: mã thuộc tài khoản khác → trả mã + chủ; c�
   assert.equal(findRefConflict(["dung", "thuy-dung"], all, "d"), null);
   assert.equal(findRefConflict(["khac"], all, null), null);
   assert.deepEqual(findRefConflict(["phuonghr"], all, null)?.owner.id, "p");
+});
+
+const st = [
+  { key: "new", position: 10, kind: "open" as const },
+  { key: "interview", position: 50, kind: "open" as const },
+  { key: "offer", position: 60, kind: "won" as const },
+];
+
+test("autoAssigneeFor: chủ mã xem được hồ sơ mới (status new) → giao; không xem được → null", () => {
+  const app = { job_id: "j1", status: "new" };
+  assert.equal(autoAssigneeFor({ id: "h", role: "hr" }, app, st, null), "h");
+  assert.equal(autoAssigneeFor({ id: "b", role: "boss" }, app, st, null), "b");
+  assert.equal(autoAssigneeFor({ id: "l", role: "leader" }, app, st, "l"), "l");
+  assert.equal(autoAssigneeFor({ id: "l", role: "leader" }, app, st, "other"), null);
+  assert.equal(autoAssigneeFor({ id: "a", role: "accountant" }, app, st, null), null);
+  assert.equal(autoAssigneeFor(null, app, st, null), null);
 });

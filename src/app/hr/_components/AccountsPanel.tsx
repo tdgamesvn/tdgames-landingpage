@@ -78,7 +78,8 @@ export default function AccountsPanel() {
     setUsers((prev) => (prev ? prev.map((x) => (x.id === u.id ? u : x)) : prev));
   }
 
-  async function patchUser(u: HrUser, body: Record<string, unknown>, okText: string) {
+  /** true = server lưu thành công. */
+  async function patchUser(u: HrUser, body: Record<string, unknown>, okText: string): Promise<boolean> {
     setBusyId(u.id);
     setNotice(null);
     try {
@@ -90,13 +91,15 @@ export default function AccountsPanel() {
       const j = await readJson(res);
       if (!res.ok) {
         setNotice({ kind: "error", text: String(j.error ?? `HTTP ${res.status}`) });
-        return;
+        return false;
       }
       if (j.user) upsertUser(j.user as HrUser);
       if (typeof j.warning === "string") setNotice({ kind: "error", text: j.warning });
       else setNotice({ kind: "ok", text: okText });
+      return true;
     } catch {
       setNotice({ kind: "error", text: "Không kết nối được máy chủ" });
+      return false;
     } finally {
       setBusyId(null);
     }
@@ -216,7 +219,7 @@ export default function AccountsPanel() {
                       <RefCodesCell
                         user={u}
                         disabled={busy}
-                        onSave={(codes) => void patchUser(u, { ref_codes: codes }, `Đã lưu mã ref của ${u.display_name}`)}
+                        onSave={(codes) => patchUser(u, { ref_codes: codes }, `Đã lưu mã ref của ${u.display_name}`)}
                       />
                     </td>
                     <td className={`px-2 py-2.5 font-semibold ${STATUS_CLS[u.status]}`}>{STATUS_LABEL[u.status]}</td>
@@ -349,17 +352,28 @@ function refLink(code: string) {
  * Ô "Mã ref": chip (mã đầu = mã chính), thêm bằng Enter, xoá bằng ×, bấm ★ để đưa lên làm mã chính.
  * Lưu ngay mỗi thay đổi; server chuẩn hoá + chặn mã trùng tài khoản khác (409).
  */
-function RefCodesCell({ user, disabled, onSave }: { user: HrUser; disabled: boolean; onSave: (codes: string[]) => void }) {
+function RefCodesCell({
+  user,
+  disabled,
+  onSave,
+}: {
+  user: HrUser;
+  disabled: boolean;
+  onSave: (codes: string[]) => Promise<boolean>;
+}) {
   const codes = user.ref_codes ?? [];
   const [draft, setDraft] = useState("");
   const [copied, setCopied] = useState(false);
   const preview = normalizeRefCode(draft);
 
-  function add() {
-    if (!preview) return;
-    setDraft("");
-    if (codes.includes(preview)) return;
-    onSave([...codes, preview]);
+  async function add() {
+    if (!preview || disabled) return;
+    if (codes.includes(preview)) {
+      setDraft("");
+      return;
+    }
+    // Chỉ xoá ô nhập khi server lưu được (vd. 409 trùng mã → giữ nguyên để sửa).
+    if (await onSave([...codes, preview])) setDraft("");
   }
 
   return (
@@ -379,7 +393,7 @@ function RefCodesCell({ user, disabled, onSave }: { user: HrUser; disabled: bool
                 <button
                   type="button"
                   disabled={disabled}
-                  onClick={() => onSave([c, ...codes.filter((x) => x !== c)])}
+                  onClick={() => void onSave([c, ...codes.filter((x) => x !== c)])}
                   aria-label={`Đặt ${c} làm mã chính`}
                   title="Đặt làm mã chính"
                   className="opacity-60 hover:opacity-100 disabled:opacity-30"
@@ -390,7 +404,7 @@ function RefCodesCell({ user, disabled, onSave }: { user: HrUser; disabled: bool
               <button
                 type="button"
                 disabled={disabled}
-                onClick={() => onSave(codes.filter((x) => x !== c))}
+                onClick={() => void onSave(codes.filter((x) => x !== c))}
                 aria-label={`Xoá mã ${c}`}
                 className="opacity-60 hover:opacity-100 disabled:opacity-30"
               >
@@ -409,10 +423,10 @@ function RefCodesCell({ user, disabled, onSave }: { user: HrUser; disabled: bool
           maxLength={60}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") add();
+            if (e.key === "Enter") void add();
             if (e.key === "Escape") setDraft("");
           }}
-          onBlur={add}
+          onBlur={() => void add()}
           title={preview && preview !== draft ? `Sẽ lưu thành: ${preview}` : undefined}
           className={`${inputCls} w-full py-1 font-mono text-[12px] disabled:opacity-50`}
         />

@@ -10,9 +10,9 @@
 import { discordNotify, type DiscordPayload } from "@/lib/discord-notify";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { sendHrPush } from "@/lib/hr-push";
-import { candidatePushPayload, mentionPayload, type PushPayload } from "@/lib/hr-push-payload";
+import { candidatePushPayload, mentionPayload, restrictedPushPayload, type PushPayload } from "@/lib/hr-push-payload";
 import {
-  candidateRecipients, discordTagFor, pushTargets, withTag,
+  candidateRecipients, discordTagFor, pushBatches, pushTargets, withTag,
   type NotifyEvent, type RecipientStaff,
 } from "@/lib/hr-notify-recipients";
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "@/lib/hr-permissions";
@@ -107,6 +107,13 @@ export type CandidateMessage = {
   push?: PushPayload | null;
   /** Push riêng cho người được @tag (comment) — thay `push` cho họ. */
   mentionPush?: PushPayload | null;
+  /**
+   * Quyền cần để xem nội dung push (vd. apps.view_notes cho ghi chú). Người nhận thiếu quyền vẫn được báo
+   * nhưng nhận bản `pushRestricted` (mặc định body chung chung "Có cập nhật mới ở hồ sơ …").
+   * Discord là kênh chung → nội dung không lọc theo quyền (như trước).
+   */
+  pushPerm?: PermissionKey | null;
+  pushRestricted?: PushPayload | null;
 };
 
 export type CandidateRule = {
@@ -144,11 +151,21 @@ export async function dispatchCandidateNotify(
     discordNotify("hr", { allowed_mentions, content: withTag(tag, msg.content), embeds: msg.embeds }),
   ];
   if (ok && msg.push) {
-    const targets = pushTargets(rec.userIds, staffCtx.staff, staffCtx.perms, app, staffCtx.statuses, app.jobLeaderId);
-    const tagged = msg.mentionPush ? targets.filter((id) => rule.mentions?.includes(id)) : [];
-    const rest = targets.filter((id) => !tagged.includes(id));
-    if (tagged.length && msg.mentionPush) tasks.push(sendHrPush(msg.mentionPush, { userIds: tagged }));
-    if (rest.length) tasks.push(sendHrPush(msg.push, { userIds: rest }));
+    // Người phụ trách + người được @tag nhận trực tiếp (không xét push.receive); còn lại theo vai.
+    const direct = [...(app.assignee_user_id ? [app.assignee_user_id] : []), ...(rule.mentions ?? [])];
+    const targets = pushTargets(rec.userIds, staffCtx.staff, staffCtx.perms, app, staffCtx.statuses, app.jobLeaderId, direct);
+    const batches = pushBatches({
+      targets,
+      staff: staffCtx.staff,
+      perms: staffCtx.perms,
+      perm: msg.pushPerm ?? null,
+      push: msg.push,
+      restricted: msg.pushRestricted ?? restrictedPushPayload(msg.push, app.full_name),
+      mentionIds: rule.mentions,
+      mentionPush: msg.mentionPush,
+      mentionRestricted: msg.mentionPush ? restrictedPushPayload(msg.mentionPush, app.full_name) : null,
+    });
+    for (const b of batches) tasks.push(sendHrPush(b.payload, { userIds: b.userIds }));
   }
   const results = await Promise.allSettled(tasks);
   let pushed = 0;
@@ -196,6 +213,7 @@ export async function notifyNewComment(i: {
         },
       ],
       push: candidatePushPayload({ event: "comment", appId: i.appId, candidateName: name, actorName: i.authorName, jobTitle, text: i.content }),
+      pushPerm: "apps.comment",
       mentionPush: mentionPayload({
         authorName: i.authorName,
         candidateName: name,
@@ -307,6 +325,7 @@ export async function notifyApplicationUpdate(
           },
         ],
         push: candidatePushPayload({ event: "note", appId: meta.appId, candidateName: name, actorName, jobTitle, text: noteText }),
+        pushPerm: "apps.view_notes",
       },
     );
   }
@@ -352,6 +371,7 @@ export async function notifyApplicationUpdate(
           jobTitle,
           text: `${v.label} (${review.score}/10)`,
         }),
+        pushPerm: "apps.view_tests",
       },
     );
   }

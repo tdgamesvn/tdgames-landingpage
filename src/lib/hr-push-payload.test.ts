@@ -113,3 +113,12 @@ test("candidatePushPayload: không có actor / job → không lộ undefined/nul
   assert.equal(Array.from(long.body).length, 160);
   assert.ok(long.body.endsWith("…"));
 });
+
+test("restrictedPushPayload: giữ tiêu đề/tag/url, body chung chung không lộ nội dung", async () => {
+  const { restrictedPushPayload } = await import("./hr-push-payload.ts");
+  const p = restrictedPushPayload({ title: "📝 T sửa ghi chú — N", body: "lương 30tr", url: "/hr", tag: "hr-note-a" }, "Nguyễn A");
+  assert.equal(p.body, "Có cập nhật mới ở hồ sơ Nguyễn A — mở /hr để xem");
+  assert.equal(p.title, "📝 T sửa ghi chú — N");
+  assert.equal(p.tag, "hr-note-a");
+  assert.equal(p.url, "/hr");
+});

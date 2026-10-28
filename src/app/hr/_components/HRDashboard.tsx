@@ -451,7 +451,8 @@ function AssigneeField({ app, onPatch }: { app: Application; onPatch: (patch: Pa
     return () => {
       alive = false;
     };
-  }, [app.id, canEdit]);
+    // Đổi trạng thái (vd. sang Interview → Kế toán vào phạm vi) → tải lại danh sách.
+  }, [app.id, app.status, app.offer_status, canEdit]);
 
   async function change(next: string) {
     const value = next || null;

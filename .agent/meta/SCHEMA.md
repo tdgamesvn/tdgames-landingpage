@@ -147,8 +147,8 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 - `candidate_emails.attachments jsonb not null default '[]'` — `[{ filename, kind: "offer_letter", snapshot: OfferLetterData }]`; PDF không lưu đâu cả, sinh lại từ snapshot. API lịch sử mail luôn chỉ trả `{filename, kind}` (snapshot có lương không bao giờ ra client).
 - `app_settings` key `offer_letter_defaults` = JSON `OfferLetterDefaults` (mẫu công ty); thiếu → `DEFAULT_OFFER_LETTER_DEFAULTS`.
 
-## Người phụ trách + mã ref (2026-10-28, migration `20261028020000_assignee_ref_codes` — CHƯA áp prod)
+## Người phụ trách + mã ref (2026-10-28, migration `20261028020000_assignee_ref_codes` — ĐÃ áp prod 2026-10-28)
 - `hr_users.ref_codes text[] not null default '{}'` — mã giới thiệu đã chuẩn hoá (`normalizeRefCode`, `src/lib/hr-ref-codes.ts`: bỏ dấu, đ→d, lowercase, [a-z0-9-]); phần tử đầu = mã chính. ≤10 mã × ≤40 ký tự; 1 mã chỉ thuộc 1 tài khoản (kiểm ở API → 409, không có ràng buộc DB).
 - `applications.assignee_user_id uuid → hr_users(id) ON DELETE SET NULL` + index `applications_assignee_user_id_idx` — người phụ trách (nhận mọi thông báo của hồ sơ). Hồ sơ mới có `?ref=` khớp mã tài khoản (chưa khoá) → `referred_by` = mã chính + `assignee_user_id` = chủ mã.
-- Backfill: `scripts/hr-backfill-ref.mjs` (dry-run mặc định, `--apply` ghi) — đặt ref_codes cho Phương/Dung/Toàn + chuẩn hoá referred_by + giao người phụ trách.
+- Backfill: `scripts/hr-backfill-ref.mjs` (dry-run mặc định, `--apply` ghi) — gộp ref_codes cho Phương/Dung/Toàn + chuẩn hoá referred_by + giao người phụ trách cho hồ sơ chưa có.
 
