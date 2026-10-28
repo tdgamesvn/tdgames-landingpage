@@ -75,17 +75,17 @@ const useStaffNames = () => useContext(StaffContext);
 
 const AVATAR_COLORS = ["#b45309", "#0f766e", "#4f46e5", "#be185d", "#15803d", "#7c3aed", "#0369a1", "#a16207"];
 
-/** Avatar chữ cái nhỏ của người phụ trách; chưa giao → chữ "chưa giao" nhạt. */
+/** Avatar chữ cái nhỏ của người support; chưa giao → chữ "chưa giao" nhạt. */
 function AssigneeBadge({ id }: { id: string | null | undefined }) {
   const names = useStaffNames();
   if (!id) {
-    return <span className="shrink-0 text-[10px] text-white/30" title="Hồ sơ chưa có người phụ trách">chưa giao</span>;
+    return <span className="shrink-0 text-[10px] text-white/30" title="Hồ sơ chưa có người support">chưa giao</span>;
   }
   const name = names.get(id);
   return (
     <span
-      title={name ? `Phụ trách: ${name}` : "Người phụ trách (tài khoản đã khoá)"}
-      aria-label={name ? `Phụ trách: ${name}` : "Người phụ trách"}
+      title={name ? `Support: ${name}` : "Người support (tài khoản đã khoá)"}
+      aria-label={name ? `Support: ${name}` : "Người support"}
       className="flex h-5 w-5 shrink-0 select-none items-center justify-center rounded-full text-[10px] font-semibold text-white"
       style={{ backgroundColor: name ? AVATAR_COLORS[avatarColorIndex(id, AVATAR_COLORS.length)] : "#8e8e93" }}
     >
@@ -429,7 +429,7 @@ function AppDetail({ app, comments = true }: { app: Application; comments?: bool
 }
 
 /**
- * Ô "Người phụ trách" trong hồ sơ. Có apps.edit: dropdown tài khoản chưa khoá xem được hồ sơ (+ "Chưa giao"),
+ * Ô "Người support" (assignee) trong hồ sơ, cạnh "Người giới thiệu" (mã ref — tính hoa hồng, không đổi khi giao). Có apps.edit: dropdown tài khoản chưa khoá xem được hồ sơ (+ "Chưa giao"),
  * đổi là lưu ngay (server báo người mới nhận). Không có quyền: chỉ hiện tên.
  */
 function AssigneeField({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
@@ -477,11 +477,18 @@ function AssigneeField({ app, onPatch }: { app: Application; onPatch: (patch: Pa
 
   const currentName = current ? (names.get(current) ?? members?.find((m) => m.id === current)?.display_name ?? null) : null;
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[13px] text-white/50">Người phụ trách</span>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <span className="text-[13px] text-white/50" title="Mã ref — dùng tính hoa hồng, không đổi khi giao người support">
+        Người giới thiệu:{" "}
+        <span className={`font-semibold ${app.referred_by ? "text-amber-400" : "text-white/40"}`}>
+          {app.referred_by || "không có"}
+        </span>
+      </span>
+      <span className="flex flex-wrap items-center gap-2">
+      <span className="text-[13px] text-white/50">Người support</span>
       {canEdit ? (
         <select
-          aria-label="Người phụ trách"
+          aria-label="Người support"
           value={current ?? ""}
           disabled={busy || members === null}
           onChange={(e) => void change(e.target.value)}
@@ -504,6 +511,7 @@ function AssigneeField({ app, onPatch }: { app: Application; onPatch: (patch: Pa
         </span>
       )}
       {error && <span role="alert" className="text-[12px] text-red-400">{error}</span>}
+      </span>
     </div>
   );
 }

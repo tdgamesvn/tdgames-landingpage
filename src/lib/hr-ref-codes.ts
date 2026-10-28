@@ -81,3 +81,6 @@ export function autoAssigneeFor(
   if (!owner) return null;
   return canViewApplication(owner, app, statuses, jobLeaderId) ? owner.id : null;
 }
+
+/** app_settings key: người support mặc định cho hồ sơ không khớp mã ref nào (sếp chọn 2026-10-28). */
+export const DEFAULT_ASSIGNEE_KEY = "hr_default_assignee";

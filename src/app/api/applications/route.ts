@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { escapeTelegramHtml, sanitizeApplicationInput } from "@/lib/application-input";
-import { autoAssigneeFor, canonicalRefCode, normalizeRefCode, resolveRefOwner } from "@/lib/hr-ref-codes";
+import { autoAssigneeFor, canonicalRefCode, DEFAULT_ASSIGNEE_KEY, normalizeRefCode, resolveRefOwner } from "@/lib/hr-ref-codes";
 import { HR_ROLES, type HrRole } from "@/lib/hr-permissions";
 import { notifyCandidate } from "@/lib/hr-notify";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
@@ -34,33 +34,41 @@ export async function POST(request: Request) {
   const input = parsed.data;
   const { job_id, full_name, email, work_type } = input;
 
-  // Mã ref: chuẩn hoá; khớp mã của tài khoản /hr (chưa khoá) → lưu mã chính + giao người đó phụ trách.
-  // Lỗi đọc (vd. migration ref_codes chưa áp) → coi như không khớp, vẫn nhận hồ sơ.
+  // Mã ref: chuẩn hoá; khớp mã của tài khoản /hr (chưa khoá) → lưu mã chính + giao người đó support.
+  // Không khớp (ref của người chưa có tài khoản / không có ref) → giao "người support mặc định" (cài đặt),
+  // mã ref GIỮ NGUYÊN để tính hoa hồng người giới thiệu.
+  // Lỗi đọc (vd. migration chưa áp) → coi như không khớp, vẫn nhận hồ sơ.
   const ref = normalizeRefCode(input.referred_by);
   let assigneeId: string | null = null;
   input.referred_by = ref;
+  const [{ data: staff, error: staffErr }, job, st, def] = await Promise.all([
+    supabase.from("hr_users").select("id, role, ref_codes").eq("disabled", false),
+    supabase.from("jobs").select("leader_user_id").eq("id", job_id).maybeSingle(),
+    supabase.from("application_statuses").select("key, position, kind"),
+    supabase.from("app_settings").select("value").eq("key", DEFAULT_ASSIGNEE_KEY).maybeSingle(),
+  ]);
+  const activeStaff = staffErr ? [] : ((staff ?? []) as { id: string; role: HrRole; ref_codes: string[] | null }[]);
+  const canCheckScope = !job.error && !st.error;
+  const statuses = (st.data ?? []).map((r) => ({
+    key: String(r.key),
+    position: Number(r.position),
+    kind: r.kind as "open" | "won" | "lost",
+  }));
+  const leaderId = (job.data as { leader_user_id: string | null } | null)?.leader_user_id ?? null;
+  // Chỉ giao khi người đó xem được hồ sơ mới (status "new" của job này).
+  const assignable = (u: { id: string; role: HrRole } | null) =>
+    u && canCheckScope && (HR_ROLES as readonly string[]).includes(u.role)
+      ? autoAssigneeFor(u, { job_id: String(job_id), status: "new" }, statuses, leaderId)
+      : null;
   if (ref) {
-    const [{ data: staff, error: staffErr }, job, st] = await Promise.all([
-      supabase.from("hr_users").select("id, role, ref_codes").eq("disabled", false),
-      supabase.from("jobs").select("leader_user_id").eq("id", job_id).maybeSingle(),
-      supabase.from("application_statuses").select("key, position, kind"),
-    ]);
-    const owner = staffErr
-      ? null
-      : resolveRefOwner(ref, (staff ?? []) as { id: string; role: HrRole; ref_codes: string[] | null }[]);
+    const owner = resolveRefOwner(ref, activeStaff);
     if (owner) {
       input.referred_by = canonicalRefCode(owner) ?? ref;
-      // Chỉ giao khi chủ mã xem được hồ sơ mới (status "new" của job này); không thì chỉ lưu mã chính.
-      if (!job.error && !st.error && (HR_ROLES as readonly string[]).includes(owner.role)) {
-        const statuses = (st.data ?? []).map((r) => ({
-          key: String(r.key),
-          position: Number(r.position),
-          kind: r.kind as "open" | "won" | "lost",
-        }));
-        const leaderId = (job.data as { leader_user_id: string | null } | null)?.leader_user_id ?? null;
-        assigneeId = autoAssigneeFor(owner, { job_id: String(job_id), status: "new" }, statuses, leaderId);
-      }
+      assigneeId = assignable(owner);
     }
+  }
+  if (!assigneeId && !def.error && def.data?.value) {
+    assigneeId = assignable(activeStaff.find((u) => u.id === def.data!.value) ?? null);
   }
 
   const { data, error } = await supabase

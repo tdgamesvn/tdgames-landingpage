@@ -133,6 +133,8 @@ export default function AccountsPanel() {
         )}
         {loadError && <p className="text-[13px] text-red-400">{loadError}</p>}
 
+        {users && <DefaultSupportSelect users={users} onNotice={setNotice} />}
+
         <AddUserForm
           onCreated={(u, warning) => {
             setUsers((prev) => (prev ? [...prev, u] : [u]));
@@ -446,6 +448,82 @@ function RefCodesCell({
           {copied ? "Đã chép link" : `…/careers?ref=${codes[0]}`}
         </button>
       )}
+    </div>
+  );
+}
+
+/**
+ * Người support mặc định: hồ sơ mới không khớp mã ref của tài khoản nào (ref của người ngoài như
+ * cat-tuong, freelancer… hoặc không có ref) tự giao cho người này. Mã ref vẫn giữ để tính hoa hồng.
+ */
+function DefaultSupportSelect({
+  users,
+  onNotice,
+}: {
+  users: HrUser[];
+  onNotice: (n: { kind: "ok" | "error"; text: string }) => void;
+}) {
+  const [value, setValue] = useState<string | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    hrFetch("/api/hr/default-assignee")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((j) => alive && setValue((j.userId as string | null) ?? null))
+      .catch(() => alive && setValue(null));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function change(next: string) {
+    setBusy(true);
+    try {
+      const res = await hrFetch("/api/hr/default-assignee", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ userId: next || null }),
+      });
+      const j = await readJson(res);
+      if (!res.ok) {
+        onNotice({ kind: "error", text: String(j.error ?? `HTTP ${res.status}`) });
+        return;
+      }
+      setValue((j.userId as string | null) ?? null);
+      const name = users.find((u) => u.id === j.userId)?.display_name;
+      onNotice({ kind: "ok", text: name ? `Người support mặc định: ${name}` : "Đã bỏ người support mặc định" });
+    } catch {
+      onNotice({ kind: "error", text: "Không kết nối được máy chủ" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const options = users.filter((u) => !u.disabled && (u.role === "hr" || u.role === "boss"));
+  return (
+    <div className="hr-group flex flex-wrap items-center gap-3 px-4 py-3">
+      <label htmlFor="default-support" className="text-[13px] font-semibold text-white/80">
+        Người support mặc định
+      </label>
+      <select
+        id="default-support"
+        value={value ?? ""}
+        disabled={busy || value === undefined}
+        onChange={(e) => void change(e.target.value)}
+        className={`${inputCls} py-1 disabled:opacity-50`}
+      >
+        <option value="">Không có (hồ sơ để chưa giao, tag @everyone)</option>
+        {options.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.display_name} · {ROLE_LABEL[u.role]}
+          </option>
+        ))}
+      </select>
+      <p className="basis-full text-[12px] text-white/50">
+        Hồ sơ mới có mã ref của người chưa có tài khoản (vd. cat-tuong, freelancer) hoặc không có ref sẽ tự giao cho người này.
+        Mã ref vẫn giữ nguyên để tính hoa hồng người giới thiệu.
+      </p>
     </div>
   );
 }
