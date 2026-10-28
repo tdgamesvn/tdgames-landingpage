@@ -150,3 +150,10 @@ Mọi request ghi (POST/PATCH/PUT/DELETE) phải cùng nguồn: header `Origin` 
 - `GET /api/hr/applications/:id/mentionable` (perm `apps.comment`, 404 ngoài phạm vi) → `{ members: [{ id, display_name, role, roleLabel }] }` — tài khoản chưa khoá xem được hồ sơ, bỏ chính mình, không email.
 - `POST /api/hr/applications/:id/comments` body `{ content, mentions?: uuid[] }` — server chỉ giữ id thuộc mentionable (≤20).
 - `GET .../comments` mỗi comment thêm `mentions: uuid[]`, `author_role`.
+
+### Thư mời nhận việc PDF (2026-10-28, cần migration `20261028010000_offer_letters`)
+- `GET /api/hr/applications/:id/offer-letter` (perm `emails.send_offer`, 404 ngoài phạm vi) → `{ data: OfferLetterData (mẫu công ty + đã lưu), saved, updated_by, updated_at, total }` · `PUT` body OfferLetterData → sanitize + validate (400 tiếng Việt: thiếu tên/chức danh/ngày bắt đầu/lương cơ bản, giới hạn độ dài/30 mục/1e10) → upsert.
+- `POST /api/hr/applications/:id/offer-letter/preview` body OfferLetterData (chưa lưu, chỉ kiểm giới hạn) → `application/pdf` inline. Không ghi gì.
+- `GET /api/hr/offer-letter-defaults` (`emails.send_offer` hoặc `emails.templates`) → `{ defaults, saved, builtin }` · `PUT` (`emails.templates`) body OfferLetterDefaults.
+- `GET /api/hr/emails/:emailId/attachment?i=0` (`emails.send_offer` + phạm vi hồ sơ của mail) → PDF sinh lại từ snapshot.
+- Mail offer: `GET .../emails/draft?kind=offer` bắt buộc đã lưu thư (chưa → 400 `{error:"Chưa soạn thư mời…", code:"no_offer_letter"}`; thiếu trường → 400 `code:"offer_letter_invalid"`), trả thêm `attachment: { filename }`; bỏ query `salary`/`start_date`. `POST .../emails` kind offer: đọc lại thư đã lưu → render PDF → Resend `attachments` (base64) → ghi `candidate_emails.attachments`. `GET .../emails` trả thêm cột `attachments`.

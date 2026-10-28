@@ -54,8 +54,22 @@ export type DraftInput = {
   testUrl?: string | null;
   /** Hồ sơ đã có kết quả MBTI → mail mời PV không nhắc làm trắc nghiệm nữa. */
   hasMbti?: boolean;
-  /** Mail offer: lương + ngày bắt đầu (trống → "…" để người gửi điền). */
-  offer?: { salary: string; startDate: string } | null;
+  /**
+   * Mail offer: các chuỗi đã định dạng từ thư mời nhận việc (trống → "…").
+   * `salary` / `startDate` là trường cũ — `{muc_luong}` vẫn hợp lệ trong mẫu tuỳ chỉnh;
+   * `start` (giờ + ngày đã định dạng) ưu tiên hơn `startDate` cho `{ngay_bat_dau}`.
+   */
+  offer?: {
+    salary?: string;
+    startDate?: string;
+    title?: string;
+    start?: string;
+    workingHours?: string;
+    location?: string;
+    confirmBy?: string;
+    contact?: string;
+    fileName?: string;
+  } | null;
 };
 
 /** Trắc nghiệm MBTI gửi ứng viên trước buổi PV (sếp chọn, 2026-10-26). */

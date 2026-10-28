@@ -102,15 +102,26 @@ function legacyBuildDraft(input: DraftInput): { subject: string; text: string } 
       ];
       break;
     case "offer": {
-      const salary = input.offer?.salary.trim() || "…";
-      const startDate = input.offer?.startDate.trim() || "…";
-      subject = `Thư mời làm việc — ${job} | TD Games`;
-      body = [
-        `Cảm ơn bạn đã dành thời gian tham gia phỏng vấn vị trí ${job} tại TD Games. Chúng tôi rất vui được gửi tới bạn lời mời làm việc:`,
-        [`- Vị trí: ${job}`, `- Mức lương: ${salary}`, `- Ngày bắt đầu dự kiến: ${startDate}`].join("\n"),
-        "Bạn vui lòng trả lời email này để xác nhận nhận offer, hoặc gửi lại bất kỳ câu hỏi nào — chúng tôi luôn sẵn sàng giải đáp.",
-      ];
-      break;
+      // Mẫu offer mới (2026-10-28, có thư mời PDF đính kèm) — thay đổi có chủ đích, không còn lương trong thân mail.
+      const o = input.offer ?? null;
+      const v = (s: string | undefined) => s?.trim() || "…";
+      subject = `[TD Games] Thư mời nhận việc — ${job}`;
+      const text = [
+        `Xin chào ${name},`,
+        `Thay mặt TD Games, cảm ơn bạn đã dành thời gian tham gia quá trình tuyển dụng. Sau quá trình cân nhắc kỹ, chúng tôi rất vui thông báo bạn đã vượt qua vòng phỏng vấn và được lựa chọn cho vị trí ${job}.`,
+        [
+          `- Chức danh: ${o?.title?.trim() || job}`,
+          `- Ngày bắt đầu: ${o?.start?.trim() || v(o?.startDate)}`,
+          `- Thời gian làm việc: ${v(o?.workingHours)}`,
+          `- Địa điểm: ${v(o?.location)}`,
+          "- Chế độ đãi ngộ: Xem chi tiết trong file đính kèm",
+        ].join("\n"),
+        `File đính kèm “${v(o?.fileName)}”: mức lương, phụ cấp, thời gian thử việc, phúc lợi, giấy tờ cần chuẩn bị và lịch trình ngày đầu đi làm.`,
+        `Bạn vui lòng trả lời email này để xác nhận nhận offer trước ${v(o?.confirmBy)}. Nếu có câu hỏi về công việc, vị trí hay chế độ, bạn liên hệ:\n${o?.contact?.trim() || "Phòng Nhân sự · hr@tdgamestudio.com"}`,
+        "TD Games rất mong được chào đón bạn trở thành một phần của đội ngũ!",
+        SIGNATURE_LEGACY,
+      ].join("\n\n");
+      return { subject, text };
     }
   }
 
@@ -135,7 +146,11 @@ for (const testUrl of ["https://tdgamestudio.com/test/x", null, undefined]) {
   cases.push({ kind: "test_assignment", candidateName: "A", jobTitle: "Dev", testUrl });
 }
 cases.push({ kind: "rejection", candidateName: "A", jobTitle: "Dev" });
-for (const offer of [null, undefined, { salary: "", startDate: "" }, { salary: " 20tr ", startDate: "01/12" }]) {
+const fullOffer = {
+  title: "Họa sĩ 2D", start: "8:45, Thứ Hai 02/11/2026", workingHours: "T2–T6, 8:30 – 17:30", location: "VP TD Games",
+  confirmBy: "Thứ Hai 02/11/2026", contact: "Ms. Thảo · 0964525584 · ketoan@td.vn", fileName: "Thư mời nhận việc - A.pdf",
+};
+for (const offer of [null, undefined, { salary: "", startDate: "" }, { salary: " 20tr ", startDate: "01/12" }, {}, fullOffer, { ...fullOffer, title: " ", contact: "" }]) {
   cases.push({ kind: "offer", candidateName: "A", jobTitle: "Dev", offer });
 }
 for (const kind of CANDIDATE_EMAIL_KINDS) {
@@ -220,7 +235,7 @@ test("SAMPLE_DRAFT_INPUT: render sạch, không còn biến chưa thay", () => {
     assert.doesNotMatch(d.subject + d.text, /\{[a-z_]+\}/, k);
     assert.match(d.text, /Nguyễn Văn A/);
   }
-  assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 12);
+  assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 18);
 });
 
 test("validate: biến viết gần đúng bị từ chối, ngoặc lẻ vẫn được", () => {
@@ -236,4 +251,53 @@ test("validate: tiêu đề chỉ gồm biến/khoảng trắng bị từ chối
   assert.ok(validateTemplate("rejection", "{vi_tri}", "x"));
   assert.ok(validateTemplate("rejection", " {vi_tri} {ten_ung_vien} ", "x"));
   assert.equal(validateTemplate("rejection", "{vi_tri} | TD", "x"), null);
+});
+
+// ── Mail offer mới + người liên hệ ──
+import { offerContact } from "./hr-email-templates.ts";
+
+test("offer: mẫu mới không lộ lương, có biến thư mời", () => {
+  const d = buildDraft({ ...SAMPLE_DRAFT_INPUT("offer"), offer: { ...fullOffer, salary: "20.000.000 VND" } });
+  assert.equal(d.subject, "[TD Games] Thư mời nhận việc — 2D Game Artist");
+  assert.ok(!d.text.includes("20.000.000"));
+  assert.ok(d.text.includes("- Chức danh: Họa sĩ 2D"));
+  assert.ok(d.text.includes("- Ngày bắt đầu: 8:45, Thứ Hai 02/11/2026"));
+  assert.ok(d.text.includes("File đính kèm “Thư mời nhận việc - A.pdf”"));
+  assert.ok(d.text.includes("trước Thứ Hai 02/11/2026."));
+  assert.ok(d.text.includes("liên hệ:\nMs. Thảo · 0964525584 · ketoan@td.vn"));
+  for (const v of ["chuc_danh", "ngay_bat_dau", "thoi_gian_lam_viec", "dia_diem", "han_xac_nhan", "nguoi_lien_he", "ten_file", "muc_luong"]) {
+    assert.ok(KIND_VARS.offer.includes(v), v);
+  }
+  // muc_luong vẫn dùng được trong mẫu tuỳ chỉnh
+  assert.equal(validateTemplate("offer", "Offer", "Lương {muc_luong} {ten_file}"), null);
+});
+
+const u = (o: Partial<{ role: string; display_name: string; email: string; phone: string | null; disabled: boolean; created_at: string }>) => ({
+  role: "accountant", display_name: "Ms. Thảo (Đào Thị Xuân Thảo)", email: "ketoan@tdconsulting.vn", phone: "0964525584",
+  disabled: false, created_at: "2026-10-01T00:00:00Z", ...o,
+});
+
+test("offerContact: Kế toán/HR gửi → chính người đó", () => {
+  assert.equal(offerContact(u({}), []), "Ms. Thảo (Đào Thị Xuân Thảo) · 0964525584 · ketoan@tdconsulting.vn");
+  assert.equal(offerContact(u({ role: "hr", display_name: "HR Phương", phone: null, email: "hr@td.vn" }), [u({})]), "HR Phương · hr@td.vn");
+  assert.equal(offerContact(u({ role: "hr", display_name: " ", phone: " ", email: "hr@td.vn" }), []), "hr@td.vn");
+});
+
+test("offerContact: Sếp gửi → kế toán đầu tiên chưa khoá theo created_at", () => {
+  const boss = u({ role: "boss", display_name: "Toàn", email: "tony@td.vn" });
+  const accs = [
+    u({ display_name: "KT mới", created_at: "2026-10-20T00:00:00Z" }),
+    u({ display_name: "KT cũ khoá", created_at: "2026-01-01T00:00:00Z", disabled: true }),
+    u({ display_name: "KT cũ", created_at: "2026-05-01T00:00:00Z", phone: "" }),
+    u({ role: "hr", display_name: "HR sớm nhất", created_at: "2025-01-01T00:00:00Z" }),
+  ];
+  assert.equal(offerContact(boss, accs), "KT cũ · ketoan@tdconsulting.vn");
+});
+
+test("offerContact: không có kế toán → Phòng Nhân sự", () => {
+  const boss = u({ role: "boss" });
+  assert.equal(offerContact(boss, []), "Phòng Nhân sự · hr@tdgamestudio.com");
+  assert.equal(offerContact(null, [u({ disabled: true })]), "Phòng Nhân sự · hr@tdgamestudio.com");
+  // Leader (nếu được cấp quyền) cũng đi nhánh kế toán
+  assert.equal(offerContact(u({ role: "leader" }), [u({ display_name: "KT" })]), "KT · 0964525584 · ketoan@tdconsulting.vn");
 });

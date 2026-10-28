@@ -3,7 +3,10 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken } from "@/lib/hr-tests";
 import { resolveCcForApplication } from "@/lib/hr-email-send";
-import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isValidEmail } from "@/lib/hr-email";
+import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isValidEmail, type DraftInput } from "@/lib/hr-email";
+import { NO_OFFER_LETTER, offerDraftFields, offerFileName, validateOfferLetter } from "@/lib/offer-letter";
+import { loadOfferContact, loadOfferLetterRow } from "@/lib/offer-letter-store";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,6 +83,26 @@ export async function GET(request: Request, { params }: Ctx) {
     testUrl = `${SITE}/test/${token}`;
   }
 
+  // Mail offer: bắt buộc đã lưu thư mời nhận việc (PDF đính kèm sinh từ dữ liệu này khi gửi).
+  let offer: DraftInput["offer"] = null;
+  let attachment: { filename: string } | null = null;
+  if (kind === "offer") {
+    let letter;
+    let contact: string;
+    try {
+      [letter, contact] = await Promise.all([loadOfferLetterRow(id), loadOfferContact(auth.ctx)]);
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : "Không đọc được thư mời" }, { status: 500 });
+    }
+    if (!letter) return NextResponse.json({ ...meta, error: NO_OFFER_LETTER, code: "no_offer_letter" }, { status: 400 });
+    const invalid = validateOfferLetter(letter.data);
+    if (invalid) {
+      return NextResponse.json({ ...meta, error: `Thư mời nhận việc chưa đủ: ${invalid}`, code: "offer_letter_invalid" }, { status: 400 });
+    }
+    offer = offerDraftFields(letter.data, contact, new Date());
+    attachment = { filename: offerFileName(letter.data.candidateName) };
+  }
+
   const job = (Array.isArray(app.jobs) ? app.jobs[0] : app.jobs) as { title?: string } | null;
   // Mẫu HR đã sửa (nếu có). Lỗi đọc → dùng mẫu mặc định, không chặn việc soạn mail.
   let template: { subject: string; body: string } | null = null;
@@ -100,7 +123,7 @@ export async function GET(request: Request, { params }: Ctx) {
     prevScheduledAt,
     testUrl,
     hasMbti: Boolean(app.mbti_type || app.mbti_url),
-    offer: kind === "offer" ? { salary: url.searchParams.get("salary")?.slice(0, 100) ?? "", startDate: url.searchParams.get("start_date")?.slice(0, 100) ?? "" } : null,
+    offer,
   }, template);
   let ccPreview: string[];
   try {
@@ -125,5 +148,6 @@ export async function GET(request: Request, { params }: Ctx) {
     text: draft.text,
     cc_preview: ccPreview,
     last_sent_at: last?.created_at ?? null,
+    ...(attachment ? { attachment } : {}),
   });
 }

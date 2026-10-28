@@ -1,7 +1,8 @@
 /**
  * Mẫu mail ứng viên sửa được (thuần, không I/O): biến `{ten_bien}`, mẫu mặc định,
  * dựng biến từ DraftInput, render, kiểm tra khi lưu, dữ liệu mẫu cho xem trước.
- * Mẫu mặc định render ra đúng văn bản cũ của buildDraft (xem hr-email-templates.test.ts).
+ * Mẫu mặc định render ra đúng văn bản cũ của buildDraft (xem hr-email-templates.test.ts),
+ * trừ `offer` (đổi có chủ đích 2026-10-28: thư mời nhận việc PDF đính kèm, thân mail không lộ lương).
  */
 
 import {
@@ -25,7 +26,11 @@ export const KIND_VARS: Record<CandidateEmailKind, string[]> = {
   interview_cancel: [...COMMON_VARS, "cau_huy", "thoi_gian_cu"],
   test_assignment: [...COMMON_VARS, "link_bai_test"],
   rejection: [...COMMON_VARS],
-  offer: [...COMMON_VARS, "muc_luong", "ngay_bat_dau"],
+  offer: [
+    ...COMMON_VARS,
+    "chuc_danh", "ngay_bat_dau", "thoi_gian_lam_viec", "dia_diem", "han_xac_nhan", "nguoi_lien_he", "ten_file",
+    "muc_luong",
+  ],
 };
 
 export const VAR_HELP: Record<string, string> = {
@@ -39,8 +44,14 @@ export const VAR_HELP: Record<string, string> = {
   cau_huy: "Câu báo huỷ (có giờ cũ nếu biết)",
   thoi_gian_cu: "Giờ phỏng vấn cũ (trống nếu không biết)",
   link_bai_test: "Link đề bài & nộp bài",
-  muc_luong: "Mức lương trong offer (trống → “…”)",
-  ngay_bat_dau: "Ngày bắt đầu dự kiến (trống → “…”)",
+  muc_luong: "Mức lương (cũ — mẫu mặc định không dùng để không lộ lương trong thân mail; trống → “…”)",
+  ngay_bat_dau: "Giờ + ngày bắt đầu từ thư mời, vd “8:45, Thứ Hai 12/10/2026”",
+  chuc_danh: "Chức danh trong thư mời (trống → tên vị trí)",
+  thoi_gian_lam_viec: "Thời gian làm việc trong thư mời",
+  dia_diem: "Địa điểm làm việc trong thư mời",
+  han_xac_nhan: "Hạn xác nhận offer, vd “Thứ Sáu 30/10/2026”",
+  nguoi_lien_he: "Người liên hệ: tên · SĐT · email (Kế toán/HR gửi → chính người đó; Sếp gửi → Kế toán)",
+  ten_file: "Tên file thư mời nhận việc đính kèm (PDF)",
 };
 
 export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
@@ -95,12 +106,20 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
     ].join("\n\n"),
   },
   offer: {
-    subject: "Thư mời làm việc — {vi_tri} | TD Games",
+    subject: "[TD Games] Thư mời nhận việc — {vi_tri}",
     body: [
-      "Chào {ten_ung_vien},",
-      "Cảm ơn bạn đã dành thời gian tham gia phỏng vấn vị trí {vi_tri} tại TD Games. Chúng tôi rất vui được gửi tới bạn lời mời làm việc:",
-      "- Vị trí: {vi_tri}\n- Mức lương: {muc_luong}\n- Ngày bắt đầu dự kiến: {ngay_bat_dau}",
-      "Bạn vui lòng trả lời email này để xác nhận nhận offer, hoặc gửi lại bất kỳ câu hỏi nào — chúng tôi luôn sẵn sàng giải đáp.",
+      "Xin chào {ten_ung_vien},",
+      "Thay mặt TD Games, cảm ơn bạn đã dành thời gian tham gia quá trình tuyển dụng. Sau quá trình cân nhắc kỹ, chúng tôi rất vui thông báo bạn đã vượt qua vòng phỏng vấn và được lựa chọn cho vị trí {vi_tri}.",
+      [
+        "- Chức danh: {chuc_danh}",
+        "- Ngày bắt đầu: {ngay_bat_dau}",
+        "- Thời gian làm việc: {thoi_gian_lam_viec}",
+        "- Địa điểm: {dia_diem}",
+        "- Chế độ đãi ngộ: Xem chi tiết trong file đính kèm",
+      ].join("\n"),
+      "File đính kèm “{ten_file}”: mức lương, phụ cấp, thời gian thử việc, phúc lợi, giấy tờ cần chuẩn bị và lịch trình ngày đầu đi làm.",
+      "Bạn vui lòng trả lời email này để xác nhận nhận offer trước {han_xac_nhan}. Nếu có câu hỏi về công việc, vị trí hay chế độ, bạn liên hệ:\n{nguoi_lien_he}",
+      "TD Games rất mong được chào đón bạn trở thành một phần của đội ngũ!",
       "{chu_ky}",
     ].join("\n\n"),
   },
@@ -124,9 +143,56 @@ export function templateVars(input: DraftInput): Record<string, string> {
       ? `Buổi phỏng vấn vị trí ${input.jobTitle.trim() || "vị trí bạn ứng tuyển"} vào lúc ${formatInterviewLong(input.prevScheduledAt)} đã được huỷ.`
       : `Buổi phỏng vấn vị trí ${input.jobTitle.trim() || "vị trí bạn ứng tuyển"} đã được huỷ.`,
     link_bai_test: input.testUrl ?? "(HR bổ sung link)",
-    muc_luong: input.offer?.salary.trim() || "…",
-    ngay_bat_dau: input.offer?.startDate.trim() || "…",
+    ...offerVars(input),
   };
+}
+
+const HR_FALLBACK_CONTACT = "Phòng Nhân sự · hr@tdgamestudio.com";
+
+function offerVars(input: DraftInput): Record<string, string> {
+  const o = input.offer ?? null;
+  const v = (s: string | undefined) => s?.trim() || "…";
+  return {
+    muc_luong: v(o?.salary),
+    ngay_bat_dau: o?.start?.trim() || v(o?.startDate),
+    chuc_danh: o?.title?.trim() || input.jobTitle.trim() || "vị trí bạn ứng tuyển",
+    thoi_gian_lam_viec: v(o?.workingHours),
+    dia_diem: v(o?.location),
+    han_xac_nhan: v(o?.confirmBy),
+    nguoi_lien_he: o?.contact?.trim() || HR_FALLBACK_CONTACT,
+    ten_file: v(o?.fileName),
+  };
+}
+
+export type OfferContactUser = {
+  role: string;
+  display_name: string | null;
+  email: string | null;
+  phone: string | null;
+  disabled?: boolean;
+  created_at?: string | null;
+};
+
+function contactLine(u: OfferContactUser): string {
+  return [u.display_name, u.phone, u.email].map((x) => (x ?? "").trim()).filter(Boolean).join(" · ");
+}
+
+/**
+ * Người liên hệ trong mail offer: người gửi là Kế toán/HR → chính người đó; vai khác (Sếp…) →
+ * tài khoản Kế toán đầu tiên chưa khoá (theo created_at); không có → Phòng Nhân sự.
+ * Định dạng "{tên} · {SĐT} · {email}", bỏ phần trống.
+ */
+export function offerContact(sender: OfferContactUser | null, users: OfferContactUser[]): string {
+  if (sender && (sender.role === "accountant" || sender.role === "hr")) {
+    const line = contactLine(sender);
+    if (line) return line;
+  }
+  const acc = users
+    .filter((u) => u.role === "accountant" && !u.disabled)
+    .sort((a, b) => String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")))
+    .map(contactLine)
+    .find(Boolean);
+  return acc || HR_FALLBACK_CONTACT;
 }
 
 const VAR_RE = /\{([a-zA-Z0-9_]+)\}/g;
@@ -188,7 +254,19 @@ export function SAMPLE_DRAFT_INPUT(kind: CandidateEmailKind): DraftInput {
     case "test_assignment":
       return { ...base, testUrl: "https://tdgamestudio.com/test/mau-xem-truoc" };
     case "offer":
-      return { ...base, offer: { salary: "15.000.000 VND/tháng", startDate: "01/12/2026" } };
+      return {
+        ...base,
+        offer: {
+          salary: "15.000.000 VND",
+          title: "2D Game Artist",
+          start: "8:45, Thứ Ba 01/12/2026",
+          workingHours: "Từ thứ Hai đến thứ Sáu, 8:30 – 17:30",
+          location: "Văn phòng TD Games – Tầng 4, 505 Minh Khai, Hai Bà Trưng, Hà Nội",
+          confirmBy: "Thứ Sáu 27/11/2026",
+          contact: "Ms. Thảo (Đào Thị Xuân Thảo) · 0964525584 · ketoan@tdconsulting.vn",
+          fileName: "Thư mời nhận việc - Nguyễn Văn A.pdf",
+        },
+      };
     default:
       return base;
   }

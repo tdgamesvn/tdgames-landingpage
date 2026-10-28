@@ -8,7 +8,15 @@ import type { HrRole } from "./hr-permissions";
 /** Gửi 1 mail qua Resend REST API. Không throw — trả `{ error }` để route báo lại HR. */
 export async function sendViaResend(
   cfg: HrEmailConfig,
-  msg: { to: string; subject: string; html: string; text: string; cc?: string[] },
+  msg: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+    cc?: string[];
+    /** File đính kèm, `content` = base64. */
+    attachments?: { filename: string; content: string }[];
+  },
 ): Promise<{ id: string } | { error: string }> {
   if (!cfg.apiKey) return { error: "RESEND_API_KEY chưa cấu hình" };
   try {
@@ -23,8 +31,10 @@ export async function sendViaResend(
         subject: msg.subject,
         html: msg.html,
         text: msg.text,
+        ...(msg.attachments && msg.attachments.length ? { attachments: msg.attachments } : {}),
       }),
-      signal: AbortSignal.timeout(15_000),
+      // Có file đính kèm (PDF vài trăm KB) → cho thêm thời gian upload.
+      signal: AbortSignal.timeout(msg.attachments?.length ? 30_000 : 15_000),
     });
     const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
     if (!res.ok || !data.id) return { error: data.message ?? `Resend HTTP ${res.status}` };

@@ -177,24 +177,24 @@ test("mời PV: đã có MBTI → không nhắc làm lại; mail khác không c�
 
 import { resolveCc, CC_ROLES, KIND_LABEL } from "./hr-email.ts";
 
-test("offer: nháp chứa lương, ngày bắt đầu, tên job", () => {
+test("offer: nháp có chức danh, ngày bắt đầu, tên job; không lộ lương", () => {
   const d = buildDraft({
     kind: "offer",
     candidateName: "Lan",
     jobTitle: "Unity Dev",
-    offer: { salary: "15.000.000đ", startDate: "01/11/2026" },
+    offer: { salary: "15.000.000đ", start: "8:45, Thứ Hai 02/11/2026" },
   });
-  assert.ok(d.text.includes("15.000.000đ"));
-  assert.ok(d.text.includes("01/11/2026"));
+  assert.ok(!d.text.includes("15.000.000đ"));
+  assert.ok(d.text.includes("8:45, Thứ Hai 02/11/2026"));
   assert.ok(d.text.includes("Unity Dev"));
-  assert.ok(d.text.includes("Chào Lan,"));
+  assert.ok(d.text.includes("Xin chào Lan,"));
   assert.equal(KIND_LABEL.offer, "Gửi offer");
 });
 
-test("offer: thiếu lương/ngày → giữ dòng với …", () => {
+test("offer: thiếu dữ liệu thư mời → giữ dòng với …", () => {
   const d = buildDraft({ kind: "offer", candidateName: "Lan", jobTitle: "Unity Dev" });
-  assert.ok(d.text.includes("- Mức lương: …"));
-  assert.ok(d.text.includes("- Ngày bắt đầu dự kiến: …"));
+  assert.ok(d.text.includes("- Chức danh: Unity Dev"));
+  assert.ok(d.text.includes("- Ngày bắt đầu: …"));
 });
 
 const staff = [

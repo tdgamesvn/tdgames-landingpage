@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   // Deploy build vào thư mục tạm (NEXT_DIST_DIR=.next-new) rồi mới swap sang .next,
   // để app đang chạy không mất file giữa chừng — xem .github/workflows/deploy.yml.
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // react-pdf (sinh PDF thư mời nhận việc) là ESM nặng, đọc font bằng fs → chạy thẳng từ node_modules, không bundle.
+  serverExternalPackages: ["@react-pdf/renderer"],
   experimental: {
     optimizePackageImports: ["framer-motion"],
   },

@@ -4,6 +4,10 @@ import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { getHrEmailConfig, isCandidateEmailKind, isValidEmail, resolveRecipient, textToHtml } from "@/lib/hr-email";
 import { sendViaResend, resolveCcForApplication } from "@/lib/hr-email-send";
 import { redactEmailRow } from "@/lib/hr-scope";
+import { NO_OFFER_LETTER, offerFileName, validateOfferLetter, type OfferLetterData } from "@/lib/offer-letter";
+import { renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
+import { loadOfferLetterRow } from "@/lib/offer-letter-store";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +24,7 @@ export async function GET(request: Request, { params }: Ctx) {
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const { data, error } = await getSupabaseAdmin()
     .from("candidate_emails")
-    .select("id, application_id, interview_id, kind, to_email, sent_to, cc_emails, test_mode, subject, body_text, body_html, resend_id, sent_by, created_at")
+    .select("id, application_id, interview_id, kind, to_email, sent_to, cc_emails, test_mode, subject, body_text, body_html, resend_id, sent_by, created_at, attachments")
     .eq("application_id", id)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -65,6 +69,27 @@ export async function POST(request: Request, { params }: Ctx) {
   const cfg = getHrEmailConfig(process.env);
   if (!cfg.apiKey) return NextResponse.json({ error: "RESEND_API_KEY chưa cấu hình" }, { status: 500 });
 
+  // Mail offer: PDF thư mời sinh từ dữ liệu ĐÃ LƯU (không nhận từ client), đính kèm qua Resend.
+  let offerAttachment: { filename: string; content: string; snapshot: OfferLetterData } | null = null;
+  if (kind === "offer") {
+    let letter;
+    try {
+      letter = await loadOfferLetterRow(id);
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : "Không đọc được thư mời" }, { status: 500 });
+    }
+    if (!letter) return NextResponse.json({ error: NO_OFFER_LETTER }, { status: 400 });
+    const invalid = validateOfferLetter(letter.data);
+    if (invalid) return NextResponse.json({ error: `Thư mời nhận việc chưa đủ: ${invalid}` }, { status: 400 });
+    try {
+      const pdf = await renderOfferLetterPdf(letter.data);
+      offerAttachment = { filename: offerFileName(letter.data.candidateName), content: pdf.toString("base64"), snapshot: letter.data };
+    } catch (e) {
+      console.error("[offer-letter] render PDF khi gửi lỗi:", e);
+      return NextResponse.json({ error: "Không tạo được PDF thư mời" }, { status: 500 });
+    }
+  }
+
   // CC: server tính; client chỉ được bớt người (tập con của ccPreview), địa chỉ lạ bị bỏ im lặng.
   let resolved: { cc: string[]; ccPreview: string[] };
   try {
@@ -81,7 +106,14 @@ export async function POST(request: Request, { params }: Ctx) {
   const candidateEmail = (appEmail as string).trim();
   const r = resolveRecipient(cfg, candidateEmail, subject);
   const html = textToHtml(text);
-  const sent = await sendViaResend(cfg, { to: r.to, subject: r.subject, html, text, cc });
+  const sent = await sendViaResend(cfg, {
+    to: r.to,
+    subject: r.subject,
+    html,
+    text,
+    cc,
+    ...(offerAttachment ? { attachments: [{ filename: offerAttachment.filename, content: offerAttachment.content }] } : {}),
+  });
   if ("error" in sent) return NextResponse.json({ error: `Gửi thất bại: ${sent.error}` }, { status: 502 });
 
   const { data, error } = await getSupabaseAdmin()
@@ -100,6 +132,10 @@ export async function POST(request: Request, { params }: Ctx) {
       resend_id: sent.id,
       sent_by: ctx.user.displayName,
       sent_by_user_id: ctx.user.id,
+      // Chỉ ghi cột khi có file (mail loại khác không phụ thuộc cột mới).
+      ...(offerAttachment
+        ? { attachments: [{ filename: offerAttachment.filename, kind: "offer_letter", snapshot: offerAttachment.snapshot }] }
+        : {}),
     })
     .select()
     .single();

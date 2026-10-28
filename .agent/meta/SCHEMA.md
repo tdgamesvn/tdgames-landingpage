@@ -141,3 +141,8 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 - `hr_email_templates` (kind PK ∈ 6 loại mail ứng viên, subject, body, updated_by text, updated_by_user_id → hr_users ON DELETE SET NULL, updated_at). RLS bật, không policy. Không có dòng = mẫu mặc định trong `src/lib/hr-email-templates.ts`.
 
 - `application_comments.mentions uuid[] not null default '{}'` — id hr_users được @tag (migration 20261027030000, chưa áp prod).
+
+## Thư mời nhận việc (2026-10-28, migration `20261028010000_offer_letters` — chưa áp prod)
+- `offer_letters` (application_id PK → applications ON DELETE CASCADE, data jsonb = `OfferLetterData` (`src/lib/offer-letter.ts`), updated_by text, updated_by_user_id → hr_users ON DELETE SET NULL, updated_at). RLS bật, không policy (có lương).
+- `candidate_emails.attachments jsonb not null default '[]'` — `[{ filename, kind: "offer_letter", snapshot: OfferLetterData }]`; PDF không lưu đâu cả, sinh lại từ snapshot. Thiếu `emails.send_offer` → API chỉ trả `{filename, kind}`.
+- `app_settings` key `offer_letter_defaults` = JSON `OfferLetterDefaults` (mẫu công ty); thiếu → `DEFAULT_OFFER_LETTER_DEFAULTS`.
