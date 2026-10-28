@@ -339,7 +339,7 @@ export default function EmailTemplatesPanel() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-[15px] font-semibold text-[var(--hr-ink)]">{preview.subject || "(chưa có tiêu đề)"}</p>
               <p className="truncate text-[12.5px] text-[var(--hr-ink-2)]">
-                TD Games HR &lt;hr@tdgamestudio.com&gt; gửi Nguyễn Văn A
+                Nguyễn Thị Minh Phương · TD Games &lt;hiring@tdgamestudio.com&gt; gửi Nguyễn Văn A
               </p>
             </div>
             <div

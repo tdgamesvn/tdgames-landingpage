@@ -119,19 +119,10 @@ export async function GET(request: Request, { params }: Ctx) {
     if (tErr) console.error("draft: đọc hr_email_templates lỗi, dùng mẫu mặc định:", tErr.message);
     else if (t) template = { subject: String(t.subject), body: String(t.body) };
   }
-  const draft = buildDraft({
-    kind,
-    candidateName: app.full_name ?? "",
-    jobTitle: job?.title ?? "",
-    interview,
-    prevScheduledAt,
-    testUrl,
-    hasMbti: Boolean(app.mbti_type || app.mbti_url),
-    offer,
-  }, template);
   let ccPreview: string[];
   let ccFixed: string[];
   let replyTo: string[];
+  let support: DraftInput["support"];
   try {
     const r = await resolveCcForApplication(cfg, kind, auth.ctx, {
       jobId: (app.job_id as string | null) ?? null,
@@ -140,9 +131,22 @@ export async function GET(request: Request, { params }: Ctx) {
     ccPreview = r.ccPreview;
     ccFixed = r.fixed;
     replyTo = r.replyTo;
+    support = r.support;
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Không đọc được danh sách CC" }, { status: 500 });
   }
+  // Chữ ký cuối mail = người support (tên + SĐT) + hiring@.
+  const draft = buildDraft({
+    kind,
+    candidateName: app.full_name ?? "",
+    jobTitle: job?.title ?? "",
+    support,
+    interview,
+    prevScheduledAt,
+    testUrl,
+    hasMbti: Boolean(app.mbti_type || app.mbti_url),
+    offer,
+  }, template);
 
   const { data: last } = await supabase
     .from("candidate_emails")

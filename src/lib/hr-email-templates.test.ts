@@ -24,7 +24,7 @@ import {
 const SIGNATURE_LEGACY = [
   "Trân trọng,",
   "TD Games Studio — Phòng Nhân sự",
-  "https://tdgamestudio.com · hr@tdgamestudio.com",
+  "hiring@tdgamestudio.com · https://tdgamestudio.com",
 ].join("\n");
 
 function whereLinesLegacy(i: NonNullable<DraftInput["interview"]>): string[] {
@@ -117,7 +117,7 @@ function legacyBuildDraft(input: DraftInput): { subject: string; text: string } 
           "- Chế độ đãi ngộ: Xem chi tiết trong file đính kèm",
         ].join("\n"),
         `File đính kèm “${v(o?.fileName)}”: mức lương, phụ cấp, thời gian thử việc, phúc lợi, giấy tờ cần chuẩn bị và lịch trình ngày đầu đi làm.`,
-        `Bạn vui lòng trả lời email này để xác nhận nhận offer trước ${v(o?.confirmBy)}. Nếu có câu hỏi về công việc, vị trí hay chế độ, bạn liên hệ:\n${o?.contact?.trim() || "Phòng Nhân sự · hr@tdgamestudio.com"}`,
+        `Bạn vui lòng trả lời email này để xác nhận nhận offer trước ${v(o?.confirmBy)}. Nếu có câu hỏi về công việc, vị trí hay chế độ, bạn liên hệ:\n${o?.contact?.trim() || "Phòng Nhân sự · hiring@tdgamestudio.com"}`,
         "TD Games rất mong được chào đón bạn trở thành một phần của đội ngũ!",
         SIGNATURE_LEGACY,
       ].join("\n\n");
@@ -297,8 +297,23 @@ test("offerContact: Sếp gửi → kế toán đầu tiên chưa khoá theo cre
 
 test("offerContact: không có kế toán → Phòng Nhân sự", () => {
   const boss = u({ role: "boss" });
-  assert.equal(offerContact(boss, []), "Phòng Nhân sự · hr@tdgamestudio.com");
-  assert.equal(offerContact(null, [u({ disabled: true })]), "Phòng Nhân sự · hr@tdgamestudio.com");
+  assert.equal(offerContact(boss, []), "Phòng Nhân sự · hiring@tdgamestudio.com");
+  assert.equal(offerContact(null, [u({ disabled: true })]), "Phòng Nhân sự · hiring@tdgamestudio.com");
   // Leader (nếu được cấp quyền) cũng đi nhánh kế toán
   assert.equal(offerContact(u({ role: "leader" }), [u({ display_name: "KT" })]), "KT · 0964525584 · ketoan@tdconsulting.vn");
+});
+
+test("chữ ký {chu_ky}: có người support → tên + SĐT + hiring@; không có → chữ ký chung hiring@", async () => {
+  const { buildSignature } = await import("./hr-email-base.ts");
+  assert.equal(
+    buildSignature({ name: "Nguyễn Thị Minh Phương", phone: "0385456273" }),
+    "Trân trọng,\nNguyễn Thị Minh Phương — Phòng Nhân sự TD Games\n0385 456 273 · hiring@tdgamestudio.com · https://tdgamestudio.com",
+  );
+  assert.equal(
+    buildSignature({ name: "Nguyễn Thị Minh Phương", phone: null }),
+    "Trân trọng,\nNguyễn Thị Minh Phương — Phòng Nhân sự TD Games\nhiring@tdgamestudio.com · https://tdgamestudio.com",
+  );
+  assert.equal(buildSignature(null), "Trân trọng,\nTD Games Studio — Phòng Nhân sự\nhiring@tdgamestudio.com · https://tdgamestudio.com");
+  const d = buildDraft({ kind: "rejection", candidateName: "Lan", jobTitle: "Dev", support: { name: "Thuỳ Dung", phone: "+84336828903" } });
+  assert.ok(d.text.endsWith("Thuỳ Dung — Phòng Nhân sự TD Games\n+84336828903 · hiring@tdgamestudio.com · https://tdgamestudio.com"));
 });

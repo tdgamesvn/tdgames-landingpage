@@ -8,7 +8,8 @@
 import {
   KIND_LABEL,
   MBTI_TEST_URL,
-  SIGNATURE,
+  buildSignature,
+  HIRING_EMAIL,
   formatInterviewLong,
   whereLines,
   isCandidateKind,
@@ -134,7 +135,7 @@ export function templateVars(input: DraftInput): Record<string, string> {
   return {
     ten_ung_vien: input.candidateName.trim() || "bạn",
     vi_tri: input.jobTitle.trim() || "vị trí bạn ứng tuyển",
-    chu_ky: SIGNATURE,
+    chu_ky: buildSignature(input.support),
     vong: i && i.round > 1 ? ` (vòng ${i.round})` : "",
     thoi_gian_pv: i ? `${formatInterviewLong(i.scheduledAt)} (giờ Việt Nam)` : "(HR bổ sung)",
     hinh_thuc_pv: i ? whereLines(i).join("\n") : "",
@@ -150,7 +151,7 @@ export function templateVars(input: DraftInput): Record<string, string> {
   };
 }
 
-const HR_FALLBACK_CONTACT = "Phòng Nhân sự · hr@tdgamestudio.com";
+const HR_FALLBACK_CONTACT = `Phòng Nhân sự · ${HIRING_EMAIL}`;
 
 function offerVars(input: DraftInput): Record<string, string> {
   const o = input.offer ?? null;
@@ -242,7 +243,12 @@ export function validateTemplate(kind: string, subject: string, body: string): s
 
 /** Dữ liệu mẫu cho xem trước trong tab "Mẫu mail". */
 export function SAMPLE_DRAFT_INPUT(kind: CandidateEmailKind): DraftInput {
-  const base: DraftInput = { kind, candidateName: "Nguyễn Văn A", jobTitle: "2D Game Artist" };
+  const base: DraftInput = {
+    kind,
+    candidateName: "Nguyễn Văn A",
+    jobTitle: "2D Game Artist",
+    support: { name: "Nguyễn Thị Minh Phương", phone: "0385456273" },
+  };
   const interview = {
     scheduledAt: "2026-11-02T08:30:00.000Z",
     mode: "online" as const,

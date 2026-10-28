@@ -252,10 +252,10 @@ test("replyToFor: người support (active) + hiring@; không có → hiring@", 
   assert.deepEqual(replyToFor(liveCfg, null), [HIRING]);
 });
 
-test("fromFor: tên người support · TD Games <hr@>; không có → from mặc định; tên lạ được làm sạch", () => {
-  assert.equal(fromFor(liveCfg, "Nguyễn Thị Minh Phương"), '"Nguyễn Thị Minh Phương · TD Games" <hr@tdgamestudio.com>');
-  assert.equal(fromFor(liveCfg, null), "TD Games HR <hr@tdgamestudio.com>");
-  assert.equal(fromFor(liveCfg, 'A "B" <c@x>\r\n'), '"A B c@x · TD Games" <hr@tdgamestudio.com>');
+test("fromFor (mail ứng viên): gửi từ hiring@, tên người support · TD Games; không có → TD Games Tuyển dụng", () => {
+  assert.equal(fromFor(liveCfg, "Nguyễn Thị Minh Phương"), '"Nguyễn Thị Minh Phương · TD Games" <hiring@tdgamestudio.com>');
+  assert.equal(fromFor(liveCfg, null), '"TD Games Tuyển dụng" <hiring@tdgamestudio.com>');
+  assert.equal(fromFor(liveCfg, 'A "B" <c@x>\r\n'), '"A B c@x · TD Games" <hiring@tdgamestudio.com>');
 });
 
 test("textToHtml: header là ảnh banner nền tối (không mất logo khi Gmail đảo màu ở chế độ tối)", () => {
@@ -268,4 +268,11 @@ test("textToHtml: link đặt mật khẩu /hr thành nút 'Đặt mật khẩu'
   const html = textToHtml("Bấm link:\n\nhttps://tdgamestudio.com/hr/set-password?token=abc_DEF-123");
   assert.ok(html.includes(">Đặt mật khẩu</a>"));
   assert.ok(html.includes('href="https://tdgamestudio.com/hr/set-password?token=abc_DEF-123"'));
+});
+
+test("textToHtml: chân mail ứng viên ghi hiring@; mail nội bộ truyền footerEmail hr@", () => {
+  assert.ok(textToHtml("Chào bạn").includes("mailto:hiring@tdgamestudio.com"));
+  assert.ok(!textToHtml("Chào bạn").includes("hr@tdgamestudio.com\""));
+  const staff = textToHtml("Chào bạn", { footerEmail: "hr@tdgamestudio.com" });
+  assert.ok(staff.includes("mailto:hr@tdgamestudio.com"));
 });

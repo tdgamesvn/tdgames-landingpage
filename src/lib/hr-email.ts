@@ -8,6 +8,7 @@
 import { OFFICE_ADDRESS } from "./company-location.ts";
 import {
   CANDIDATE_EMAIL_KINDS,
+  HIRING_EMAIL,
   KIND_LABEL,
   MBTI_TEST_URL,
   formatInterviewLong,
@@ -39,7 +40,7 @@ export function getHrEmailConfig(env: Record<string, string | undefined>): HrEma
     from: env.HR_EMAIL_FROM?.trim() || "TD Games HR <hr@tdgamestudio.com>",
     replyTo: env.HR_EMAIL_REPLY_TO?.trim() || "hr@tdgamestudio.com",
     testTo: env.HR_EMAIL_TEST_TO?.trim() || "tony@tdgamestudio.com",
-    hiring: env.HR_HIRING_EMAIL?.trim() || "hiring@tdgamestudio.com",
+    hiring: env.HR_HIRING_EMAIL?.trim() || HIRING_EMAIL,
     apiKey: env.RESEND_API_KEY?.trim() || null,
   };
 }
@@ -103,17 +104,15 @@ export function replyToFor(cfg: HrEmailConfig, assignee: { email: string; disabl
   return out;
 }
 
-/** From hiển thị tên người support: `"Tên · TD Games" <hr@…>`; không có tên → From mặc định. */
+/** From mail ứng viên (gửi từ hiring@): `"Tên người support · TD Games" <hiring@…>`; không có → "TD Games Tuyển dụng". */
 export function fromFor(cfg: HrEmailConfig, supportName: string | null): string {
   const name = (supportName ?? "")
     .replace(/[\u0000-\u001f\u007f"<>\\]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 60);
-  if (!name) return cfg.from;
-  const m = /<([^>]+)>/.exec(cfg.from);
-  const addr = (m ? m[1] : cfg.from).trim();
-  return `"${name} · TD Games" <${addr}>`;
+  const addr = isValidEmail(cfg.hiring) ? cfg.hiring.trim() : HIRING_EMAIL;
+  return `"${name ? `${name} · TD Games` : "TD Games Tuyển dụng"}" <${addr}>`;
 }
 
 /** Dựng bản nháp từ mẫu (HR đã sửa trong DB) hoặc mẫu mặc định. */
@@ -194,7 +193,8 @@ function infoTable(lines: string[]) {
 }
 
 /** Text (HR có thể đã sửa) → HTML mail có thương hiệu. Escape hết rồi mới dựng thẻ. */
-export function textToHtml(text: string, opts?: { footerNote?: string }): string {
+export function textToHtml(text: string, opts?: { footerNote?: string; footerEmail?: string }): string {
+  const footerEmail = escapeHtml(opts?.footerEmail ?? HIRING_EMAIL);
   const footerNote = opts?.footerNote ?? "Bạn nhận email này vì đã ứng tuyển tại TD Games.";
   const blocks = text
     .replace(/\r\n/g, "\n")
@@ -231,7 +231,7 @@ ${body}
 </table>
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px"><tr><td style="padding:18px 32px;font-family:${FONT};font-size:12px;line-height:1.6;color:#a1a1aa;text-align:center">
 TD Games Studio · ${escapeHtml(OFFICE_ADDRESS)}<br>
-<a href="https://tdgamestudio.com" style="color:#71717a;text-decoration:none">tdgamestudio.com</a> · <a href="mailto:hr@tdgamestudio.com" style="color:#71717a;text-decoration:none">hr@tdgamestudio.com</a><br>
+<a href="https://tdgamestudio.com" style="color:#71717a;text-decoration:none">tdgamestudio.com</a> · <a href="mailto:${footerEmail}" style="color:#71717a;text-decoration:none">${footerEmail}</a><br>
 ${escapeHtml(footerNote)}
 </td></tr></table>
 </td></tr></table>

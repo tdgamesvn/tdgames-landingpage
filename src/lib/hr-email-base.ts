@@ -44,6 +44,8 @@ export type DraftInput = {
   kind: CandidateEmailKind;
   candidateName: string;
   jobTitle: string;
+  /** Người support của hồ sơ — ký tên cuối mail (tên + SĐT). Không có → chữ ký chung. */
+  support?: { name: string; phone: string | null } | null;
   interview?: {
     scheduledAt: string;
     mode: "offline" | "online" | null;
@@ -74,11 +76,25 @@ export type DraftInput = {
 /** Trắc nghiệm MBTI gửi ứng viên trước buổi PV (sếp chọn, 2026-10-26). */
 export const MBTI_TEST_URL = "https://www.topcv.vn/mbti/lam-trac-nghiem";
 
-export const SIGNATURE = [
-  "Trân trọng,",
-  "TD Games Studio — Phòng Nhân sự",
-  "https://tdgamestudio.com · hr@tdgamestudio.com",
-].join("\n");
+/** Hộp thư tuyển dụng — mail gửi ứng viên đi từ / ký bằng địa chỉ này (sếp chốt 2026-10-28; hr@ cho việc nội bộ). */
+export const HIRING_EMAIL = "hiring@tdgamestudio.com";
+
+/** "0385456273" → "0385 456 273"; số khác (vd. +84…) giữ nguyên. */
+export function formatPhoneVi(phone: string): string {
+  return /^0\d{9}$/.test(phone) ? `${phone.slice(0, 4)} ${phone.slice(4, 7)} ${phone.slice(7)}` : phone;
+}
+
+/** Chữ ký mail ứng viên: có người support → tên + SĐT; luôn kèm hiring@ + website. */
+export function buildSignature(support: { name: string; phone: string | null } | null | undefined): string {
+  const name = support?.name.trim();
+  if (!name) return ["Trân trọng,", "TD Games Studio — Phòng Nhân sự", `${HIRING_EMAIL} · https://tdgamestudio.com`].join("\n");
+  const contact = [support?.phone ? formatPhoneVi(support.phone) : null, HIRING_EMAIL, "https://tdgamestudio.com"]
+    .filter(Boolean)
+    .join(" · ");
+  return ["Trân trọng,", `${name} — Phòng Nhân sự TD Games`, contact].join("\n");
+}
+
+export const SIGNATURE = buildSignature(null);
 
 export function whereLines(i: NonNullable<DraftInput["interview"]>): string[] {
   if (i.mode === "online" && i.meetUrl) {

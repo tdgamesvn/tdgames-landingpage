@@ -53,7 +53,11 @@ export async function sendStaffEmail(
   msg: { subject: string; text: string },
 ): Promise<{ id: string } | { error: string }> {
   const cfg = getHrEmailConfig(process.env);
-  const html = textToHtml(msg.text, { footerNote: "Bạn nhận email này vì được mời sử dụng TD Games HR." });
+  // Mail nội bộ: chân mail giữ hr@ (hiring@ dành cho ứng viên).
+  const html = textToHtml(msg.text, {
+    footerNote: "Bạn nhận email này vì được mời sử dụng TD Games HR.",
+    footerEmail: "hr@tdgamestudio.com",
+  });
   return sendViaResend(cfg, { to, subject: msg.subject, html, text: msg.text });
 }
 
@@ -67,9 +71,17 @@ export async function resolveCcForApplication(
   kind: CandidateEmailKind,
   ctx: HrContext,
   app: { jobId: string | null; assigneeId: string | null },
-): Promise<{ cc: string[]; ccPreview: string[]; fixed: string[]; replyTo: string[]; from: string }> {
+): Promise<{
+  cc: string[];
+  ccPreview: string[];
+  fixed: string[];
+  replyTo: string[];
+  from: string;
+  /** Người support (đang hoạt động) — ký tên cuối mail. */
+  support: { name: string; phone: string | null } | null;
+}> {
   const supabase = getSupabaseAdmin();
-  const { data: users, error } = await supabase.from("hr_users").select("id, email, role, disabled, display_name");
+  const { data: users, error } = await supabase.from("hr_users").select("id, email, role, disabled, display_name, phone");
   if (error) throw new Error(`resolveCc: ${error.message}`);
   let jobLeaderId: string | null = null;
   if (app.jobId) {
@@ -83,6 +95,7 @@ export async function resolveCcForApplication(
     role: u.role as HrRole,
     disabled: !!u.disabled,
     display_name: String(u.display_name ?? ""),
+    phone: (u.phone as string | null) ?? null,
   }));
   const assignee = app.assigneeId ? staff.find((u) => u.id === app.assigneeId) ?? null : null;
   const r = resolveCc(cfg, kind, staff, { assigneeId: app.assigneeId, jobLeaderId, senderEmail: ctx.user.email });
@@ -90,5 +103,6 @@ export async function resolveCcForApplication(
     ...r,
     replyTo: replyToFor(cfg, assignee),
     from: fromFor(cfg, assignee && !assignee.disabled ? assignee.display_name : null),
+    support: assignee && !assignee.disabled && assignee.display_name ? { name: assignee.display_name, phone: assignee.phone } : null,
   };
 }
