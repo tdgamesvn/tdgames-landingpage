@@ -1,6 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { requireBoss, loadScopedApplication } from "@/lib/hr-session";
-import { canReview, validateReviewInput } from "@/lib/offer-letter-approval";
+import { canReview, OFFER_CHANGED_SINCE_REVIEW, sameVersion, validateReviewInput } from "@/lib/offer-letter-approval";
 import { loadOfferLetterRow, readJsonBody, transitionOfferApproval } from "@/lib/offer-letter-store";
 import { notifyOfferApproval } from "@/lib/hr-notify";
 
@@ -27,6 +27,12 @@ export async function POST(request: Request, { params }: Ctx) {
   const input = validateReviewInput(body.data);
   if (!input.ok) return NextResponse.json({ error: input.error }, { status: 400 });
 
+  // Duyệt gắn với phiên bản thư Sếp đã xem (updated_at lấy từ GET offer-letter).
+  const expected = (body.data as Record<string, unknown> | null)?.updated_at;
+  if (typeof expected !== "string" || !expected) {
+    return NextResponse.json({ error: "Thiếu updated_at của bản thư đã xem" }, { status: 400 });
+  }
+
   let letter;
   try {
     letter = await loadOfferLetterRow(id);
@@ -36,6 +42,10 @@ export async function POST(request: Request, { params }: Ctx) {
   if (!letter) return NextResponse.json({ error: "Chưa có thư mời" }, { status: 400 });
   if (!canReview(ctx.role, letter.approval.status)) {
     return NextResponse.json({ error: "Thư không ở trạng thái chờ duyệt" }, { status: 400 });
+  }
+
+  if (!sameVersion(expected, letter.updated_at)) {
+    return NextResponse.json({ error: OFFER_CHANGED_SINCE_REVIEW, code: "offer_changed" }, { status: 409 });
   }
 
   const now = new Date().toISOString();
@@ -48,8 +58,8 @@ export async function POST(request: Request, { params }: Ctx) {
       reviewed_by_user_id: ctx.user.id,
       reviewed_at: now,
       review_note: reviewNote,
-    });
-    if (!ok) return NextResponse.json({ error: "Trạng thái thư vừa thay đổi, tải lại rồi thử lại" }, { status: 409 });
+    }, expected);
+    if (!ok) return NextResponse.json({ error: OFFER_CHANGED_SINCE_REVIEW, code: "offer_changed" }, { status: 409 });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Không lưu được quyết định" }, { status: 500 });
   }

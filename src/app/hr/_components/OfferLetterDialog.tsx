@@ -12,6 +12,7 @@ import { Download, FileText, Mail, Save, Send, X } from "lucide-react";
 import { hrFetch, useHrSession } from "./HrSession";
 import { OfferLetterFields, PdfPreviewPane, downloadBlob, fetchPdfBlob, openPdfInNewTab, useIsWide, usePdfPreview } from "./OfferLetterFields";
 import { offerFileName, type OfferLetterData } from "@/lib/offer-letter";
+import { previousReviewNote } from "@/lib/offer-letter-approval";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
 export type OfferLetterRequest = { appId: string; candidateName: string };
@@ -48,8 +49,11 @@ function approvalBanner(a: ApprovalView | undefined, saved: boolean, isBoss: boo
       };
     case "changes_requested":
       return { tone: "warn", text: `✏️ Sếp yêu cầu sửa: ${a.review_note ?? ""}` };
-    default:
+    default: {
+      const prevNote = previousReviewNote(a);
+      if (prevNote) return { tone: "warn", text: `✏️ Sếp yêu cầu sửa (lần trước): ${prevNote}` };
       return { tone: "warn", text: isBoss ? "Thư chưa duyệt — bấm Lưu để duyệt" : "Thư chưa gửi Sếp duyệt" };
+    }
   }
 }
 

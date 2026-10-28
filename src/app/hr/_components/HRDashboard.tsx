@@ -11,7 +11,7 @@ import EmailTemplatesPanel from "./EmailTemplatesPanel";
 import CommentThread from "./CommentThread";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
-import { CandidateMailProvider, CandidateMailSection, openSavedOfferPdf, useCandidateMail } from "./CandidateMailDialog";
+import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
 import ThemeToggle, { useHrTheme, type HrThemePref } from "./ThemeToggle";
 import { HrSessionProvider, hrFetch, useHrSession } from "./HrSession";
 import HrAuthCard, { AUTH_INPUT, AUTH_LINK } from "./HrAuthCard";
@@ -21,6 +21,8 @@ import PushToggle from "./PushToggle";
 import { STATUS_PALETTE } from "./status-palette";
 import { avatarColorIndex } from "@/lib/hr-comment-mentions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
+import { fetchPdfBlob, openPdfInNewTab } from "./OfferLetterFields";
+import { previousReviewNote } from "@/lib/offer-letter-approval";
 import { cvViewerUrl, safeExternalUrl } from "@/lib/cv-viewer";
 import { ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
 
@@ -2639,7 +2641,15 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   // Trạng thái bước: thư mời đã lưu chưa (ai, lúc nào, duyệt chưa) + mail offer đã gửi chưa (lần gần nhất).
-  const [letter, setLetter] = useState<{ saved: boolean; by: string | null; at: string | null; approval: OfferApprovalView } | null>(null);
+  const [letter, setLetter] = useState<{ saved: boolean; by: string | null; at: string | null; data: unknown; approval: OfferApprovalView } | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
+  // onPatch / nhãn hiện tại đọc qua ref để effect tải không phụ thuộc vào chúng (tránh tải lặp).
+  const patchRef = useRef(onPatch);
+  const badgeRef = useRef(app.offer_approval_status ?? null);
+  useEffect(() => {
+    patchRef.current = onPatch;
+    badgeRef.current = app.offer_approval_status ?? null;
+  });
   const [sentAt, setSentAt] = useState<string | null>(null);
   const [busy, setBusy] = useState<"" | "submit" | "approve" | "changes" | "pdf">("");
   const [noteOpen, setNoteOpen] = useState(false);
@@ -2656,19 +2666,16 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
     let alive = true;
     hrFetch(`/api/hr/applications/${app.id}/offer-letter`)
       .then((r) => (r.ok ? r.json() : null))
-      .then(
-        (j) =>
-          alive &&
-          j &&
-          setLetter({
-            saved: !!j.saved,
-            by: j.updated_by ?? null,
-            at: j.updated_at ?? null,
-            approval: (j.approval as OfferApprovalView | undefined) ?? {
-              status: "draft", submitted_by: null, submitted_at: null, reviewed_by: null, reviewed_at: null, review_note: null,
-            },
-          }),
-      )
+      .then((j) => {
+        if (!alive || !j) return;
+        const approval: OfferApprovalView = (j.approval as OfferApprovalView | undefined) ?? {
+          status: "draft", submitted_by: null, submitted_at: null, reviewed_by: null, reviewed_at: null, review_note: null,
+        };
+        setLetter({ saved: !!j.saved, by: j.updated_by ?? null, at: j.updated_at ?? null, data: j.data, approval });
+        // Nhãn "Chờ duyệt offer" trên card theo trạng thái thật (sau khi đóng hộp thoại / duyệt xong).
+        const badge = j.saved && approval.status === "pending" ? "pending" : null;
+        if (badge !== badgeRef.current) patchRef.current({ offer_approval_status: badge });
+      })
       .catch(() => {});
     if (canSeeEmails) {
       hrFetch(`/api/hr/applications/${app.id}/emails`)
@@ -2683,7 +2690,7 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
     return () => {
       alive = false;
     };
-  }, [app.id, visible, canMail, canSeeEmails, dialogOpen, lastSentAt]);
+  }, [app.id, visible, canMail, canSeeEmails, dialogOpen, lastSentAt, reloadTick]);
 
   if (!visible) return null;
   if (!canSetResult && !canMail && !app.offer_status) return null;
@@ -2715,11 +2722,26 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
       const res = await hrFetch(`/api/hr/applications/${app.id}/offer-letter/${kind === "submit" ? "submit" : "review"}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(kind === "submit" ? {} : kind === "approve" ? { decision: "approve" } : { decision: "changes", note: note.trim() }),
+        // Duyệt gắn với bản thư Sếp đang xem (updated_at lấy từ GET).
+        body: JSON.stringify(
+          kind === "submit"
+            ? {}
+            : kind === "approve"
+              ? { decision: "approve", updated_at: letter?.at }
+              : { decision: "changes", note: note.trim(), updated_at: letter?.at },
+        ),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+      if (!res.ok) {
+        // Thư vừa được sửa → tải lại bản mới để Sếp xem rồi duyệt.
+        if (res.status === 409) {
+          setReloadTick((t) => t + 1);
+          setNoteOpen(false);
+        }
+        throw new Error(j.error ?? `HTTP ${res.status}`);
+      }
       setLetter((l) => (l ? { ...l, approval: j.approval as OfferApprovalView } : l));
+      onPatch({ offer_approval_status: (j.approval as OfferApprovalView).status === "pending" ? "pending" : null });
       setNoteOpen(false);
       setNote("");
     } catch (e) {
@@ -2732,7 +2754,11 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
   async function viewLetter() {
     setBusy("pdf");
     setError("");
-    const err = await openSavedOfferPdf(app.id);
+    // Xem đúng bản đã tải cùng updated_at (bản Sếp sẽ duyệt), không tải lại bản có thể mới hơn.
+    const data = letter?.data;
+    const err = data
+      ? await openPdfInNewTab(() => fetchPdfBlob(`/api/hr/applications/${app.id}/offer-letter/preview`, data))
+      : "Chưa tải được thư";
     if (err) setError(err);
     setBusy("");
   }
@@ -2766,6 +2792,9 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
             <p className="text-[13px] text-white/60">
               {step === "loading" && "Đang kiểm tra thư mời…"}
               {step === "compose" && "Chưa có thư mời nhận việc. Soạn thư trước; thư cần Sếp duyệt rồi mới gửi mail offer (thư PDF tự đính kèm)."}
+              {step === "draft" && ap && previousReviewNote(ap) && !isBoss && (
+                <span className="block text-white/70">✏️ Sếp yêu cầu sửa (lần trước): {previousReviewNote(ap)}</span>
+              )}
               {step === "draft" &&
                 (isBoss
                   ? `Thư mời đã lưu${letter?.by ? ` bởi ${letter.by}` : ""}${at(letter?.at ?? null)} — chưa duyệt. Mở thư và bấm Lưu để duyệt.`

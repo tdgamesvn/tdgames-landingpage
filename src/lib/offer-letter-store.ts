@@ -121,30 +121,55 @@ export async function loadOfferLetterRow(applicationId: string): Promise<OfferLe
 /**
  * Lưu thư + áp luật duyệt (nextApprovalOnSave): Sếp lưu → approved (reviewed_by = Sếp, xoá ghi chú sửa);
  * người khác đổi dữ liệu → draft; không đổi dữ liệu → giữ nguyên trạng thái.
+ * Người không phải Sếp: ghi có điều kiện theo trạng thái đã đọc (không đè trạng thái vừa được Sếp duyệt);
+ * xung đột → đọc lại và tính lại (tối đa 3 lần). `prevStatus` = trạng thái ngay trước lần lưu thành công.
  */
-export async function saveOfferLetter(ctx: HrContext, applicationId: string, data: OfferLetterData): Promise<OfferLetterRow> {
-  const prev = await loadOfferLetterRow(applicationId);
-  const status: ApprovalStatus = nextApprovalOnSave({
-    actorRole: ctx.role,
-    prevStatus: prev?.approval.status ?? null,
-    dataChanged: offerDataChanged(prev?.data ?? null, data),
-  });
-  const now = new Date().toISOString();
-  const row = {
-    application_id: applicationId,
-    data,
-    updated_by: ctx.user.displayName,
-    updated_by_user_id: ctx.user.id,
-    updated_at: now,
-    approval_status: status,
-    ...(ctx.role === "boss"
-      ? { reviewed_by: ctx.user.displayName, reviewed_by_user_id: ctx.user.id, reviewed_at: now, review_note: null }
-      : {}),
-  };
-  const { error } = await getSupabaseAdmin().from("offer_letters").upsert(row);
-  if (error) throw new Error(`saveOfferLetter: ${error.message}`);
-  const approval: OfferApproval =
-    ctx.role === "boss"
+export async function saveOfferLetter(
+  ctx: HrContext,
+  applicationId: string,
+  data: OfferLetterData,
+): Promise<OfferLetterRow & { prevStatus: ApprovalStatus | null }> {
+  const boss = ctx.role === "boss";
+  const supabase = getSupabaseAdmin();
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const prev = await loadOfferLetterRow(applicationId);
+    const status: ApprovalStatus = nextApprovalOnSave({
+      actorRole: ctx.role,
+      prevStatus: prev?.approval.status ?? null,
+      dataChanged: offerDataChanged(prev?.data ?? null, data),
+    });
+    const now = new Date().toISOString();
+    const row = {
+      application_id: applicationId,
+      data,
+      updated_by: ctx.user.displayName,
+      updated_by_user_id: ctx.user.id,
+      updated_at: now,
+      approval_status: status,
+      ...(boss ? { reviewed_by: ctx.user.displayName, reviewed_by_user_id: ctx.user.id, reviewed_at: now, review_note: null } : {}),
+    };
+    if (boss) {
+      const { error } = await supabase.from("offer_letters").upsert(row);
+      if (error) throw new Error(`saveOfferLetter: ${error.message}`);
+    } else if (!prev) {
+      const { error } = await supabase.from("offer_letters").insert(row);
+      if (error) {
+        if (error.code === "23505") continue; // người khác vừa tạo thư → tính lại
+        throw new Error(`saveOfferLetter: ${error.message}`);
+      }
+    } else {
+      const { application_id: _id, ...patch } = row;
+      void _id;
+      const { data: hit, error } = await supabase
+        .from("offer_letters")
+        .update(patch)
+        .eq("application_id", applicationId)
+        .eq("approval_status", prev.approval.status)
+        .select("application_id");
+      if (error) throw new Error(`saveOfferLetter: ${error.message}`);
+      if (!(hit ?? []).length) continue; // trạng thái vừa đổi (vd. Sếp vừa duyệt) → tính lại
+    }
+    const approval: OfferApproval = boss
       ? {
           ...(prev?.approval ?? EMPTY_APPROVAL),
           status,
@@ -154,24 +179,29 @@ export async function saveOfferLetter(ctx: HrContext, applicationId: string, dat
           review_note: null,
         }
       : { ...(prev?.approval ?? EMPTY_APPROVAL), status };
-  return { data, updated_by: row.updated_by, updated_at: now, approval };
+    return { data, updated_by: row.updated_by, updated_at: now, approval, prevStatus: prev?.approval.status ?? null };
+  }
+  throw new Error("saveOfferLetter: thư đang được người khác thao tác, thử lại");
 }
 
 /**
  * Chuyển trạng thái duyệt (submit / review) có điều kiện: chỉ ghi khi trạng thái hiện tại còn ở `from`
- * (tránh hai người bấm cùng lúc / dữ liệu vừa bị sửa). Trả false nếu không có dòng nào khớp.
+ * và (nếu có) `updated_at` còn đúng phiên bản `expectedUpdatedAt` (Sếp duyệt đúng bản đã xem).
+ * Trả false nếu không có dòng nào khớp.
  */
 export async function transitionOfferApproval(
   applicationId: string,
   from: ApprovalStatus[],
   patch: Record<string, unknown>,
+  expectedUpdatedAt?: string,
 ): Promise<boolean> {
-  const { data, error } = await getSupabaseAdmin()
+  let q = getSupabaseAdmin()
     .from("offer_letters")
     .update(patch)
     .eq("application_id", applicationId)
-    .in("approval_status", from)
-    .select("application_id");
+    .in("approval_status", from);
+  if (expectedUpdatedAt) q = q.eq("updated_at", expectedUpdatedAt);
+  const { data, error } = await q.select("application_id");
   if (error) throw new Error(`transitionOfferApproval: ${error.message}`);
   return (data ?? []).length > 0;
 }

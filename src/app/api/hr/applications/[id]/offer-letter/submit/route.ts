@@ -49,6 +49,11 @@ export async function POST(request: Request, { params }: Ctx) {
       submitted_by: ctx.user.displayName,
       submitted_by_user_id: ctx.user.id,
       submitted_at: now,
+      // Vòng duyệt mới: xoá phản hồi vòng trước.
+      reviewed_by: null,
+      reviewed_by_user_id: null,
+      reviewed_at: null,
+      review_note: null,
     });
     if (!ok) return NextResponse.json({ error: "Trạng thái thư vừa thay đổi, tải lại rồi thử lại" }, { status: 409 });
   } catch (e) {
@@ -65,9 +70,9 @@ export async function POST(request: Request, { params }: Ctx) {
       status: "pending",
       submitted_by: ctx.user.displayName,
       submitted_at: now,
-      reviewed_by: letter.approval.reviewed_by,
-      reviewed_at: letter.approval.reviewed_at,
-      review_note: letter.approval.review_note,
+      reviewed_by: null,
+      reviewed_at: null,
+      review_note: null,
     },
   });
 }

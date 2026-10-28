@@ -91,3 +91,28 @@ export function offerApprovalRecipients(i: {
   const actor = i.actorId ?? null;
   return { userIds: actor ? ids.filter((id) => id !== actor) : ids, everyone: false };
 }
+
+export const OFFER_CHANGED_SINCE_REVIEW = "Thư mời vừa được sửa — mở lại để xem bản mới rồi duyệt";
+
+/** Hai mốc `updated_at` có cùng một phiên bản thư không (so theo thời điểm, không so chuỗi). */
+export function sameVersion(expected: unknown, current: string | null | undefined): boolean {
+  if (typeof expected !== "string" || !current) return false;
+  const a = Date.parse(expected);
+  const b = Date.parse(current);
+  return Number.isFinite(a) && Number.isFinite(b) && a === b;
+}
+
+/**
+ * Ghi chú "Sếp yêu cầu sửa" lần trước, vẫn hiện khi người soạn đang sửa (trạng thái đã về draft
+ * nhưng Sếp phản hồi SAU lần gửi gần nhất). Trạng thái changes_requested thì dùng thẳng review_note.
+ */
+export function previousReviewNote(a: {
+  status: ApprovalStatus;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+}): string | null {
+  if (a.status !== "draft" || !a.review_note || !a.reviewed_at) return null;
+  if (!a.submitted_at) return a.review_note;
+  return Date.parse(a.reviewed_at) > Date.parse(a.submitted_at) ? a.review_note : null;
+}

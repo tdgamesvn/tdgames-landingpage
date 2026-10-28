@@ -435,7 +435,8 @@ export async function notifyOfferApproval(i: {
     body = "Có thể gửi mail offer";
   } else {
     const note = (i.note ?? "").trim();
-    content = `✏️ Sếp yêu cầu sửa thư mời nhận việc của ${who}: ${note}`;
+    // Discord là kênh chung → không đưa ghi chú tự do; push (riêng người gửi + người support) có ghi chú.
+    content = `✏️ Sếp yêu cầu sửa thư mời nhận việc của ${who} — xem ghi chú trong /hr`;
     title = `✏️ Sếp yêu cầu sửa thư mời — ${name}`;
     body = note.length > 160 ? `${note.slice(0, 157)}...` : note;
   }

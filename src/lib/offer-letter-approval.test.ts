@@ -110,3 +110,22 @@ test("offerApprovalRecipients reviewed: loại người thực hiện (sếp duy
   const r = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: "b1", assigneeId: "h1", actorId: "b1" });
   assert.deepEqual(r.userIds, ["h1"]);
 });
+
+import { sameVersion, previousReviewNote } from "./offer-letter-approval.ts";
+
+test("sameVersion: so theo thời điểm, khác định dạng vẫn khớp; thiếu/sai → false", () => {
+  assert.equal(sameVersion("2026-10-28T05:00:00.123+00:00", "2026-10-28T05:00:00.123Z"), true);
+  assert.equal(sameVersion("2026-10-28T05:00:00.123Z", "2026-10-28T05:00:00.124Z"), false);
+  assert.equal(sameVersion(undefined, "2026-10-28T05:00:00Z"), false);
+  assert.equal(sameVersion("x", "2026-10-28T05:00:00Z"), false);
+  assert.equal(sameVersion("2026-10-28T05:00:00Z", null), false);
+});
+
+test("previousReviewNote: chỉ khi draft, có ghi chú và Sếp phản hồi sau lần gửi", () => {
+  const base = { status: "draft" as const, submitted_at: "2026-10-28T05:00:00Z", reviewed_at: "2026-10-28T06:00:00Z", review_note: "sửa lương" };
+  assert.equal(previousReviewNote(base), "sửa lương");
+  assert.equal(previousReviewNote({ ...base, reviewed_at: "2026-10-28T04:00:00Z" }), null);
+  assert.equal(previousReviewNote({ ...base, status: "pending" as never }), null);
+  assert.equal(previousReviewNote({ ...base, review_note: null }), null);
+  assert.equal(previousReviewNote({ ...base, submitted_at: null }), "sửa lương");
+});

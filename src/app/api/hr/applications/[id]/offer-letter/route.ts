@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { offerTotal, sanitizeOfferLetter, validateOfferLetter } from "@/lib/offer-letter";
+import { notifyOfferApproval } from "@/lib/hr-notify";
 import { approvalForClient, EMPTY_APPROVAL, loadOfferLetterForApp, saveOfferLetter, readJsonBody } from "@/lib/offer-letter-store";
 
 export const runtime = "nodejs";
@@ -50,6 +51,20 @@ export async function PUT(request: Request, { params }: Ctx) {
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
   try {
     const row = await saveOfferLetter(auth.ctx, id, data);
+    // Sếp lưu thư đang chờ duyệt = duyệt → báo người gửi + người support như khi bấm Duyệt.
+    if (auth.ctx.role === "boss" && row.prevStatus === "pending") {
+      const actor = auth.ctx.user;
+      after(() =>
+        notifyOfferApproval({
+          kind: "reviewed",
+          appId: id,
+          actorId: actor.id,
+          actorName: actor.displayName,
+          submitterId: row.approval.submitted_by_user_id,
+          decision: "approve",
+        }).catch((e) => console.error("[offer-letter] notify reviewed (PUT) lỗi:", e)),
+      );
+    }
     return NextResponse.json({
       data: row.data,
       saved: true,
