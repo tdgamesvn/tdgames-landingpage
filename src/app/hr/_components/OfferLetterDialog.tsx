@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Download, FileText, Mail, Save, X } from "lucide-react";
 import { hrFetch } from "./HrSession";
-import { OfferLetterFields, PdfPreviewPane, downloadBlob, fetchPdfBlob, openPdfInNewTab, usePdfPreview } from "./OfferLetterFields";
+import { OfferLetterFields, PdfPreviewPane, downloadBlob, fetchPdfBlob, openPdfInNewTab, useIsWide, usePdfPreview } from "./OfferLetterFields";
 import { offerFileName, type OfferLetterData } from "@/lib/offer-letter";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
@@ -42,7 +42,9 @@ export default function OfferLetterDialog({
   const [busy, setBusy] = useState<"" | "save" | "compose" | "download">("");
 
   const previewUrl = `/api/hr/applications/${req.appId}/offer-letter/preview`;
-  const preview = usePdfPreview(previewUrl, data);
+  // Màn hẹp: khung xem trước ẩn → không tự tạo PDF; dùng nút "Xem trước".
+  const wide = useIsWide();
+  const preview = usePdfPreview(previewUrl, wide ? data : null);
   // savedJson = mốc so sánh (bản đã lưu, hoặc bản dựng từ mẫu lúc mở nếu chưa lưu lần nào).
   const dirty = !!data && savedJson !== null && JSON.stringify(data) !== savedJson;
   const neverSaved = !!loaded && !loaded.saved;

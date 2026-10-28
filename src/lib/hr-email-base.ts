@@ -56,11 +56,10 @@ export type DraftInput = {
   hasMbti?: boolean;
   /**
    * Mail offer: các chuỗi đã định dạng từ thư mời nhận việc (trống → "…").
-   * `salary` / `startDate` là trường cũ — `{muc_luong}` vẫn hợp lệ trong mẫu tuỳ chỉnh;
-   * `start` (giờ + ngày đã định dạng) ưu tiên hơn `startDate` cho `{ngay_bat_dau}`.
+   * `startDate` là trường cũ; `start` (giờ + ngày đã định dạng) ưu tiên hơn cho `{ngay_bat_dau}`.
+   * Không có lương: `{muc_luong}` còn hợp lệ (mẫu cũ) nhưng luôn ra “…” — lương chỉ nằm trong file PDF.
    */
   offer?: {
-    salary?: string;
     startDate?: string;
     title?: string;
     start?: string;

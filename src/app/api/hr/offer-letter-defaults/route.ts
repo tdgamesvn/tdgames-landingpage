@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireHrUser } from "@/lib/hr-session";
 import { DEFAULT_OFFER_LETTER_DEFAULTS, sanitizeOfferLetterDefaults, validateOfferLetterDefaults } from "@/lib/offer-letter";
-import { loadOfferDefaults, saveOfferDefaults } from "@/lib/offer-letter-store";
+import { loadOfferDefaults, saveOfferDefaults, readJsonBody } from "@/lib/offer-letter-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,14 +24,9 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   const auth = await requireHrUser(request, "emails.templates");
   if ("response" in auth) return auth.response;
-  const raw = await request.text().catch(() => "");
-  if (raw.length > 200_000) return NextResponse.json({ error: "Dữ liệu quá lớn" }, { status: 400 });
-  let input: unknown;
-  try {
-    input = JSON.parse(raw);
-  } catch {
-    return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
-  }
+  const body = await readJsonBody(request);
+  if ("response" in body) return body.response;
+  const input = body.data;
   const defaults = sanitizeOfferLetterDefaults(input);
   const invalid = validateOfferLetterDefaults(defaults);
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });

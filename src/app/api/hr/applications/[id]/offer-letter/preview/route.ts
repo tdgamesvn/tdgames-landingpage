@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { offerFileName, sanitizeOfferLetter, validateOfferLetterLimits } from "@/lib/offer-letter";
-import { renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
-import { pdfDisposition } from "@/lib/offer-letter-store";
+import { PdfBusyError, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
+import { pdfDisposition, pdfUserKey, readJsonBody } from "@/lib/offer-letter-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,19 +20,14 @@ export async function POST(request: Request, { params }: Ctx) {
   const app = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
   if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const raw = await request.text().catch(() => "");
-  if (raw.length > 200_000) return NextResponse.json({ error: "Dữ liệu quá lớn" }, { status: 400 });
-  let input: unknown;
-  try {
-    input = JSON.parse(raw);
-  } catch {
-    return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
-  }
+  const body = await readJsonBody(request);
+  if ("response" in body) return body.response;
+  const input = body.data;
   const data = sanitizeOfferLetter(input);
   const invalid = validateOfferLetterLimits(data);
   if (invalid) return NextResponse.json({ error: invalid }, { status: 400 });
   try {
-    const pdf = await renderOfferLetterPdf(data);
+    const pdf = await renderOfferLetterPdf(data, pdfUserKey(auth.ctx));
     return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
@@ -41,6 +36,7 @@ export async function POST(request: Request, { params }: Ctx) {
       },
     });
   } catch (e) {
+    if (e instanceof PdfBusyError) return NextResponse.json({ error: e.message }, { status: 429 });
     console.error("[offer-letter] render preview lỗi:", e);
     return NextResponse.json({ error: "Không tạo được PDF" }, { status: 500 });
   }

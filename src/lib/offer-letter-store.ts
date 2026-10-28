@@ -6,6 +6,7 @@ import "server-only";
  * Hàm throw khi lỗi DB — route bắt và trả 500.
  */
 
+import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "./supabase-admin";
 import type { HrContext } from "./hr-session";
 import { offerContact, type OfferContactUser } from "./hr-email-templates";
@@ -111,5 +112,28 @@ export async function loadOfferContact(ctx: HrContext): Promise<string> {
 /** Header Content-Disposition cho PDF (tên file có dấu → filename* UTF-8, kèm bản ASCII dự phòng). */
 export function pdfDisposition(type: "inline" | "attachment", filename: string): string {
   const ascii = filename.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").replace(/[^\x20-\x7e]|["\\]/g, "_");
-  return `${type}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+  // RFC 5987 attr-char không có ' ( ) * — encodeURIComponent để nguyên nên mã hoá thêm.
+  const ext = encodeURIComponent(filename).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `${type}; filename="${ascii}"; filename*=UTF-8''${ext}`;
+}
+
+export const MAX_BODY_BYTES = 200_000;
+
+/** Đọc body JSON có giới hạn: Content-Length > 200KB → 413 trước khi đọc; đọc xong vẫn quá → 413; JSON hỏng → 400. */
+export async function readJsonBody(request: Request): Promise<{ data: unknown } | { response: NextResponse }> {
+  const tooLarge = () => ({ response: NextResponse.json({ error: "Dữ liệu quá lớn" }, { status: 413 }) });
+  const len = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(len) && len > MAX_BODY_BYTES) return tooLarge();
+  const raw = await request.text().catch(() => "");
+  if (Buffer.byteLength(raw) > MAX_BODY_BYTES) return tooLarge();
+  try {
+    return { data: JSON.parse(raw) };
+  } catch {
+    return { response: NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 }) };
+  }
+}
+
+/** Khoá render theo tài khoản (xem renderOfferLetterPdf). */
+export function pdfUserKey(ctx: HrContext): string {
+  return ctx.user.id ?? ctx.user.email;
 }

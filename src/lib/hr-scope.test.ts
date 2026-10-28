@@ -154,13 +154,13 @@ test("redactEmailRow: email ứng viên chứa ']' vẫn gỡ hết địa chỉ
   assert.equal(r.subject, "[TEST] Kết quả ứng tuyển");
 });
 
-test("redactEmailRow: thiếu emails.send_offer → attachments chỉ còn filename (bỏ snapshot có lương)", () => {
+test("redactEmailRow: attachments luôn chỉ còn filename + kind (bỏ snapshot có lương, kể cả đủ quyền)", () => {
   const row = {
     ...mailRow, kind: "offer",
     attachments: [{ filename: "Thư mời nhận việc - A.pdf", kind: "offer_letter", snapshot: { baseSalary: 10_000_000 } }],
   };
   const full = redactEmailRow(row, allPerms) as Record<string, unknown>;
-  assert.deepEqual(full.attachments, row.attachments);
+  assert.deepEqual(full.attachments, [{ filename: "Thư mời nhận việc - A.pdf", kind: "offer_letter" }]);
   const r = redactEmailRow(row, without("emails.send_offer")) as Record<string, unknown>;
   assert.deepEqual(r.attachments, [{ filename: "Thư mời nhận việc - A.pdf", kind: "offer_letter" }]);
   assert.ok(!JSON.stringify(r).includes("10000000"));

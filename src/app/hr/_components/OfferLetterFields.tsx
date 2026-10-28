@@ -6,10 +6,13 @@
  * Kèm hook xem trước PDF (POST → blob) và khung xem trước. Màu theo token --hr-* (Sáng/Tối).
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronRight, ExternalLink, Plus, RefreshCw, X } from "lucide-react";
 import { hrFetch } from "./HrSession";
 import {
+  OFFER_MAX_ITEMS,
+  OFFER_MAX_PARAGRAPH,
+  OFFER_MAX_TEXT,
   formatVnd,
   offerTotal,
   type OfferLetterData,
@@ -43,7 +46,7 @@ function TextField({
   value,
   onChange,
   rows,
-  max = 500,
+  max = OFFER_MAX_TEXT,
   type = "text",
   hint,
 }: {
@@ -109,7 +112,7 @@ function StringList({ label, items, onChange, addLabel }: { label: string; items
             <textarea
               aria-label={`${label} ${i + 1}`}
               rows={1}
-              maxLength={500}
+              maxLength={OFFER_MAX_TEXT}
               className={`${inputCls} min-h-[38px] min-w-0 flex-1 resize-y [field-sizing:content]`}
               value={it}
               onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))}
@@ -120,7 +123,7 @@ function StringList({ label, items, onChange, addLabel }: { label: string; items
           </li>
         ))}
       </ul>
-      {items.length < 30 && (
+      {items.length < OFFER_MAX_ITEMS && (
         <button type="button" className={`${addBtn} mt-1.5`} onClick={() => onChange([...items, ""])}>
           <Plus className="h-3.5 w-3.5" /> {addLabel}
         </button>
@@ -137,15 +140,15 @@ function ScheduleList({ items, onChange }: { items: ScheduleItem[]; onChange: (v
       <ul className="space-y-1.5">
         {items.map((it, i) => (
           <li key={i} className="flex items-start gap-1.5">
-            <input aria-label={`Giờ dòng ${i + 1}`} className={`${inputBase} w-28 shrink-0 sm:w-32`} maxLength={500} value={it.time} placeholder="8:45 – 9:00" onChange={(e) => set(i, { time: e.target.value })} />
-            <input aria-label={`Việc dòng ${i + 1}`} className={`${inputCls} min-w-0 flex-1`} maxLength={500} value={it.task} onChange={(e) => set(i, { task: e.target.value })} />
+            <input aria-label={`Giờ dòng ${i + 1}`} className={`${inputBase} w-28 shrink-0 sm:w-32`} maxLength={OFFER_MAX_TEXT} value={it.time} placeholder="8:45 – 9:00" onChange={(e) => set(i, { time: e.target.value })} />
+            <input aria-label={`Việc dòng ${i + 1}`} className={`${inputCls} min-w-0 flex-1`} maxLength={OFFER_MAX_TEXT} value={it.task} onChange={(e) => set(i, { task: e.target.value })} />
             <button type="button" className={iconBtn} aria-label={`Xoá lịch trình dòng ${i + 1}`} onClick={() => onChange(items.filter((_, j) => j !== i))}>
               <X className="h-4 w-4" />
             </button>
           </li>
         ))}
       </ul>
-      {items.length < 30 && (
+      {items.length < OFFER_MAX_ITEMS && (
         <button type="button" className={`${addBtn} mt-1.5`} onClick={() => onChange([...items, { time: "", task: "" }])}>
           <Plus className="h-3.5 w-3.5" /> Thêm dòng
         </button>
@@ -218,7 +221,7 @@ export function OfferLetterFields(props: Props) {
                     <input
                       aria-label={`Tên phụ cấp ${i + 1}`}
                       className={`${inputCls} min-w-0 flex-1`}
-                      maxLength={500}
+                      maxLength={OFFER_MAX_TEXT}
                       value={a.name}
                       placeholder="Tên phụ cấp"
                       onChange={(e) => setL({ allowances: L.allowances.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)) })}
@@ -240,7 +243,7 @@ export function OfferLetterFields(props: Props) {
                   </li>
                 ))}
               </ul>
-              {L.allowances.length < 30 && (
+              {L.allowances.length < OFFER_MAX_ITEMS && (
                 <button type="button" className={`${addBtn} mt-1.5`} onClick={() => setL({ allowances: [...L.allowances, { name: "", amount: null }] })}>
                   <Plus className="h-3.5 w-3.5" /> Thêm phụ cấp
                 </button>
@@ -292,7 +295,7 @@ export function OfferLetterFields(props: Props) {
             type="date"
             value={L.confirmBy}
             onChange={(x) => setL({ confirmBy: x })}
-            hint="Ghi trong mail offer. Để trống = ngày gửi + 3 ngày làm việc."
+            hint="Ghi trong mail offer, phải trước hoặc đúng ngày bắt đầu. Để trống = ngày soạn mail + 3 ngày làm việc; hạn đã qua sẽ tự đổi khi soạn mail."
           />
         </Group>
       )}
@@ -302,8 +305,8 @@ export function OfferLetterFields(props: Props) {
           <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" /> Tuỳ chỉnh khác (đoạn mở đầu, đoạn kết, người ký)
         </summary>
         <div className="space-y-3 px-4 pb-4">
-          <TextField label="Đoạn mở đầu" rows={4} max={2000} value={v.intro} onChange={(x) => set("intro", x)} />
-          <TextField label="Đoạn kết" rows={4} max={2000} value={v.closing} onChange={(x) => set("closing", x)} />
+          <TextField label="Đoạn mở đầu" rows={4} max={OFFER_MAX_PARAGRAPH} value={v.intro} onChange={(x) => set("intro", x)} />
+          <TextField label="Đoạn kết" rows={4} max={OFFER_MAX_PARAGRAPH} value={v.closing} onChange={(x) => set("closing", x)} />
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField label="Chức vụ người ký" value={v.signerTitle} onChange={(x) => set("signerTitle", x)} />
             <TextField label="Tên người ký" value={v.signerName} onChange={(x) => set("signerName", x)} />
@@ -358,7 +361,25 @@ export function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-/** Xem trước tự làm mới ~800ms sau khi ngừng sửa. `body` null = chưa có dữ liệu. */
+const WIDE_QUERY = "(min-width: 1024px)";
+
+/** Màn rộng (≥ lg, khung xem trước đang hiện). Server render coi là hẹp → không tự tạo PDF. */
+export function useIsWide(): boolean {
+  return useSyncExternalStore(
+    (cb) => {
+      const m = window.matchMedia(WIDE_QUERY);
+      m.addEventListener("change", cb);
+      return () => m.removeEventListener("change", cb);
+    },
+    () => window.matchMedia(WIDE_QUERY).matches,
+    () => false,
+  );
+}
+
+/**
+ * Xem trước tự làm mới ~800ms sau khi ngừng sửa. `body` null = tắt (chưa có dữ liệu, hoặc khung
+ * xem trước đang ẩn trên màn hẹp — khi đó chỉ tạo PDF khi bấm "Xem trước").
+ */
 export function usePdfPreview(url: string, body: unknown | null) {
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -33,6 +33,9 @@ export const KIND_VARS: Record<CandidateEmailKind, string[]> = {
   ],
 };
 
+/** Biến còn hợp lệ (mẫu cũ không lỗi) nhưng không gợi ý chèn trong tab Mẫu mail. */
+export const HIDDEN_VARS: ReadonlySet<string> = new Set(["muc_luong"]);
+
 export const VAR_HELP: Record<string, string> = {
   ten_ung_vien: "Tên ứng viên (trống → “bạn”)",
   vi_tri: "Tên vị trí ứng tuyển",
@@ -44,7 +47,7 @@ export const VAR_HELP: Record<string, string> = {
   cau_huy: "Câu báo huỷ (có giờ cũ nếu biết)",
   thoi_gian_cu: "Giờ phỏng vấn cũ (trống nếu không biết)",
   link_bai_test: "Link đề bài & nộp bài",
-  muc_luong: "Mức lương (cũ — mẫu mặc định không dùng để không lộ lương trong thân mail; trống → “…”)",
+  muc_luong: "Không còn dùng — luôn “…” (lương nằm trong file PDF)",
   ngay_bat_dau: "Giờ + ngày bắt đầu từ thư mời, vd “8:45, Thứ Hai 12/10/2026”",
   chuc_danh: "Chức danh trong thư mời (trống → tên vị trí)",
   thoi_gian_lam_viec: "Thời gian làm việc trong thư mời",
@@ -153,7 +156,8 @@ function offerVars(input: DraftInput): Record<string, string> {
   const o = input.offer ?? null;
   const v = (s: string | undefined) => s?.trim() || "…";
   return {
-    muc_luong: v(o?.salary),
+    // Không còn dùng: lương chỉ nằm trong file PDF, thân mail không bao giờ có số.
+    muc_luong: "…",
     ngay_bat_dau: o?.start?.trim() || v(o?.startDate),
     chuc_danh: o?.title?.trim() || input.jobTitle.trim() || "vị trí bạn ứng tuyển",
     thoi_gian_lam_viec: v(o?.workingHours),
@@ -257,7 +261,6 @@ export function SAMPLE_DRAFT_INPUT(kind: CandidateEmailKind): DraftInput {
       return {
         ...base,
         offer: {
-          salary: "15.000.000 VND",
           title: "2D Game Artist",
           start: "8:45, Thứ Ba 01/12/2026",
           workingHours: "Từ thứ Hai đến thứ Sáu, 8:30 – 17:30",

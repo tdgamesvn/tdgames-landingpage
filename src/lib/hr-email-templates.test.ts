@@ -150,7 +150,7 @@ const fullOffer = {
   title: "Họa sĩ 2D", start: "8:45, Thứ Hai 02/11/2026", workingHours: "T2–T6, 8:30 – 17:30", location: "VP TD Games",
   confirmBy: "Thứ Hai 02/11/2026", contact: "Ms. Thảo · 0964525584 · ketoan@td.vn", fileName: "Thư mời nhận việc - A.pdf",
 };
-for (const offer of [null, undefined, { salary: "", startDate: "" }, { salary: " 20tr ", startDate: "01/12" }, {}, fullOffer, { ...fullOffer, title: " ", contact: "" }]) {
+for (const offer of [null, undefined, { startDate: "" }, { startDate: "01/12" }, {}, fullOffer, { ...fullOffer, title: " ", contact: "" }]) {
   cases.push({ kind: "offer", candidateName: "A", jobTitle: "Dev", offer });
 }
 for (const kind of CANDIDATE_EMAIL_KINDS) {
@@ -210,11 +210,12 @@ test("renderTemplate: thay đúng biến, biến không có giữ nguyên, khôn
 
 test("buildDraft với mẫu tuỳ chỉnh", () => {
   const d = buildDraft(
-    { kind: "offer", candidateName: "Lan", jobTitle: "Artist", offer: { salary: "20tr", startDate: "" } },
+    { kind: "offer", candidateName: "Lan", jobTitle: "Artist", offer: { startDate: "" } },
     { subject: "Offer {vi_tri} cho {ten_ung_vien}", body: "Hi {ten_ung_vien}: {muc_luong}, {ngay_bat_dau}\n\n{chu_ky}" },
   );
   assert.equal(d.subject, "Offer Artist cho Lan");
-  assert.match(d.text, /^Hi Lan: 20tr, …\n\nTrân trọng,/);
+  // muc_luong luôn "…" (lương chỉ nằm trong PDF).
+  assert.match(d.text, /^Hi Lan: …, …\n\nTrân trọng,/);
 });
 
 test("không có ≥3 newline liên tiếp, không khoảng trắng đầu/cuối (biến rỗng)", () => {
@@ -257,7 +258,7 @@ test("validate: tiêu đề chỉ gồm biến/khoảng trắng bị từ chối
 import { offerContact } from "./hr-email-templates.ts";
 
 test("offer: mẫu mới không lộ lương, có biến thư mời", () => {
-  const d = buildDraft({ ...SAMPLE_DRAFT_INPUT("offer"), offer: { ...fullOffer, salary: "20.000.000 VND" } });
+  const d = buildDraft({ ...SAMPLE_DRAFT_INPUT("offer"), offer: fullOffer });
   assert.equal(d.subject, "[TD Games] Thư mời nhận việc — 2D Game Artist");
   assert.ok(!d.text.includes("20.000.000"));
   assert.ok(d.text.includes("- Chức danh: Họa sĩ 2D"));

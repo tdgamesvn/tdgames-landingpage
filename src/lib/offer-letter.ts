@@ -54,7 +54,7 @@ export type OfferLetterData = {
   closing: string;
   signerTitle: string;
   signerName: string;
-  /** Hạn xác nhận "YYYY-MM-DD" | "" (trống → ngày gửi + 3 ngày làm việc). */
+  /** Hạn xác nhận "YYYY-MM-DD" | "" (trống → tính lúc soạn mail: hôm nay + 3 ngày làm việc). */
   confirmBy: string;
 };
 
@@ -99,9 +99,10 @@ export const DEFAULT_OFFER_LETTER_DEFAULTS: OfferLetterDefaults = {
 };
 
 export const OFFER_MAX_AMOUNT = 1e10;
-export const OFFER_MAX_ITEMS = 30;
-export const OFFER_MAX_TEXT = 500;
-export const OFFER_MAX_PARAGRAPH = 2000;
+// Giới hạn vừa đủ dùng thật, đồng thời chặn PDF quá to (render tốn CPU, xem offer-letter-pdf.tsx).
+export const OFFER_MAX_ITEMS = 15;
+export const OFFER_MAX_TEXT = 300;
+export const OFFER_MAX_PARAGRAPH = 1500;
 
 // ── Ngày giờ ──
 
@@ -175,7 +176,10 @@ export function formatVnd(n: number): string {
 
 // ── Dựng / gộp ──
 
-/** Thư mới cho 1 hồ sơ: mẫu công ty + tên/chức danh từ hồ sơ; số tiền trống; hạn xác nhận = hôm nay + 3 ngày làm việc. */
+/**
+ * Thư mới cho 1 hồ sơ: mẫu công ty + tên/chức danh từ hồ sơ; số tiền trống.
+ * Hạn xác nhận để trống — tính lúc soạn mail (hôm nay + 3 ngày làm việc), không chốt từ lúc mở form.
+ */
 export function buildOfferLetterData(
   defaults: OfferLetterDefaults,
   ctx: { candidateName: string; jobTitle: string; today: Date },
@@ -202,7 +206,7 @@ export function buildOfferLetterData(
     closing: defaults.closing,
     signerTitle: defaults.signerTitle,
     signerName: defaults.signerName,
-    confirmBy: addWorkingDays(vnDateString(ctx.today), 3),
+    confirmBy: "",
   };
 }
 
@@ -238,8 +242,9 @@ function strList(v: unknown): string[] {
 function amount(v: unknown): number | null {
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
   if (typeof v === "string") {
-    const t = v.replace(/[.,\s]/g, "");
-    return /^-?\d+$/.test(t) ? Number(t) : null;
+    const t = v.trim();
+    // "12.000.000" / "12 000 000" / "12000000"; dạng khác (âm, dấu phẩy, chữ) → null.
+    return /^\d{1,3}([.\s]\d{3})*$|^\d+$/.test(t) ? Number(t.replace(/[.\s]/g, "")) : null;
   }
   return null;
 }
@@ -391,7 +396,11 @@ export function validateOfferLetter(data: OfferLetterData): string | null {
   if (!isValidDate(data.startDate)) return "Thiếu ngày bắt đầu làm việc (hoặc ngày không hợp lệ)";
   if (!isValidTime(data.startTime)) return "Giờ bắt đầu không hợp lệ (dạng 08:45)";
   if (data.baseSalary === null || !(data.baseSalary > 0)) return "Thiếu lương cơ bản";
-  return validateOfferLetterLimits(data);
+  const limits = validateOfferLetterLimits(data);
+  if (limits) return limits;
+  // So chuỗi YYYY-MM-DD = so ngày.
+  if (data.confirmBy && data.confirmBy > data.startDate) return "Hạn xác nhận phải trước hoặc đúng ngày bắt đầu làm việc";
+  return null;
 }
 
 export function validateOfferLetterDefaults(d: OfferLetterDefaults): string | null {
@@ -416,16 +425,31 @@ export function offerFileName(candidateName: string): string {
 
 export const NO_OFFER_LETTER = "Chưa soạn thư mời nhận việc — bấm “Soạn thư mời” trong khối Offer trước";
 
-/** Chuỗi đã định dạng cho các biến mail offer (DraftInput.offer). Hạn trống → hôm nay (giờ VN) + 3 ngày làm việc. */
+/**
+ * Hạn xác nhận dùng khi soạn mail: trống → hôm nay (giờ VN) + 3 ngày làm việc;
+ * đã lưu nhưng đã qua → tính lại từ hôm nay và trả `notice` để báo người gửi.
+ */
+export function resolveConfirmBy(saved: string, today: Date): { date: string; notice: string | null } {
+  const todayVn = vnDateString(today);
+  const fresh = addWorkingDays(todayVn, 3);
+  if (!isValidDate(saved)) return { date: fresh, notice: null };
+  if (saved < todayVn) return { date: fresh, notice: `Hạn xác nhận đã qua — đã tự đổi thành ${formatDateVi(fresh)}` };
+  return { date: saved, notice: null };
+}
+
+/** Chuỗi đã định dạng cho các biến mail offer (DraftInput.offer) + thông báo nếu hạn xác nhận bị đổi. */
 export function offerDraftFields(data: OfferLetterData, contact: string, today: Date) {
-  const confirmBy = isValidDate(data.confirmBy) ? data.confirmBy : addWorkingDays(vnDateString(today), 3);
+  const confirm = resolveConfirmBy(data.confirmBy, today);
   return {
-    title: data.jobTitle,
-    start: formatStartVi(data.startDate, data.startTime),
-    workingHours: data.workingHours,
-    location: data.location,
-    confirmBy: formatDateVi(confirmBy),
-    contact,
-    fileName: offerFileName(data.candidateName),
+    fields: {
+      title: data.jobTitle,
+      start: formatStartVi(data.startDate, data.startTime),
+      workingHours: data.workingHours,
+      location: data.location,
+      confirmBy: formatDateVi(confirm.date),
+      contact,
+      fileName: offerFileName(data.candidateName),
+    },
+    notice: confirm.notice,
   };
 }

@@ -56,8 +56,8 @@ test("buildOfferLetterData: phụ cấp tên từ mẫu, số tiền null; hạn
   assert.equal(b.baseSalary, null);
   assert.equal(b.startDate, "");
   assert.equal(b.startTime, "08:45");
-  // T4 28/10 + 3 ngày làm việc = T2 02/11
-  assert.equal(b.confirmBy, "2026-11-02");
+  // Hạn xác nhận để trống — tính lúc soạn mail.
+  assert.equal(b.confirmBy, "");
   assert.equal(b.location, D.location);
   assert.deepEqual(b.schedule, D.schedule);
   assert.notEqual(b.schedule, D.schedule); // bản sao, không dùng chung mảng
@@ -110,24 +110,30 @@ test("validateOfferLetter: bắt buộc tên, chức danh, ngày bắt đầu, l
 
 test("validateOfferLetter: giới hạn số tiền, danh sách, độ dài", () => {
   assert.ok(validateOfferLetter(sample({ baseSalary: 1e10 + 1 })));
+  // Hạn xác nhận không được sau ngày bắt đầu (startDate mẫu = 2026-11-02).
+  assert.match(validateOfferLetter(sample({ confirmBy: "2026-11-03" })) ?? "", /Hạn xác nhận/);
+  assert.equal(validateOfferLetter(sample({ confirmBy: "2026-11-02" })), null);
   assert.equal(validateOfferLetter(sample({ baseSalary: 1e10 })), null);
   assert.ok(validateOfferLetter(sample({ allowances: [{ name: "X", amount: -1 }] })));
   assert.ok(validateOfferLetter(sample({ allowances: [{ name: "", amount: 100 }] })));
   assert.equal(validateOfferLetter(sample({ allowances: [{ name: "X", amount: 0 }] })), null);
-  assert.ok(validateOfferLetter(sample({ otherBenefits: Array(31).fill("a") })));
-  assert.equal(validateOfferLetter(sample({ otherBenefits: Array(30).fill("a") })), null);
-  assert.ok(validateOfferLetter(sample({ schedule: Array(31).fill({ time: "1", task: "a" }) })));
-  assert.ok(validateOfferLetter(sample({ jobTitle: "x".repeat(501) })));
-  assert.ok(validateOfferLetter(sample({ documents: ["x".repeat(501)] })));
-  assert.equal(validateOfferLetter(sample({ intro: "x".repeat(2000) })), null);
-  assert.ok(validateOfferLetter(sample({ intro: "x".repeat(2001) })));
+  assert.ok(validateOfferLetter(sample({ otherBenefits: Array(16).fill("a") })));
+  assert.equal(validateOfferLetter(sample({ otherBenefits: Array(15).fill("a") })), null);
+  assert.ok(validateOfferLetter(sample({ schedule: Array(16).fill({ time: "1", task: "a" }) })));
+  assert.ok(validateOfferLetter(sample({ allowances: Array(16).fill({ name: "a", amount: 1 }) })));
+  assert.ok(validateOfferLetter(sample({ jobTitle: "x".repeat(301) })));
+  assert.equal(validateOfferLetter(sample({ jobTitle: "x".repeat(300) })), null);
+  assert.ok(validateOfferLetter(sample({ documents: ["x".repeat(301)] })));
+  assert.ok(validateOfferLetter(sample({ schedule: [{ time: "1", task: "x".repeat(301) }] })));
+  assert.equal(validateOfferLetter(sample({ intro: "x".repeat(1500) })), null);
+  assert.ok(validateOfferLetter(sample({ intro: "x".repeat(1501) })));
   assert.ok(validateOfferLetter(sample({ confirmBy: "30/10/2026" })));
   assert.equal(validateOfferLetter(sample({ confirmBy: "" })), null);
 });
 
 test("validateOfferLetterLimits: bỏ qua trường bắt buộc (cho xem trước bản nháp)", () => {
   assert.equal(validateOfferLetterLimits(sample({ baseSalary: null, startDate: "", jobTitle: "" })), null);
-  assert.ok(validateOfferLetterLimits(sample({ intro: "x".repeat(2001) })));
+  assert.ok(validateOfferLetterLimits(sample({ intro: "x".repeat(1501) })));
 });
 
 test("sanitizeOfferLetter: ép kiểu an toàn", () => {
@@ -157,6 +163,10 @@ test("sanitizeOfferLetter: ép kiểu an toàn", () => {
   assert.deepEqual(empty.allowances, []);
   assert.equal(sanitizeOfferLetter({ baseSalary: "abc" }).baseSalary, null);
   assert.equal(sanitizeOfferLetter({ baseSalary: Infinity }).baseSalary, null);
+  // Chuỗi tiền: chỉ nhóm 3 số bằng . hoặc khoảng trắng, hoặc toàn chữ số.
+  for (const [s, v] of [["12 000 000", 12_000_000], ["5000", 5000], ["1.000", 1000], ["12,000,000", null], ["1.00", null], ["-5", null], ["1e9", null], ["", null]] as const) {
+    assert.equal(sanitizeOfferLetter({ baseSalary: s }).baseSalary, v, s);
+  }
 });
 
 test("mergeOfferLetter: dữ liệu đã lưu đè mặc định, trường thiếu lấy từ mặc định", () => {
@@ -185,14 +195,14 @@ test("sanitizeOfferLetterDefaults: thiếu → mặc định công ty", () => {
   assert.deepEqual(s.allowanceNames, ["A", "B"]);
   assert.equal(s.closing, D.closing);
   assert.ok(validateOfferLetterDefaults({ ...D, startTime: "8h" }));
-  assert.ok(validateOfferLetterDefaults({ ...D, documents: Array(31).fill("a") }));
+  assert.ok(validateOfferLetterDefaults({ ...D, documents: Array(16).fill("a") }));
 });
 
 import { offerDraftFields } from "./offer-letter.ts";
 
 test("offerDraftFields: chuỗi đã định dạng cho mail; hạn trống → +3 ngày làm việc", () => {
   const d = sample({ startDate: "2026-10-12", confirmBy: "2026-10-30" });
-  assert.deepEqual(offerDraftFields(d, "KT · 09 · kt@x", new Date("2026-10-28T03:00:00Z")), {
+  assert.deepEqual(offerDraftFields(d, "KT · 09 · kt@x", new Date("2026-10-28T03:00:00Z")).fields, {
     title: "2D Game Artist",
     start: "8:45, Thứ Hai 12/10/2026",
     workingHours: D.workingHours,
@@ -201,5 +211,21 @@ test("offerDraftFields: chuỗi đã định dạng cho mail; hạn trống → 
     contact: "KT · 09 · kt@x",
     fileName: "Thư mời nhận việc - Nguyễn Văn A.pdf",
   });
-  assert.equal(offerDraftFields(sample({ confirmBy: "" }), "", new Date("2026-10-30T03:00:00Z")).confirmBy, "Thứ Tư 04/11/2026");
+  assert.equal(offerDraftFields(sample({ confirmBy: "" }), "", new Date("2026-10-30T03:00:00Z")).fields.confirmBy, "Thứ Tư 04/11/2026");
+  assert.equal(offerDraftFields(d, "", new Date("2026-10-28T03:00:00Z")).notice, null);
+});
+
+import { resolveConfirmBy } from "./offer-letter.ts";
+
+test("resolveConfirmBy: trống → +3 ngày làm việc; đã qua → tính lại + notice; hôm nay vẫn giữ", () => {
+  const now = new Date("2026-10-28T03:00:00Z"); // T4 28/10 giờ VN
+  assert.deepEqual(resolveConfirmBy("", now), { date: "2026-11-02", notice: null });
+  assert.deepEqual(resolveConfirmBy("2026-10-28", now), { date: "2026-10-28", notice: null });
+  assert.deepEqual(resolveConfirmBy("2026-10-30", now), { date: "2026-10-30", notice: null });
+  assert.deepEqual(resolveConfirmBy("2026-10-27", now), {
+    date: "2026-11-02",
+    notice: "Hạn xác nhận đã qua — đã tự đổi thành Thứ Hai 02/11/2026",
+  });
+  // Ranh giới ngày theo giờ VN: 17:30 UTC 27/10 = 00:30 28/10 VN → 27/10 đã qua.
+  assert.ok(resolveConfirmBy("2026-10-27", new Date("2026-10-27T17:30:00Z")).notice);
 });

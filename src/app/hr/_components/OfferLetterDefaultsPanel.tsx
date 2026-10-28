@@ -6,9 +6,9 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RotateCcw, Save, Undo2 } from "lucide-react";
+import { FileText, RotateCcw, Save, Undo2 } from "lucide-react";
 import { hrFetch } from "./HrSession";
-import { OfferLetterFields, PdfPreviewPane, fetchPdfBlob, offerSurface, openPdfInNewTab, usePdfPreview } from "./OfferLetterFields";
+import { OfferLetterFields, PdfPreviewPane, fetchPdfBlob, offerSurface, openPdfInNewTab, useIsWide, usePdfPreview } from "./OfferLetterFields";
 import { addWorkingDays, buildOfferLetterData, vnDateString, type OfferLetterDefaults } from "@/lib/offer-letter";
 
 type Loaded = { defaults: OfferLetterDefaults; saved: boolean; builtin: OfferLetterDefaults };
@@ -67,7 +67,12 @@ export default function OfferLetterDefaultsPanel({ onDirtyChange }: { onDirtyCha
   }, [dirty]);
 
   const sample = useMemo(() => (value ? sampleLetter(value) : null), [value]);
-  const preview = usePdfPreview(PREVIEW_URL, sample);
+  // Màn hẹp: khung xem trước ẩn → chỉ tạo PDF khi bấm "Xem trước".
+  const wide = useIsWide();
+  const preview = usePdfPreview(PREVIEW_URL, wide ? sample : null);
+  const openSample = () => {
+    if (sample) void openPdfInNewTab(() => fetchPdfBlob(PREVIEW_URL, sample)).then((err) => err && setNotice({ kind: "error", text: err }));
+  };
 
   async function put(body: OfferLetterDefaults, okText: string) {
     setBusy(true);
@@ -145,15 +150,14 @@ export default function OfferLetterDefaultsPanel({ onDirtyChange }: { onDirtyCha
         </div>
       </section>
 
-      <div className="flex min-h-[560px] flex-col gap-2">
-        <PdfPreviewPane
-          preview={preview}
-          className="min-h-[520px] flex-1"
-          onOpen={() => {
-            if (sample) void openPdfInNewTab(() => fetchPdfBlob(PREVIEW_URL, sample)).then((err) => err && setNotice({ kind: "error", text: err }));
-          }}
-        />
+      <div className="hidden min-h-[560px] flex-col gap-2 lg:flex">
+        <PdfPreviewPane preview={preview} className="min-h-[520px] flex-1" onOpen={openSample} />
         <p className="px-1 text-[12px] text-[var(--hr-ink-2)]">Dữ liệu mẫu: Nguyễn Văn A, lương ví dụ. Thư thật điền theo hồ sơ trong khối Offer.</p>
+      </div>
+      <div className="lg:hidden">
+        <button type="button" className="hr-secondary-btn hr-secondary-btn--sm" disabled={!sample} onClick={openSample}>
+          <FileText className="mr-1 inline h-3.5 w-3.5" /> Xem trước PDF (dữ liệu mẫu)
+        </button>
       </div>
     </div>
   );

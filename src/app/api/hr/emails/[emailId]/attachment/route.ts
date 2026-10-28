@@ -2,19 +2,22 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { sanitizeOfferLetter } from "@/lib/offer-letter";
-import { renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
-import { pdfDisposition } from "@/lib/offer-letter-store";
+import { PdfBusyError, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
+import { pdfDisposition, pdfUserKey } from "@/lib/offer-letter-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ emailId: string }> };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Tải lại file đính kèm của mail đã gửi (`?i=0`): sinh lại PDF thư mời từ snapshot lúc gửi. */
 export async function GET(request: Request, { params }: Ctx) {
   const auth = await requireHrUser(request, "emails.send_offer");
   if ("response" in auth) return auth.response;
   const { emailId } = await params;
+  if (!UUID_RE.test(emailId)) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const i = Number(new URL(request.url).searchParams.get("i") ?? "0");
   if (!Number.isInteger(i) || i < 0 || i > 20) return NextResponse.json({ error: "i không hợp lệ" }, { status: 400 });
 
@@ -35,7 +38,7 @@ export async function GET(request: Request, { params }: Ctx) {
   if (!att || att.kind !== "offer_letter" || !att.snapshot) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const filename = typeof att.filename === "string" && att.filename ? att.filename : "Thư mời nhận việc.pdf";
   try {
-    const pdf = await renderOfferLetterPdf(sanitizeOfferLetter(att.snapshot));
+    const pdf = await renderOfferLetterPdf(sanitizeOfferLetter(att.snapshot), pdfUserKey(auth.ctx));
     return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
@@ -44,6 +47,7 @@ export async function GET(request: Request, { params }: Ctx) {
       },
     });
   } catch (e) {
+    if (e instanceof PdfBusyError) return NextResponse.json({ error: e.message }, { status: 429 });
     console.error("[offer-letter] render attachment lỗi:", e);
     return NextResponse.json({ error: "Không tạo được PDF" }, { status: 500 });
   }

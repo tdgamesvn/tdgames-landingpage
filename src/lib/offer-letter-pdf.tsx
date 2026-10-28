@@ -68,62 +68,102 @@ const s = StyleSheet.create({
   bulletDot: { width: 10 },
   bulletText: { flex: 1 },
   money: { flexDirection: "row", justifyContent: "space-between" },
+  moneyLabel: { flex: 1, paddingRight: 8 },
   note: { fontStyle: "italic" },
   sign: { marginTop: 18, alignSelf: "flex-end", width: 200, alignItems: "center" },
   signTitle: { fontWeight: "bold", fontSize: 11 },
   signName: { fontWeight: "bold", fontSize: 11, marginTop: 48 },
 });
 
-type Item = { label: string; body: ReactNode; note?: string; bold?: boolean };
+/**
+ * Một mục trong bảng. `body` chuỗi = mục ngắn (≤ 300 ký tự, không bao giờ dài quá 1 trang);
+ * `lines` = mục dạng danh sách (phúc lợi, giấy tờ, lương): mỗi dòng không bị cắt, giữa các dòng
+ * được ngắt trang — danh sách dài tối đa (15 × 300 ký tự) không bao giờ bị xén.
+ */
+type Item = { label: string; note?: string; bold?: boolean } & ({ body: string } | { lines: ReactNode[] });
 
-function Bullets({ items }: { items: string[] }) {
+function bullet(t: string, key: number) {
   return (
-    <View>
-      {items.map((t, i) => (
-        <View key={i} style={s.bullet} wrap={false}>
-          <Text style={s.bulletDot}>•</Text>
-          <Text style={s.bulletText}>{t}</Text>
-        </View>
-      ))}
+    <View key={key} style={s.bullet} wrap={false}>
+      <Text style={s.bulletDot}>•</Text>
+      <Text style={s.bulletText}>{t}</Text>
     </View>
   );
 }
 
-/** Thanh mục cam + các dòng; thanh luôn đi cùng dòng đầu (không bị bỏ lại cuối trang). */
-function BarGroup({ title, rows }: { title: string; rows: ReactNode[] }) {
-  if (!rows.length) return null;
+function Bar({ title }: { title: string }) {
   return (
-    <View>
-      <View wrap={false}>
-        <View style={s.row}>
-          <View style={s.bar}>
-            <Text style={s.barText}>{title}</Text>
-          </View>
-        </View>
-        {rows[0]}
+    <View style={s.row}>
+      <View style={s.bar}>
+        <Text style={s.barText}>{title}</Text>
       </View>
-      {rows.slice(1)}
     </View>
+  );
+}
+
+/** 1 dòng bảng: cột nội dung + cột ghi chú. `open` = phần tiếp theo còn nữa → bỏ kẻ dưới. */
+function Row({ children, note, open, cont, wrap }: { children: ReactNode; note?: string; open?: boolean; cont?: boolean; wrap?: boolean }) {
+  // open: còn phần tiếp → bỏ kẻ dưới; cont: là phần tiếp → bỏ đệm trên (liền mạch với phần đầu).
+  const cellOpen = { ...(open ? { borderBottomWidth: 0, paddingBottom: 0 } : {}), ...(cont ? { paddingTop: 0 } : {}) };
+  return (
+    <View style={s.row} wrap={wrap ?? false}>
+      <View style={[s.cell, s.colMain, cellOpen]}>{children}</View>
+      <View style={[s.cell, s.colNote, cellOpen]}>
+        <Text style={s.note}>{note ?? ""}</Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Phần đầu của mục (nhãn + dòng đầu, không ngắt) và phần còn lại (ngắt được giữa các dòng).
+ * Thanh mục (nếu có) dính vào phần đầu của mục đầu tiên → không bao giờ đứng một mình cuối trang.
+ * (Không dùng minPresenceAhead: react-pdf 4.9 bỏ qua nó ở đây — đã thử, thanh vẫn bị bỏ lại.)
+ */
+function ItemRows({ it, n, bar }: { it: Item; n: number; bar?: string }) {
+  const label = <Text style={s.label}>{`${n}. ${it.label}`}</Text>;
+  if ("body" in it) {
+    return (
+      <View wrap={false}>
+        {bar && <Bar title={bar} />}
+        <Row note={it.note}>
+          <Text>
+            {label}
+            {it.body ? ": " : ""}
+            <Text style={it.bold ? s.label : {}}>{it.body}</Text>
+          </Text>
+        </Row>
+      </View>
+    );
+  }
+  const [first, ...rest] = it.lines;
+  return (
+    <>
+      <View wrap={false}>
+        {bar && <Bar title={bar} />}
+        <Row note={it.note} open={rest.length > 0}>
+          {label}
+          {first}
+        </Row>
+      </View>
+      {rest.length > 0 && (
+        <Row wrap cont>
+          {rest}
+        </Row>
+      )}
+    </>
   );
 }
 
 function Section({ title, items }: { title: string; items: Item[] }) {
-  const rows = items.map((it, i) => (
-    <View key={i} style={s.row} wrap={false}>
-      <View style={[s.cell, s.colMain]}>
-        <Text>
-          <Text style={s.label}>{`${i + 1}. ${it.label}`}</Text>
-          {typeof it.body === "string" ? ": " : ""}
-          {typeof it.body === "string" ? <Text style={it.bold ? s.label : {}}>{it.body}</Text> : null}
-        </Text>
-        {typeof it.body === "string" ? null : it.body}
-      </View>
-      <View style={[s.cell, s.colNote]}>
-        <Text style={s.note}>{it.note ?? ""}</Text>
-      </View>
-    </View>
-  ));
-  return <BarGroup title={title} rows={rows} />;
+  if (!items.length) return null;
+  return (
+    <>
+      {items.map((it, i) => (
+        <ItemRows key={i} it={it} n={i + 1} bar={i === 0 ? title : undefined} />
+      ))}
+    </>
+  );
 }
 
 /** Mục có giá trị chữ: bỏ nếu trống và không có ghi chú. */
@@ -133,7 +173,8 @@ function textItem(label: string, value: string, note?: string): Item[] {
 
 function listItem(label: string, values: string[], note?: string): Item[] {
   const v = values.filter((x) => x.trim());
-  return v.length || note?.trim() ? [{ label, body: <Bullets items={v} />, note }] : [];
+  if (!v.length && !note?.trim()) return [];
+  return [{ label, note, lines: v.length ? v.map(bullet) : [<View key={0} />] }];
 }
 
 /** "Xăng xe" → "xăng xe" (ghép sau "Phụ cấp"); viết tắt như "KPI" giữ nguyên. */
@@ -142,21 +183,17 @@ function allowanceLabel(name: string): string {
   return t.length > 1 && t[1] === t[1].toLocaleLowerCase("vi") ? t[0].toLocaleLowerCase("vi") + t.slice(1) : t;
 }
 
-function salaryBlock(d: OfferLetterData): ReactNode {
+function salaryLines(d: OfferLetterData): ReactNode[] {
   const lines: [string, string, boolean][] = [];
   if (d.baseSalary !== null) lines.push(["Lương cơ bản", formatVnd(d.baseSalary), false]);
   for (const a of d.allowances) if (a.amount !== null && a.name) lines.push([`Phụ cấp ${allowanceLabel(a.name)}`, formatVnd(a.amount), false]);
   lines.push(["Tổng lương gross", formatVnd(offerTotal(d)), true]);
-  return (
-    <View style={{ marginTop: 2 }}>
-      {lines.map(([k, v, bold], i) => (
-        <View key={i} style={[s.money, bold ? { marginTop: 2 } : {}]}>
-          <Text style={bold ? s.label : {}}>{`• ${k}`}</Text>
-          <Text style={bold ? s.label : {}}>{v}</Text>
-        </View>
-      ))}
+  return lines.map(([k, v, bold], i) => (
+    <View key={i} style={[s.money, i === 0 || bold ? { marginTop: 2 } : {}]} wrap={false}>
+      <Text style={[s.moneyLabel, bold ? s.label : {}]}>{`• ${k}`}</Text>
+      <Text style={bold ? s.label : {}}>{v}</Text>
     </View>
-  );
+  ));
 }
 
 function OfferLetterDocument({ d }: { d: OfferLetterData }) {
@@ -166,7 +203,7 @@ function OfferLetterDocument({ d }: { d: OfferLetterData }) {
     ...textItem("Địa điểm làm việc", d.location),
     ...textItem("Thời gian làm việc", d.workingHours),
     ...(start ? [{ label: "Ngày bắt đầu làm việc", body: start, bold: true }] : []),
-    { label: "Mức lương", body: salaryBlock(d), note: d.probationNote || undefined },
+    { label: "Mức lương", lines: salaryLines(d), note: d.probationNote || undefined },
     ...textItem("Máy tính làm việc", d.computer),
     ...textItem("Điện thoại", d.phone),
   ];
@@ -206,10 +243,10 @@ function OfferLetterDocument({ d }: { d: OfferLetterData }) {
           <Section title="I. THÔNG TIN VỊ TRÍ" items={sec1} />
           <Section title="II. CHÍNH SÁCH PHÚC LỢI" items={sec2} />
           <Section title="III. CHUẨN BỊ CHO NGÀY ĐẦU ĐI LÀM" items={sec3} />
-          <BarGroup
-            title="IV. LỊCH TRÌNH NGÀY ĐẦU ĐI LÀM"
-            rows={schedule.map((x, i) => (
-              <View key={i} style={s.row} wrap={false}>
+          {schedule.map((x, i) => (
+            <View key={i} wrap={false}>
+              {i === 0 && <Bar title="IV. LỊCH TRÌNH NGÀY ĐẦU ĐI LÀM" />}
+              <View style={s.row}>
                 <View style={[s.cell, s.colTime]}>
                   <Text style={s.label}>{x.time}</Text>
                 </View>
@@ -217,8 +254,8 @@ function OfferLetterDocument({ d }: { d: OfferLetterData }) {
                   <Text>{x.task}</Text>
                 </View>
               </View>
-            ))}
-          />
+            </View>
+          ))}
         </View>
 
         {d.closing ? <Text style={[s.para, { marginTop: 12 }]}>{d.closing}</Text> : null}
@@ -231,8 +268,34 @@ function OfferLetterDocument({ d }: { d: OfferLetterData }) {
   );
 }
 
-/** Sinh PDF thư mời từ dữ liệu (đã sanitize). */
-export async function renderOfferLetterPdf(data: OfferLetterData): Promise<Buffer> {
-  ensureFonts();
-  return renderToBuffer(<OfferLetterDocument d={data} />);
+// ── Giới hạn render đồng thời (render ~0.5–1s CPU; chặn spam xem trước làm nghẽn server) ──
+
+const MAX_CONCURRENT = 2;
+let running = 0;
+const inFlightUsers = new Set<string>();
+
+export const PDF_BUSY_MESSAGE = "Đang tạo PDF khác, thử lại sau giây lát";
+
+/** Server đang bận tạo PDF (quá 2 bản cùng lúc, hoặc người này đang có 1 bản chưa xong) → route trả 429. */
+export class PdfBusyError extends Error {
+  constructor() {
+    super(PDF_BUSY_MESSAGE);
+  }
+}
+
+/**
+ * Sinh PDF thư mời từ dữ liệu (đã sanitize). Tối đa 2 bản cùng lúc toàn server, mỗi người 1 bản;
+ * vượt → PdfBusyError (không xếp hàng). `userKey` = id/email tài khoản.
+ */
+export async function renderOfferLetterPdf(data: OfferLetterData, userKey: string): Promise<Buffer> {
+  if (running >= MAX_CONCURRENT || inFlightUsers.has(userKey)) throw new PdfBusyError();
+  running++;
+  inFlightUsers.add(userKey);
+  try {
+    ensureFonts();
+    return await renderToBuffer(<OfferLetterDocument d={data} />);
+  } finally {
+    running--;
+    inFlightUsers.delete(userKey);
+  }
 }

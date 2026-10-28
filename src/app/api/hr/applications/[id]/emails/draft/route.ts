@@ -86,6 +86,8 @@ export async function GET(request: Request, { params }: Ctx) {
   // Mail offer: bắt buộc đã lưu thư mời nhận việc (PDF đính kèm sinh từ dữ liệu này khi gửi).
   let offer: DraftInput["offer"] = null;
   let attachment: { filename: string } | null = null;
+  // Thông báo nhỏ cho hộp thoại mail (vd. hạn xác nhận đã qua nên đã tự đổi).
+  let notice: string | null = null;
   if (kind === "offer") {
     let letter;
     let contact: string;
@@ -99,7 +101,9 @@ export async function GET(request: Request, { params }: Ctx) {
     if (invalid) {
       return NextResponse.json({ ...meta, error: `Thư mời nhận việc chưa đủ: ${invalid}`, code: "offer_letter_invalid" }, { status: 400 });
     }
-    offer = offerDraftFields(letter.data, contact, new Date());
+    const f = offerDraftFields(letter.data, contact, new Date());
+    offer = f.fields;
+    notice = f.notice;
     attachment = { filename: offerFileName(letter.data.candidateName) };
   }
 
@@ -149,5 +153,6 @@ export async function GET(request: Request, { params }: Ctx) {
     cc_preview: ccPreview,
     last_sent_at: last?.created_at ?? null,
     ...(attachment ? { attachment } : {}),
+    ...(notice ? { notice } : {}),
   });
 }

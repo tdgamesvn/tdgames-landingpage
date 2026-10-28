@@ -115,7 +115,8 @@ export function redactInterview<T extends Record<string, unknown>>(
  * Gỡ dữ liệu nhạy cảm khỏi 1 dòng lịch sử mail theo quyền (thuần):
  * - thiếu apps.view_contact: bỏ to_email/sent_to/cc_emails, subject `[TEST → …] ` → `[TEST] `;
  * - thiếu apps.view_tests: mail test_assignment che token trong đường dẫn `/test/<token>` → `/test/…`;
- * - thiếu emails.send_offer: `attachments` chỉ còn `{ filename, kind }` (bỏ snapshot thư mời — có lương).
+ * - `attachments` luôn chỉ còn `{ filename, kind }` (bỏ snapshot thư mời — có lương; UI chỉ cần tên file,
+ *   tải lại PDF qua /api/hr/emails/[id]/attachment).
  */
 export function redactEmailRow<T extends Record<string, unknown>>(row: T, perms: Set<PermissionKey>): Partial<T> {
   const out: Record<string, unknown> = { ...row };
@@ -128,7 +129,7 @@ export function redactEmailRow<T extends Record<string, unknown>>(row: T, perms:
       if (typeof out[k] === "string") out[k] = (out[k] as string).replace(/\/test\/[A-Za-z0-9_-]+/g, "/test/…");
     }
   }
-  if (!perms.has("emails.send_offer") && Array.isArray(out.attachments)) {
+  if (Array.isArray(out.attachments)) {
     out.attachments = (out.attachments as unknown[]).map((a) => {
       const o = a && typeof a === "object" ? (a as Record<string, unknown>) : {};
       return { filename: typeof o.filename === "string" ? o.filename : "", kind: typeof o.kind === "string" ? o.kind : null };

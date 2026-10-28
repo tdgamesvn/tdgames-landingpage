@@ -11,7 +11,7 @@ import { Monitor, RotateCcw, Save, Smartphone, Undo2 } from "lucide-react";
 import { hrFetch, useHrSession } from "./HrSession";
 import OfferLetterDefaultsPanel from "./OfferLetterDefaultsPanel";
 import { textToHtml, CANDIDATE_EMAIL_KINDS, KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
-import { SAMPLE_DRAFT_INPUT, renderTemplate, templateVars } from "@/lib/hr-email-templates";
+import { HIDDEN_VARS, SAMPLE_DRAFT_INPUT, renderTemplate, templateVars } from "@/lib/hr-email-templates";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
 type Tpl = {
@@ -255,7 +255,7 @@ export default function EmailTemplatesPanel() {
 
           <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--hr-hair)] bg-[var(--hr-fill)] px-5 py-2.5">
             <span className="mr-1 text-[12px] text-[var(--hr-ink-2)]">Chèn</span>
-            {data.vars[kind].map((v) => (
+            {data.vars[kind].filter((v) => !HIDDEN_VARS.has(v)).map((v) => (
               <button
                 key={v}
                 type="button"

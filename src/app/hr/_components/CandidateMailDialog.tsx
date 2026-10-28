@@ -35,6 +35,8 @@ type Draft = {
   cc_preview?: string[];
   /** Mail offer: file thư mời nhận việc sẽ đính kèm khi gửi. */
   attachment?: { filename: string };
+  /** Thông báo nhỏ từ server (vd. hạn xác nhận đã qua nên đã tự đổi). */
+  notice?: string;
   error?: string;
   message?: string;
 };
@@ -200,6 +202,12 @@ function MailDialog({
   const [cc, setCc] = useState<string[]>([]);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const needsLetter = req.kind === "offer" && !!draft?.error && OFFER_LETTER_CODES.has(draft.error);
+  // Rời sang hộp thoại thư mời sẽ bỏ nháp mail → hỏi nếu đã sửa tiêu đề / nội dung.
+  const edited = !!draft && (subject !== (draft.subject ?? "") || text !== (draft.text ?? ""));
+  const composeLetter = () => {
+    if (edited && !confirm("Bạn đã sửa tiêu đề / nội dung mail. Mở thư mời sẽ bỏ các sửa đổi này — tiếp tục?")) return;
+    onComposeLetter();
+  };
 
   useEffect(() => {
     let alive = true;
@@ -286,7 +294,7 @@ function MailDialog({
           <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">{loadError}</div>
         )}
         {needsLetter && (
-          <button type="button" onClick={onComposeLetter} className="hr-primary-btn inline-flex items-center gap-1.5 px-4 py-2">
+          <button type="button" onClick={composeLetter} className="hr-primary-btn inline-flex items-center gap-1.5 px-4 py-2">
             <FileText className="hr-ico" /> Soạn thư mời nhận việc
           </button>
         )}
@@ -328,6 +336,11 @@ function MailDialog({
                 ))}
               </div>
             )}
+            {draft.notice && (
+              <div role="status" className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                {draft.notice}
+              </div>
+            )}
             {draft.attachment && (
               <div className="flex flex-wrap items-center gap-1.5 text-xs text-white/50">
                 <span>Đính kèm:</span>
@@ -340,7 +353,7 @@ function MailDialog({
                 >
                   <FileText className="hr-ico-solo" /> {draft.attachment.filename}
                 </button>
-                <button type="button" onClick={onComposeLetter} className="text-[var(--hr-orange-ink)] underline-offset-2 hover:underline">
+                <button type="button" onClick={composeLetter} className="text-[var(--hr-orange-ink)] underline-offset-2 hover:underline">
                   Sửa thư mời
                 </button>
                 {pdfError && <span className="text-red-300">{pdfError}</span>}

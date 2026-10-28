@@ -182,9 +182,9 @@ test("offer: nháp có chức danh, ngày bắt đầu, tên job; không lộ l�
     kind: "offer",
     candidateName: "Lan",
     jobTitle: "Unity Dev",
-    offer: { salary: "15.000.000đ", start: "8:45, Thứ Hai 02/11/2026" },
+    offer: { start: "8:45, Thứ Hai 02/11/2026" },
   });
-  assert.ok(!d.text.includes("15.000.000đ"));
+  assert.ok(!/\d{1,3}(\.\d{3}){2}/.test(d.text)); // không có số tiền
   assert.ok(d.text.includes("8:45, Thứ Hai 02/11/2026"));
   assert.ok(d.text.includes("Unity Dev"));
   assert.ok(d.text.includes("Xin chào Lan,"));
