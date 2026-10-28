@@ -3,10 +3,11 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireBoss, hrPublicOrigin, issueToken } from "@/lib/hr-session";
 import { HR_ROLES, ROLE_LABEL, type HrRole } from "@/lib/hr-permissions";
 import { parseDiscordId, parsePhone, validateUserChange } from "@/lib/hr-users";
+import { findRefConflict, parseRefCodes } from "@/lib/hr-ref-codes";
 import { buildStaffInviteEmail } from "@/lib/hr-staff-email";
 import { sendStaffEmail } from "@/lib/hr-email-send";
 
-const COLS = "id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, password_hash";
+const COLS = "id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, ref_codes, password_hash";
 
 type Row = {
   id: string;
@@ -18,6 +19,7 @@ type Row = {
   last_login_at: string | null;
   discord_user_id: string | null;
   phone: string | null;
+  ref_codes: string[] | null;
   password_hash: string | null;
 };
 
@@ -35,7 +37,14 @@ export async function PATCH(req: Request, ctxRoute: { params: Promise<{ id: stri
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
 
-  const change: { display_name?: string; role?: HrRole; disabled?: boolean; discord_user_id?: string | null; phone?: string | null } = {};
+  const change: {
+    display_name?: string;
+    role?: HrRole;
+    disabled?: boolean;
+    discord_user_id?: string | null;
+    phone?: string | null;
+    ref_codes?: string[];
+  } = {};
   if (body.display_name !== undefined) {
     const n = typeof body.display_name === "string" ? body.display_name.trim() : "";
     if (n.length < 1 || n.length > 80) return NextResponse.json({ error: "Tên hiển thị phải từ 1 đến 80 ký tự" }, { status: 400 });
@@ -66,9 +75,26 @@ export async function PATCH(req: Request, ctxRoute: { params: Promise<{ id: stri
     if (ph === "invalid") return NextResponse.json({ error: "Số điện thoại không hợp lệ (9–13 chữ số, có thể bắt đầu bằng +)" }, { status: 400 });
     change.phone = ph;
   }
+  if (body.ref_codes !== undefined) {
+    // Phần tử đầu = mã chính (dùng cho link giới thiệu, chuẩn hoá referred_by của hồ sơ).
+    const codes = parseRefCodes(body.ref_codes);
+    if ("error" in codes) return NextResponse.json({ error: codes.error }, { status: 400 });
+    change.ref_codes = codes;
+  }
   const resend = body.resend_invite === true;
 
   const supabase = getSupabaseAdmin();
+  if (change.ref_codes?.length) {
+    const { data: others, error: othersErr } = await supabase.from("hr_users").select("id, display_name, ref_codes");
+    if (othersErr) return NextResponse.json({ error: othersErr.message }, { status: 500 });
+    const conflict = findRefConflict(change.ref_codes, (others ?? []) as { id: string; display_name: string; ref_codes: string[] | null }[], id);
+    if (conflict) {
+      return NextResponse.json(
+        { error: `Mã ref “${conflict.code}” đã thuộc tài khoản ${conflict.owner.display_name}` },
+        { status: 409 },
+      );
+    }
+  }
   const { data: target, error: findError } = await supabase.from("hr_users").select(COLS).eq("id", id).maybeSingle();
   if (findError) return NextResponse.json({ error: findError.message }, { status: 500 });
   if (!target) return NextResponse.json({ error: "Không tìm thấy tài khoản" }, { status: 404 });

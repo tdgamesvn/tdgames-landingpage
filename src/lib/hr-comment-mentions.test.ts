@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  foldVi, mentionableUsers, splitMentions, filterMembers, keptMentionIds, relativeTimeVi, avatarColorIndex,
+  assignableUsers, canViewApplication, foldVi, mentionableUsers, splitMentions, filterMembers, keptMentionIds, relativeTimeVi, avatarColorIndex,
 } from "./hr-comment-mentions.ts";
 
 const statuses = [
@@ -33,6 +33,25 @@ test("mentionableUsers: boss+hr luôn; leader chỉ của job; kế toán theo p
   assert.deepEqual(ids({ job_id: "j", status: "interview" }, null), ["b", "h", "a"]);
   assert.deepEqual(ids({ job_id: "j", status: "rejected", offer_status: "declined" }, "l2"), ["b", "h", "l2", "a"]);
   assert.deepEqual(ids({ job_id: "j", status: "rejected" }, null), ["b", "h"]);
+});
+
+test("canViewApplication: boss/hr luôn; leader chỉ job mình; kế toán theo phạm vi", () => {
+  const app = { job_id: "j", status: "new" };
+  assert.equal(canViewApplication({ id: "b", role: "boss" }, app, statuses, null), true);
+  assert.equal(canViewApplication({ id: "h", role: "hr" }, app, statuses, null), true);
+  assert.equal(canViewApplication({ id: "l1", role: "leader" }, app, statuses, "l1"), true);
+  assert.equal(canViewApplication({ id: "l2", role: "leader" }, app, statuses, "l1"), false);
+  assert.equal(canViewApplication({ id: "a", role: "accountant" }, app, statuses, null), false);
+  assert.equal(canViewApplication({ id: "a", role: "accountant" }, { job_id: "j", status: "offer" }, statuses, null), true);
+});
+
+test("assignableUsers: như mentionableUsers nhưng không cần quyền comment, có cả vai không comment được", () => {
+  const ids = (app: { job_id: string; status: string; offer_status?: string | null }, lead: string | null) =>
+    assignableUsers(users, app, statuses, lead).map((u) => u.id);
+  assert.deepEqual(ids({ job_id: "j", status: "new" }, "l1"), ["b", "h", "l1"]);
+  assert.deepEqual(ids({ job_id: "j", status: "interview" }, null), ["b", "h", "a"]);
+  // Vai bị thu apps.comment vẫn được giao phụ trách (miễn xem được hồ sơ).
+  assert.deepEqual(mentionableUsers(users, { job_id: "j", status: "new" }, statuses, "l1", new Set()).map((u) => u.id), ["b"]);
 });
 
 test("filterMembers: bỏ dấu khi khớp", () => {

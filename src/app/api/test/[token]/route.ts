@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { MAX_SUBMISSION_ITEMS, readSubmissionBatch } from "@/lib/hr-tests";
 import { deleteFromR2 } from "@/lib/r2";
-import { discordNotify } from "@/lib/discord-notify";
+import { notifyCandidate } from "@/lib/hr-notify";
+import { candidatePushPayload } from "@/lib/hr-push-payload";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,10 +55,11 @@ async function setEta(app: NonNullable<Awaited<ReturnType<typeof findApp>>>, raw
     return NextResponse.json({ error: "Expected time already set — please contact HR to change it." }, { status: 409 });
 
   const unix = Math.floor(eta.getTime() / 1000);
-  void discordNotify("hr", {
+  // Ứng viên tự đặt (không có người thực hiện). Chỉ Discord, không push.
+  void notifyCandidate(app.id, { event: "test_eta" }, () => ({
     content: `⏰ **${app.full_name}** hẹn nộp bài test lúc <t:${unix}:F> (<t:${unix}:R>)`,
     embeds: app.jobs?.title ? [{ title: `Bài test — ${app.jobs.title}`, color: 0xf59e0b }] : undefined,
-  }).catch(() => {});
+  })).catch(() => {});
 
   return NextResponse.json({ eta: iso });
 }
@@ -143,8 +145,9 @@ export async function POST(request: Request, { params }: Ctx) {
   const list = items
     .map((it) => `${it.kind === "file" ? "📎" : "🔗"} ${it.file_name ? `[${it.file_name}](${it.url})` : it.url}`)
     .join("\n");
-  void discordNotify("hr", {
-    content: `@everyone 📝 **${app.full_name}** vừa nộp bài test (${items.length} mục)`,
+  // Người nhận: Sếp, người phụ trách, Leader của job (chưa giao → @everyone + HR). Ứng viên nộp → không có actor.
+  void notifyCandidate(app.id, { event: "test_submitted" }, ({ jobTitle }) => ({
+    content: `📝 **${app.full_name}** vừa nộp bài test (${items.length} mục)`,
     embeds: [
       {
         title: app.jobs?.title ? `Bài test — ${app.jobs.title}` : "Bài test",
@@ -158,7 +161,14 @@ export async function POST(request: Request, { params }: Ctx) {
         ],
       },
     ],
-  }).catch(() => {});
+    push: candidatePushPayload({
+      event: "test_submitted",
+      appId: app.id,
+      candidateName: app.full_name,
+      jobTitle: jobTitle ?? app.jobs?.title ?? null,
+      text: `${items.length} mục — chờ chấm`,
+    }),
+  })).catch(() => {});
 
   return NextResponse.json({ submissions: data ?? [] });
 }

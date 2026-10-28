@@ -18,6 +18,9 @@ export function checkAppPatch(
     } else if (key === "offer_status") {
       if (!ctx.perms.has("apps.offer")) return "Bạn không có quyền ghi kết quả offer";
       if (!reachesOffer) return "Chỉ ghi kết quả offer cho hồ sơ đang ở trạng thái Offer";
+    } else if (key === "assignee_user_id") {
+      // Giao người phụ trách = sửa hồ sơ → chỉ apps.edit (đã cho qua ở đầu hàm).
+      return "Bạn không có quyền giao người phụ trách";
     } else if (key === "status") {
       if (!(ctx.perms.has("apps.offer") && oldStatus === "interview" && body.status === "offer")) {
         return "Bạn chỉ được chuyển hồ sơ từ Interview sang Offer";

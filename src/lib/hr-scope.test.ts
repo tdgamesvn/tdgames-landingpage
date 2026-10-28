@@ -64,6 +64,13 @@ test("leader giữ message, mất referred_by/source", () => {
   assert.ok(!("referred_by" in out) && !("source" in out));
 });
 
+test("assignee_user_id là BASE field: kế toán / leader vẫn thấy người phụ trách", () => {
+  const a = { ...app, assignee_user_id: "u1" };
+  for (const role of ["leader", "accountant"] as const) {
+    assert.equal(redactApplication(a, effectivePermissions(role, [])).assignee_user_id, "u1");
+  }
+});
+
 test("có view_ai thì giữ key ai_* / rank* lạ", () => {
   const out = redactApplication(app, new Set<PermissionKey>(["apps.view_ai"]));
   assert.ok("ai_custom" in out && "rank_score" in out && !("email" in out));

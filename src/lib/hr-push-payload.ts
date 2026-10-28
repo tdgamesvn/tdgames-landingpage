@@ -47,7 +47,53 @@ export function mentionPayload(i: {
   };
 }
 
-export type PushSubscriptionInput = { endpoint: string; keys: { p256dh: string; auth: string } };
+/** Cắt theo code point (không làm vỡ emoji), thêm "…" khi dài. */
+function clip(s: string, max: number): string {
+  const chars = Array.from(s);
+  return chars.length > max ? `${chars.slice(0, max - 1).join("")}…` : s;
+}
+
+/**
+ * Push cho sự kiện gắn với 1 hồ sơ (người nhận theo luật candidateRecipients). Tag `hr-<event>-<appId>`:
+ * thông báo mới của cùng loại + cùng hồ sơ thay cái cũ. `text` = chi tiết (nội dung comment, trạng thái…).
+ */
+export function candidatePushPayload(i: {
+  event:
+    | "comment"
+    | "note"
+    | "status"
+    | "test_review"
+    | "test_submitted"
+    | "new_application"
+    | "interview_schedule"
+    | "assigned";
+  appId: string;
+  candidateName: string;
+  actorName?: string | null;
+  jobTitle?: string | null;
+  text?: string | null;
+  /** Chỉ "assigned": có tên → bản cho người khác ("… cho Dung"); không có → bản cho người nhận ("… cho bạn"). */
+  assigneeName?: string | null;
+}): PushPayload {
+  const who = i.actorName?.trim() || "Ai đó";
+  const name = i.candidateName || "Ứng viên";
+  const job = i.jobTitle?.trim() || "";
+  const text = i.text?.trim() || "";
+  const titles: Record<typeof i.event, string> = {
+    comment: `💬 ${who} bình luận — ${name}`,
+    note: `📝 ${who} sửa ghi chú — ${name}`,
+    status: `📋 ${name} — đổi trạng thái`,
+    test_review: `✅ ${who} chấm bài test — ${name}`,
+    test_submitted: `📥 ${name} vừa nộp bài test`,
+    new_application: `🎯 Hồ sơ mới — ${name}`,
+    interview_schedule: `🗓 Lịch PV — ${name}`,
+    assigned: `👤 ${who} giao hồ sơ ${name} cho ${i.assigneeName?.trim() || "bạn"}`,
+  };
+  const body = [text, job].filter(Boolean).join(" · ") || "Mở /hr để xem";
+  return { title: titles[i.event], body: clip(body, 160), url: "/hr", tag: `hr-${i.event}-${i.appId}` };
+}
+
+export type PushSubscriptionInput ={ endpoint: string; keys: { p256dh: string; auth: string } };
 
 // Server sẽ POST tới endpoint → chỉ nhận host của dịch vụ push chính thức (chặn SSRF).
 const PUSH_HOSTS = ["fcm.googleapis.com", "web.push.apple.com"];

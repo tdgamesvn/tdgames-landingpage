@@ -19,6 +19,7 @@ import { accountantStatusKeys } from "@/lib/hr-scope";
 import type { PermissionKey } from "@/lib/hr-permissions";
 import PushToggle from "./PushToggle";
 import { STATUS_PALETTE } from "./status-palette";
+import { avatarColorIndex } from "@/lib/hr-comment-mentions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 import { cvViewerUrl, safeExternalUrl } from "@/lib/cv-viewer";
 import { ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
@@ -67,6 +68,31 @@ function buildStatusApi(list: StatusDef[]): StatusApi {
 
 const StatusContext = createContext<StatusApi>(buildStatusApi(DEFAULT_STATUSES));
 const useStatuses = () => useContext(StatusContext);
+
+/** Tên tài khoản chưa khoá (id → tên) — để hiện người phụ trách trên card / hồ sơ. */
+const StaffContext = createContext<Map<string, string>>(new Map());
+const useStaffNames = () => useContext(StaffContext);
+
+const AVATAR_COLORS = ["#b45309", "#0f766e", "#4f46e5", "#be185d", "#15803d", "#7c3aed", "#0369a1", "#a16207"];
+
+/** Avatar chữ cái nhỏ của người phụ trách; chưa giao → chữ "chưa giao" nhạt. */
+function AssigneeBadge({ id }: { id: string | null | undefined }) {
+  const names = useStaffNames();
+  if (!id) {
+    return <span className="shrink-0 text-[10px] text-white/30" title="Hồ sơ chưa có người phụ trách">chưa giao</span>;
+  }
+  const name = names.get(id);
+  return (
+    <span
+      title={name ? `Phụ trách: ${name}` : "Người phụ trách (tài khoản đã khoá)"}
+      aria-label={name ? `Phụ trách: ${name}` : "Người phụ trách"}
+      className="flex h-5 w-5 shrink-0 select-none items-center justify-center rounded-full text-[10px] font-semibold text-white"
+      style={{ backgroundColor: name ? AVATAR_COLORS[avatarColorIndex(id, AVATAR_COLORS.length)] : "#8e8e93" }}
+    >
+      {name ? initials(name).slice(-1) || "?" : "?"}
+    </span>
+  );
+}
 
 const COLLAPSED_KEY = "hr.pipeline.collapsed";
 const CV_OPEN_KEY = "hr.modal.cvOpen";
@@ -402,6 +428,85 @@ function AppDetail({ app, comments = true }: { app: Application; comments?: bool
   );
 }
 
+/**
+ * Ô "Người phụ trách" trong hồ sơ. Có apps.edit: dropdown tài khoản chưa khoá xem được hồ sơ (+ "Chưa giao"),
+ * đổi là lưu ngay (server báo người mới nhận). Không có quyền: chỉ hiện tên.
+ */
+function AssigneeField({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
+  const { can } = useHrSession();
+  const names = useStaffNames();
+  const canEdit = can("apps.edit");
+  const current = app.assignee_user_id ?? null;
+  const [members, setMembers] = useState<{ id: string; display_name: string; roleLabel: string }[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!canEdit) return;
+    let alive = true;
+    hrFetch(`/api/hr/applications/${app.id}/assignable`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((j) => alive && setMembers(j.members ?? []))
+      .catch(() => alive && setError("Không tải được danh sách tài khoản"));
+    return () => {
+      alive = false;
+    };
+  }, [app.id, canEdit]);
+
+  async function change(next: string) {
+    const value = next || null;
+    if (value === current) return;
+    setBusy(true);
+    setError("");
+    try {
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ assignee_user_id: value }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+      onPatch({ assignee_user_id: value });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Không lưu được");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const currentName = current ? (names.get(current) ?? members?.find((m) => m.id === current)?.display_name ?? null) : null;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[13px] text-white/50">Người phụ trách</span>
+      {canEdit ? (
+        <select
+          aria-label="Người phụ trách"
+          value={current ?? ""}
+          disabled={busy || members === null}
+          onChange={(e) => void change(e.target.value)}
+          className="hr-status-trigger cursor-pointer text-white disabled:opacity-50"
+        >
+          <option value="">Chưa giao</option>
+          {/* Người đang phụ trách không còn trong danh sách (khoá / hết phạm vi) vẫn hiện để không mất giá trị. */}
+          {current && members && !members.some((m) => m.id === current) && (
+            <option value={current}>{currentName ?? "Tài khoản đã khoá"}</option>
+          )}
+          {(members ?? []).map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.display_name} · {m.roleLabel}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <span className={`text-[13px] font-semibold ${current ? "text-white/85" : "text-white/40"}`}>
+          {current ? (currentName ?? "Tài khoản đã khoá") : "Chưa giao"}
+        </span>
+      )}
+      {error && <span role="alert" className="text-[12px] text-red-400">{error}</span>}
+    </div>
+  );
+}
+
 // ── Candidate Modal (ClickUp-style: info left, comments right) ───────────────
 
 function CandidateModal({
@@ -584,6 +689,9 @@ function CandidateModal({
                 </button>
               </MoreMenu>
             )}
+          </div>
+          <div className="mt-2.5 md:pl-[52px]">
+            <AssigneeField app={app} onPatch={onPatch} />
           </div>
         </div>
 
@@ -1026,7 +1134,10 @@ function AppCard({
         >
           {app.full_name}
         </button>
-        <span className="text-[10px] text-white/40 shrink-0">{timeAgo(app.created_at)}</span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="text-[10px] text-white/40">{timeAgo(app.created_at)}</span>
+          <AssigneeBadge id={app.assignee_user_id} />
+        </div>
       </div>
 
       {/* Job title */}
@@ -2731,15 +2842,17 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
 
   const [statuses, setStatuses] = useState<StatusDef[]>(DEFAULT_STATUSES);
   const statusApi = useMemo(() => buildStatusApi(statuses), [statuses]);
+  const [staffNames, setStaffNames] = useState<Map<string, string>>(() => new Map());
   const [showStatusMgr, setShowStatusMgr] = useState(false);
   const [searchOpenId, setSearchOpenId] = useState<string | null>(null);
   const searchOpenApp = searchOpenId ? apps.find((a) => a.id === searchOpenId) : undefined;
 
   const loadData = useCallback(async () => {
-    const [appsRes, jobsRes, stRes] = await Promise.all([
+    const [appsRes, jobsRes, stRes, dirRes] = await Promise.all([
       hrFetch("/api/hr/applications"),
       hrFetch("/api/hr/jobs"),
       hrFetch("/api/hr/statuses").catch(() => null),
+      hrFetch("/api/hr/users/directory").catch(() => null),
     ]);
     // Phiên hết hạn / bị khoá giữa chừng → hỏi lại phiên, về form đăng nhập.
     if (appsRes.status === 401) {
@@ -2751,6 +2864,13 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     setApps(appsData.applications ?? []);
     setJobs(jobsData.jobs ?? []);
     setLoadError("");
+    // Tên người phụ trách — lỗi thì card chỉ hiện avatar "?" (không chặn dashboard).
+    if (dirRes?.ok) {
+      const dir = await dirRes.json().catch(() => null);
+      if (Array.isArray(dir?.users)) {
+        setStaffNames(new Map((dir.users as { id: string; display_name: string }[]).map((u) => [u.id, u.display_name])));
+      }
+    }
     // Không chặn nếu bảng statuses lỗi/chưa migrate → giữ DEFAULT_STATUSES.
     if (stRes?.ok) {
       const st = await stRes.json().catch(() => null);
@@ -2826,6 +2946,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
 
   return (
     <StatusContext.Provider value={statusApi}>
+    <StaffContext.Provider value={staffNames}>
     <CandidateMailProvider>
     <div className="hr-app min-h-screen text-white">
       {/* Thanh công cụ kiểu macOS: tiêu đề trái, segmented control giữa, nút văn bản phải.
@@ -2937,6 +3058,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
       )}
     </div>
     </CandidateMailProvider>
+    </StaffContext.Provider>
     </StatusContext.Provider>
   );
 }

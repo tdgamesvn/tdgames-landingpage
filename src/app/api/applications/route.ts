@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { discordNotify } from "@/lib/discord-notify";
 import { escapeTelegramHtml, sanitizeApplicationInput } from "@/lib/application-input";
+import { canonicalRefCode, normalizeRefCode, resolveRefOwner } from "@/lib/hr-ref-codes";
+import { notifyCandidate } from "@/lib/hr-notify";
+import { candidatePushPayload } from "@/lib/hr-push-payload";
 
 // CV hợp lệ = file đã upload qua /api/applications/upload-cv (R2 public base).
 function cvHost() {
@@ -31,9 +33,27 @@ export async function POST(request: Request) {
   const input = parsed.data;
   const { job_id, full_name, email, work_type } = input;
 
+  // Mã ref: chuẩn hoá; khớp mã của tài khoản /hr (chưa khoá) → lưu mã chính + giao người đó phụ trách.
+  // Lỗi đọc (vd. migration ref_codes chưa áp) → coi như không khớp, vẫn nhận hồ sơ.
+  const ref = normalizeRefCode(input.referred_by);
+  let assigneeId: string | null = null;
+  input.referred_by = ref;
+  if (ref) {
+    const { data: staff, error: staffErr } = await supabase
+      .from("hr_users")
+      .select("id, ref_codes")
+      .eq("disabled", false);
+    const owner = staffErr ? null : resolveRefOwner(ref, (staff ?? []) as { id: string; ref_codes: string[] | null }[]);
+    if (owner) {
+      input.referred_by = canonicalRefCode(owner) ?? ref;
+      assigneeId = owner.id;
+    }
+  }
+
   const { data, error } = await supabase
     .from("applications")
-    .insert([input])
+    // Chỉ gửi assignee_user_id khi có (không vỡ insert nếu cột chưa có và không ai khớp).
+    .insert([assigneeId ? { ...input, assignee_user_id: assigneeId } : input])
     .select("id")
     .single();
 
@@ -103,16 +123,30 @@ export async function POST(request: Request) {
       if (cvUrl) fields.push({ name: "CV", value: `[Download CV](${cvUrl})`, inline: false });
       if (referredBy) fields.push({ name: "🔗 Referred by", value: referredBy, inline: true });
 
-      await discordNotify("hr", {
-        content: `@everyone 🎯 **New application for ${jobTitle}** from **${String(full_name)}**`,
-        embeds: [
-          {
-            title: `Application — ${jobTitle}`,
-            color: 0xf59e0b,
-            fields,
-            timestamp: new Date().toISOString(),
-          },
-        ],
+      // Người nhận: Sếp, người phụ trách (chủ mã ref), Leader của job; chưa giao → @everyone + mọi HR.
+      await notifyCandidate(String(data.id), { event: "new_application" }, ({ staff }) => {
+        const assigneeName = assigneeId ? staff?.staff.find((u) => u.id === assigneeId)?.display_name : null;
+        const embedFields = assigneeName
+          ? [...fields, { name: "👤 Người phụ trách", value: assigneeName, inline: true }]
+          : fields;
+        return {
+          content: `🎯 **New application for ${jobTitle}** from **${String(full_name)}**`,
+          embeds: [
+            {
+              title: `Application — ${jobTitle}`,
+              color: 0xf59e0b,
+              fields: embedFields,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+          push: candidatePushPayload({
+            event: "new_application",
+            appId: String(data.id),
+            candidateName: String(full_name),
+            jobTitle,
+            text: referredBy ? `via ${referredBy}` : null,
+          }),
+        };
       });
     } catch {
       // Silently ignore notification errors — application is already saved

@@ -100,7 +100,10 @@ export async function GET(request: Request) {
     inline: true,
   });
 
+  // Bản tổng hợp nhiều hồ sơ (không gắn 1 ứng viên) → giữ @everyone như cũ, KHÔNG theo luật
+  // người nhận từng hồ sơ (candidateRecipients) — sếp chốt 2026-10-28.
   await discordNotify("hr", {
+    allowed_mentions: { parse: ["everyone"] },
     content: `@everyone ⏰ **Daily HR Reminder** — ${[
       staleCount > 0 && `${staleCount} application${staleCount !== 1 ? "s" : ""} need attention`,
       todays.length > 0 && `${todays.length} PV hôm nay`,

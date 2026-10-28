@@ -192,6 +192,8 @@ export type Application = {
   admin_notes: string | null;
   rejection_reason: string | null;
   referred_by: string | null;
+  /** Người phụ trách hồ sơ (hr_users.id) — nhận mọi thông báo của hồ sơ; null = chưa giao. */
+  assignee_user_id?: string | null;
   /** HR nhập — AI đọc khi chấm. */
   mbti_type: string | null;
   mbti_url: string | null;

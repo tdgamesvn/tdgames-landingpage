@@ -3,8 +3,6 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { notifyNewComment } from "@/lib/hr-notify";
 import { loadMentionableMembers } from "@/lib/hr-comment-members";
-import { sendHrPush } from "@/lib/hr-push";
-import { mentionPayload } from "@/lib/hr-push-payload";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_MENTIONS = 20;
@@ -122,56 +120,15 @@ export async function POST(
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Fire-and-forget Discord notification
-  (async () => {
-    try {
-      // Fetch applicant name + job title for notification context
-      const { data: app } = await supabase
-        .from("applications")
-        .select("full_name, job_id")
-        .eq("id", id)
-        .single();
-
-      let jobTitle: string | undefined;
-      if (app?.job_id) {
-        const { data: job } = await supabase
-          .from("jobs")
-          .select("title")
-          .eq("id", app.job_id)
-          .single();
-        jobTitle = job?.title ?? undefined;
-      }
-
-      // Discord và push độc lập: một bên lỗi không chặn bên kia.
-      const results = await Promise.allSettled([
-        notifyNewComment(
-          app?.full_name ?? "Unknown",
-          authorName,
-          content,
-          jobTitle,
-          app?.job_id ?? null,
-          mentions,
-        ),
-        mentions.length
-          ? sendHrPush(
-              mentionPayload({
-                authorName,
-                candidateName: app?.full_name ?? "Ứng viên",
-                content,
-                commentId: String(data.id),
-                applicationId: id,
-              }),
-              { userIds: mentions.filter((u) => u !== ctx.user.id) },
-            )
-          : Promise.resolve(null),
-      ]);
-      results.forEach((r, i) => {
-        if (r.status === "rejected") console.error(`[hr-comments] ${i === 0 ? "Discord" : "push"} lỗi:`, r.reason);
-      });
-    } catch {
-      // Silently ignore — DB insert already succeeded
-    }
-  })();
+  // Fire-and-forget: Discord + push theo luật người nhận (Sếp, người phụ trách, Leader job, người được tag).
+  void notifyNewComment({
+    appId: id,
+    commentId: String(data.id),
+    authorName,
+    actorId: ctx.user.id,
+    content,
+    mentions,
+  }).catch((e) => console.error("[hr-comments] notify lỗi:", e));
 
   return NextResponse.json({ comment: data }, { status: 201 });
 }

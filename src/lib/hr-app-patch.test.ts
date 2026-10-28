@@ -46,3 +46,9 @@ test("kế toán: test_review bị chặn (không có apps.review_test)", () => 
 test("kế toán: offer_status khi hồ sơ chưa ở offer bị chặn", () => {
   assert.ok(checkAppPatch(ctx("accountant"), "interview", { offer_status: "accepted" }));
 });
+test("assignee_user_id: cần apps.edit (leader / kế toán bị chặn, hr/boss được)", () => {
+  assert.equal(checkAppPatch(ctx("leader"), "new", { assignee_user_id: "x" }), "Bạn không có quyền giao người phụ trách");
+  assert.equal(checkAppPatch(ctx("accountant"), "offer", { assignee_user_id: null }), "Bạn không có quyền giao người phụ trách");
+  assert.equal(checkAppPatch(ctx("hr"), "new", { assignee_user_id: "x" }), null);
+  assert.equal(checkAppPatch(ctx("boss"), "new", { assignee_user_id: null }), null);
+});

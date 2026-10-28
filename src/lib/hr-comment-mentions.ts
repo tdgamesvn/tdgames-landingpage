@@ -10,31 +10,52 @@ export function foldVi(s: string): string {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase();
 }
 
+type ScopeApp = { job_id: string; status: string; offer_status?: string | null };
+
 /**
- * Tài khoản chưa khoá xem được hồ sơ này: boss + hr luôn; leader nếu là người phụ trách job;
+ * Tài khoản này có xem được hồ sơ không (không xét khoá): boss + hr luôn; leader nếu là Leader của job;
  * kế toán nếu hồ sơ nằm trong phạm vi kế toán.
  */
+export function canViewApplication(
+  u: { id: string; role: HrRole },
+  app: ScopeApp,
+  statuses: ScopeInput["statuses"],
+  jobLeaderId: string | null,
+): boolean {
+  if (u.role === "boss" || u.role === "hr") return true;
+  if (u.role === "leader") return jobLeaderId !== null && u.id === jobLeaderId;
+  if (u.role === "accountant") return inScope({ role: "accountant", userId: u.id, leaderJobIds: [], statuses }, app);
+  return false;
+}
+
+function toMember(u: MentionUser): MentionMember {
+  return { id: u.id, display_name: u.display_name, role: u.role, roleLabel: ROLE_LABEL[u.role] };
+}
+
+/** Tài khoản chưa khoá xem được hồ sơ này và có quyền đọc comment (boss luôn có). */
 export function mentionableUsers(
   users: MentionUser[],
-  app: { job_id: string; status: string; offer_status?: string | null },
+  app: ScopeApp,
   statuses: ScopeInput["statuses"],
   jobLeaderId: string | null,
   rolesWithComment: Set<HrRole>,
 ): MentionMember[] {
-  const out: MentionMember[] = [];
-  for (const u of users) {
-    if (u.disabled) continue;
+  return users
+    .filter((u) => !u.disabled)
     // Vai không có quyền apps.comment thì không đọc được comment → không tag (boss luôn có).
-    if (u.role !== "boss" && !rolesWithComment.has(u.role)) continue;
-    let ok = false;
-    if (u.role === "boss" || u.role === "hr") ok = true;
-    else if (u.role === "leader") ok = jobLeaderId !== null && u.id === jobLeaderId;
-    else if (u.role === "accountant") {
-      ok = inScope({ role: "accountant", userId: u.id, leaderJobIds: [], statuses }, app);
-    }
-    if (ok) out.push({ id: u.id, display_name: u.display_name, role: u.role, roleLabel: ROLE_LABEL[u.role] });
-  }
-  return out;
+    .filter((u) => u.role === "boss" || rolesWithComment.has(u.role))
+    .filter((u) => canViewApplication(u, app, statuses, jobLeaderId))
+    .map(toMember);
+}
+
+/** Người được giao phụ trách hồ sơ: tài khoản chưa khoá xem được hồ sơ (không cần quyền comment). */
+export function assignableUsers(
+  users: MentionUser[],
+  app: ScopeApp,
+  statuses: ScopeInput["statuses"],
+  jobLeaderId: string | null,
+): MentionMember[] {
+  return users.filter((u) => !u.disabled && canViewApplication(u, app, statuses, jobLeaderId)).map(toMember);
 }
 
 /** Lọc danh sách gợi ý theo chữ gõ sau @ (bỏ dấu). */

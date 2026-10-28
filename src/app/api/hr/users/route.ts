@@ -4,6 +4,7 @@ import { requireBoss, hrPublicOrigin, issueToken } from "@/lib/hr-session";
 import { HR_ROLES, ROLE_LABEL, type HrRole } from "@/lib/hr-permissions";
 import { isValidEmail } from "@/lib/hr-email";
 import { parseDiscordId, parsePhone } from "@/lib/hr-users";
+import { findRefConflict, parseRefCodes } from "@/lib/hr-ref-codes";
 import { buildStaffInviteEmail } from "@/lib/hr-staff-email";
 import { sendStaffEmail } from "@/lib/hr-email-send";
 
@@ -17,6 +18,7 @@ type UserRow = {
   last_login_at: string | null;
   discord_user_id: string | null;
   phone: string | null;
+  ref_codes: string[] | null;
   password_hash?: string | null;
 };
 
@@ -33,7 +35,7 @@ export async function GET(req: Request) {
   if ("response" in auth) return auth.response;
   const { data, error } = await getSupabaseAdmin()
     .from("hr_users")
-    .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, password_hash")
+    .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, ref_codes, password_hash")
     .order("created_at", { ascending: true });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ users: (data ?? []).map((u) => toPublic(u as UserRow)) });
@@ -60,11 +62,25 @@ export async function POST(req: Request) {
   const phone = parsePhone(body?.phone);
   if (phone === "invalid") return NextResponse.json({ error: "Số điện thoại không hợp lệ (9–13 chữ số, có thể bắt đầu bằng +)" }, { status: 400 });
 
+  const refCodes = parseRefCodes(body?.ref_codes);
+  if ("error" in refCodes) return NextResponse.json({ error: refCodes.error }, { status: 400 });
+
   const supabase = getSupabaseAdmin();
+  if (refCodes.length) {
+    const { data: others, error: othersErr } = await supabase.from("hr_users").select("id, display_name, ref_codes");
+    if (othersErr) return NextResponse.json({ error: othersErr.message }, { status: 500 });
+    const conflict = findRefConflict(refCodes, (others ?? []) as { id: string; display_name: string; ref_codes: string[] | null }[], null);
+    if (conflict) {
+      return NextResponse.json(
+        { error: `Mã ref “${conflict.code}” đã thuộc tài khoản ${conflict.owner.display_name}` },
+        { status: 409 },
+      );
+    }
+  }
   const { data: user, error } = await supabase
     .from("hr_users")
-    .insert({ email, display_name: displayName, role, discord_user_id: discordId, phone })
-    .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, password_hash")
+    .insert({ email, display_name: displayName, role, discord_user_id: discordId, phone, ...(refCodes.length ? { ref_codes: refCodes } : {}) })
+    .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, ref_codes, password_hash")
     .single();
   if (error) {
     if (error.code === "23505") return NextResponse.json({ error: "Email đã có tài khoản" }, { status: 409 });

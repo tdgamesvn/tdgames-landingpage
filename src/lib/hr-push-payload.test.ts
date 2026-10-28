@@ -76,3 +76,40 @@ test("mentionPayload: cắt theo code point, không làm vỡ emoji", () => {
   const p = mentionPayload({ authorName: "T", candidateName: "N", content: "😀".repeat(200), commentId: "c", applicationId: "a" });
   assert.equal(p.body, `N: ${"😀".repeat(119)}…`);
 });
+
+test("candidatePushPayload: tag hr-<event>-<appId>, url /hr, tiếng Việt ngắn", async () => {
+  const { candidatePushPayload } = await import("./hr-push-payload.ts");
+  const c = candidatePushPayload({ event: "comment", appId: "a1", candidateName: "Nguyễn A", actorName: "Toàn", text: "ok" });
+  assert.equal(c.tag, "hr-comment-a1");
+  assert.equal(c.url, "/hr");
+  assert.equal(c.title, "💬 Toàn bình luận — Nguyễn A");
+  assert.equal(c.body, "ok");
+
+  const s = candidatePushPayload({ event: "status", appId: "a1", candidateName: "Nguyễn A", actorName: "Toàn", text: "Interview → Offer" });
+  assert.equal(s.tag, "hr-status-a1");
+  assert.ok(s.title.includes("Nguyễn A"));
+  assert.ok(s.body.includes("Interview → Offer"));
+
+  const n = candidatePushPayload({ event: "new_application", appId: "a2", candidateName: "B", jobTitle: "Spine Animator" });
+  assert.equal(n.tag, "hr-new_application-a2");
+  assert.ok(n.title.includes("B"));
+  assert.ok(n.body.includes("Spine Animator"));
+
+  const g = candidatePushPayload({ event: "assigned", appId: "a3", candidateName: "C", actorName: "Sếp", jobTitle: "2D Artist" });
+  assert.equal(g.title, "👤 Sếp giao hồ sơ C cho bạn");
+  assert.equal(g.tag, "hr-assigned-a3");
+  const g2 = candidatePushPayload({ event: "assigned", appId: "a3", candidateName: "C", actorName: "Sếp", assigneeName: "Dung" });
+  assert.equal(g2.title, "👤 Sếp giao hồ sơ C cho Dung");
+});
+
+test("candidatePushPayload: không có actor / job → không lộ undefined/null; body cắt 160 ký tự", async () => {
+  const { candidatePushPayload } = await import("./hr-push-payload.ts");
+  for (const event of ["comment", "note", "status", "test_review", "test_submitted", "new_application", "interview_schedule", "assigned"] as const) {
+    const p = candidatePushPayload({ event, appId: "x", candidateName: "N" });
+    assert.ok(!/undefined|null/.test(p.title + p.body), event);
+    assert.ok(p.title.length > 0, event);
+  }
+  const long = candidatePushPayload({ event: "note", appId: "x", candidateName: "N", actorName: "T", text: "😀".repeat(300) });
+  assert.equal(Array.from(long.body).length, 160);
+  assert.ok(long.body.endsWith("…"));
+});

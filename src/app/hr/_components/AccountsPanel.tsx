@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { hrFetch, useHrSession } from "./HrSession";
 import { HR_PERMISSIONS, HR_ROLES, ROLE_LABEL, type HrRole } from "@/lib/hr-permissions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
+import { MAX_REF_CODES, normalizeRefCode } from "@/lib/hr-ref-codes";
 
 type UserStatus = "active" | "invited" | "disabled";
 type HrUser = {
@@ -22,6 +23,8 @@ type HrUser = {
   last_login_at: string | null;
   discord_user_id: string | null;
   phone: string | null;
+  /** Mã giới thiệu (đã chuẩn hoá); phần tử đầu = mã chính. */
+  ref_codes: string[] | null;
 };
 type Override = { role: string; permission: string; allowed: boolean };
 type PermRole = "hr" | "leader" | "accountant";
@@ -140,7 +143,7 @@ export default function AccountsPanel() {
         />
 
         <div className="hr-group overflow-x-auto">
-          <table className="w-full min-w-[1080px] text-left text-[13px]">
+          <table className="w-full min-w-[1320px] text-left text-[13px]">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-white/40">
                 <th className="px-4 py-2 font-bold">Tên</th>
@@ -148,6 +151,7 @@ export default function AccountsPanel() {
                 <th className="px-2 py-2 font-bold">Vai</th>
                 <th className="px-2 py-2 font-bold">Số điện thoại</th>
                 <th className="px-2 py-2 font-bold">Discord ID</th>
+                <th className="px-2 py-2 font-bold" title="Hồ sơ nộp qua link ?ref=<mã> tự giao cho người này phụ trách">Mã ref</th>
                 <th className="px-2 py-2 font-bold">Trạng thái</th>
                 <th className="px-2 py-2 font-bold">Đăng nhập cuối</th>
                 <th className="px-4 py-2 text-right font-bold">Thao tác</th>
@@ -155,7 +159,7 @@ export default function AccountsPanel() {
             </thead>
             <tbody>
               {users === null && !loadError && (
-                <tr><td colSpan={8} className="px-4 py-6 text-white/50">Đang tải…</td></tr>
+                <tr><td colSpan={9} className="px-4 py-6 text-white/50">Đang tải…</td></tr>
               )}
               {users?.map((u) => {
                 const isSelf = me?.user.id === u.id;
@@ -206,6 +210,13 @@ export default function AccountsPanel() {
                             v ? `Đã lưu Discord ID của ${u.display_name}` : `Đã xoá Discord ID của ${u.display_name}`,
                           )
                         }
+                      />
+                    </td>
+                    <td className="px-2 py-2.5 align-top">
+                      <RefCodesCell
+                        user={u}
+                        disabled={busy}
+                        onSave={(codes) => void patchUser(u, { ref_codes: codes }, `Đã lưu mã ref của ${u.display_name}`)}
                       />
                     </td>
                     <td className={`px-2 py-2.5 font-semibold ${STATUS_CLS[u.status]}`}>{STATUS_LABEL[u.status]}</td>
@@ -329,6 +340,102 @@ function DiscordIdCell({ user, disabled, onSave }: { user: HrUser; disabled: boo
   );
 }
 
+/** Link giới thiệu: trang Careers đọc ?ref= rồi chuyển tiếp sang /apply (form gửi referred_by). */
+function refLink(code: string) {
+  return `https://tdgamestudio.com/careers?ref=${encodeURIComponent(code)}`;
+}
+
+/**
+ * Ô "Mã ref": chip (mã đầu = mã chính), thêm bằng Enter, xoá bằng ×, bấm ★ để đưa lên làm mã chính.
+ * Lưu ngay mỗi thay đổi; server chuẩn hoá + chặn mã trùng tài khoản khác (409).
+ */
+function RefCodesCell({ user, disabled, onSave }: { user: HrUser; disabled: boolean; onSave: (codes: string[]) => void }) {
+  const codes = user.ref_codes ?? [];
+  const [draft, setDraft] = useState("");
+  const [copied, setCopied] = useState(false);
+  const preview = normalizeRefCode(draft);
+
+  function add() {
+    if (!preview) return;
+    setDraft("");
+    if (codes.includes(preview)) return;
+    onSave([...codes, preview]);
+  }
+
+  return (
+    <div className="w-60 space-y-1.5">
+      {codes.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {codes.map((c, i) => (
+            <span
+              key={c}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11.5px] ${
+                i === 0 ? "bg-[var(--hr-orange)] text-[var(--hr-on-orange)]" : "bg-white/10 text-white/80"
+              }`}
+              title={i === 0 ? "Mã chính (dùng cho link giới thiệu)" : undefined}
+            >
+              {c}
+              {i > 0 && (
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onSave([c, ...codes.filter((x) => x !== c)])}
+                  aria-label={`Đặt ${c} làm mã chính`}
+                  title="Đặt làm mã chính"
+                  className="opacity-60 hover:opacity-100 disabled:opacity-30"
+                >
+                  ★
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onSave(codes.filter((x) => x !== c))}
+                aria-label={`Xoá mã ${c}`}
+                className="opacity-60 hover:opacity-100 disabled:opacity-30"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      {codes.length < MAX_REF_CODES && (
+        <input
+          aria-label={`Thêm mã ref cho ${user.display_name}`}
+          placeholder={codes.length ? "Thêm mã…" : "Thêm mã (vd. thuy-dung)"}
+          value={draft}
+          disabled={disabled}
+          maxLength={60}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") add();
+            if (e.key === "Escape") setDraft("");
+          }}
+          onBlur={add}
+          title={preview && preview !== draft ? `Sẽ lưu thành: ${preview}` : undefined}
+          className={`${inputCls} w-full py-1 font-mono text-[12px] disabled:opacity-50`}
+        />
+      )}
+      {codes[0] && (
+        <button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard.writeText(refLink(codes[0])).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            });
+          }}
+          title="Chép link giới thiệu"
+          className="block max-w-full truncate text-left font-mono text-[11px] text-white/45 hover:text-white/80"
+        >
+          {copied ? "Đã chép link" : `…/careers?ref=${codes[0]}`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function AddUserForm({
   onCreated,
   onError,
@@ -342,6 +449,7 @@ function AddUserForm({
   const [role, setRole] = useState<HrRole>("leader");
   const [discordId, setDiscordId] = useState("");
   const [phone, setPhone] = useState("");
+  const [refCodes, setRefCodes] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -351,7 +459,15 @@ function AddUserForm({
       const res = await hrFetch("/api/hr/users", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, display_name: name, role, discord_user_id: discordId, phone }),
+        body: JSON.stringify({
+          email,
+          display_name: name,
+          role,
+          discord_user_id: discordId,
+          phone,
+          // "Thuỳ Dung, dung" → ["Thuỳ Dung", "dung"]; server chuẩn hoá ("thuy-dung") + kiểm trùng.
+          ref_codes: refCodes.split(",").map((c) => c.trim()).filter(Boolean),
+        }),
       });
       const j = await readJson(res);
       if (!res.ok) {
@@ -363,6 +479,7 @@ function AddUserForm({
       setName("");
       setDiscordId("");
       setPhone("");
+      setRefCodes("");
       setOpen(false);
     } catch {
       onError("Không kết nối được máy chủ");
@@ -429,6 +546,15 @@ function AddUserForm({
           placeholder="Không bắt buộc"
           value={discordId}
           onChange={(e) => setDiscordId(e.target.value)}
+          className={`${inputCls} mt-1 block w-48 font-mono font-normal normal-case tracking-normal`}
+        />
+      </label>
+      <label className="text-[11px] font-bold uppercase tracking-wider text-white/40" title="Cách nhau bằng dấu phẩy; mã đầu là mã chính">
+        Mã ref
+        <input
+          placeholder="Không bắt buộc"
+          value={refCodes}
+          onChange={(e) => setRefCodes(e.target.value)}
           className={`${inputCls} mt-1 block w-48 font-mono font-normal normal-case tracking-normal`}
         />
       </label>

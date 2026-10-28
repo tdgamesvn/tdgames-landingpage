@@ -4,6 +4,9 @@ import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { checkAppPatch, OFFER_STATUSES } from "@/lib/hr-app-patch";
 import { notifyApplicationUpdate } from "@/lib/hr-notify";
 import { redactApplication } from "@/lib/hr-scope";
+import { loadAssignableMembers } from "@/lib/hr-comment-members";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,12 +33,22 @@ export async function PATCH(
   }
 
   // Snapshot old values before update (for diff in notification) + kiểm phạm vi (ngoài phạm vi = 404)
+  // Chỉ đọc assignee_user_id khi request đổi nó (route vẫn chạy nếu migration assignee chưa áp).
+  const wantsAssignee = "assignee_user_id" in body;
   const oldApp = (await loadScopedApplication(
     ctx,
     id,
-    "full_name, status, admin_notes, rejection_reason, job_id, offer_status",
+    `full_name, status, admin_notes, rejection_reason, job_id, offer_status${wantsAssignee ? ", assignee_user_id" : ""}`,
   ).catch(() => undefined)) as
-    | { full_name: string | null; status: string; admin_notes: string | null; rejection_reason: string | null; job_id: string; offer_status: string | null }
+    | {
+        full_name: string | null;
+        status: string;
+        admin_notes: string | null;
+        rejection_reason: string | null;
+        job_id: string;
+        offer_status: string | null;
+        assignee_user_id?: string | null;
+      }
     | null
     | undefined;
   if (oldApp === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
@@ -102,6 +115,26 @@ export async function PATCH(
     allowed.offer_status_at = new Date().toISOString();
   }
 
+  // Người phụ trách: null = chưa giao; id phải là tài khoản chưa khoá xem được hồ sơ này.
+  if (wantsAssignee) {
+    const v = body.assignee_user_id;
+    if (v !== null && (typeof v !== "string" || !UUID_RE.test(v))) {
+      return NextResponse.json({ error: "Người phụ trách không hợp lệ" }, { status: 400 });
+    }
+    if (v !== null) {
+      let members: { id: string }[];
+      try {
+        members = await loadAssignableMembers(oldApp as unknown as Record<string, unknown>);
+      } catch {
+        return NextResponse.json({ error: "Không đọc được danh sách tài khoản" }, { status: 500 });
+      }
+      if (!members.some((m) => m.id === v)) {
+        return NextResponse.json({ error: "Người này không xem được hồ sơ (hoặc tài khoản đã khoá)" }, { status: 400 });
+      }
+    }
+    allowed.assignee_user_id = v;
+  }
+
   if (Object.keys(allowed).length === 0) {
     return NextResponse.json({ error: "No updatable fields" }, { status: 400 });
   }
@@ -120,7 +153,11 @@ export async function PATCH(
   if (oldApp) {
     (async () => {
       try {
-        await notifyApplicationUpdate(oldApp, allowed, body);
+        await notifyApplicationUpdate(oldApp, allowed, body, {
+          appId: id,
+          actorId: ctx.user.id,
+          actorName: ctx.user.displayName,
+        });
       } catch {
         // Silently ignore — DB update already succeeded
       }

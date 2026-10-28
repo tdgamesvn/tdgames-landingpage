@@ -63,7 +63,8 @@ export async function PATCH(
   if (oldApp) {
     (async () => {
       try {
-        await notifyApplicationUpdate(oldApp, allowedFields, body);
+        // Admin (ADMIN_SECRET) không gắn tài khoản /hr → không có người thực hiện để loại.
+        await notifyApplicationUpdate(oldApp, allowedFields, body, { appId: id, actorId: null, actorName: null });
       } catch {
         // Silently ignore — DB update already succeeded
       }

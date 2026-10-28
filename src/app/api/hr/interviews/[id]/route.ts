@@ -4,33 +4,33 @@ import { requireHrUser, loadScopedApplication, loadScopedInterview } from "@/lib
 import { redactInterview } from "@/lib/hr-scope";
 import { deleteFromR2, r2PublicUrl } from "@/lib/r2";
 import { isInterviewAudioKey } from "@/lib/interview-audio";
-import { discordNotify } from "@/lib/discord-notify";
+import { notifyCandidate } from "@/lib/hr-notify";
+import { candidatePushPayload } from "@/lib/hr-push-payload";
 import { formatInterviewTime, isMeetUrl, modeLabel } from "@/lib/interview-schedule";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function notifySchedule(s: {
-  application_id: string;
-  title: string | null;
-  round: number;
-  scheduled_at: string | null;
-  mode: string | null;
-  meet_url: string | null;
-}) {
-  const { data: app } = await getSupabaseAdmin()
-    .from("applications")
-    .select("full_name, jobs(title)")
-    .eq("id", s.application_id)
-    .single();
-  const jobs = app?.jobs as { title: string } | { title: string }[] | null | undefined;
-  const jobTitle = Array.isArray(jobs) ? jobs[0]?.title : jobs?.title;
+async function notifySchedule(
+  s: {
+    application_id: string;
+    title: string | null;
+    round: number;
+    scheduled_at: string | null;
+    mode: string | null;
+    meet_url: string | null;
+  },
+  actor: { id: string | null; name: string },
+) {
   const round = s.title ?? `Vòng ${s.round}`;
-
-  await discordNotify("hr", {
+  // Người nhận: Sếp, người phụ trách, Leader của job (chưa giao → @everyone + HR); loại người đặt lịch.
+  await notifyCandidate(s.application_id, { event: "interview_schedule", actorId: actor.id }, ({ name, jobTitle }) => ({
+    content: s.scheduled_at
+      ? `🗓 **${name}** — ${actor.name} đặt lịch PV ${formatInterviewTime(s.scheduled_at)}`
+      : `🗓 **${name}** — ${actor.name} huỷ lịch PV`,
     embeds: [
       {
-        title: s.scheduled_at ? `🗓 Lịch PV — ${app?.full_name ?? "?"}` : `🗓 Huỷ lịch PV — ${app?.full_name ?? "?"}`,
+        title: s.scheduled_at ? `🗓 Lịch PV — ${name}` : `🗓 Huỷ lịch PV — ${name}`,
         color: s.mode === "online" ? 0x3b82f6 : 0xf59e0b,
         fields: [
           { name: "Vị trí", value: `${jobTitle ?? "?"} · ${round}`, inline: true },
@@ -45,7 +45,17 @@ async function notifySchedule(s: {
         footer: { text: "tdgamestudio.com/hr" },
       },
     ],
-  });
+    push: candidatePushPayload({
+      event: "interview_schedule",
+      appId: s.application_id,
+      candidateName: name,
+      actorName: actor.name,
+      jobTitle,
+      text: s.scheduled_at
+        ? `${formatInterviewTime(s.scheduled_at)} · ${round} · ${s.mode === "online" ? "Online" : "Tại văn phòng"}`
+        : `Huỷ lịch ${round}`,
+    }),
+  }));
 }
 
 /** Sửa phiên PV: gắn file ghi âm, dán transcript tay, đổi tên vòng, sửa câu hỏi. */
@@ -189,13 +199,11 @@ export async function PATCH(
   // Dọn sau khi DB đã đổi xong — hỏng bước này chỉ để lại rác, không mất dữ liệu.
   if (oldAudioKey) await deleteFromR2(oldAudioKey);
 
-  // Báo kênh HR khi đặt/đổi lịch — lỗi Discord không được làm hỏng việc lưu.
+  // Báo Discord + push khi đặt/đổi lịch — fire-and-forget, lỗi không được làm hỏng việc lưu.
   if (scheduleChanged) {
-    try {
-      await notifySchedule(data);
-    } catch (e) {
-      console.error("[interviews] discord notify failed", e);
-    }
+    void notifySchedule(data, { id: auth.ctx.user.id, name: auth.ctx.user.displayName }).catch((e) =>
+      console.error("[interviews] notify failed", e),
+    );
   }
 
   return NextResponse.json({ session: redactInterview(data as Record<string, unknown>, auth.ctx.perms) });
