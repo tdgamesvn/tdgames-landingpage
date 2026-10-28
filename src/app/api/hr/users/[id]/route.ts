@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireBoss, hrPublicOrigin, issueToken } from "@/lib/hr-session";
 import { HR_ROLES, ROLE_LABEL, type HrRole } from "@/lib/hr-permissions";
-import { parseDiscordId, validateUserChange } from "@/lib/hr-users";
+import { parseDiscordId, parsePhone, validateUserChange } from "@/lib/hr-users";
 import { buildStaffInviteEmail } from "@/lib/hr-staff-email";
 import { sendStaffEmail } from "@/lib/hr-email-send";
 
-const COLS = "id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, password_hash";
+const COLS = "id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, password_hash";
 
 type Row = {
   id: string;
@@ -17,6 +17,7 @@ type Row = {
   created_at: string | null;
   last_login_at: string | null;
   discord_user_id: string | null;
+  phone: string | null;
   password_hash: string | null;
 };
 
@@ -34,7 +35,7 @@ export async function PATCH(req: Request, ctxRoute: { params: Promise<{ id: stri
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
 
-  const change: { display_name?: string; role?: HrRole; disabled?: boolean; discord_user_id?: string | null } = {};
+  const change: { display_name?: string; role?: HrRole; disabled?: boolean; discord_user_id?: string | null; phone?: string | null } = {};
   if (body.display_name !== undefined) {
     const n = typeof body.display_name === "string" ? body.display_name.trim() : "";
     if (n.length < 1 || n.length > 80) return NextResponse.json({ error: "Tên hiển thị phải từ 1 đến 80 ký tự" }, { status: 400 });
@@ -59,6 +60,11 @@ export async function PATCH(req: Request, ctxRoute: { params: Promise<{ id: stri
       );
     }
     change.discord_user_id = d;
+  }
+  if (body.phone !== undefined) {
+    const ph = parsePhone(body.phone);
+    if (ph === "invalid") return NextResponse.json({ error: "Số điện thoại không hợp lệ (9–13 chữ số, có thể bắt đầu bằng +)" }, { status: 400 });
+    change.phone = ph;
   }
   const resend = body.resend_invite === true;
 

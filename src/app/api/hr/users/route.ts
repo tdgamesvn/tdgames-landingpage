@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireBoss, hrPublicOrigin, issueToken } from "@/lib/hr-session";
 import { HR_ROLES, ROLE_LABEL, type HrRole } from "@/lib/hr-permissions";
 import { isValidEmail } from "@/lib/hr-email";
-import { parseDiscordId } from "@/lib/hr-users";
+import { parseDiscordId, parsePhone } from "@/lib/hr-users";
 import { buildStaffInviteEmail } from "@/lib/hr-staff-email";
 import { sendStaffEmail } from "@/lib/hr-email-send";
 
@@ -16,6 +16,7 @@ type UserRow = {
   created_at: string | null;
   last_login_at: string | null;
   discord_user_id: string | null;
+  phone: string | null;
   password_hash?: string | null;
 };
 
@@ -32,7 +33,7 @@ export async function GET(req: Request) {
   if ("response" in auth) return auth.response;
   const { data, error } = await getSupabaseAdmin()
     .from("hr_users")
-    .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, password_hash")
+    .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, password_hash")
     .order("created_at", { ascending: true });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ users: (data ?? []).map((u) => toPublic(u as UserRow)) });
@@ -56,12 +57,14 @@ export async function POST(req: Request) {
   }
   const discordId = parseDiscordId(body?.discord_user_id);
   if (discordId === "invalid") return NextResponse.json({ error: DISCORD_ID_ERROR }, { status: 400 });
+  const phone = parsePhone(body?.phone);
+  if (phone === "invalid") return NextResponse.json({ error: "Số điện thoại không hợp lệ (9–13 chữ số, có thể bắt đầu bằng +)" }, { status: 400 });
 
   const supabase = getSupabaseAdmin();
   const { data: user, error } = await supabase
     .from("hr_users")
-    .insert({ email, display_name: displayName, role, discord_user_id: discordId })
-    .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, password_hash")
+    .insert({ email, display_name: displayName, role, discord_user_id: discordId, phone })
+    .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, password_hash")
     .single();
   if (error) {
     if (error.code === "23505") return NextResponse.json({ error: "Email đã có tài khoản" }, { status: 409 });

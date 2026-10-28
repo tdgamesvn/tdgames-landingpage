@@ -31,3 +31,15 @@ export function parseDiscordId(v: unknown): string | null | "invalid" {
   const m = /^(?:<@!?)?(\d{17,20})>?$/.exec(s);
   return m ? m[1] : "invalid";
 }
+
+/**
+ * Số điện thoại tài khoản (hiện trong mail ứng viên, vd. người liên hệ ở mail offer).
+ * Bỏ dấu cách / chấm / gạch / ngoặc; giữ "+" đầu. 9–13 chữ số. Rỗng / null → null (xoá); sai → "invalid".
+ */
+export function parsePhone(v: unknown): string | null | "invalid" {
+  if (v === null || v === undefined) return null;
+  if (typeof v !== "string") return "invalid";
+  const s = v.trim().replace(/[\s.\-()]/g, "");
+  if (!s) return null;
+  return /^\+?\d{9,13}$/.test(s) ? s : "invalid";
+}

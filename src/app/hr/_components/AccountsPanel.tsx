@@ -21,6 +21,7 @@ type HrUser = {
   created_at: string | null;
   last_login_at: string | null;
   discord_user_id: string | null;
+  phone: string | null;
 };
 type Override = { role: string; permission: string; allowed: boolean };
 type PermRole = "hr" | "leader" | "accountant";
@@ -139,12 +140,13 @@ export default function AccountsPanel() {
         />
 
         <div className="hr-group overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left text-[13px]">
+          <table className="w-full min-w-[1080px] text-left text-[13px]">
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-white/40">
                 <th className="px-4 py-2 font-bold">Tên</th>
                 <th className="px-2 py-2 font-bold">Email</th>
                 <th className="px-2 py-2 font-bold">Vai</th>
+                <th className="px-2 py-2 font-bold">Số điện thoại</th>
                 <th className="px-2 py-2 font-bold">Discord ID</th>
                 <th className="px-2 py-2 font-bold">Trạng thái</th>
                 <th className="px-2 py-2 font-bold">Đăng nhập cuối</th>
@@ -153,7 +155,7 @@ export default function AccountsPanel() {
             </thead>
             <tbody>
               {users === null && !loadError && (
-                <tr><td colSpan={7} className="px-4 py-6 text-white/50">Đang tải…</td></tr>
+                <tr><td colSpan={8} className="px-4 py-6 text-white/50">Đang tải…</td></tr>
               )}
               {users?.map((u) => {
                 const isSelf = me?.user.id === u.id;
@@ -179,6 +181,19 @@ export default function AccountsPanel() {
                           <option key={r} value={r}>{ROLE_LABEL[r]}</option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-2 py-2.5">
+                      <InlineFieldCell
+                        label={`Số điện thoại của ${u.display_name}`}
+                        value={u.phone ?? ""}
+                        placeholder="Chưa có"
+                        inputMode="tel"
+                        width="w-32"
+                        disabled={busy}
+                        onSave={(v) =>
+                          void patchUser(u, { phone: v }, v ? `Đã lưu số điện thoại của ${u.display_name}` : `Đã xoá số điện thoại của ${u.display_name}`)
+                        }
+                      />
                     </td>
                     <td className="px-2 py-2.5">
                       <DiscordIdCell
@@ -236,6 +251,51 @@ export default function AccountsPanel() {
 
 const DISCORD_HINT = "Discord → Cài đặt → Nâng cao → bật Developer Mode → chuột phải tên người đó → Copy User ID";
 
+/** Ô sửa tại chỗ dùng chung: lưu khi rời ô / Enter nếu giá trị đổi, Esc huỷ. Server kiểm định dạng. */
+function InlineFieldCell({
+  label,
+  value,
+  placeholder,
+  inputMode,
+  width,
+  disabled,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  inputMode: "tel" | "numeric";
+  width: string;
+  disabled: boolean;
+  onSave: (v: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [prev, setPrev] = useState(value);
+  if (value !== prev) {
+    setPrev(value);
+    setDraft(value);
+  }
+  return (
+    <input
+      aria-label={label}
+      inputMode={inputMode}
+      placeholder={placeholder}
+      value={draft}
+      disabled={disabled}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        const v = draft.trim();
+        if (v !== value) onSave(v);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+        if (e.key === "Escape") setDraft(value);
+      }}
+      className={`${inputCls} ${width} py-1 font-mono text-[12px] disabled:opacity-50`}
+    />
+  );
+}
+
 /** Ô Discord ID sửa tại chỗ: lưu khi rời ô / Enter nếu giá trị đổi. Server kiểm định dạng. */
 function DiscordIdCell({ user, disabled, onSave }: { user: HrUser; disabled: boolean; onSave: (v: string) => void }) {
   const saved = user.discord_user_id ?? "";
@@ -281,6 +341,7 @@ function AddUserForm({
   const [name, setName] = useState("");
   const [role, setRole] = useState<HrRole>("leader");
   const [discordId, setDiscordId] = useState("");
+  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -290,7 +351,7 @@ function AddUserForm({
       const res = await hrFetch("/api/hr/users", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, display_name: name, role, discord_user_id: discordId }),
+        body: JSON.stringify({ email, display_name: name, role, discord_user_id: discordId, phone }),
       });
       const j = await readJson(res);
       if (!res.ok) {
@@ -301,6 +362,7 @@ function AddUserForm({
       setEmail("");
       setName("");
       setDiscordId("");
+      setPhone("");
       setOpen(false);
     } catch {
       onError("Không kết nối được máy chủ");
@@ -349,6 +411,16 @@ function AddUserForm({
             <option key={r} value={r}>{ROLE_LABEL[r]}</option>
           ))}
         </select>
+      </label>
+      <label className="text-[11px] font-bold uppercase tracking-wider text-white/40">
+        Số điện thoại
+        <input
+          inputMode="tel"
+          placeholder="Không bắt buộc"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className={`${inputCls} mt-1 block w-40 font-mono font-normal normal-case tracking-normal`}
+        />
       </label>
       <label className="text-[11px] font-bold uppercase tracking-wider text-white/40" title={DISCORD_HINT}>
         Discord ID (để tag)

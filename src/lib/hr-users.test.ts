@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { parseDiscordId, validateUserChange } from "./hr-users.ts";
+import { parseDiscordId, parsePhone, validateUserChange } from "./hr-users.ts";
 
 const boss = (id: string) => ({ id, role: "boss" as const, disabled: false });
 
@@ -47,4 +47,20 @@ test("parseDiscordId: rỗng/null → null (xoá), sai định dạng → 'inval
   assert.equal(parseDiscordId("1234"), "invalid");
   assert.equal(parseDiscordId("123456789012345678901"), "invalid");
   assert.equal(parseDiscordId(123), "invalid");
+});
+
+test("parsePhone: chuẩn hoá số VN, bỏ dấu cách/chấm/gạch", () => {
+  assert.equal(parsePhone("0964525584"), "0964525584");
+  assert.equal(parsePhone(" 0964 525 584 "), "0964525584");
+  assert.equal(parsePhone("0964.525.584"), "0964525584");
+  assert.equal(parsePhone("+84 964-525-584"), "+84964525584");
+});
+
+test("parsePhone: rỗng/null → null (xoá), sai → 'invalid'", () => {
+  assert.equal(parsePhone(""), null);
+  assert.equal(parsePhone(null), null);
+  assert.equal(parsePhone("abc"), "invalid");
+  assert.equal(parsePhone("12345"), "invalid");
+  assert.equal(parsePhone("0964525584999999"), "invalid");
+  assert.equal(parsePhone(964525584), "invalid");
 });
