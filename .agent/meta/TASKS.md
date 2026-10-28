@@ -2,6 +2,8 @@
 
 ## Doing
 
+- [ ] HR: thư mời nhận việc PDF + mail offer mới (2026-10-28) — ĐÃ DEPLOY. Chờ sếp/Kế toán thử: soạn thư 1 hồ sơ Offer thật → gửi (chế độ test về tony@). Tồn nhỏ: tải lại file từ lịch sử khi 429/503 hiện JSON thô; header /hr tràn ngang ở 390px (có từ trước). LOG 2026-10-28
+
 - [ ] HR: đăng nhập theo tài khoản + phân quyền theo vai (2026-10-27) — ĐÃ DEPLOY. + Discord ID + tag đúng người (2026-10-27) — chờ sếp điền Discord ID trong tab Tài khoản. Mật khẩu chung ĐÃ GỠ 2026-10-28. Minor tồn: clientIp nên ưu tiên x-real-ip (nginx ghi đè) trước cf-connecting-ip; nút ghi trong GET (remind, draft test token); file R2 cũ svg chưa chuyển; /api/hr/upload + upload-cv vẫn tin content-type trình duyệt. LOG 2026-10-27
 
 - [ ] HR: app PWA /hr + thông báo đẩy nhắc lịch PV (2026-10-26) — đã deploy, chờ sếp cài lên điện thoại + bật chuông để thử. LOG 2026-10-26
