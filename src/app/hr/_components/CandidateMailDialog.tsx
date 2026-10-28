@@ -8,8 +8,10 @@
 import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { CandidateEmail } from "@/app/admin/_lib/types";
 import { createPortal } from "react-dom";
-import { CircleAlert, Mail, Send, X } from "lucide-react";
+import { CircleAlert, FileText, Mail, Send, X } from "lucide-react";
 import { hrFetch, useHrSession } from "./HrSession";
+import OfferLetterDialog, { type OfferLetterRequest } from "./OfferLetterDialog";
+import { fetchPdfBlob, openPdfInNewTab } from "./OfferLetterFields";
 import { KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
 import type { PermissionKey } from "@/lib/hr-permissions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
@@ -31,18 +33,25 @@ type Draft = {
   last_sent_at?: string | null;
   /** Những người sẽ được CC (server tính; chế độ test thì chỉ để xem trước, không CC thật). */
   cc_preview?: string[];
+  /** Mail offer: file thư mời nhận việc sẽ đính kèm khi gửi. */
+  attachment?: { filename: string };
   error?: string;
   message?: string;
 };
 
+/** Lỗi draft offer khi chưa có / chưa đủ thư mời → hiện nút mở hộp thoại soạn thư. */
+const OFFER_LETTER_CODES = new Set(["no_offer_letter", "offer_letter_invalid"]);
+
 type Ctx = {
   prompt: (req: MailPromptRequest) => void;
+  /** Mở hộp thoại "Soạn thư mời nhận việc" (quyền emails.send_offer). */
+  openOfferLetter: (req: OfferLetterRequest) => void;
   lastSentAt: number;
-  /** Đang có hộp thoại mail mở — modal hồ sơ phía sau không xử lý phím Esc. */
+  /** Đang có hộp thoại mail / thư mời mở — modal hồ sơ phía sau không xử lý phím Esc. */
   dialogOpen: boolean;
 };
 
-const CandidateMailContext = createContext<Ctx>({ prompt: () => {}, lastSentAt: 0, dialogOpen: false });
+const CandidateMailContext = createContext<Ctx>({ prompt: () => {}, openOfferLetter: () => {}, lastSentAt: 0, dialogOpen: false });
 
 export function useCandidateMail() {
   return useContext(CandidateMailContext);
@@ -92,8 +101,19 @@ export function CandidateMailProvider({ children }: { children: React.ReactNode 
     return () => clearTimeout(t);
   }, [notice]);
 
-  const dialogOpen = req !== null;
-  const value = useMemo(() => ({ prompt, lastSentAt, dialogOpen }), [prompt, lastSentAt, dialogOpen]);
+  const [offerReq, setOfferReq] = useState<OfferLetterRequest | null>(null);
+  const openOfferLetter = useCallback(
+    (r: OfferLetterRequest) => {
+      if (can("emails.send_offer")) setOfferReq(r);
+    },
+    [can],
+  );
+
+  const dialogOpen = req !== null || offerReq !== null;
+  const value = useMemo(
+    () => ({ prompt, openOfferLetter, lastSentAt, dialogOpen }),
+    [prompt, openOfferLetter, lastSentAt, dialogOpen],
+  );
 
   return (
     <CandidateMailContext.Provider value={value}>
@@ -106,6 +126,21 @@ export function CandidateMailProvider({ children }: { children: React.ReactNode 
           onSent={() => {
             dequeue();
             setLastSentAt(Date.now());
+          }}
+          onComposeLetter={() => {
+            dequeue();
+            setOfferReq({ appId: req.appId, candidateName: req.candidateName });
+          }}
+        />
+      )}
+      {offerReq && (
+        <OfferLetterDialog
+          key={offerReq.appId}
+          req={offerReq}
+          onClose={() => setOfferReq(null)}
+          onComposeMail={() => {
+            setOfferReq(null);
+            prompt({ ...offerReq, kind: "offer" });
           }}
         />
       )}
@@ -120,28 +155,40 @@ export function CandidateMailProvider({ children }: { children: React.ReactNode 
   );
 }
 
-async function fetchDraft(r: MailPromptRequest, offer?: { salary: string; startDate: string }): Promise<Draft> {
+async function fetchDraft(r: MailPromptRequest): Promise<Draft> {
   const q = new URLSearchParams({ kind: r.kind });
-  if (r.kind === "offer" && offer) {
-    if (offer.salary.trim()) q.set("salary", offer.salary.trim());
-    if (offer.startDate.trim()) q.set("start_date", offer.startDate.trim());
-  }
   if (r.interviewId) q.set("interview_id", r.interviewId);
   if (r.prevScheduledAt) q.set("prev_scheduled_at", r.prevScheduledAt);
   const res = await hrFetch(`/api/hr/applications/${r.appId}/emails/draft?${q}`);
   const j = await res.json().catch(() => ({}));
+  // Mail offer chưa có / chưa đủ thư mời: 400 kèm `code` → trả như lỗi nghiệp vụ để hiện nút soạn thư.
+  if (!res.ok && typeof j.code === "string" && OFFER_LETTER_CODES.has(j.code)) {
+    return { ...j, error: j.code, message: j.error } as Draft;
+  }
   if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
   return j as Draft;
+}
+
+/** Mở PDF thư mời đã lưu của hồ sơ (dữ liệu GET offer-letter → preview). */
+function openSavedOfferPdf(appId: string) {
+  return openPdfInNewTab(async () => {
+    const res = await hrFetch(`/api/hr/applications/${appId}/offer-letter`);
+    const j = (await res.json().catch(() => ({}))) as { data?: unknown; error?: string };
+    if (!res.ok || !j.data) throw new Error(j.error ?? `HTTP ${res.status}`);
+    return fetchPdfBlob(`/api/hr/applications/${appId}/offer-letter/preview`, j.data);
+  });
 }
 
 function MailDialog({
   req,
   onClose,
   onSent,
+  onComposeLetter,
 }: {
   req: MailPromptRequest;
   onClose: () => void;
   onSent: () => void;
+  onComposeLetter: () => void;
 }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [subject, setSubject] = useState("");
@@ -151,28 +198,8 @@ function MailDialog({
   const [sending, setSending] = useState(false);
   // CC: chip từ cc_preview, bấm × để bỏ (server chỉ nhận tập con của danh sách nó tính).
   const [cc, setCc] = useState<string[]>([]);
-  // Mail offer: mức lương / ngày bắt đầu → điền vào nháp qua nút "Điền vào nháp".
-  const [salary, setSalary] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [refilling, setRefilling] = useState(false);
-
-  async function refillOffer() {
-    setRefilling(true);
-    setLoadError(null);
-    try {
-      const d = await fetchDraft(req, { salary, startDate });
-      if (d.error) {
-        setLoadError(d.message ?? d.error);
-        return;
-      }
-      setSubject(d.subject ?? "");
-      setText(d.text ?? "");
-    } catch (e) {
-      setLoadError(e instanceof Error ? e.message : "Không tải được bản nháp");
-    } finally {
-      setRefilling(false);
-    }
-  }
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const needsLetter = req.kind === "offer" && !!draft?.error && OFFER_LETTER_CODES.has(draft.error);
 
   useEffect(() => {
     let alive = true;
@@ -258,6 +285,11 @@ function MailDialog({
         {loadError && (
           <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">{loadError}</div>
         )}
+        {needsLetter && (
+          <button type="button" onClick={onComposeLetter} className="hr-primary-btn inline-flex items-center gap-1.5 px-4 py-2">
+            <FileText className="hr-ico" /> Soạn thư mời nhận việc
+          </button>
+        )}
 
         {draft && !loadError && (
           <>
@@ -296,31 +328,22 @@ function MailDialog({
                 ))}
               </div>
             )}
-            {req.kind === "offer" && (
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                  Mức lương
-                  <input
-                    value={salary}
-                    onChange={(e) => setSalary(e.target.value)}
-                    maxLength={100}
-                    placeholder="vd. 25.000.000 VND/tháng"
-                    className="mt-1 block w-56 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-normal normal-case tracking-normal text-white focus:outline-none"
-                  />
-                </label>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                  Ngày bắt đầu
-                  <input
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    maxLength={100}
-                    placeholder="vd. 01/12/2026"
-                    className="mt-1 block w-44 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-normal normal-case tracking-normal text-white focus:outline-none"
-                  />
-                </label>
-                <button type="button" onClick={() => void refillOffer()} disabled={refilling || sending} className="hr-secondary-btn">
-                  {refilling ? "Đang điền…" : "Điền vào nháp"}
+            {draft.attachment && (
+              <div className="flex flex-wrap items-center gap-1.5 text-xs text-white/50">
+                <span>Đính kèm:</span>
+                <button
+                  type="button"
+                  onClick={() => void openSavedOfferPdf(req.appId).then(setPdfError)}
+                  className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 font-semibold text-white/80 hover:border-[var(--hr-orange)]"
+                  title="Xem PDF thư mời đã lưu"
+                  data-testid="offer-attachment-chip"
+                >
+                  <FileText className="hr-ico-solo" /> {draft.attachment.filename}
                 </button>
+                <button type="button" onClick={onComposeLetter} className="text-[var(--hr-orange-ink)] underline-offset-2 hover:underline">
+                  Sửa thư mời
+                </button>
+                {pdfError && <span className="text-red-300">{pdfError}</span>}
               </div>
             )}
             <div>
@@ -379,6 +402,7 @@ export function CandidateMailSection({
   const { can } = useHrSession();
   const canView = can("apps.view_emails");
   const canSend = can("emails.send");
+  const canOpenAttachment = can("emails.send_offer");
   const [emails, setEmails] = useState<CandidateEmail[] | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -457,6 +481,28 @@ export function CandidateMailSection({
                   {e.cc_emails && e.cc_emails.length > 0 ? ` · CC ${e.cc_emails.join(", ")}` : ""}
                 </span>
               </button>
+              {(e.attachments?.length ?? 0) > 0 && (
+                <span className="mt-0.5 flex flex-wrap gap-1">
+                  {e.attachments!.map((a, i) =>
+                    canOpenAttachment ? (
+                      <a
+                        key={i}
+                        href={`/api/hr/emails/${e.id}/attachment?i=${i}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[12px] text-white/80 hover:border-[var(--hr-orange)]"
+                        title="Mở file đính kèm (sinh lại từ dữ liệu lúc gửi)"
+                      >
+                        <FileText className="hr-ico-solo" /> {a.filename}
+                      </a>
+                    ) : (
+                      <span key={i} className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-0.5 text-[12px] text-white/50">
+                        <FileText className="hr-ico-solo" /> {a.filename}
+                      </span>
+                    ),
+                  )}
+                </span>
+              )}
               {openId === e.id && (
                 <div className="mt-1.5 rounded-lg border border-white/10 bg-white/[0.03] p-2.5">
                   <p className="text-[12px] font-semibold text-white/70">{e.subject}</p>

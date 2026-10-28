@@ -2491,10 +2491,10 @@ const OFFER_CHOICES = [
   { key: "declined", label: "Từ chối" },
 ] as const;
 
-/** Khối "Offer" trong hồ sơ: ghi kết quả offer + gửi mail offer. Chỉ hiện khi hồ sơ ở Offer hoặc đã có kết quả. */
+/** Khối "Offer" trong hồ sơ: ghi kết quả offer + soạn thư mời nhận việc (PDF) + gửi mail offer. Chỉ hiện khi hồ sơ ở Offer hoặc đã có kết quả. */
 function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
   const { can } = useHrSession();
-  const { prompt } = useCandidateMail();
+  const { prompt, openOfferLetter } = useCandidateMail();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const canSetResult = can("apps.offer");
@@ -2539,6 +2539,15 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
               </button>
             ))}
           </div>
+          {canMail && (
+            <button
+              type="button"
+              onClick={() => openOfferLetter({ appId: app.id, candidateName: app.full_name })}
+              className="hr-secondary-btn"
+            >
+              Soạn thư mời nhận việc
+            </button>
+          )}
           {canMail && (
             <button
               type="button"

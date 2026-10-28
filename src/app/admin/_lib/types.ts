@@ -323,4 +323,6 @@ export type CandidateEmail = {
   resend_id: string | null;
   sent_by: string | null;
   created_at: string;
+  /** File đính kèm (mail offer: thư mời PDF). Không có quyền emails.send_offer → không có snapshot. */
+  attachments?: { filename: string; kind: string | null }[] | null;
 };

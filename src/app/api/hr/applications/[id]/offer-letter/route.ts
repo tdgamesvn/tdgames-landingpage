@@ -13,7 +13,7 @@ export async function GET(request: Request, { params }: Ctx) {
   const auth = await requireHrUser(request, "emails.send_offer");
   if ("response" in auth) return auth.response;
   const { id } = await params;
-  const app = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
+  const app = await loadScopedApplication(auth.ctx, id, "id, expected_salary").catch(() => undefined);
   if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
   try {
@@ -24,6 +24,8 @@ export async function GET(request: Request, { params }: Ctx) {
       updated_by: row?.updated_by ?? null,
       updated_at: row?.updated_at ?? null,
       total: offerTotal(data),
+      // Lương mong muốn để tham khảo khi điền (chỉ khi có quyền xem lương).
+      expected_salary: auth.ctx.perms.has("apps.view_salary") ? ((app.expected_salary as string | null) ?? null) : null,
     });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Không đọc được thư mời" }, { status: 500 });

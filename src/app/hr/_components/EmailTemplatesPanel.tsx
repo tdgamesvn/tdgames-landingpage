@@ -3,11 +3,13 @@
 /**
  * Tab "Mẫu mail": sửa tiêu đề + nội dung 6 loại mail ứng viên, chèn biến `{ten_bien}`,
  * xem trước đúng giao diện mail thật. Lỗi server hiện nguyên văn.
+ * Mục thứ 7 "Thư mời nhận việc" = mẫu công ty của PDF đính kèm mail offer (OfferLetterDefaultsPanel).
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Monitor, RotateCcw, Save, Smartphone, Undo2 } from "lucide-react";
-import { hrFetch } from "./HrSession";
+import { hrFetch, useHrSession } from "./HrSession";
+import OfferLetterDefaultsPanel from "./OfferLetterDefaultsPanel";
 import { textToHtml, CANDIDATE_EMAIL_KINDS, KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
 import { SAMPLE_DRAFT_INPUT, renderTemplate, templateVars } from "@/lib/hr-email-templates";
 import { formatInterviewTime } from "@/lib/interview-schedule";
@@ -38,6 +40,14 @@ async function readJson(res: Response) {
 }
 
 export default function EmailTemplatesPanel() {
+  const { can } = useHrSession();
+  const canLetter = can("emails.templates");
+  // Đang ở mục "Thư mời nhận việc" (không phải 1 loại mail) + trạng thái sửa dở của mục đó.
+  const [letterOpen, setLetterOpen] = useState(false);
+  const letterDirty = useRef(false);
+  const onLetterDirty = useCallback((d: boolean) => {
+    letterDirty.current = d;
+  }, []);
   const [data, setData] = useState<Data | null>(null);
   const [loadError, setLoadError] = useState("");
   const [kind, setKind] = useState<CandidateEmailKind>(CANDIDATE_EMAIL_KINDS[0]);
@@ -82,8 +92,11 @@ export default function EmailTemplatesPanel() {
   }, [dirty]);
 
   function pickKind(k: CandidateEmailKind) {
-    if (k === kind) return;
-    if (dirty && !confirm("Bỏ thay đổi chưa lưu của mẫu này?")) return;
+    if (k === kind && !letterOpen) return;
+    if (letterOpen) {
+      if (letterDirty.current && !confirm("Bỏ thay đổi chưa lưu của mẫu thư mời?")) return;
+      setLetterOpen(false);
+    } else if (dirty && !confirm("Bỏ thay đổi chưa lưu của mẫu này?")) return;
     setKind(k);
     setDraft(null);
     setNotice(null);
@@ -156,6 +169,14 @@ export default function EmailTemplatesPanel() {
   if (loadError) return <p className="text-[13px] text-[var(--hr-danger-ink)]">{loadError}</p>;
   if (!data || !saved) return <p className="py-16 text-center text-sm text-white/30">Đang tải mẫu mail…</p>;
 
+  function pickLetter() {
+    if (letterOpen) return;
+    if (dirty && !confirm("Bỏ thay đổi chưa lưu của mẫu này?")) return;
+    setDraft(null);
+    setNotice(null);
+    setLetterOpen(true);
+  }
+
   const status = saved.isDefault
     ? "Đang dùng mẫu mặc định"
     : `Sửa lần cuối bởi ${saved.updated_by ?? "—"}${saved.updated_at ? `, ${formatInterviewTime(saved.updated_at)}` : ""}`;
@@ -171,7 +192,7 @@ export default function EmailTemplatesPanel() {
           className="-mx-1 flex max-w-full gap-1 overflow-x-auto rounded-full bg-[var(--hr-segment-bg)] p-1"
         >
           {data.templates.map((t) => {
-            const on = t.kind === kind;
+            const on = t.kind === kind && !letterOpen;
             return (
               <button
                 key={t.kind}
@@ -192,8 +213,27 @@ export default function EmailTemplatesPanel() {
               </button>
             );
           })}
+          {canLetter && (
+            <button
+              role="tab"
+              aria-selected={letterOpen}
+              type="button"
+              onClick={pickLetter}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hr-orange)] ${
+                letterOpen
+                  ? "bg-[var(--hr-segment-on)] font-semibold text-[var(--hr-ink)] shadow-sm"
+                  : "text-[var(--hr-ink-2)] hover:text-[var(--hr-ink)]"
+              }`}
+            >
+              Thư mời nhận việc
+            </button>
+          )}
         </div>
       </div>
+
+      {letterOpen ? (
+        <OfferLetterDefaultsPanel onDirtyChange={onLetterDirty} />
+      ) : (
 
       <div className="grid gap-4 lg:h-[calc(100vh-190px)] lg:min-h-[560px] lg:grid-cols-2">
         {/* ── Soạn ── */}
@@ -345,6 +385,7 @@ export default function EmailTemplatesPanel() {
           </p>
         </section>
       </div>
+      )}
     </div>
   );
 }
