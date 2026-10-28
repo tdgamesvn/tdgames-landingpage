@@ -2611,15 +2611,47 @@ const OFFER_CHOICES = [
   { key: "declined", label: "Từ chối" },
 ] as const;
 
-/** Khối "Offer" trong hồ sơ: ghi kết quả offer + soạn thư mời nhận việc (PDF) + gửi mail offer. Chỉ hiện khi hồ sơ ở Offer hoặc đã có kết quả. */
+/**
+ * Khối "Offer" trong hồ sơ — luồng theo bước: ① soạn thư mời nhận việc (PDF) → ② gửi mail offer (đính kèm PDF)
+ * → kết quả offer. Nút chính (cam) đổi theo bước hiện tại. Chỉ hiện khi hồ sơ ở Offer hoặc đã có kết quả.
+ */
 function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
   const { can } = useHrSession();
-  const { prompt, openOfferLetter } = useCandidateMail();
+  const { prompt, openOfferLetter, lastSentAt, dialogOpen } = useCandidateMail();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  // Trạng thái bước: thư mời đã lưu chưa (ai, lúc nào) + mail offer đã gửi chưa (lần gần nhất).
+  const [letter, setLetter] = useState<{ saved: boolean; by: string | null; at: string | null } | null>(null);
+  const [sentAt, setSentAt] = useState<string | null>(null);
   const canSetResult = can("apps.offer");
   const canMail = can("emails.send_offer");
-  if (app.status !== "offer" && !app.offer_status) return null;
+  const canSeeEmails = can("apps.view_emails");
+  const visible = app.status === "offer" || !!app.offer_status;
+
+  // Tải lại khi đóng hộp thoại thư mời / mail hoặc vừa gửi xong.
+  useEffect(() => {
+    if (!visible || !canMail || dialogOpen) return;
+    let alive = true;
+    hrFetch(`/api/hr/applications/${app.id}/offer-letter`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => alive && j && setLetter({ saved: !!j.saved, by: j.updated_by ?? null, at: j.updated_at ?? null }))
+      .catch(() => {});
+    if (canSeeEmails) {
+      hrFetch(`/api/hr/applications/${app.id}/emails`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          if (!alive || !j) return;
+          const offers = ((j.emails ?? []) as { kind: string; created_at: string }[]).filter((e) => e.kind === "offer");
+          setSentAt(offers[0]?.created_at ?? null);
+        })
+        .catch(() => {});
+    }
+    return () => {
+      alive = false;
+    };
+  }, [app.id, visible, canMail, canSeeEmails, dialogOpen, lastSentAt]);
+
+  if (!visible) return null;
   if (!canSetResult && !canMail && !app.offer_status) return null;
 
   async function setResult(v: (typeof OFFER_CHOICES)[number]["key"]) {
@@ -2641,43 +2673,79 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
     }
   }
 
+  const openLetter = () => openOfferLetter({ appId: app.id, candidateName: app.full_name });
+  const openMail = () => prompt({ appId: app.id, candidateName: app.full_name, kind: "offer" });
+  const step: "loading" | "compose" | "send" | "sent" = !canMail
+    ? "sent"
+    : letter === null
+      ? "loading"
+      : !letter.saved
+        ? "compose"
+        : sentAt
+          ? "sent"
+          : "send";
+
   return (
     <section className="space-y-2" aria-label="Offer">
       <h4 className="hr-section-title px-1">Offer</h4>
-      <div className="hr-group space-y-2 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="hr-segmented" role="group" aria-label="Kết quả offer">
-            {OFFER_CHOICES.map((c) => (
-              <button
-                key={c.key}
-                type="button"
-                aria-pressed={app.offer_status === c.key}
-                disabled={!canSetResult || saving}
-                onClick={() => void setResult(c.key)}
-              >
-                {c.label}
-              </button>
-            ))}
+      <div className="hr-group space-y-3 px-4 py-3">
+        {canMail && (
+          <div className="space-y-2">
+            <p className="text-[13px] text-white/60">
+              {step === "loading" && "Đang kiểm tra thư mời…"}
+              {step === "compose" && "Chưa có thư mời nhận việc. Soạn thư trước, rồi gửi mail offer (thư PDF tự đính kèm)."}
+              {step === "send" &&
+                `✓ Thư mời đã lưu${letter?.by ? ` bởi ${letter.by}` : ""}${letter?.at ? `, ${formatInterviewTime(letter.at)}` : ""}. Bước tiếp: gửi mail offer.`}
+              {step === "sent" && sentAt && `✓ Đã gửi mail offer lúc ${formatInterviewTime(sentAt)}. Ghi kết quả khi ứng viên trả lời.`}
+              {step === "sent" && !sentAt && "Thư mời đã lưu."}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {step === "compose" && (
+                <button type="button" onClick={openLetter} className="hr-primary-btn h-9 px-4 text-[14px] font-semibold">
+                  ① Soạn thư mời nhận việc
+                </button>
+              )}
+              {step === "send" && (
+                <>
+                  <button type="button" onClick={openMail} className="hr-primary-btn h-9 px-4 text-[14px] font-semibold">
+                    ② Gửi mail offer
+                  </button>
+                  <button type="button" onClick={openLetter} className="hr-secondary-btn">
+                    Sửa thư mời
+                  </button>
+                </>
+              )}
+              {step === "sent" && (
+                <>
+                  <button type="button" onClick={openLetter} className="hr-secondary-btn">
+                    Sửa thư mời
+                  </button>
+                  <button type="button" onClick={openMail} className="hr-secondary-btn">
+                    Gửi lại mail offer
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          {canMail && (
-            <button
-              type="button"
-              onClick={() => openOfferLetter({ appId: app.id, candidateName: app.full_name })}
-              className="hr-secondary-btn"
-            >
-              Soạn thư mời nhận việc
-            </button>
-          )}
-          {canMail && (
-            <button
-              type="button"
-              onClick={() => prompt({ appId: app.id, candidateName: app.full_name, kind: "offer" })}
-              className="hr-secondary-btn"
-            >
-              Gửi mail offer
-            </button>
-          )}
-        </div>
+        )}
+        {(canSetResult || app.offer_status) && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[13px] text-white/60">Kết quả offer</span>
+            <div className="hr-segmented" role="group" aria-label="Kết quả offer">
+              {OFFER_CHOICES.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  aria-pressed={app.offer_status === c.key}
+                  disabled={!canSetResult || saving}
+                  onClick={() => void setResult(c.key)}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
       </div>
     </section>
