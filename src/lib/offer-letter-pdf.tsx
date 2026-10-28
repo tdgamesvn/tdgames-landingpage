@@ -299,7 +299,7 @@ export class PdfTimeoutError extends Error {
  * - `mode: "preview"` (mặc định): hết slot hoặc người này đang có 1 bản → PdfBusyError ngay.
  * - `mode: "wait"` (gửi mail offer, tải lại file đã gửi): xếp hàng chờ slot tối đa 15s; vượt trần
  *   (2 việc chờ/người, hàng chờ 10, hết hạn mà đã chạy ≥ 4 bản) → PdfBusyError.
- * Render quá 20s → PdfTimeoutError (slot được nhả; tiến trình render cũ không huỷ được, chạy nốt ở nền).
+ * Render quá 20s → PdfTimeoutError cho caller; slot chỉ nhả khi render cũ thật sự xong (không huỷ được).
  */
 export async function renderOfferLetterPdf(
   data: OfferLetterData,
@@ -309,15 +309,24 @@ export async function renderOfferLetterPdf(
   const release = mode === "wait" ? await slots.acquire(userKey, WAIT_MS) : slots.tryAcquire(userKey);
   if (!release) throw new PdfBusyError();
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let render: Promise<Buffer>;
   try {
     ensureFonts();
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new PdfTimeoutError()), RENDER_TIMEOUT_MS);
-    });
-    return await Promise.race([renderToBuffer(<OfferLetterDocument d={data} />), timeout]);
+    render = renderToBuffer(<OfferLetterDocument d={data} />);
+  } catch (e) {
+    release();
+    throw e;
+  }
+  // Slot chỉ nhả khi render THỰC SỰ xong (kể cả sau khi caller đã nhận timeout) — không để
+  // render bị bỏ dở chạy nền mà vẫn mở slot cho việc mới (trần đồng thời vẫn đúng).
+  void render.then(release, release);
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new PdfTimeoutError()), RENDER_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([render, timeout]);
   } finally {
     clearTimeout(timer);
-    release();
   }
 }
 
