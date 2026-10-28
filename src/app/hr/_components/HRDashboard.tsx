@@ -2604,17 +2604,16 @@ function HrGate() {
     );
   }
   if (!me) return <HrLogin theme={theme} />;
-  return <HrWorkspace key={`${me.user.id ?? "legacy"}:${me.role}`} theme={theme} />;
+  return <HrWorkspace key={`${me.user.id}:${me.role}`} theme={theme} />;
 }
 
-type LoginMode = "login" | "forgot" | "forgot-sent" | "legacy";
+type LoginMode = "login" | "forgot" | "forgot-sent";
 
 function HrLogin({ theme }: { theme: ThemeState }) {
-  const { signIn, signInLegacy } = useHrSession();
+  const { signIn } = useHrSession();
   const [mode, setMode] = useState<LoginMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [legacyKey, setLegacyKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -2631,9 +2630,6 @@ function HrLogin({ theme }: { theme: ThemeState }) {
     try {
       if (mode === "login") {
         const err = await signIn(email.trim(), password);
-        if (err) setError(err);
-      } else if (mode === "legacy") {
-        const err = await signInLegacy(legacyKey);
         if (err) setError(err);
       } else if (mode === "forgot") {
         // Server luôn trả ok — không lộ email nào có tài khoản.
@@ -2665,50 +2661,35 @@ function HrLogin({ theme }: { theme: ThemeState }) {
   return (
     <HrAuthCard theme={theme} subtitle={mode === "forgot" ? "Quên mật khẩu" : "TD Games Studio"}>
       <form onSubmit={(e) => void submit(e)} className="space-y-3">
-        {mode === "legacy" ? (
+        {mode === "forgot" && (
+          <p className="text-[13px] leading-relaxed text-white/60">Nhập email tài khoản, hệ thống gửi link đặt lại mật khẩu (hạn 1 giờ).</p>
+        )}
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          aria-label="Email"
+          autoComplete="username"
+          autoFocus
+          className={AUTH_INPUT}
+        />
+        {mode === "login" && (
           <input
             type="password"
-            value={legacyKey}
-            onChange={(e) => setLegacyKey(e.target.value)}
-            placeholder="Mật khẩu chung"
-            aria-label="Mật khẩu chung"
-            autoFocus
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mật khẩu"
+            aria-label="Mật khẩu"
+            autoComplete="current-password"
             className={AUTH_INPUT}
           />
-        ) : (
-          <>
-            {mode === "forgot" && (
-              <p className="text-[13px] leading-relaxed text-white/60">Nhập email tài khoản, hệ thống gửi link đặt lại mật khẩu (hạn 1 giờ).</p>
-            )}
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              aria-label="Email"
-              autoComplete="username"
-              autoFocus
-              className={AUTH_INPUT}
-            />
-            {mode === "login" && (
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mật khẩu"
-                aria-label="Mật khẩu"
-                autoComplete="current-password"
-                className={AUTH_INPUT}
-              />
-            )}
-          </>
         )}
         {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
         <button
           type="submit"
           disabled={
-            busy ||
-            (mode === "legacy" ? !legacyKey : !email.trim() || (mode === "login" && !password))
+            busy || !email.trim() || (mode === "login" && !password)
           }
           className="hr-primary-btn w-full py-2.5"
         >
@@ -2721,12 +2702,6 @@ function HrLogin({ theme }: { theme: ThemeState }) {
             <button type="button" onClick={() => go("forgot")} className={AUTH_LINK}>Quên mật khẩu?</button>
           ) : (
             <button type="button" onClick={() => go("login")} className={AUTH_LINK}>Đăng nhập bằng email</button>
-          )}
-          {/* Giai đoạn chuyển tiếp — gỡ ở Task 12. */}
-          {mode !== "legacy" && (
-            <button type="button" onClick={() => go("legacy")} className="text-[12px] text-white/40 hover:text-white/70 hover:underline">
-              Đăng nhập bằng mật khẩu chung
-            </button>
           )}
         </div>
       </form>

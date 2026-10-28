@@ -33,14 +33,14 @@ const KEY_META: Record<string, { label: string; description: string }> = {
       "Mật khẩu để truy cập /admin. Để trống = dùng ADMIN_SECRET env var. Đổi ở đây có hiệu lực ngay với mọi API route.",
   },
   hr_secret: {
-    label: "HR Dashboard Password",
+    label: "HR Dashboard Password (không còn dùng)",
     description:
-      "Mật khẩu để truy cập /hr. Để trống = dùng HR_SECRET env var (hoặc ADMIN_SECRET làm fallback).",
+      "Đã gỡ 2026-10-28: /hr đăng nhập bằng tài khoản riêng (Sếp quản lý ở /hr > Tài khoản & quyền). Giá trị này không còn tác dụng.",
   },
   crm_secret: {
     label: "CRM Dashboard Password",
     description:
-      "Mật khẩu để truy cập /crm. Để trống = dùng CRM_SECRET env var, không có thì dùng chung mật khẩu HR.",
+      "Mật khẩu để truy cập /crm. Để trống = dùng CRM_SECRET env var.",
   },
 };
 

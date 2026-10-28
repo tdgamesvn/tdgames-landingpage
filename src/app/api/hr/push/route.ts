@@ -7,11 +7,11 @@ import { isPushSubscriptionInput } from "@/lib/hr-push-payload";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Endpoint phải tồn tại; có tài khoản thì chỉ thao tác endpoint của mình hoặc chưa gắn user (legacy: không giới hạn). */
+/** Endpoint phải tồn tại; chỉ thao tác endpoint của mình hoặc chưa gắn user (máy bật chuông từ thời mật khẩu chung). */
 async function endpointUsable(userId: string | null, endpoint: string): Promise<boolean> {
   const { data } = await getSupabaseAdmin().from("hr_push_subscriptions").select("user_id").eq("endpoint", endpoint).maybeSingle();
   if (!data) return false; // không có thiết bị nào với endpoint này
-  if (!userId) return true; // phiên mật khẩu chung cũ: không giới hạn theo user
+  if (!userId) return false;
   return data.user_id === null || data.user_id === userId;
 }
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         p256dh: s.keys.p256dh,
         auth: s.keys.auth,
         label,
-        user_id: auth.ctx.user.id, // tài khoản cũ (mật khẩu chung) → null
+        user_id: auth.ctx.user.id,
         user_agent: (request.headers.get("user-agent") ?? "").slice(0, 300) || null,
       },
       { onConflict: "endpoint" },

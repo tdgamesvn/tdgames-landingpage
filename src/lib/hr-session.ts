@@ -2,7 +2,6 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "./supabase-admin";
-import { getHRSecret } from "./hr-auth";
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "./hr-permissions";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { hashToken, newToken, readCookie, sessionUserIsActive } from "./hr-crypto";
@@ -16,7 +15,6 @@ export type HrContext = {
   user: { id: string | null; email: string; displayName: string };
   role: HrRole;
   perms: Set<PermissionKey>;
-  legacy: boolean;
 };
 
 /** Đọc ghi đè quyền theo vai từ DB → effectivePermissions. */
@@ -63,24 +61,10 @@ export async function getHrContext(req: Request): Promise<HrContext | null> {
         user: { id: user.id, email: user.email, displayName: user.display_name },
         role,
         perms,
-        legacy: false,
-      };
-    }
-    // Cookie không hợp lệ: vẫn cho thử header mật khẩu chung bên dưới.
-  }
-
-  const key = req.headers.get("x-hr-key");
-  if (key) {
-    const secret = await getHRSecret();
-    if (secret && key === secret) {
-      return {
-        user: { id: null, email: "", displayName: "Mật khẩu chung" },
-        role: "boss",
-        perms: effectivePermissions("boss", []),
-        legacy: true,
       };
     }
   }
+  // Chỉ đăng nhập bằng tài khoản (mật khẩu chung x-hr-key đã gỡ 2026-10-28).
   return null;
 }
 

@@ -66,8 +66,3 @@ export function effectivePermissions(
   }
   return out;
 }
-
-/** Cổng chuyển tiếp: route chưa chuyển sang requireHrUser(perm) vẫn toàn quyền, nên chỉ boss/hr được qua. */
-export function legacyRouteAllowed(role: HrRole): boolean {
-  return role === "boss" || role === "hr";
-}

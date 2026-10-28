@@ -6,7 +6,6 @@ import {
   HR_PERMISSIONS,
   effectivePermissions,
   isPermissionKey,
-  legacyRouteAllowed,
 } from "./hr-permissions.ts";
 
 test("boss có mọi quyền, override bị bỏ qua", () => {
@@ -61,11 +60,4 @@ test("key duy nhất và đúng định dạng", () => {
   const keys = HR_PERMISSIONS.map((p) => p.key);
   assert.equal(new Set(keys).size, keys.length);
   for (const k of keys) assert.match(k, /^[a-z_]+\.[a-z_]+$/);
-});
-
-test("legacyRouteAllowed: chỉ boss/hr", () => {
-  assert.equal(legacyRouteAllowed("boss"), true);
-  assert.equal(legacyRouteAllowed("hr"), true);
-  assert.equal(legacyRouteAllowed("leader"), false);
-  assert.equal(legacyRouteAllowed("accountant"), false);
 });

@@ -6,7 +6,7 @@
  */
 
 import { planParts } from "@/lib/interview-audio";
-import { hrFetch, hrLegacyHeaders } from "./HrSession";
+import { hrFetch } from "./HrSession";
 
 const API = "/api/hr/upload/audio/multipart";
 const STALL_MS = 30_000;
@@ -34,8 +34,7 @@ function putPart(url: string, blob: Blob, onLoaded: (n: number) => void): Promis
       stall = setTimeout(() => xhr.abort(), STALL_MS);
     };
     xhr.open("PUT", url);
-    // Cookie phiên tự đi theo (cùng origin); mật khẩu chung (giai đoạn chuyển tiếp) gắn header.
-    for (const [k, v] of Object.entries(hrLegacyHeaders())) xhr.setRequestHeader(k, v);
+    // Cookie phiên tự đi theo (cùng origin).
     xhr.setRequestHeader("content-type", "application/octet-stream");
     xhr.upload.onprogress = (e) => {
       arm();

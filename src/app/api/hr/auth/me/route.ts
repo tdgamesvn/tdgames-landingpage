@@ -11,6 +11,5 @@ export async function GET(req: Request) {
     role: ctx.role,
     roleLabel: ROLE_LABEL[ctx.role],
     perms: [...ctx.perms],
-    legacy: ctx.legacy,
   });
 }

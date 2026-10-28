@@ -2,8 +2,7 @@
 
 /**
  * Phiên đăng nhập /hr: cookie httpOnly do server đặt (tài khoản email + mật khẩu).
- * Giai đoạn chuyển tiếp (tới Task 12): còn đăng nhập bằng mật khẩu chung — lưu ở localStorage
- * và gửi qua header x-hr-key. Mọi request /api/hr đi qua `hrFetch` để không nơi nào tự gắn header.
+ * Mọi request /api/hr đi qua `hrFetch` (cookie cùng origin).
  */
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -14,19 +13,10 @@ export type Me = {
   role: HrRole;
   roleLabel: string;
   perms: string[];
-  legacy: boolean;
 };
 
-/** Khoá localStorage của mật khẩu chung (giữ như cũ để ai đang đăng nhập không bị đá ra). */
+/** Khoá localStorage của mật khẩu chung cũ (đã gỡ 2026-10-28) — xoá nếu máy còn lưu. */
 const LEGACY_KEY_STORAGE = "tdg.hr.key";
-
-function readLegacyKey(): string | null {
-  try {
-    return typeof window !== "undefined" ? localStorage.getItem(LEGACY_KEY_STORAGE) : null;
-  } catch {
-    return null;
-  }
-}
 
 function clearLegacyKey() {
   try {
@@ -36,17 +26,9 @@ function clearLegacyKey() {
   }
 }
 
-/** Header mật khẩu chung (rỗng nếu không đăng nhập kiểu cũ) — cho XHR (upload ghi âm). */
-export function hrLegacyHeaders(): Record<string, string> {
-  const key = readLegacyKey();
-  return key ? { "x-hr-key": key } : {};
-}
-
-/** fetch cho /api/hr: cookie phiên tự đi theo; thêm x-hr-key khi đang dùng mật khẩu chung. */
+/** fetch cho /api/hr: cookie phiên tự đi theo. */
 export function hrFetch(url: string, init: RequestInit = {}): Promise<Response> {
-  const headers = new Headers(init.headers);
-  for (const [k, v] of Object.entries(hrLegacyHeaders())) headers.set(k, v);
-  return fetch(url, { ...init, headers, credentials: "same-origin" });
+  return fetch(url, { ...init, credentials: "same-origin" });
 }
 
 type SessionApi = {
@@ -60,8 +42,6 @@ type SessionApi = {
   refresh: () => Promise<Me | null>;
   /** Đăng nhập email + mật khẩu; trả lỗi tiếng Việt hoặc null nếu thành công. */
   signIn: (email: string, password: string) => Promise<string | null>;
-  /** Đăng nhập bằng mật khẩu chung (chỉ tới Task 12). */
-  signInLegacy: (key: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 };
 
@@ -88,7 +68,7 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
   const [connError, setConnError] = useState<string | null>(null);
   const meRef = useRef<Me | null>(null);
 
-  /** Hỏi /me. `failed` = lỗi mạng/5xx → KHÔNG đổi phiên, KHÔNG xoá mật khẩu chung. */
+  /** Hỏi /me. `failed` = lỗi mạng/5xx → KHÔNG đổi phiên. */
   const load = useCallback(async (): Promise<{ me: Me | null; failed: boolean }> => {
     let next: Me | null;
     try {
@@ -98,8 +78,7 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
       return { me: meRef.current, failed: true };
     }
     setConnError(null);
-    // Chỉ 401/403 mới là "chưa đăng nhập". Mật khẩu chung chỉ giữ khi chính nó đang đăng nhập.
-    if (!next || !next.legacy) clearLegacyKey();
+    // Chỉ 401/403 mới là "chưa đăng nhập".
     meRef.current = next;
     setMe(next);
     return { me: next, failed: false };
@@ -108,6 +87,7 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => (await load()).me, [load]);
 
   useEffect(() => {
+    clearLegacyKey();
     let alive = true;
     // Qua microtask — không setState đồng bộ trong effect.
     void Promise.resolve()
@@ -131,7 +111,6 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
         const j = await res.json().catch(() => ({}));
         return typeof j.error === "string" ? j.error : "Email hoặc mật khẩu không đúng";
       }
-      clearLegacyKey();
       const r = await load();
       if (r.failed) return CONN_ERROR;
       return r.me ? null : "Đăng nhập không thành công, thử lại";
@@ -139,29 +118,11 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
     [load],
   );
 
-  const signInLegacy = useCallback(
-    async (key: string) => {
-      try {
-        localStorage.setItem(LEGACY_KEY_STORAGE, key);
-      } catch {
-        return "Trình duyệt chặn lưu mật khẩu";
-      }
-      const r = await load();
-      if (r.failed) return CONN_ERROR;
-      return r.me ? null : "Mật khẩu chung không đúng";
-    },
-    [load],
-  );
-
   const signOut = useCallback(async () => {
-    const wasLegacy = me?.legacy;
-    clearLegacyKey();
-    if (!wasLegacy) {
-      await fetch("/api/hr/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => null);
-    }
+    await fetch("/api/hr/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => null);
     meRef.current = null;
     setMe(null);
-  }, [me?.legacy]);
+  }, []);
 
   const value = useMemo<SessionApi>(() => {
     const perms = new Set(me?.perms ?? []);
@@ -172,10 +133,9 @@ export function HrSessionProvider({ children }: { children: React.ReactNode }) {
       can: (p) => perms.has(p),
       refresh,
       signIn,
-      signInLegacy,
       signOut,
     };
-  }, [me, loading, connError, refresh, signIn, signInLegacy, signOut]);
+  }, [me, loading, connError, refresh, signIn, signOut]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

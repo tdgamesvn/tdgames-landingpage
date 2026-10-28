@@ -44,7 +44,7 @@ export async function sendStaffEmail(
   return sendViaResend(cfg, { to, subject: msg.subject, html, text: msg.text });
 }
 
-/** CC nội bộ cho 1 mail: đọc tài khoản staff + Leader của job. Người gửi legacy (không có tài khoản) → senderEmail "". */
+/** CC nội bộ cho 1 mail: đọc tài khoản staff + Leader của job. */
 export async function resolveCcForApplication(
   cfg: HrEmailConfig,
   kind: CandidateEmailKind,
@@ -66,5 +66,5 @@ export async function resolveCcForApplication(
     role: u.role as HrRole,
     disabled: !!u.disabled,
   }));
-  return resolveCc(cfg, kind, staff, jobLeaderId, ctx.legacy ? "" : ctx.user.email);
+  return resolveCc(cfg, kind, staff, jobLeaderId, ctx.user.email);
 }
