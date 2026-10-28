@@ -6288,3 +6288,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Tạo tài khoản "Nguyễn Thị Thuỳ Dung" infor@tdconsulting.vn 0336828903 — sếp muốn vai "HR và Kế toán"; 1 tài khoản 1 vai, HR mặc định bao trùm quyền Kế toán (không có ghi đè quyền) → tạo vai HR, mail mời đã gửi.
 - Đổi tên hiển thị Sếp: Toan Dang → Đặng Thế Toàn (PATCH /api/hr/users).
 - Đổi tên hiển thị HR: Phương Nguyễn → Nguyễn Minh Phương.
+- Sếp SĐT 0362608491; HR đổi tên Nguyễn Thị Minh Phương + SĐT 0385456273.
