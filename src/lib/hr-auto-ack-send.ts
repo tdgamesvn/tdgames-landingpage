@@ -28,14 +28,26 @@ export async function readAutoAckEnabled(): Promise<boolean> {
  * Gửi mail "Cảm ơn ứng tuyển" cho hồ sơ vừa nộp. Chạy nền (after()) — nhà gọi bắt lỗi chỉ để log.
  * Không CC ai; chữ ký / From / Reply-To theo người support (assignee vừa giao).
  */
-export async function sendApplicationAck(app: {
+type AckInput = {
   applicationId: string;
   jobId: string;
   email: string;
   fullName: string;
   assigneeId: string | null;
   ip: string;
-}): Promise<{ sent: boolean; reason?: string }> {
+};
+
+// Chạy LẦN LƯỢT trong tiến trình (PM2 1 process): đếm trần giờ + đặt chỗ + gửi của mail trước xong rồi mới tới
+// mail sau → nhiều đơn tới cùng lúc không vượt được trần (đếm rồi chèn không còn khe hở giữa các request).
+let ackQueue: Promise<unknown> = Promise.resolve();
+
+export function sendApplicationAck(app: AckInput): Promise<{ sent: boolean; reason?: string }> {
+  const run = ackQueue.then(() => sendApplicationAckNow(app));
+  ackQueue = run.catch(() => undefined);
+  return run;
+}
+
+async function sendApplicationAckNow(app: AckInput): Promise<{ sent: boolean; reason?: string }> {
   const supabase = getSupabaseAdmin();
   const enabled = await readAutoAckEnabled();
   if (!enabled) return { sent: false, reason: "disabled" };

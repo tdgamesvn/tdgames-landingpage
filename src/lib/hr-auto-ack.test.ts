@@ -60,7 +60,9 @@ test("shouldSendAck: job không hoạt động, trần giờ", () => {
 });
 
 test("isStrictAckEmail", () => {
-  assert.equal(isStrictAckEmail("lan.nguyen+x@gmail.com"), true);
+  assert.equal(isStrictAckEmail("lan.nguyen@gmail.com"), true);
+  // "+tag" cho phép lách chống gửi trùng (cùng hộp thư, khác chuỗi) → không gửi ack tự động.
+  assert.equal(isStrictAckEmail("lan.nguyen+x@gmail.com"), false);
   for (const bad of ["a@b.co,c@d.co", "a@b.co;c@d.co", "a@b.co c@d.co", "<a@b.co>", 'a"@b.co', "o'x@b.co", "a@b.co\n", " ", "", null, undefined, "x".repeat(250) + "@b.co"]) {
     assert.equal(isStrictAckEmail(bad as string), bad === "a@b.co\n" ? true : false, String(bad));
   }
@@ -68,9 +70,11 @@ test("isStrictAckEmail", () => {
 
 test("sanitizeAckName", () => {
   assert.equal(sanitizeAckName("Nguyễn Văn A"), "Nguyễn Văn A");
-  for (const bad of ["Click http://evil.com", "www.x.vn", "a@b.co", "visit evil.xyz now", "promo.com", "", "  "]) {
+  assert.equal(sanitizeAckName("Mary-Jane O'Neil"), "Mary-Jane O'Neil");
+  // Allowlist: chỉ chữ cái (có dấu), khoảng trắng, gạch nối, nháy đơn — mọi ký tự khác → "bạn".
+  for (const bad of ["Click http://evil.com", "www.x.vn", "a@b.co", "visit evil.xyz now", "promo.com", "evil。com", "Win $100", "Lan 2", "", "  "]) {
     assert.equal(sanitizeAckName(bad), "bạn", bad);
   }
   assert.equal(sanitizeAckName("An\u0000\n  Bình"), "An Bình");
-  assert.equal(sanitizeAckName("x".repeat(100)).length, 60);
+  assert.equal(sanitizeAckName("x".repeat(100)), "bạn");
 });

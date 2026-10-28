@@ -27,21 +27,23 @@ export function isStrictAckEmail(email: string | null | undefined): boolean {
   if (typeof email !== "string") return false;
   const e = email.trim();
   if (e.length === 0 || e.length > 254) return false;
-  if (/[\s,;<>"']/.test(e)) return false;
+  if (/[\s,;<>"'+]/.test(e)) return false;
   return isValidEmail(e);
 }
 
-const DOMAIN_LIKE = /\w+\.(com|net|org|vn|io|xyz|ru|cn|info|link|top)\b/i;
+/** Tên hợp lệ cho lời chào mail ack: chỉ chữ cái (kể cả tiếng Việt có dấu), khoảng trắng, gạch nối, nháy đơn. */
+const SAFE_NAME = /^[\p{L}\p{M}' -]{1,60}$/u;
 
-/** Tên ứng viên đưa vào mail ack: có URL / email / tên miền → "bạn"; bỏ ký tự điều khiển; ≤ 60 ký tự. */
+/**
+ * Tên ứng viên đưa vào mail ack (form công khai — không tin): allowlist chữ cái; có bất kỳ ký tự nào khác
+ * (dấu chấm, số, @, /, ký hiệu…) hoặc dài quá 60 → "bạn". Chặn dùng tên làm kênh chèn link/quảng cáo.
+ */
 export function sanitizeAckName(name: string | null | undefined): string {
   const clean = String(name ?? "")
     .replace(/[\u0000-\u001f\u007f-\u009f]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  if (!clean) return "bạn";
-  if (/:\/\/|www\.|@/i.test(clean) || DOMAIN_LIKE.test(clean)) return "bạn";
-  return clean.slice(0, 60).trim() || "bạn";
+  return clean && SAFE_NAME.test(clean) ? clean : "bạn";
 }
 
 export type AckDecision =

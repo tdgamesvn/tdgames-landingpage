@@ -65,10 +65,12 @@ export function createLimiter(
  * rồi phần tử CUỐI của x-forwarded-for (phần đầu do client tự đặt được). Không có thì "unknown".
  */
 export function clientIp(headers: Headers): string {
-  const cf = headers.get("cf-connecting-ip")?.trim();
-  if (cf) return cf;
+  // x-real-ip do nginx đặt (= IP thật đã giải từ CF-Connecting-IP chỉ khi request đến từ dải IP Cloudflare)
+  // nên không giả được; cf-connecting-ip thô thì client gửi thẳng tới origin có thể tự đặt.
   const real = headers.get("x-real-ip")?.trim();
   if (real) return real;
+  const cf = headers.get("cf-connecting-ip")?.trim();
+  if (cf) return cf;
   const parts = headers.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
   return parts?.length ? parts[parts.length - 1] : "unknown";
 }

@@ -52,9 +52,11 @@ test("key hết hạn được dọn để nhường chỗ cho key mới", () =>
   assert.equal(l.count("new1"), 1);
 });
 
-test("clientIp: cf-connecting-ip > x-real-ip > x-forwarded-for cuối > unknown", () => {
+test("clientIp: x-real-ip (nginx ghi đè, đã giải CF) > cf-connecting-ip > x-forwarded-for cuối > unknown", () => {
   const h = (o: Record<string, string>) => new Headers(o);
-  assert.equal(clientIp(h({ "cf-connecting-ip": "1.1.1.1", "x-real-ip": "2.2.2.2", "x-forwarded-for": "9.9.9.9, 3.3.3.3" })), "1.1.1.1");
+  // Header cf-connecting-ip do client gửi thẳng tới origin giả được; x-real-ip do nginx đặt thì không.
+  assert.equal(clientIp(h({ "cf-connecting-ip": "1.1.1.1", "x-real-ip": "2.2.2.2", "x-forwarded-for": "9.9.9.9, 3.3.3.3" })), "2.2.2.2");
+  assert.equal(clientIp(h({ "cf-connecting-ip": "1.1.1.1", "x-forwarded-for": "9.9.9.9, 3.3.3.3" })), "1.1.1.1");
   assert.equal(clientIp(h({ "x-real-ip": "2.2.2.2", "x-forwarded-for": "9.9.9.9, 3.3.3.3" })), "2.2.2.2");
   assert.equal(clientIp(h({ "x-forwarded-for": "9.9.9.9, 3.3.3.3" })), "3.3.3.3");
   assert.equal(clientIp(h({})), "unknown");
