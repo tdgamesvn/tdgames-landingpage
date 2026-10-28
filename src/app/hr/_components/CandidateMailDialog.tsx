@@ -33,6 +33,10 @@ type Draft = {
   last_sent_at?: string | null;
   /** Những người sẽ được CC (server tính; chế độ test thì chỉ để xem trước, không CC thật). */
   cc_preview?: string[];
+  /** CC bắt buộc (hiring@) — không có nút bỏ. */
+  cc_fixed?: string[];
+  /** Ứng viên bấm "Trả lời" → mail về các địa chỉ này. */
+  reply_to?: string[];
   /** Mail offer: file thư mời nhận việc sẽ đính kèm khi gửi. */
   attachment?: { filename: string };
   /** Thông báo nhỏ từ server (vd. hạn xác nhận đã qua nên đã tự đổi). */
@@ -324,6 +328,9 @@ function MailDialog({
                 {cc.map((e) => (
                   <span key={e} className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 py-0.5 pl-2 pr-1 text-white/80" data-testid="cc-chip">
                     {e}
+                    {draft.cc_fixed?.includes(e) ? (
+                      <span className="pr-1 text-white/40" title="Luôn CC — hộp thư tuyển dụng chung">·</span>
+                    ) : (
                     <button
                       type="button"
                       onClick={() => setCc((l) => l.filter((x) => x !== e))}
@@ -332,8 +339,14 @@ function MailDialog({
                     >
                       <X className="hr-ico-solo" />
                     </button>
+                    )}
                   </span>
                 ))}
+              </div>
+            )}
+            {(draft.reply_to?.length ?? 0) > 0 && (
+              <div className="text-xs text-white/50">
+                Ứng viên trả lời sẽ về: <span className="font-semibold text-white/80">{draft.reply_to!.join(", ")}</span>
               </div>
             )}
             {draft.notice && (

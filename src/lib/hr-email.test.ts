@@ -22,6 +22,7 @@ test("config mặc định: chế độ test, gửi từ hr@, về tony@", () =>
     from: "TD Games HR <hr@tdgamestudio.com>",
     replyTo: "hr@tdgamestudio.com",
     testTo: "tony@tdgamestudio.com",
+    hiring: "hiring@tdgamestudio.com",
     apiKey: null,
   });
 });
@@ -175,7 +176,7 @@ test("mời PV: đã có MBTI → không nhắc làm lại; mail khác không c�
 
 // ── Task 8: mail offer + tự CC nội bộ ──
 
-import { resolveCc, CC_ROLES, KIND_LABEL } from "./hr-email.ts";
+import { resolveCc, replyToFor, fromFor, KIND_LABEL } from "./hr-email.ts";
 
 test("offer: nháp có chức danh, ngày bắt đầu, tên job; không lộ lương", () => {
   const d = buildDraft({
@@ -201,57 +202,60 @@ const staff = [
   { id: "b1", email: "Boss@td.com", role: "boss" as const, disabled: false },
   { id: "h1", email: "hr1@td.com", role: "hr" as const, disabled: false },
   { id: "h2", email: "hr2@td.com", role: "hr" as const, disabled: true },
-  { id: "h3", email: "HR1@td.com", role: "hr" as const, disabled: false },
+  { id: "h3", email: "hr3@td.com", role: "hr" as const, disabled: false },
   { id: "a1", email: "acc@td.com", role: "accountant" as const, disabled: false },
   { id: "l1", email: "lead1@td.com", role: "leader" as const, disabled: false },
   { id: "l2", email: "lead2@td.com", role: "leader" as const, disabled: false },
 ];
+const HIRING = "hiring@tdgamestudio.com";
 
-test("resolveCc live + rejection: HR active + Sếp (luôn CC), không trùng", () => {
-  const r = resolveCc(liveCfg, "rejection", staff, "l1", "x@td.com");
-  assert.deepEqual(r.ccPreview, ["boss@td.com", "hr1@td.com"]);
-  assert.deepEqual(r.cc, ["boss@td.com", "hr1@td.com"]);
-  // Sếp tự gửi thì không CC chính mình.
-  assert.deepEqual(resolveCc(liveCfg, "rejection", staff, "l1", "boss@td.com").ccPreview, ["hr1@td.com"]);
+// Luật CC (sếp chốt 2026-10-28): luôn hiring@ + người support; mời/đổi/huỷ PV + bài test thêm Leader job;
+// offer thêm Kế toán + Sếp. Không CC toàn bộ HR, không CC Sếp ngoài offer.
+test("resolveCc rejection: chỉ hiring@ + người support (không HR khác, không Sếp)", () => {
+  const r = resolveCc(liveCfg, "rejection", staff, { assigneeId: "h3", jobLeaderId: "l1", senderEmail: "x@td.com" });
+  assert.deepEqual(r.ccPreview, [HIRING, "hr3@td.com"]);
+  assert.deepEqual(r.cc, r.ccPreview);
+  assert.deepEqual(r.fixed, [HIRING]);
 });
 
-test("resolveCc offer: kế toán + HR + boss, không người gửi, không disabled", () => {
-  const r = resolveCc(liveCfg, "offer", staff, null, "hr1@td.com");
-  assert.deepEqual([...r.ccPreview].sort(), ["acc@td.com", "boss@td.com"]);
-  const r2 = resolveCc(liveCfg, "offer", staff, null, "someone@td.com");
-  assert.deepEqual([...r2.ccPreview].sort(), ["acc@td.com", "boss@td.com", "hr1@td.com"]);
-  assert.ok(!r2.ccPreview.includes("hr2@td.com"));
+test("resolveCc: người support là người gửi → không CC lại; chưa có support → chỉ hiring@", () => {
+  assert.deepEqual(resolveCc(liveCfg, "rejection", staff, { assigneeId: "h3", jobLeaderId: null, senderEmail: "HR3@td.com" }).ccPreview, [HIRING]);
+  assert.deepEqual(resolveCc(liveCfg, "rejection", staff, { assigneeId: null, jobLeaderId: null, senderEmail: "" }).ccPreview, [HIRING]);
 });
 
-test("resolveCc invite: có leader của job, không có leader khác", () => {
-  const r = resolveCc(liveCfg, "interview_invite", staff, "l1", "x@td.com");
-  assert.ok(r.ccPreview.includes("lead1@td.com"));
-  assert.ok(!r.ccPreview.includes("lead2@td.com"));
-  assert.ok(r.ccPreview.includes("hr1@td.com"));
-  assert.deepEqual(resolveCc(liveCfg, "interview_invite", staff, null, "x@td.com").ccPreview, ["boss@td.com", "hr1@td.com"]);
+test("resolveCc mời PV / đổi / huỷ / bài test: thêm Leader của job (không leader khác)", () => {
+  for (const kind of ["interview_invite", "interview_reschedule", "interview_cancel", "test_assignment"] as const) {
+    const r = resolveCc(liveCfg, kind, staff, { assigneeId: "h1", jobLeaderId: "l1", senderEmail: "x@td.com" });
+    assert.deepEqual(r.ccPreview, [HIRING, "hr1@td.com", "lead1@td.com"], kind);
+  }
+  // Sếp kiêm Leader job → được CC ở mail mời PV.
+  const b = resolveCc(liveCfg, "interview_invite", staff, { assigneeId: null, jobLeaderId: "b1", senderEmail: "" });
+  assert.deepEqual(b.ccPreview, [HIRING, "boss@td.com"]);
 });
 
-test("resolveCc: leader bị disabled hoặc email sai bị loại", () => {
-  const s = [
-    { id: "l9", email: "l9@td.com", role: "leader" as const, disabled: true },
-    { id: "h9", email: "not-an-email", role: "hr" as const, disabled: false },
-  ];
-  assert.deepEqual(resolveCc(liveCfg, "interview_invite", s, "l9", "").ccPreview, []);
+test("resolveCc offer: hiring@ + support + Kế toán + Sếp; không Leader; bỏ người gửi + tài khoản khoá", () => {
+  const r = resolveCc(liveCfg, "offer", staff, { assigneeId: "h1", jobLeaderId: "l1", senderEmail: "acc@td.com" });
+  assert.deepEqual(r.ccPreview, [HIRING, "hr1@td.com", "boss@td.com"]);
+  const r2 = resolveCc(liveCfg, "offer", staff, { assigneeId: "h2", jobLeaderId: null, senderEmail: "x@td.com" });
+  assert.deepEqual(r2.ccPreview, [HIRING, "acc@td.com", "boss@td.com"]);
 });
 
 test("resolveCc test mode: cc rỗng nhưng ccPreview đầy đủ", () => {
-  const r = resolveCc(testCfg, "offer", staff, null, "");
+  const r = resolveCc(testCfg, "offer", staff, { assigneeId: "h1", jobLeaderId: null, senderEmail: "" });
   assert.deepEqual(r.cc, []);
-  assert.deepEqual([...r.ccPreview].sort(), ["acc@td.com", "boss@td.com", "hr1@td.com"]);
+  assert.deepEqual(r.ccPreview, [HIRING, "hr1@td.com", "acc@td.com", "boss@td.com"]);
 });
 
-test("CC_ROLES phủ mọi kind", () => {
-  for (const k of CANDIDATE_EMAIL_KINDS) assert.ok(CC_ROLES[k].length > 0, k);
+test("replyToFor: người support (active) + hiring@; không có → hiring@", () => {
+  assert.deepEqual(replyToFor(liveCfg, { email: "HR1@td.com", disabled: false }), ["hr1@td.com", HIRING]);
+  assert.deepEqual(replyToFor(liveCfg, { email: "hr2@td.com", disabled: true }), [HIRING]);
+  assert.deepEqual(replyToFor(liveCfg, null), [HIRING]);
 });
 
-test("resolveCc: Sếp là Leader của job → được CC ở mail mời PV", () => {
-  const r = resolveCc(liveCfg, "interview_invite", staff, "b1", "x@td.com");
-  assert.deepEqual(r.ccPreview, ["boss@td.com", "hr1@td.com"]);
+test("fromFor: tên người support · TD Games <hr@>; không có → from mặc định; tên lạ được làm sạch", () => {
+  assert.equal(fromFor(liveCfg, "Nguyễn Thị Minh Phương"), '"Nguyễn Thị Minh Phương · TD Games" <hr@tdgamestudio.com>');
+  assert.equal(fromFor(liveCfg, null), "TD Games HR <hr@tdgamestudio.com>");
+  assert.equal(fromFor(liveCfg, 'A "B" <c@x>\r\n'), '"A B c@x · TD Games" <hr@tdgamestudio.com>');
 });
 
 test("textToHtml: header là ảnh banner nền tối (không mất logo khi Gmail đảo màu ở chế độ tối)", () => {

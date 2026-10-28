@@ -28,6 +28,8 @@ export type HrEmailConfig = {
   from: string;
   replyTo: string;
   testTo: string;
+  /** Hộp thư tuyển dụng chung — luôn CC + nhận bản trả lời của ứng viên (sếp chốt 2026-10-28). */
+  hiring: string;
   apiKey: string | null;
 };
 
@@ -37,6 +39,7 @@ export function getHrEmailConfig(env: Record<string, string | undefined>): HrEma
     from: env.HR_EMAIL_FROM?.trim() || "TD Games HR <hr@tdgamestudio.com>",
     replyTo: env.HR_EMAIL_REPLY_TO?.trim() || "hr@tdgamestudio.com",
     testTo: env.HR_EMAIL_TEST_TO?.trim() || "tony@tdgamestudio.com",
+    hiring: env.HR_HIRING_EMAIL?.trim() || "hiring@tdgamestudio.com",
     apiKey: env.RESEND_API_KEY?.trim() || null,
   };
 }
@@ -52,41 +55,65 @@ export function resolveRecipient(cfg: HrEmailConfig, candidateEmail: string, sub
 }
 
 /** Vai được tự CC theo loại mail. "leader" = Leader của job ứng viên; vai khác = mọi tài khoản active vai đó. */
-export const CC_ROLES: Record<CandidateEmailKind, ("hr" | "leader" | "accountant" | "boss")[]> = {
-  interview_invite: ["hr", "leader"],
-  interview_reschedule: ["hr", "leader"],
-  interview_cancel: ["hr", "leader"],
-  test_assignment: ["hr", "leader"],
-  rejection: ["hr"],
-  offer: ["accountant", "hr", "boss"],
-};
+/** Mail có CC Leader của job (sếp chốt: giữ như trước). */
+const LEADER_CC_KINDS: readonly CandidateEmailKind[] = [
+  "interview_invite",
+  "interview_reschedule",
+  "interview_cancel",
+  "test_assignment",
+];
 
 /**
- * Danh sách CC nội bộ. `ccPreview` luôn đầy đủ (để UI hiển thị); `cc` thực gửi chỉ có ở chế độ live.
- * Loại người gửi + tài khoản disabled, lower-case, gộp trùng, bỏ email sai.
+ * CC nội bộ (sếp chốt 2026-10-28): luôn hiring@ + người support của hồ sơ; mời/đổi/huỷ PV + bài test
+ * thêm Leader của job; offer thêm Kế toán + Sếp. Không CC toàn bộ HR. Bỏ người gửi + tài khoản khoá,
+ * lower-case, gộp trùng, bỏ email sai. `fixed` = địa chỉ người gửi không bỏ được (hiring@).
+ * `ccPreview` luôn đầy đủ (UI hiển thị); `cc` thực gửi chỉ có ở chế độ live.
  */
 export function resolveCc(
   cfg: HrEmailConfig,
   kind: CandidateEmailKind,
   staff: { email: string; role: HrRole; disabled: boolean; id: string }[],
-  jobLeaderId: string | null,
-  senderEmail: string,
-): { cc: string[]; ccPreview: string[] } {
-  const roles = CC_ROLES[kind];
-  const sender = senderEmail.trim().toLowerCase();
-  const out = new Set<string>();
-  for (const u of staff) {
-    if (u.disabled) continue;
-    // "leader" = người được gán phụ trách job (vai Leader hoặc Sếp kiêm Leader); vai khác theo role.
-    const isJobLeader = roles.includes("leader") && jobLeaderId !== null && u.id === jobLeaderId;
-    // Sếp luôn được CC mọi mail ứng viên (sếp chốt 2026-10-27).
-    const hit = u.role === "boss" || isJobLeader || (u.role !== "leader" && (roles as string[]).includes(u.role));
-    if (!hit || !isValidEmail(u.email)) continue;
-    const e = u.email.trim().toLowerCase();
-    if (e !== sender) out.add(e);
+  opts: { assigneeId: string | null; jobLeaderId: string | null; senderEmail: string },
+): { cc: string[]; ccPreview: string[]; fixed: string[] } {
+  const sender = opts.senderEmail.trim().toLowerCase();
+  const out: string[] = [];
+  const add = (email: string | null | undefined) => {
+    if (!email || !isValidEmail(email)) return;
+    const e = email.trim().toLowerCase();
+    if (e !== sender && !out.includes(e)) out.push(e);
+  };
+  const active = (id: string | null) => (id ? staff.find((u) => u.id === id && !u.disabled) ?? null : null);
+  const hiring = isValidEmail(cfg.hiring) ? cfg.hiring.trim().toLowerCase() : null;
+  if (hiring) out.push(hiring);
+  add(active(opts.assigneeId)?.email);
+  if (LEADER_CC_KINDS.includes(kind)) add(active(opts.jobLeaderId)?.email);
+  if (kind === "offer") {
+    for (const u of staff) if (!u.disabled && u.role === "accountant") add(u.email);
+    for (const u of staff) if (!u.disabled && u.role === "boss") add(u.email);
   }
-  const ccPreview = [...out];
-  return { cc: cfg.mode === "live" ? ccPreview : [], ccPreview };
+  return { cc: cfg.mode === "live" ? out : [], ccPreview: out, fixed: hiring ? [hiring] : [] };
+}
+
+/** Reply-To: ứng viên trả lời → về người support (nếu còn hoạt động) + hiring@. */
+export function replyToFor(cfg: HrEmailConfig, assignee: { email: string; disabled: boolean } | null): string[] {
+  const out: string[] = [];
+  if (assignee && !assignee.disabled && isValidEmail(assignee.email)) out.push(assignee.email.trim().toLowerCase());
+  const hiring = isValidEmail(cfg.hiring) ? cfg.hiring.trim().toLowerCase() : cfg.replyTo;
+  if (!out.includes(hiring)) out.push(hiring);
+  return out;
+}
+
+/** From hiển thị tên người support: `"Tên · TD Games" <hr@…>`; không có tên → From mặc định. */
+export function fromFor(cfg: HrEmailConfig, supportName: string | null): string {
+  const name = (supportName ?? "")
+    .replace(/[\u0000-\u001f\u007f"<>\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 60);
+  if (!name) return cfg.from;
+  const m = /<([^>]+)>/.exec(cfg.from);
+  const addr = (m ? m[1] : cfg.from).trim();
+  return `"${name} · TD Games" <${addr}>`;
 }
 
 /** Dựng bản nháp từ mẫu (HR đã sửa trong DB) hoặc mẫu mặc định. */

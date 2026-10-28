@@ -40,7 +40,7 @@ export async function GET(request: Request, { params }: Ctx) {
   const supabase = getSupabaseAdmin();
   const { data: app } = await supabase
     .from("applications")
-    .select("id, email, full_name, job_id, test_token, mbti_type, mbti_url, jobs(title)")
+    .select("id, email, full_name, job_id, assignee_user_id, test_token, mbti_type, mbti_url, jobs(title)")
     .eq("id", id)
     .maybeSingle();
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -130,8 +130,16 @@ export async function GET(request: Request, { params }: Ctx) {
     offer,
   }, template);
   let ccPreview: string[];
+  let ccFixed: string[];
+  let replyTo: string[];
   try {
-    ccPreview = (await resolveCcForApplication(cfg, kind, auth.ctx, (app.job_id as string | null) ?? null)).ccPreview;
+    const r = await resolveCcForApplication(cfg, kind, auth.ctx, {
+      jobId: (app.job_id as string | null) ?? null,
+      assigneeId: (app.assignee_user_id as string | null) ?? null,
+    });
+    ccPreview = r.ccPreview;
+    ccFixed = r.fixed;
+    replyTo = r.replyTo;
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Không đọc được danh sách CC" }, { status: 500 });
   }
@@ -151,6 +159,8 @@ export async function GET(request: Request, { params }: Ctx) {
     subject: draft.subject,
     text: draft.text,
     cc_preview: ccPreview,
+    cc_fixed: ccFixed,
+    reply_to: replyTo,
     last_sent_at: last?.created_at ?? null,
     ...(attachment ? { attachment } : {}),
     ...(notice ? { notice } : {}),

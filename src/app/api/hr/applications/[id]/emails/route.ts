@@ -60,7 +60,7 @@ export async function POST(request: Request, { params }: Ctx) {
   if (!subject || !text) return NextResponse.json({ error: "Thiếu tiêu đề hoặc nội dung" }, { status: 400 });
   const interviewId = typeof body.interview_id === "string" && body.interview_id ? body.interview_id : null;
 
-  const app = await loadScopedApplication(ctx, id, "id, email, job_id").catch(() => undefined);
+  const app = await loadScopedApplication(ctx, id, "id, email, job_id, assignee_user_id").catch(() => undefined);
   if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const appEmail = typeof app.email === "string" ? app.email : null;
@@ -94,16 +94,20 @@ export async function POST(request: Request, { params }: Ctx) {
   }
 
   // CC: server tính; client chỉ được bớt người (tập con của ccPreview), địa chỉ lạ bị bỏ im lặng.
-  let resolved: { cc: string[]; ccPreview: string[] };
+  let resolved: Awaited<ReturnType<typeof resolveCcForApplication>>;
   try {
-    resolved = await resolveCcForApplication(cfg, kind, ctx, (app.job_id as string | null) ?? null);
+    resolved = await resolveCcForApplication(cfg, kind, ctx, {
+      jobId: (app.job_id as string | null) ?? null,
+      assigneeId: (app.assignee_user_id as string | null) ?? null,
+    });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Không đọc được danh sách CC" }, { status: 500 });
   }
   const wanted = Array.isArray(body.cc)
     ? new Set(body.cc.filter((x): x is string => typeof x === "string").map((x) => x.trim().toLowerCase()))
     : null;
-  const keep = (list: string[]) => (wanted ? list.filter((e) => wanted.has(e)) : list);
+  // hiring@ (fixed) luôn giữ — client không bỏ được.
+  const keep = (list: string[]) => (wanted ? list.filter((e) => wanted.has(e) || resolved.fixed.includes(e)) : list);
   const cc = keep(resolved.cc);
 
   const candidateEmail = (appEmail as string).trim();
@@ -115,6 +119,8 @@ export async function POST(request: Request, { params }: Ctx) {
     html,
     text,
     cc,
+    from: resolved.from,
+    replyTo: resolved.replyTo,
     ...(offerAttachment ? { attachments: [{ filename: offerAttachment.filename, content: offerAttachment.content }] } : {}),
   });
   if ("error" in sent) return NextResponse.json({ error: `Gửi thất bại: ${sent.error}` }, { status: 502 });
