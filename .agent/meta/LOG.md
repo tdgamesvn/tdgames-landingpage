@@ -6287,3 +6287,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Mail offer đề xuất lại (chờ sếp duyệt): thân mail ngắn + chi tiết đãi ngộ ở file đính kèm (PDF đề xuất), người liên hệ lấy từ tài khoản (người gửi nếu Kế toán/HR, Sếp gửi → Kế toán đầu tiên, chưa có → Phòng Nhân sự hr@).
 - Tạo tài khoản "Nguyễn Thị Thuỳ Dung" infor@tdconsulting.vn 0336828903 — sếp muốn vai "HR và Kế toán"; 1 tài khoản 1 vai, HR mặc định bao trùm quyền Kế toán (không có ghi đè quyền) → tạo vai HR, mail mời đã gửi.
 - Đổi tên hiển thị Sếp: Toan Dang → Đặng Thế Toàn (PATCH /api/hr/users).
+- Đổi tên hiển thị HR: Phương Nguyễn → Nguyễn Minh Phương.
