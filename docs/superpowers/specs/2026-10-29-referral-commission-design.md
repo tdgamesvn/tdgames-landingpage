@@ -30,7 +30,9 @@ Danh sách người được hưởng hoa hồng, quản lý trong /hr (tab mớ
   (mảng, mã đầu = mã chính; mã sau = mã cũ/alias, vd. `mai-ha` + `mai-ha-headhunt`), SĐT, email,
   thông tin chuyển khoản (ngân hàng, số TK, chủ TK — text tự do), ghi chú, đang hoạt động.
 - Mã ref của referrer không trùng với mã của tài khoản /hr (hr_users.ref_codes) và không trùng giữa các referrer.
-- Tài khoản /hr (HR, Sếp…) **không** nằm trong bảng này → mặc định không hưởng. Ngoại lệ "HR có hoa hồng
+- **Sếp chốt 2026-10-29 — ai hưởng:** tài khoản /hr vai **Kế toán** giới thiệu → hưởng như nội bộ (mức `internal`).
+  **HR, Leader, Sếp** → không hưởng (trừ ngoại lệ ghi đè bên dưới).
+- Tài khoản /hr **không** nằm trong bảng này; vai Kế toán được coi là `internal` tự động (khớp qua mã tài khoản). Ngoại lệ "HR có hoa hồng
   riêng": referrer có cột `hr_user_id` trỏ tới tài khoản đó (không có mã riêng — khớp qua mã chính của tài
   khoản, vì POST /api/applications đã đổi alias → mã chính) + **mức riêng** (mục 2). *(Em chọn.)*
 - Khởi tạo: liệt kê các mã ref đang có trên hồ sơ mà không thuộc tài khoản nào (`cat-tuong`, `freelancer`,
@@ -42,7 +44,7 @@ Danh sách người được hưởng hoa hồng, quản lý trong /hr (tab mớ
 ### 2. Quy tắc hoa hồng
 Một quy tắc = **số tiền** + **lịch trả**.
 - Số tiền: `fixed` (VND) **hoặc** `salary_multiple` (hệ số × lương cơ bản trong thư mời nhận việc đã được
-  Sếp duyệt; vd 1.0 = 1 tháng lương). Lương = `baseSalary` (không cộng phụ cấp). *(Em chọn — xem câu hỏi mở.)*
+  Sếp duyệt; vd 1.0 = 1 tháng lương). Lương = `baseSalary` (không cộng phụ cấp). *(Em chọn.)*
 - Lịch trả: danh sách mốc `{ sau_N_tháng_đi_làm (0 = ngay khi đi làm), phần_trăm }`, tổng = 100%.
 - Quy tắc áp theo thứ tự ưu tiên:
   1. **Ghi đè theo người** (referrer có mức riêng) — dùng cho HR được hưởng ngoại lệ.
@@ -54,8 +56,13 @@ Một quy tắc = **số tiền** + **lịch trả**.
   Sếp/Kế toán sửa tay số tiền từng khoản được (có ghi người sửa).
 
 ### 3. Khoản hoa hồng (`referral_payouts`)
-- **Sinh khi**: hồ sơ có `offer_status = accepted` **và** `referred_by` khớp một referrer đang hoạt động.
-  Mã khớp tài khoản /hr không có ghi đè → không sinh.
+- **Sinh khi**: hồ sơ có `offer_status = accepted` **và** `referred_by` khớp một referrer đang hoạt động
+  (hoặc tài khoản Kế toán). Mã khớp tài khoản HR/Leader/Sếp không có ghi đè → không sinh.
+- **Không tính** (sếp chốt): ứng viên **freelancer / theo dự án** (`applications.work_type = 'freelancer'`).
+- **Hồ sơ đã nhận offer trước khi có bảng** (sếp chốt): không tự tính bù; Phương bấm "Tính lại" trên hồ sơ nếu cần.
+- **Đổi ý / huỷ** (sếp chốt: chỉ trả khi đủ điều kiện nên không có thu hồi): offer rời "Đã nhận" hoặc UV nghỉ
+  → các khoản **chưa trả** chuyển `cancelled`; khoản đã trả giữ nguyên. Quay lại "Đã nhận" → sinh lại các mốc
+  chưa có (không trùng mốc đã trả).
 - **Ngày đi làm**: mặc định lấy `startDate` trong thư mời; Phương xác nhận / sửa "Ngày đi làm thực tế" trên
   hồ sơ. Chưa xác nhận → các mốc hiển thị "dự kiến".
 - Mỗi mốc = một dòng: referrer, ứng viên, job, mốc (vd "Đủ 1 tháng"), số tiền, ngày đến hạn
@@ -77,7 +84,7 @@ Một quy tắc = **số tiền** + **lịch trả**.
   ngày đi làm thực tế / ngày nghỉ.
 
 ### 5. Quyền (bảng quyền hiện có, thêm 2 dòng)
-- `referrals.view` — xem tab Hoa hồng & số tiền: Sếp, HR, Kế toán (mặc định bật). Leader: tắt.
+- `referrals.view` — xem tab Hoa hồng & số tiền: Sếp, **mọi HR** (sếp chốt), Kế toán. Leader: tắt.
 - `referrals.manage` — quản lý người giới thiệu, quy tắc, xác nhận còn làm / huỷ: Sếp, HR.
 - Đánh dấu **Đã chuyển khoản** + sửa số tiền: Sếp, Kế toán (`referrals.pay`).
   *(Sếp nói "Phương cũng có thể thấy" → HR được xem, kể cả khoản tính theo lương.)*
