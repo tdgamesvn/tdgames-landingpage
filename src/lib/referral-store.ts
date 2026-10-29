@@ -244,3 +244,22 @@ export async function setPayoutStatus(ids: string[], status: "cancelled", reason
   if (error) throw new Error(`setPayoutStatus: ${error.message}`);
   return data?.length ?? 0;
 }
+
+/**
+ * Chuẩn bị xoá hồ sơ: có khoản approved/paid → false (chặn xoá); không thì xoá các khoản còn lại → true.
+ * FK application_id là RESTRICT nên phải xoá khoản trước khi xoá hồ sơ.
+ */
+export async function deletePayoutsForApplication(appId: string): Promise<boolean> {
+  const db = getSupabaseAdmin();
+  const { data, error } = await db
+    .from("referral_payouts")
+    .select("id")
+    .eq("application_id", appId)
+    .in("status", ["approved", "paid"])
+    .limit(1);
+  if (error) throw new Error(`deletePayoutsForApplication.check: ${error.message}`);
+  if (data?.length) return false;
+  const { error: delErr } = await db.from("referral_payouts").delete().eq("application_id", appId);
+  if (delErr) throw new Error(`deletePayoutsForApplication.delete: ${delErr.message}`);
+  return true;
+}

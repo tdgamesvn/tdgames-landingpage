@@ -37,7 +37,7 @@ create table if not exists public.referral_placements (
 
 create table if not exists public.referral_payouts (
   id uuid primary key default gen_random_uuid(),
-  application_id uuid not null references public.applications(id) on delete cascade,
+  application_id uuid not null references public.applications(id) on delete restrict, -- xoá hồ sơ phải qua API (chặn khi có khoản duyệt/trả)
   referrer_id uuid references public.referrers(id) on delete set null,
   hr_user_id uuid references public.hr_users(id) on delete set null,
   beneficiary_name text not null,

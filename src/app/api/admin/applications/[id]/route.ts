@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { deletePayoutsForApplication } from "@/lib/referral-store";
 import { notifyApplicationUpdate } from "@/lib/hr-notify";
 
 export const runtime = "nodejs";
@@ -84,6 +85,13 @@ export async function DELETE(
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
+  try {
+    if (!(await deletePayoutsForApplication(id))) {
+      return NextResponse.json({ error: "Hồ sơ đã có hoa hồng được duyệt/đã trả — không xoá được" }, { status: 409 });
+    }
+  } catch {
+    return NextResponse.json({ error: "Không kiểm tra được khoản hoa hồng của hồ sơ" }, { status: 500 });
+  }
   const { error } = await supabase.from("applications").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

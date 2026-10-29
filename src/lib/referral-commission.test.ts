@@ -12,6 +12,7 @@ import {
   addMonthsClamped,
   cancelOnLeave,
   cancellableIds,
+  autoCancelIds,
   offerTransition,
   planPayouts,
   ruleKey,
@@ -261,4 +262,19 @@ test("statusAfterDueEdit: đổi hạn → due/upcoming theo hôm nay; approved/
   assert.equal(statusAfterDueEdit("due", null, "2026-11-01"), "upcoming");
   assert.equal(statusAfterDueEdit("approved", "2027-01-01", "2026-11-01"), "approved");
   assert.equal(statusAfterDueEdit("paid", "2027-01-01", "2026-11-01"), "paid");
+});
+
+test("planPayouts: needsManual + replaceOpen → không xoá gì", () => {
+  const existing: PayoutLite[] = [
+    { id: "p", milestone_months: 1, status: "paid", due_date: "2026-02-28", rule_key: "khac" },
+    { id: "u", milestone_months: 2, status: "upcoming", due_date: "2026-03-31", rule_key: "khac" },
+  ];
+  const r = planPayouts({ existing, rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: true });
+  assert.equal(r.needsManual, true);
+  assert.deepEqual(r.deleteIds, []);
+});
+test("autoCancelIds: chỉ upcoming/due (không approved/paid/cancelled)", () => {
+  const ps: PayoutLite[] = ["upcoming", "due", "approved", "paid", "cancelled"].map((status, i) => ({ id: `m${i}`, milestone_months: i, status: status as PayoutLite["status"], due_date: null }));
+  assert.deepEqual(autoCancelIds(ps), ["m0", "m1"]);
+  assert.deepEqual(cancellableIds(ps), ["m0", "m1", "m2"]);
 });

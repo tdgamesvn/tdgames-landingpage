@@ -289,7 +289,7 @@ export function planPayouts(i: {
   const key = ruleKey(i.rule);
   const locked = i.existing.filter((p) => p.status === "approved" || p.status === "paid");
   if (locked.length && (key === null || locked.some((p) => p.rule_key !== key || p.amount_edited || p.amount_issue))) {
-    return { deleteIds, inserts: [], needsManual: true };
+    return { deleteIds: [], inserts: [], needsManual: true }; // cần xử lý tay: không đụng gì
   }
   // Đã nghỉ nhưng chưa có ngày đi làm → không biết mốc nào còn hiệu lực: không sinh.
   if (i.leftDate && !i.startDate) return { deleteIds, inserts: [], needsManual: false };
@@ -326,6 +326,11 @@ export function cancelOnLeave(existing: PayoutLite[], leftDate: string): string[
 /** Khoản còn huỷ được (offer bị rút): upcoming | due | approved. */
 export function cancellableIds(existing: PayoutLite[]): string[] {
   return existing.filter((p) => p.status === "upcoming" || p.status === "due" || p.status === "approved").map((p) => p.id);
+}
+
+/** Offer không còn "Đã nhận": chỉ tự huỷ khoản chưa duyệt (upcoming/due); approved giữ nguyên để xử lý tay. */
+export function autoCancelIds(existing: PayoutLite[]): string[] {
+  return existing.filter((p) => p.status === "upcoming" || p.status === "due").map((p) => p.id);
 }
 
 export function offerTransition(oldStatus: string | null, newStatus: string | null): "generate" | "cancel" | null {

@@ -5,9 +5,10 @@ import { checkAppPatch, OFFER_STATUSES } from "@/lib/hr-app-patch";
 import { notifyApplicationUpdate } from "@/lib/hr-notify";
 import { redactApplication } from "@/lib/hr-scope";
 import { loadAssignableMembers } from "@/lib/hr-comment-members";
-import { cancellableIds, offerTransition } from "@/lib/referral-commission";
-import { loadPayouts, setPayoutStatus, syncApplicationPayouts } from "@/lib/referral-store";
+import { autoCancelIds, offerTransition } from "@/lib/referral-commission";
+import { deletePayoutsForApplication, loadPayouts, setPayoutStatus, syncApplicationPayouts } from "@/lib/referral-store";
 
+const PAYOUT_BLOCK_MSG = "Hồ sơ đã có hoa hồng được duyệt/đã trả — không xoá được";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const runtime = "nodejs";
@@ -165,7 +166,7 @@ export async function PATCH(
         const r = await syncApplicationPayouts(id, { replaceOpen: false });
         if (r.needsManual) console.error(`[referral] hồ sơ ${id}: cần Sếp/Kế toán xử lý tay khoản hoa hồng đã duyệt/đã trả`);
       } else if (transition === "cancel") {
-        const ids = cancellableIds(await loadPayouts(id));
+        const ids = autoCancelIds(await loadPayouts(id));
         await setPayoutStatus(ids, "cancelled", "Offer không còn ở Đã nhận");
       }
     } catch (e) {
@@ -206,6 +207,11 @@ export async function DELETE(
   if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  try {
+    if (!(await deletePayoutsForApplication(id))) return NextResponse.json({ error: PAYOUT_BLOCK_MSG }, { status: 409 });
+  } catch {
+    return NextResponse.json({ error: "Không kiểm tra được khoản hoa hồng của hồ sơ" }, { status: 500 });
+  }
   const { error } = await supabase.from("applications").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
