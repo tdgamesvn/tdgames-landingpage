@@ -5,6 +5,13 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_RULES,
   addMonthsClamped,
+  approvedBaseSalary,
+  isCommissionable,
+  pickRule,
+  resolveBeneficiary,
+  unknownRefCodes,
+  type ReferrerLite,
+  type StaffLite,
   computeAmount,
   effectiveStatus,
   parseDefaultRules,
@@ -55,4 +62,49 @@ test("effectiveStatus: upcoming tới hạn (≤ hôm nay) → due", () => {
 test("parseDefaultRules: null/hỏng → mặc định", () => {
   assert.deepEqual(parseDefaultRules(null), DEFAULT_RULES);
   assert.equal(parseDefaultRules({ internal: { amount: { type: "fixed", vnd: 5 } } }).internal, DEFAULT_RULES.internal);
+});
+
+const staff: StaffLite[] = [
+  { id: "u-thao", role: "accountant", display_name: "Thảo", ref_codes: ["thaodtx"] },
+  { id: "u-phuong", role: "hr", display_name: "Phương", ref_codes: ["phuongntm"] },
+  { id: "u-toan", role: "boss", display_name: "Toàn", ref_codes: ["toandt"] },
+];
+const refs: ReferrerLite[] = [
+  { id: "r-maiha", name: "Mai Hà", kind: "external", ref_codes: ["mai-ha", "mai-ha-headhunt"], hr_user_id: null, active: true, rule: null },
+  { id: "r-cat", name: "Cát Tường", kind: null, ref_codes: ["cat-tuong"], hr_user_id: null, active: true, rule: null },
+  { id: "r-van", name: "Thuỳ Vân", kind: "external", ref_codes: ["thuy-van"], hr_user_id: null, active: false, rule: null },
+];
+
+test("resolveBeneficiary", () => {
+  assert.deepEqual(resolveBeneficiary("thaodtx", staff, refs), { referrerId: null, hrUserId: "u-thao", name: "Thảo", kind: "internal", override: null });
+  assert.equal(resolveBeneficiary("phuongntm", staff, refs), null);
+  assert.equal(resolveBeneficiary("toandt", staff, refs), null);
+  assert.equal(resolveBeneficiary("Mai Ha Headhunt", staff, refs)?.referrerId, "r-maiha");
+  assert.equal(resolveBeneficiary("thuy-van", staff, refs), null);           // ngừng hoạt động
+  assert.equal(resolveBeneficiary("cat-tuong", staff, refs)?.kind, null);    // chưa phân loại
+  assert.equal(resolveBeneficiary("khong-ai", staff, refs), null);
+  const own: CommissionRule = { amount: { type: "fixed", vnd: 500_000 }, schedule: [{ months: 0, percent: 100 }] };
+  const linked: ReferrerLite[] = [...refs, { id: "r-ph", name: "Phương", kind: null, ref_codes: [], hr_user_id: "u-phuong", active: true, rule: own }];
+  assert.deepEqual(resolveBeneficiary("phuongntm", staff, linked), { referrerId: "r-ph", hrUserId: "u-phuong", name: "Phương", kind: "internal", override: own });
+});
+test("pickRule: ghi đè người > job > mặc định; chưa phân loại → null", () => {
+  const job: CommissionRule = { amount: { type: "salary_multiple", multiple: 1 }, schedule: [{ months: 2, percent: 100 }] };
+  const ext = { referrerId: "r-maiha", hrUserId: null, name: "Mai Hà", kind: "external" as const, override: null };
+  assert.deepEqual(pickRule(ext, { external: job }, DEFAULT_RULES), { rule: job, source: "job" });
+  assert.deepEqual(pickRule(ext, {}, DEFAULT_RULES), { rule: null, source: null });
+  assert.deepEqual(pickRule({ ...ext, kind: "internal" }, {}, DEFAULT_RULES), { rule: DEFAULT_RULES.internal, source: "default" });
+  assert.equal(pickRule({ ...ext, override: job }, {}, DEFAULT_RULES).source, "override");
+  assert.deepEqual(pickRule({ ...ext, kind: null }, { external: job }, DEFAULT_RULES), { rule: null, source: null });
+});
+test("isCommissionable + approvedBaseSalary", () => {
+  assert.equal(isCommissionable({ offer_status: "accepted", work_type: "fulltime" }), true);
+  assert.equal(isCommissionable({ offer_status: "accepted", work_type: "freelancer" }), false);
+  assert.equal(isCommissionable({ offer_status: "pending", work_type: "fulltime" }), false);
+  assert.equal(approvedBaseSalary({ data: { baseSalary: 15_000_000 }, approval: { status: "approved" } }), 15_000_000);
+  assert.equal(approvedBaseSalary({ data: { baseSalary: 15_000_000 }, approval: { status: "pending" } }), null);
+  assert.equal(approvedBaseSalary(null), null);
+});
+test("unknownRefCodes: bỏ mã tài khoản + mã referrer (kể cả ngừng), gộp sau normalize", () => {
+  assert.deepEqual(unknownRefCodes(["cat-tuong", "thaodtx", "dieu-anh", "Dieu Anh", null, "thuy-van", "freelancer"], staff, refs.filter((r) => r.id !== "r-cat")),
+    [{ code: "dieu-anh", count: 2 }, { code: "cat-tuong", count: 1 }, { code: "freelancer", count: 1 }]);
 });

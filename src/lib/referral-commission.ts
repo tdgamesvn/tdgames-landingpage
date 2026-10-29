@@ -1,6 +1,9 @@
 // Hoa hồng giới thiệu (refer) — lõi thuần, không import server (dùng cả client, route, test).
 // Tiền VND số nguyên; ngày YYYY-MM-DD theo giờ VN.
 
+import { normalizeRefCode, resolveRefOwner } from "./hr-ref-codes.ts";
+import type { HrRole } from "./hr-permissions.ts";
+
 export type CommissionKind = "internal" | "external";
 export type PayoutStatus = "upcoming" | "due" | "approved" | "paid" | "cancelled";
 export type AmountIssue = "no_rule" | "no_salary";
@@ -129,4 +132,91 @@ export function effectiveStatus(p: { status: PayoutStatus; due_date: string | nu
 
 export function milestoneLabel(months: number): string {
   return months === 0 ? "Ngay khi đi làm" : `Đủ ${months} tháng`;
+}
+
+// ── Ai được hưởng ──────────────────────────────────────────────────────────
+
+export type StaffLite = { id: string; role: HrRole; display_name: string; ref_codes: string[] | null };
+export type ReferrerLite = {
+  id: string;
+  name: string;
+  kind: CommissionKind | null;
+  ref_codes: string[];
+  hr_user_id: string | null;
+  active: boolean;
+  rule: CommissionRule | null;
+};
+export type Beneficiary = {
+  referrerId: string | null;
+  hrUserId: string | null;
+  name: string;
+  kind: CommissionKind | null;
+  override: CommissionRule | null;
+};
+
+/**
+ * Người hưởng hoa hồng của mã ref `code`; không ai hưởng → null.
+ * Mã tài khoản: Kế toán → internal; HR/Leader/Sếp → chỉ khi có referrer active gắn hr_user_id (ngoại lệ).
+ * Mã không thuộc tài khoản: referrer độc lập đang hoạt động khớp mã (kind null = chưa phân loại).
+ */
+export function resolveBeneficiary(code: unknown, staff: StaffLite[], referrers: ReferrerLite[]): Beneficiary | null {
+  const c = normalizeRefCode(code);
+  if (!c) return null;
+  const owner = resolveRefOwner(c, staff);
+  if (owner) {
+    const r = referrers.find((x) => x.active && x.hr_user_id === owner.id);
+    if (r) return { referrerId: r.id, hrUserId: owner.id, name: r.name, kind: r.kind ?? "internal", override: r.rule };
+    if (owner.role === "accountant") {
+      return { referrerId: null, hrUserId: owner.id, name: owner.display_name, kind: "internal", override: null };
+    }
+    return null;
+  }
+  const r = referrers.find((x) => x.hr_user_id === null && x.active && x.ref_codes.some((k) => normalizeRefCode(k) === c));
+  return r ? { referrerId: r.id, hrUserId: null, name: r.name, kind: r.kind, override: r.rule } : null;
+}
+
+/** Ghi đè người > quy tắc job (theo loại) > mặc định công ty. Chưa phân loại (kind null) → không có quy tắc. */
+export function pickRule(
+  b: Beneficiary,
+  jobRules: Partial<Record<CommissionKind, CommissionRule>>,
+  defaults: DefaultRules,
+): { rule: CommissionRule | null; source: "override" | "job" | "default" | null } {
+  if (b.override) return { rule: b.override, source: "override" };
+  if (!b.kind) return { rule: null, source: null };
+  const job = jobRules[b.kind];
+  if (job) return { rule: job, source: "job" };
+  const def = defaults[b.kind];
+  return def ? { rule: def, source: "default" } : { rule: null, source: null };
+}
+
+/** Hồ sơ đủ điều kiện sinh hoa hồng: đã nhận offer và không phải freelancer / theo dự án. */
+export function isCommissionable(app: { offer_status: string | null; work_type: string | null }): boolean {
+  return app.offer_status === "accepted" && app.work_type !== "freelancer";
+}
+
+/** Lương cơ bản của thư mời đã được Sếp duyệt; chưa duyệt / không có thư → null. */
+export function approvedBaseSalary(
+  row: { data: { baseSalary: number | null }; approval: { status: string } } | null,
+): number | null {
+  if (!row || row.approval.status !== "approved") return null;
+  const s = row.data.baseSalary;
+  return typeof s === "number" && s > 0 ? s : null;
+}
+
+/** Mã ref trên hồ sơ chưa thuộc tài khoản nào / referrer nào (kể cả ngừng hoạt động), gộp sau normalize. */
+export function unknownRefCodes(
+  codes: (string | null)[],
+  staff: StaffLite[],
+  referrers: ReferrerLite[],
+): { code: string; count: number }[] {
+  const known = new Set<string>();
+  for (const u of staff) for (const k of u.ref_codes ?? []) known.add(normalizeRefCode(k) ?? "");
+  for (const r of referrers) for (const k of r.ref_codes) known.add(normalizeRefCode(k) ?? "");
+  const counts = new Map<string, number>();
+  for (const raw of codes) {
+    const c = normalizeRefCode(raw);
+    if (!c || known.has(c)) continue;
+    counts.set(c, (counts.get(c) ?? 0) + 1);
+  }
+  return [...counts].map(([code, count]) => ({ code, count })).sort((a, b) => b.count - a.count || a.code.localeCompare(b.code));
 }
