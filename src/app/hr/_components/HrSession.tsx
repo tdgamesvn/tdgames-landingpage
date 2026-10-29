@@ -13,6 +13,8 @@ export type Me = {
   role: HrRole;
   roleLabel: string;
   perms: string[];
+  /** Mã ref chính của tài khoản (Sếp đặt ở tab Tài khoản); chưa có → null. */
+  refCode?: string | null;
 };
 
 /** Khoá localStorage của mật khẩu chung cũ (đã gỡ 2026-10-28) — xoá nếu máy còn lưu. */

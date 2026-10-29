@@ -2010,7 +2010,6 @@ function JobForm({
   );
 }
 
-const REFCODE_KEY = "tdg.hr.refcode";
 const BASE_URL = typeof window !== "undefined" ? window.location.origin : "https://www.tdgamestudio.com";
 
 function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDeleteApp }: {
@@ -2021,16 +2020,15 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
   onDeleteApp: (id: string) => void;
 }) {
   const S = useStatuses();
-  const { can } = useHrSession();
+  const { can, me } = useHrSession();
+  // Link job gắn mã ref của TÀI KHOẢN đang đăng nhập (không còn gõ tay / lưu trình duyệt).
+  const refCode = me?.refCode ?? "";
   const [rankingId, setRankingId] = useState<string | null>(null);
   const [openAppId, setOpenAppId] = useState<string | null>(null);
   const openApp = openAppId ? apps.find((a) => a.id === openAppId) : undefined;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
-  const [refCode, setRefCode] = useState<string>(() =>
-    typeof window !== "undefined" ? (localStorage.getItem(REFCODE_KEY) ?? "") : ""
-  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [testsId, setTestsId] = useState<string | null>(null);
   // Leader phụ trách: danh sách lấy từ endpoint riêng (HR không gọi được /api/hr/users).
@@ -2066,14 +2064,6 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
       setLeaderError(e instanceof Error ? e.message : "Không gán được Leader");
     } finally {
       setLeaderBusy(null);
-    }
-  }
-
-  function saveRefCode(val: string) {
-    setRefCode(val);
-    if (typeof window !== "undefined") {
-      if (val) localStorage.setItem(REFCODE_KEY, val);
-      else localStorage.removeItem(REFCODE_KEY);
     }
   }
 
@@ -2128,23 +2118,19 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
         )}
       </div>
 
-      {/* Ref code banner */}
+      {/* Ref code banner — mã lấy từ tài khoản */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-        <span className="text-xs font-bold text-amber-400/80"><Link2 className="hr-ico" />Your ref code:</span>
-        <input
-          value={refCode}
-          onChange={(e) => saveRefCode(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
-          placeholder="e.g. nam, linh, hr-team…"
-          className="w-40 rounded-lg border border-amber-500/30 bg-transparent px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-amber-500/60 focus:outline-none"
-        />
-        {refCode && (
-          <span className="text-[10px] text-white/40">
-            Links will use <code className="text-amber-300/70">?ref={refCode}</code>
-          </span>
-        )}
-        {!refCode && (
-          <span className="text-[10px] text-white/30 italic">
-            Enter your name to generate trackable apply links
+        <span className="text-xs font-bold text-amber-400/80"><Link2 className="hr-ico" />Mã ref của bạn:</span>
+        {refCode ? (
+          <>
+            <code className="rounded-md bg-amber-500/10 px-2 py-1 text-xs text-amber-300">{refCode}</code>
+            <span className="text-[10px] text-white/40">
+              Nút <b>Copy Link</b> tự gắn <code className="text-amber-300/70">?ref={refCode}</code> — ứng viên nộp qua link sẽ ghi bạn là người giới thiệu.
+            </span>
+          </>
+        ) : (
+          <span className="text-[10px] text-white/40 italic">
+            Tài khoản chưa có mã ref — nhờ Sếp đặt ở tab Tài khoản. Link copy lúc này không gắn người giới thiệu.
           </span>
         )}
       </div>
