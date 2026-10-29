@@ -63,6 +63,11 @@
 
 ## To do
 
+- [ ] /hr Bảng theo dõi hoa hồng refer — sếp hoãn 2026-10-29 ("triển khai sau, chưa cần lắm"). Yêu cầu đã nêu:
+      hoa hồng refer cấu hình theo từng job; HR mặc định KHÔNG hưởng (nếu có thì cách tính riêng);
+      lịch trả khác nhau theo job (trả ngay khi UV đi làm / sau 2 tháng / 50% sau tháng 1 + 50% sau tháng 2…).
+      Chưa hỏi: ai theo dõi UV đi làm bao lâu, ai tính/chuyển tiền, đang ghi bằng gì; có cần đăng ký
+      headhunter trong /hr không (hiện headhunter = mã ref tự do HR gõ ở tab Jobs, vd cat-tuong, mai-ha / mai-ha-headhunt lệch).
 - [ ] Monster Legends (Social Point) — các hệ còn lại (Dark, Light, …), mỗi hệ 1 trang (2026-10-18).
       Fire + Water live (có card + sitemap). Đủ 10 hệ, đã publish hết (2026-10-19). Phần chung: src/app/portfolio/_monster-legends/shared.ts.
       **Làm theo quy chuẩn `.agent/meta/MONSTER-LEGENDS.md`** (sếp chốt 2026-10-18). Hệ mới: `scripts/upload-monster-legends.mjs <Hệ> --apply`,
