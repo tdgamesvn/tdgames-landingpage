@@ -31,7 +31,8 @@ export async function GET(request: Request) {
 
   // Hồ sơ có thư mời đang chờ Sếp duyệt → nhãn "Chờ duyệt offer" trên thẻ. Lỗi đọc (vd. chưa áp migration) → bỏ nhãn, không chặn danh sách.
   const pendingOffers = new Set<string>();
-  {
+  // Chỉ người có quyền offer (Kế toán + Sếp) thấy nhãn này.
+  if (ctx.perms.has("emails.send_offer")) {
     const { data: pend, error: pendErr } = await supabase
       .from("offer_letters")
       .select("application_id")

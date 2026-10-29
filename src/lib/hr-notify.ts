@@ -406,7 +406,7 @@ export async function notifyApplicationUpdate(
 /**
  * Thông báo duyệt thư mời nhận việc (Discord tag + push). KHÔNG đưa lương vào nội dung.
  * - submitted: tới mọi Sếp ("📝 X gửi thư mời … chờ duyệt"); không Sếp nào có Discord ID → @everyone.
- * - reviewed: tới người gửi duyệt + người support (Sếp đã duyệt / yêu cầu sửa kèm ghi chú).
+ * - reviewed: tới người gửi duyệt + Kế toán (Sếp đã duyệt / yêu cầu sửa kèm ghi chú).
  * Fire-and-forget: lỗi chỉ ghi log, không ảnh hưởng thao tác chính.
  */
 export async function notifyOfferApproval(i: {
@@ -435,7 +435,7 @@ export async function notifyOfferApproval(i: {
     body = "Có thể gửi mail offer";
   } else {
     const note = (i.note ?? "").trim();
-    // Discord là kênh chung → không đưa ghi chú tự do; push (riêng người gửi + người support) có ghi chú.
+    // Discord có thể là kênh chung → không đưa ghi chú tự do; push (riêng người gửi + Kế toán) có ghi chú.
     content = `✏️ Sếp yêu cầu sửa thư mời nhận việc của ${who} — xem ghi chú trong /hr`;
     title = `✏️ Sếp yêu cầu sửa thư mời — ${name}`;
     body = note.length > 160 ? `${note.slice(0, 157)}...` : note;
@@ -445,14 +445,16 @@ export async function notifyOfferApproval(i: {
         kind: i.kind,
         staff: staffCtx.staff,
         submitterId: i.submitterId ?? null,
-        assigneeId: app?.assignee_user_id ?? null,
         actorId: i.actorId,
       })
-    : { userIds: [], everyone: i.kind === "submitted" };
-  const { tag, allowed_mentions } = discordTagFor(rec, staffCtx?.staff ?? []);
-  const tasks: Promise<unknown>[] = [discordNotify("hr", { allowed_mentions, content: withTag(tag, content) })];
+    : { userIds: [], everyone: false };
+  // Luồng offer chỉ Kế toán + Sếp: có kênh riêng (DISCORD_WEBHOOK_OFFER) thì đăng ở đó; chưa có → kênh HR
+  // nhưng KHÔNG bao giờ @everyone (để HR không bị gọi).
+  const channel = process.env.DISCORD_WEBHOOK_OFFER ? "offer" : "hr";
+  const { tag, allowed_mentions } = discordTagFor({ ...rec, everyone: channel === "offer" && rec.everyone }, staffCtx?.staff ?? []);
+  const tasks: Promise<unknown>[] = [discordNotify(channel, { allowed_mentions, content: withTag(tag, content) })];
   if (app && staffCtx && rec.userIds.length) {
-    // Người nhận chủ động (Sếp / người gửi / người support) → luôn nhận push, vẫn cần xem được hồ sơ.
+    // Người nhận chủ động (Sếp / người gửi / Kế toán) → luôn nhận push, vẫn cần xem được hồ sơ.
     const targets = pushTargets(rec.userIds, staffCtx.staff, staffCtx.perms, app, staffCtx.statuses, app.jobLeaderId, rec.userIds);
     tasks.push(sendHrPush({ title, body, url: "/hr", tag: `hr-offer_approval-${i.appId}` }, { userIds: targets }));
   }

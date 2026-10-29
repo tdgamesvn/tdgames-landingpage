@@ -35,7 +35,8 @@ export const HR_PERMISSIONS = [
   { key: "apps.delete", label: "Xoá hồ sơ", group: "Thao tác hồ sơ", defaults: d(true, false, false) },
   { key: "interviews.manage", label: "Tạo / sửa lịch PV, upload & phân tích ghi âm", group: "Phỏng vấn & mail", defaults: d(true, false, false) },
   { key: "emails.send", label: "Gửi mail ứng viên (mời PV, bài test, báo trượt…)", group: "Phỏng vấn & mail", defaults: d(true, false, false) },
-  { key: "emails.send_offer", label: "Gửi mail offer", group: "Phỏng vấn & mail", defaults: d(true, false, true) },
+  // Sếp chốt 2026-10-29: luồng offer (thư mời, duyệt, mail offer, phản hồi) chỉ Kế toán + Sếp.
+  { key: "emails.send_offer", label: "Xem thư mời nhận việc, soạn & gửi mail offer", group: "Phỏng vấn & mail", defaults: d(false, false, true) },
   { key: "emails.templates", label: "Xem & sửa mẫu mail", group: "Phỏng vấn & mail", defaults: d(true, false, true) },
   { key: "jobs.manage", label: "Quản lý job, bài test, trạng thái pipeline, quy tắc xếp hạng", group: "Job & hệ thống", defaults: d(true, false, false) },
   { key: "jobs.assign_leader", label: "Gán Leader cho job", group: "Job & hệ thống", defaults: d(true, false, false) },

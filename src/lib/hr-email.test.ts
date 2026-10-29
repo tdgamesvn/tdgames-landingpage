@@ -233,9 +233,9 @@ test("resolveCc mời PV / đổi / huỷ / bài test: thêm Leader của job (k
   assert.deepEqual(b.ccPreview, [HIRING, "boss@td.com"]);
 });
 
-test("resolveCc offer: hiring@ + support + Kế toán + Sếp; không Leader; bỏ người gửi + tài khoản khoá", () => {
+test("resolveCc offer: hiring@ + Kế toán + Sếp; KHÔNG người support, không Leader; bỏ người gửi + tài khoản khoá", () => {
   const r = resolveCc(liveCfg, "offer", staff, { assigneeId: "h1", jobLeaderId: "l1", senderEmail: "acc@td.com" });
-  assert.deepEqual(r.ccPreview, [HIRING, "hr1@td.com", "boss@td.com"]);
+  assert.deepEqual(r.ccPreview, [HIRING, "boss@td.com"]);
   const r2 = resolveCc(liveCfg, "offer", staff, { assigneeId: "h2", jobLeaderId: null, senderEmail: "x@td.com" });
   assert.deepEqual(r2.ccPreview, [HIRING, "acc@td.com", "boss@td.com"]);
 });
@@ -243,13 +243,25 @@ test("resolveCc offer: hiring@ + support + Kế toán + Sếp; không Leader; b�
 test("resolveCc test mode: cc rỗng nhưng ccPreview đầy đủ", () => {
   const r = resolveCc(testCfg, "offer", staff, { assigneeId: "h1", jobLeaderId: null, senderEmail: "" });
   assert.deepEqual(r.cc, []);
-  assert.deepEqual(r.ccPreview, [HIRING, "hr1@td.com", "acc@td.com", "boss@td.com"]);
+  assert.deepEqual(r.ccPreview, [HIRING, "acc@td.com", "boss@td.com"]);
 });
 
 test("replyToFor: người support (active) + hiring@; không có → hiring@", () => {
   assert.deepEqual(replyToFor(liveCfg, { email: "HR1@td.com", disabled: false }), ["hr1@td.com", HIRING]);
   assert.deepEqual(replyToFor(liveCfg, { email: "hr2@td.com", disabled: true }), [HIRING]);
   assert.deepEqual(replyToFor(liveCfg, null), [HIRING]);
+});
+
+test("replyToFor danh sách (mail offer → Kế toán): bỏ khoá, gộp trùng, luôn thêm hiring@", () => {
+  assert.deepEqual(
+    replyToFor(liveCfg, [
+      { email: "Acc@td.com", disabled: false },
+      { email: "acc@td.com", disabled: false },
+      { email: "acc2@td.com", disabled: true },
+    ]),
+    ["acc@td.com", HIRING],
+  );
+  assert.deepEqual(replyToFor(liveCfg, []), [HIRING]);
 });
 
 test("fromFor (mail ứng viên): gửi từ hiring@, tên người support · TD Games; không có → TD Games Tuyển dụng", () => {

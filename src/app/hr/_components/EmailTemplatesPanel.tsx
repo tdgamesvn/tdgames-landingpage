@@ -41,7 +41,8 @@ async function readJson(res: Response) {
 
 export default function EmailTemplatesPanel() {
   const { can } = useHrSession();
-  const canLetter = can("emails.templates");
+  // Mẫu thư mời nhận việc thuộc luồng offer → chỉ Kế toán + Sếp.
+  const canLetter = can("emails.templates") && can("emails.send_offer");
   // Đang ở mục "Thư mời nhận việc" (không phải 1 loại mail) + trạng thái sửa dở của mục đó.
   const [letterOpen, setLetterOpen] = useState(false);
   const letterDirty = useRef(false);

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { fromFor, getHrEmailConfig, replyToFor, resolveCc, textToHtml, type CandidateEmailKind, type HrEmailConfig } from "./hr-email";
+import { offerContactUser } from "./hr-email-templates";
 import { getSupabaseAdmin } from "./supabase-admin";
 import type { HrContext } from "./hr-session";
 import type { HrRole } from "./hr-permissions";
@@ -65,6 +66,8 @@ export async function sendStaffEmail(
  * CC / Reply-To / From cho 1 mail ứng viên (sếp chốt 2026-10-28): CC luôn hiring@ + người support
  * (+ Leader job ở mail PV / bài test, + Kế toán & Sếp ở offer); ứng viên trả lời → người support + hiring@;
  * From hiển thị tên người support.
+ * Mail offer (sếp chốt 2026-10-29 — luồng offer chỉ Kế toán + Sếp): không CC người support; ứng viên trả lời
+ * → người liên hệ offer + mọi Kế toán + hiring@; From/chữ ký = người liên hệ offer (như `offerContact`).
  */
 export async function resolveCcForApplication(
   cfg: HrEmailConfig,
@@ -81,7 +84,7 @@ export async function resolveCcForApplication(
   support: { name: string; phone: string | null } | null;
 }> {
   const supabase = getSupabaseAdmin();
-  const { data: users, error } = await supabase.from("hr_users").select("id, email, role, disabled, display_name, phone");
+  const { data: users, error } = await supabase.from("hr_users").select("id, email, role, disabled, display_name, phone, created_at");
   if (error) throw new Error(`resolveCc: ${error.message}`);
   let jobLeaderId: string | null = null;
   if (app.jobId) {
@@ -96,9 +99,21 @@ export async function resolveCcForApplication(
     disabled: !!u.disabled,
     display_name: String(u.display_name ?? ""),
     phone: (u.phone as string | null) ?? null,
+    created_at: (u.created_at as string | null) ?? null,
   }));
-  const assignee = app.assigneeId ? staff.find((u) => u.id === app.assigneeId) ?? null : null;
   const r = resolveCc(cfg, kind, staff, { assigneeId: app.assigneeId, jobLeaderId, senderEmail: ctx.user.email });
+  if (kind === "offer") {
+    const sender = staff.find((u) => u.id === ctx.user.id) ?? null;
+    const contact = offerContactUser(sender, staff);
+    const accountants = staff.filter((u) => u.role === "accountant" && !u.disabled);
+    return {
+      ...r,
+      replyTo: replyToFor(cfg, contact ? [contact, ...accountants] : accountants),
+      from: fromFor(cfg, contact?.display_name || null),
+      support: contact?.display_name ? { name: contact.display_name, phone: contact.phone } : null,
+    };
+  }
+  const assignee = app.assigneeId ? staff.find((u) => u.id === app.assigneeId) ?? null : null;
   return {
     ...r,
     replyTo: replyToFor(cfg, assignee),

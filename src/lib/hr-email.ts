@@ -88,7 +88,8 @@ export function resolveCc(
   const active = (id: string | null) => (id ? staff.find((u) => u.id === id && !u.disabled) ?? null : null);
   const hiring = isValidEmail(cfg.hiring) ? cfg.hiring.trim().toLowerCase() : null;
   if (hiring) out.push(hiring);
-  add(active(opts.assigneeId)?.email);
+  // Offer: chỉ Kế toán + Sếp (sếp chốt 2026-10-29) → không CC người support.
+  if (kind !== "offer") add(active(opts.assigneeId)?.email);
   if (LEADER_CC_KINDS.includes(kind)) add(active(opts.jobLeaderId)?.email);
   if (kind === "offer") {
     for (const u of staff) if (!u.disabled && u.role === "accountant") add(u.email);
@@ -97,10 +98,20 @@ export function resolveCc(
   return { cc: cfg.mode === "live" ? out : [], ccPreview: out, fixed: hiring ? [hiring] : [] };
 }
 
-/** Reply-To: ứng viên trả lời → về người support (nếu còn hoạt động) + hiring@. */
-export function replyToFor(cfg: HrEmailConfig, assignee: { email: string; disabled: boolean } | null): string[] {
+/**
+ * Reply-To: ứng viên trả lời → về người support (nếu còn hoạt động) + hiring@.
+ * Mail offer truyền danh sách Kế toán thay cho người support (chỉ Kế toán + hiring@ nhận phản hồi).
+ */
+export function replyToFor(
+  cfg: HrEmailConfig,
+  assignee: { email: string; disabled: boolean } | { email: string; disabled: boolean }[] | null,
+): string[] {
   const out: string[] = [];
-  if (assignee && !assignee.disabled && isValidEmail(assignee.email)) out.push(assignee.email.trim().toLowerCase());
+  for (const a of Array.isArray(assignee) ? assignee : assignee ? [assignee] : []) {
+    if (a.disabled || !isValidEmail(a.email)) continue;
+    const e = a.email.trim().toLowerCase();
+    if (!out.includes(e)) out.push(e);
+  }
   const hiring = isValidEmail(cfg.hiring) ? cfg.hiring.trim().toLowerCase() : cfg.replyTo;
   if (!out.includes(hiring)) out.push(hiring);
   return out;

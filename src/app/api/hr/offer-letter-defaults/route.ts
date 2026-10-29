@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const auth = await requireHrUser(request);
   if ("response" in auth) return auth.response;
-  if (!auth.ctx.perms.has("emails.send_offer") && !auth.ctx.perms.has("emails.templates")) {
+  // Luồng offer chỉ Kế toán + Sếp (sếp chốt 2026-10-29).
+  if (!auth.ctx.perms.has("emails.send_offer")) {
     return NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
   }
   try {
@@ -24,6 +25,9 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   const auth = await requireHrUser(request, "emails.templates");
   if ("response" in auth) return auth.response;
+  if (!auth.ctx.perms.has("emails.send_offer")) {
+    return NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
+  }
   const body = await readJsonBody(request);
   if ("response" in body) return body.response;
   const input = body.data;

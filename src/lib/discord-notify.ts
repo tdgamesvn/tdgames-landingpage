@@ -11,6 +11,8 @@
 const CHANNEL_ENV = {
   hr: "DISCORD_WEBHOOK_HR",
   sales: "DISCORD_WEBHOOK_SALES",
+  // Kênh riêng Kế toán + Sếp cho luồng offer; chưa đặt → người gọi tự rơi về "hr".
+  offer: "DISCORD_WEBHOOK_OFFER",
   // future: system, ...
 } as const;
 

@@ -14,6 +14,9 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const auth = await requireHrUser(request, "emails.templates");
   if ("response" in auth) return auth.response;
+  if (!auth.ctx.perms.has("emails.send_offer")) {
+    return NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
+  }
   const body = await readJsonBody(request);
   if ("response" in body) return body.response;
   const input = body.data;

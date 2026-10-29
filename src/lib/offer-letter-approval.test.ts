@@ -81,7 +81,7 @@ const staff = [
 ];
 
 test("offerApprovalRecipients submitted: mọi Sếp chưa khoá; có Discord ID → không everyone", () => {
-  const r = offerApprovalRecipients({ kind: "submitted", staff, submitterId: "a1", assigneeId: "h1" });
+  const r = offerApprovalRecipients({ kind: "submitted", staff, submitterId: "a1" });
   assert.deepEqual(r.userIds, ["b1", "b2"]);
   assert.equal(r.everyone, false);
 });
@@ -91,24 +91,23 @@ test("offerApprovalRecipients submitted: không Sếp nào có Discord ID → ev
     kind: "submitted",
     staff: staff.map((u) => ({ ...u, discord_user_id: u.role === "boss" ? null : u.discord_user_id })),
     submitterId: "a1",
-    assigneeId: null,
   });
   assert.equal(r.everyone, true);
 });
 
-test("offerApprovalRecipients reviewed: người gửi + người support, không trùng, bỏ khoá, không everyone", () => {
-  const r = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: "a1", assigneeId: "h1", actorId: "b1" });
-  assert.deepEqual(r.userIds, ["a1", "h1"]);
+test("offerApprovalRecipients reviewed: người gửi + Kế toán, KHÔNG báo HR/người support, không trùng, không everyone", () => {
+  const r = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: "a1", actorId: "b1" });
+  assert.deepEqual(r.userIds, ["a1"]);
   assert.equal(r.everyone, false);
-  const same = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: "a1", assigneeId: "a1" });
-  assert.deepEqual(same.userIds, ["a1"]);
-  const none = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: null, assigneeId: null });
-  assert.deepEqual(none.userIds, []);
+  const byHr = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: "h1", actorId: "b1" });
+  assert.deepEqual(byHr.userIds, ["h1", "a1"]);
+  const none = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: null });
+  assert.deepEqual(none.userIds, ["a1"]);
 });
 
 test("offerApprovalRecipients reviewed: loại người thực hiện (sếp duyệt thư tự gửi)", () => {
-  const r = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: "b1", assigneeId: "h1", actorId: "b1" });
-  assert.deepEqual(r.userIds, ["h1"]);
+  const r = offerApprovalRecipients({ kind: "reviewed", staff, submitterId: "b1", actorId: "b1" });
+  assert.deepEqual(r.userIds, ["a1"]);
 });
 
 import { sameVersion, previousReviewNote } from "./offer-letter-approval.ts";

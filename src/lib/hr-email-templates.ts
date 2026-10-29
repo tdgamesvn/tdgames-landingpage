@@ -199,16 +199,19 @@ function contactLine(u: OfferContactUser): string {
  * Định dạng "{tên} · {SĐT} · {email}", bỏ phần trống.
  */
 export function offerContact(sender: OfferContactUser | null, users: OfferContactUser[]): string {
-  if (sender && (sender.role === "accountant" || sender.role === "hr")) {
-    const line = contactLine(sender);
-    if (line) return line;
-  }
-  const acc = users
-    .filter((u) => u.role === "accountant" && !u.disabled)
-    .sort((a, b) => String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")))
-    .map(contactLine)
-    .find(Boolean);
-  return acc || HR_FALLBACK_CONTACT;
+  const u = offerContactUser(sender, users);
+  return (u && contactLine(u)) || HR_FALLBACK_CONTACT;
+}
+
+/** Tài khoản đứng tên liên hệ của mail offer (luật như `offerContact`); không có → null. */
+export function offerContactUser<T extends OfferContactUser>(sender: T | null, users: T[]): T | null {
+  if (sender && (sender.role === "accountant" || sender.role === "hr") && contactLine(sender)) return sender;
+  return (
+    users
+      .filter((u) => u.role === "accountant" && !u.disabled)
+      .sort((a, b) => String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")))
+      .find((u) => !!contactLine(u)) ?? null
+  );
 }
 
 const VAR_RE = /\{([a-zA-Z0-9_]+)\}/g;

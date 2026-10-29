@@ -30,7 +30,11 @@ export async function GET(request: Request, { params }: Ctx) {
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   // Gỡ liên hệ / token test khỏi từng dòng theo quyền (xem redactEmailRow).
-  const emails = (data ?? []).map((r) => redactEmailRow(r, auth.ctx.perms));
+  // Mail offer chỉ người có quyền offer (Kế toán + Sếp) thấy — sếp chốt 2026-10-29.
+  const canOffer = auth.ctx.perms.has("emails.send_offer");
+  const emails = (data ?? [])
+    .filter((r) => canOffer || r.kind !== "offer")
+    .map((r) => redactEmailRow(r, auth.ctx.perms));
   return NextResponse.json({ emails });
 }
 

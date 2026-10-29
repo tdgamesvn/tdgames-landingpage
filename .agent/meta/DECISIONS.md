@@ -357,3 +357,9 @@ Sếp duyệt Fire + Water và yêu cầu lưu thành chuẩn cho các hệ sau 
 - Ghi chống CSRF bằng kiểm Origin/Sec-Fetch-Site (cookie SameSite=Lax không chặn được subdomain cdn.*). File bài test: content-type theo đuôi, cấm svg/html, lưu attachment.
 - Rate limit đăng nhập/quên mật khẩu trong bộ nhớ (PM2 1 process).
 - Push nhắc PV chỉ tới thiết bị gắn tài khoản có quyền (Leader chỉ job mình).
+
+## 2026-10-29 — Luồng offer chỉ Kế toán + Sếp
+Thư mời nhận việc, duyệt thư, mail offer (lịch sử + mẫu) và phản hồi của ứng viên cho mail offer chỉ
+Kế toán + Sếp thấy. Cổng là quyền `emails.send_offer` (HR mặc định tắt). Mail offer không CC/Reply-To người
+support; Reply-To = Kế toán + hiring@. Discord: kênh riêng `DISCORD_WEBHOOK_OFFER` nếu có, không @everyone.
+Vị trí "Offer" trong pipeline + kết quả offer vẫn hiện cho HR (trạng thái hồ sơ, không có nội dung thư).

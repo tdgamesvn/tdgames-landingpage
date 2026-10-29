@@ -9,7 +9,9 @@ export const dynamic = "force-dynamic";
 
 type Row = { kind: string; subject: string; body: string; updated_by: string | null; updated_at: string | null };
 
-/** Danh sách 6 mẫu (đã sửa hoặc mặc định) + mặc định + biến cho UI. */
+const forbidden = () => NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
+
+/** Danh sách mẫu (đã sửa hoặc mặc định) + mặc định + biến cho UI. */
 export async function GET(req: Request) {
   const auth = await requireHrUser(req, "emails.templates");
   if ("response" in auth) return auth.response;
@@ -18,7 +20,9 @@ export async function GET(req: Request) {
     .select("kind, subject, body, updated_by, updated_at");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const rows = new Map(((data ?? []) as Row[]).map((r) => [r.kind, r]));
-  const templates = CANDIDATE_EMAIL_KINDS.map((kind) => {
+  // Mẫu mail offer chỉ Kế toán + Sếp (quyền emails.send_offer) — sếp chốt 2026-10-29.
+  const canOffer = auth.ctx.perms.has("emails.send_offer");
+  const templates = CANDIDATE_EMAIL_KINDS.filter((kind) => canOffer || kind !== "offer").map((kind) => {
     const r = rows.get(kind);
     return {
       kind,
@@ -41,6 +45,7 @@ export async function PUT(req: Request) {
   const subject = input?.subject;
   const body = input?.body;
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "Loại mẫu không hợp lệ" }, { status: 400 });
+  if (kind === "offer" && !auth.ctx.perms.has("emails.send_offer")) return forbidden();
   if (typeof subject !== "string" || typeof body !== "string") {
     return NextResponse.json({ error: "Thiếu tiêu đề hoặc nội dung" }, { status: 400 });
   }
@@ -67,6 +72,7 @@ export async function DELETE(req: Request) {
   if ("response" in auth) return auth.response;
   const kind = new URL(req.url).searchParams.get("kind");
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "Loại mẫu không hợp lệ" }, { status: 400 });
+  if (kind === "offer" && !auth.ctx.perms.has("emails.send_offer")) return forbidden();
   const { error } = await getSupabaseAdmin().from("hr_email_templates").delete().eq("kind", kind);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

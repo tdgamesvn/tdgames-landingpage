@@ -67,13 +67,13 @@ export function validateReviewInput(
 /**
  * Người nhận thông báo duyệt thư mời.
  * - submitted: mọi Sếp chưa khoá; không Sếp nào có Discord ID → @everyone (để không ai bỏ sót).
- * - reviewed: người gửi duyệt + người support (assignee), loại người thực hiện; không bao giờ everyone.
+ * - reviewed: người gửi duyệt + mọi Kế toán, loại người thực hiện; không bao giờ everyone.
+ *   Không báo người support (luồng offer chỉ Kế toán + Sếp — sếp chốt 2026-10-29).
  */
 export function offerApprovalRecipients(i: {
   kind: "submitted" | "reviewed";
   staff: RecipientStaff[];
   submitterId: string | null;
-  assigneeId: string | null;
   actorId?: string | null;
 }): Recipients {
   const active = new Map(i.staff.filter((u) => !u.disabled).map((u) => [u.id, u]));
@@ -87,7 +87,7 @@ export function offerApprovalRecipients(i: {
     return { userIds: ids, everyone: !bosses.some((u) => !!u.discord_user_id) };
   }
   add(i.submitterId);
-  add(i.assigneeId);
+  for (const u of active.values()) if (u.role === "accountant") add(u.id);
   const actor = i.actorId ?? null;
   return { userIds: actor ? ids.filter((id) => id !== actor) : ids, everyone: false };
 }
