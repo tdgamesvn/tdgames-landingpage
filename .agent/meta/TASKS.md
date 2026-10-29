@@ -63,7 +63,7 @@
 
 ## To do
 
-- [ ] /hr Bảng theo dõi hoa hồng refer — sếp hoãn 2026-10-29 ("triển khai sau, chưa cần lắm"). Yêu cầu đã nêu:
+- [ ] /hr Bảng theo dõi hoa hồng refer — 2026-10-29 sếp yêu cầu làm; spec docs/superpowers/specs/2026-10-29-referral-commission-design.md, chờ sếp trả lời 5 câu (xem LOG). Yêu cầu đã nêu:
       hoa hồng refer cấu hình theo từng job; HR mặc định KHÔNG hưởng (nếu có thì cách tính riêng);
       lịch trả khác nhau theo job (trả ngay khi UV đi làm / sau 2 tháng / 50% sau tháng 1 + 50% sau tháng 2…).
       Chưa hỏi: ai theo dõi UV đi làm bao lâu, ai tính/chuyển tiền, đang ghi bằng gì; có cần đăng ký
