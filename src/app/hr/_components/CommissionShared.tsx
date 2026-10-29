@@ -160,7 +160,9 @@ export function RuleEditor(p: {
               emit(e.target.checked, d);
             }}
           />
-          {enabled ? "Đặt mức riêng" : (p.emptyLabel ?? "Chưa đặt")}
+          Đặt mức
+          {/* Nhãn cố định; trạng thái khi bỏ tích nói rõ ở dòng phụ (trước đây nhãn đổi theo ô tích → dễ hiểu ngược). */}
+          {!enabled && <span className="text-white/40">— đang: {p.emptyLabel ?? "chưa đặt"}</span>}
         </label>
       )}
       {enabled && (

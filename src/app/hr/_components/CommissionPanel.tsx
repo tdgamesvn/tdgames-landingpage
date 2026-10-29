@@ -110,7 +110,7 @@ function DefaultsSettings({ defaults, onSaved }: { defaults: DefaultRules; onSav
       </div>
       <div>
         <h3 className="mb-2 text-[14px] font-bold text-white">Mặc định công ty — Freelancer / headhunter</h3>
-        <RuleEditor value={external} allowEmpty emptyLabel="Chưa đặt mức (khoản hiện “Chưa đặt mức”)" disabled={!canManage} onChange={setExternal} onInvalid={(m) => setInvalid((x) => ({ ...x, external: m }))} />
+        <RuleEditor value={external} allowEmpty emptyLabel="chưa đặt mức (khoản hiện “Chưa đặt mức” tới khi job có mức riêng)" disabled={!canManage} onChange={setExternal} onInvalid={(m) => setInvalid((x) => ({ ...x, external: m }))} />
       </div>
       {canManage ? (
         <div className="flex items-center gap-3">
@@ -177,11 +177,11 @@ export function JobRulesFields({ jobId }: { jobId: string | null }) {
         <>
           <div>
             <p className="mb-1 text-[12px] font-semibold text-white/70">Nội bộ</p>
-            <RuleEditor value={rules.internal} allowEmpty emptyLabel="Dùng mặc định công ty" disabled={!canManage} onChange={(v) => { setOk(false); setDraft((d) => d && { ...d, internal: v }); }} onInvalid={(m) => setInvalid((x) => ({ ...x, internal: m }))} />
+            <RuleEditor value={rules.internal} allowEmpty emptyLabel="dùng mặc định công ty" disabled={!canManage} onChange={(v) => { setOk(false); setDraft((d) => d && { ...d, internal: v }); }} onInvalid={(m) => setInvalid((x) => ({ ...x, internal: m }))} />
           </div>
           <div>
             <p className="mb-1 text-[12px] font-semibold text-white/70">Freelancer / headhunter</p>
-            <RuleEditor value={rules.external} allowEmpty emptyLabel="Chưa đặt" disabled={!canManage} onChange={(v) => { setOk(false); setDraft((d) => d && { ...d, external: v }); }} onInvalid={(m) => setInvalid((x) => ({ ...x, external: m }))} />
+            <RuleEditor value={rules.external} allowEmpty emptyLabel="dùng mặc định công ty" disabled={!canManage} onChange={(v) => { setOk(false); setDraft((d) => d && { ...d, external: v }); }} onInvalid={(m) => setInvalid((x) => ({ ...x, external: m }))} />
           </div>
           {canManage && (
             <div className="flex items-center gap-3">

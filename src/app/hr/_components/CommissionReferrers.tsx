@@ -197,7 +197,7 @@ export default function CommissionReferrers({
           </label>
           <div>
             <label className={lbl}>Mức hoa hồng riêng</label>
-            <RuleEditor key={formKey} value={form.rule} allowEmpty emptyLabel="Dùng mức theo job / mặc định công ty" disabled={!isBoss} onChange={(v) => set("rule", v)} onInvalid={setRuleErr} />
+            <RuleEditor key={formKey} value={form.rule} allowEmpty emptyLabel="dùng mức theo job / mặc định công ty" disabled={!isBoss} onChange={(v) => set("rule", v)} onInvalid={setRuleErr} />
             {!isBoss && <p className="mt-1 text-[11px] text-white/40">Chỉ Sếp được gắn tài khoản /hr hoặc đặt mức riêng.</p>}
           </div>
           {err && <p role="alert" className="text-[13px] text-red-400">{err}</p>}
