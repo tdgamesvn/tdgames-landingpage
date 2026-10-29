@@ -201,7 +201,6 @@ function DateField(p: {
   onSave: (d: string | null) => Promise<void>;
 }) {
   const [val, setVal] = useState(p.saved);
-  useEffect(() => setVal(p.saved), [p.saved]);
   const valid = val === "" || (/^\d{4}-\d{2}-\d{2}$/.test(val) && Number(val.slice(0, 4)) >= 2020);
   const dirty = val !== p.saved;
   return (
@@ -293,6 +292,7 @@ export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offe
           </p>
           {v.referred_by && <p className="text-[12px] text-white/45">Mã ref trên hồ sơ: <code>{v.referred_by}</code></p>}
           <DateField
+            key={`s-${v.start.date}`}
             label="Ngày đi làm thực tế"
             saved={v.start.date ?? ""}
             hint={v.start.confirmed ? undefined : "dự kiến từ thư mời"}
@@ -301,6 +301,7 @@ export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offe
             onSave={(d) => patch({ start_date: d })}
           />
           <DateField
+            key={`l-${v.left_date}`}
             label="Ngày nghỉ việc"
             saved={v.left_date ?? ""}
             canEdit={canManage}
