@@ -25,6 +25,7 @@ jobs:
           fi
           echo "✅ Done"
       - name: 💰 Trigger referral commission cron
+        if: ${{ !cancelled() }}
         run: |
           STATUS=$(curl -s -o /tmp/referral_body.txt -w "%{http_code}" \
             -X GET \

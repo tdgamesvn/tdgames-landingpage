@@ -53,7 +53,8 @@ export async function GET(request: Request) {
       if (error) throw new Error(error.message);
       const rows = (data ?? []) as Row[];
       if (!rows.length) continue;
-      await notifyReferralPayouts(event, toNotifyRows(rows));
+      const delivered = await notifyReferralPayouts(event, toNotifyRows(rows));
+      if (!delivered) continue; // chưa gửi được kênh nào → để ngày mai thử lại
       const { error: upErr } = await supabase
         .from("referral_payouts")
         .update({ [col]: new Date().toISOString() })

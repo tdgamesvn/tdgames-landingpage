@@ -90,11 +90,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       try {
         const { data: a } = await getSupabaseAdmin()
           .from("applications").select("full_name, assignee_user_id").eq("id", row.application_id).maybeSingle();
-        await notifyReferralPayouts("approved", [{
+        const delivered = await notifyReferralPayouts("approved", [{
           application_id: row.application_id, candidate_name: String(a?.full_name ?? "Ứng viên"),
           assignee_user_id: (a?.assignee_user_id as string | null) ?? null, amount_issue: row.amount_issue,
         }]);
-        await getSupabaseAdmin().from("referral_payouts").update({ approved_notified_at: now }).eq("id", id).eq("status", "approved");
+        if (delivered) await getSupabaseAdmin().from("referral_payouts").update({ approved_notified_at: now }).eq("id", id).eq("status", "approved");
       } catch (e) {
         console.error("[referrals] notify approved", id, e);
       }

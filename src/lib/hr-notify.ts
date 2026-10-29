@@ -469,13 +469,13 @@ export async function notifyOfferApproval(i: {
 /**
  * Nhắc hoa hồng giới thiệu (Discord + push trực tiếp, không xét push.receive). KHÔNG có số tiền, KHÔNG @everyone.
  * due → người phụ trách/mặc định/HR (kênh HR); approved → Kế toán (kênh offer nếu có, không thì HR).
- * Không ai có Discord ID → tin thường không tag. Lỗi chỉ log.
+ * Không ai có Discord ID → tin thường không tag. Lỗi chỉ log. Trả true nếu ít nhất 1 kênh gửi được.
  */
 export async function notifyReferralPayouts(
   event: "due" | "approved",
   rows: { application_id: string; candidate_name: string; assignee_user_id: string | null; amount_issue: AmountIssue | null }[],
-): Promise<void> {
-  if (!rows.length) return;
+): Promise<boolean> {
+  if (!rows.length) return false;
   try {
     const staffCtx = await loadNotifyStaff();
     let defaultAssigneeId: string | null = null;
@@ -517,7 +517,13 @@ export async function notifyReferralPayouts(
     results.forEach((r, idx) => {
       if (r.status === "rejected") console.error(`[hr-notify] referral_${event} ${idx === 0 ? "Discord" : "push"} lỗi:`, r.reason);
     });
+    // true khi ít nhất 1 kênh thật sự gửi được (Discord có webhook, hoặc push tới ≥1 thiết bị).
+    const [d, pu] = results;
+    const discordOk = d.status === "fulfilled" && d.value === true;
+    const pushOk = !!pu && pu.status === "fulfilled" && ((pu.value as { sent?: number } | undefined)?.sent ?? 0) > 0;
+    return discordOk || pushOk;
   } catch (e) {
     console.error(`[hr-notify] referral_${event} lỗi:`, e);
+    return false;
   }
 }
