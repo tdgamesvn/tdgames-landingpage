@@ -12,7 +12,10 @@ import { isValidDate } from "./offer-letter.ts";
 import {
   REFERRAL_DEFAULTS_KEY,
   approvedBaseSalary,
+  effectiveStatus,
   isCommissionable,
+  milestoneLabel,
+  payoutNeedsAttention,
   parseDefaultRules,
   parseRule,
   pickRule,
@@ -262,4 +265,80 @@ export async function deletePayoutsForApplication(appId: string): Promise<boolea
   const { error: delErr } = await db.from("referral_payouts").delete().eq("application_id", appId);
   if (delErr) throw new Error(`deletePayoutsForApplication.delete: ${delErr.message}`);
   return true;
+}
+
+export type PayoutView = Omit<PayoutRow, "status" | "edits"> & {
+  status: PayoutStatus;
+  label: string;
+  due_estimated: boolean;
+  candidate_name: string;
+  job_title: string;
+  needs_attention: boolean;
+  attention_reason: "offer_changed" | null;
+  edits: unknown[];
+};
+
+/** Gắn tên ứng viên / job / nhãn mốc / trạng thái hiển thị. Không bao giờ chứa lương. */
+async function toPayoutViews(rows: PayoutRow[], today: string): Promise<PayoutView[]> {
+  if (!rows.length) return [];
+  const db = getSupabaseAdmin();
+  const appIds = [...new Set(rows.map((r) => r.application_id))];
+  const jobIds = [...new Set(rows.map((r) => r.job_id).filter((x): x is string => !!x))];
+  const [appRes, jobRes] = await Promise.all([
+    db.from("applications").select("id, full_name, offer_status").in("id", appIds),
+    jobIds.length ? db.from("jobs").select("id, title").in("id", jobIds) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (appRes.error) throw new Error(`toPayoutViews.apps: ${appRes.error.message}`);
+  if (jobRes.error) throw new Error(`toPayoutViews.jobs: ${jobRes.error.message}`);
+  const apps = new Map((appRes.data ?? []).map((a) => [a.id as string, a as { full_name: string | null; offer_status: string | null }]));
+  const jobs = new Map((jobRes.data ?? []).map((j) => [j.id as string, String(j.title ?? "")]));
+  const { data: pl, error: plErr } = await db
+    .from("referral_placements")
+    .select("application_id, start_confirmed")
+    .in("application_id", appIds);
+  if (plErr) throw new Error(`toPayoutViews.placements: ${plErr.message}`);
+  const confirmed = new Map((pl ?? []).map((x) => [x.application_id as string, x.start_confirmed === true]));
+  return rows.map((r) => {
+    const app = apps.get(r.application_id);
+    const attention = payoutNeedsAttention(r.status, app?.offer_status ?? null);
+    return {
+      ...r,
+      status: effectiveStatus(r, today),
+      label: milestoneLabel(r.milestone_months),
+      due_estimated: r.due_date !== null && confirmed.get(r.application_id) !== true,
+      candidate_name: app?.full_name ?? "",
+      job_title: r.job_id ? (jobs.get(r.job_id) ?? "") : "",
+      needs_attention: attention,
+      attention_reason: attention ? "offer_changed" : null,
+    };
+  });
+}
+
+export async function loadAllPayoutViews(today: string): Promise<PayoutView[]> {
+  const { data, error } = await getSupabaseAdmin().from("referral_payouts").select(PAYOUT_COLUMNS).order("due_date", { ascending: true, nullsFirst: false });
+  if (error) throw new Error(`loadAllPayoutViews: ${error.message}`);
+  return toPayoutViews((data ?? []) as PayoutRow[], today);
+}
+
+export async function loadPayoutRow(id: string): Promise<PayoutRow | null> {
+  const { data, error } = await getSupabaseAdmin().from("referral_payouts").select(PAYOUT_COLUMNS).eq("id", id).maybeSingle();
+  if (error) throw new Error(`loadPayoutRow: ${error.message}`);
+  return (data as PayoutRow | null) ?? null;
+}
+
+export async function toPayoutView(row: PayoutRow, today: string): Promise<PayoutView> {
+  return (await toPayoutViews([row], today))[0];
+}
+
+/** Ghi placement (upsert) và nối thêm 1 dòng lịch sử nếu có. */
+export async function savePlacement(
+  appId: string,
+  patch: { start_date?: string | null; start_confirmed?: boolean; left_date?: string | null },
+  historyEntry?: Record<string, unknown>,
+): Promise<void> {
+  const current = historyEntry ? await loadPlacement(appId) : null;
+  const row: Record<string, unknown> = { application_id: appId, ...patch, updated_at: new Date().toISOString() };
+  if (historyEntry) row.history = [...(current?.history ?? []), historyEntry];
+  const { error } = await getSupabaseAdmin().from("referral_placements").upsert(row, { onConflict: "application_id" });
+  if (error) throw new Error(`savePlacement: ${error.message}`);
 }

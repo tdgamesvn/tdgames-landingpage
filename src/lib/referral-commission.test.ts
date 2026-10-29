@@ -10,6 +10,10 @@ import {
   parseReferrerInput,
   type ReferrerInput,
   addMonthsClamped,
+  filterPayouts,
+  referrerTotals,
+  parseAppReferralPatch,
+  payoutNeedsAttention,
   cancelOnLeave,
   cancellableIds,
   autoCancelIds,
@@ -277,4 +281,35 @@ test("autoCancelIds: chỉ upcoming/due (không approved/paid/cancelled)", () =>
   const ps: PayoutLite[] = ["upcoming", "due", "approved", "paid", "cancelled"].map((status, i) => ({ id: `m${i}`, milestone_months: i, status: status as PayoutLite["status"], due_date: null }));
   assert.deepEqual(autoCancelIds(ps), ["m0", "m1"]);
   assert.deepEqual(cancellableIds(ps), ["m0", "m1", "m2"]);
+});
+
+test("filterPayouts + tổng theo bộ lọc", () => {
+  const rows = [
+    { status: "due" as const, amount: 1_000_000, due_date: "2026-11-02", job_id: "j1", referrer_id: "r-maiha", hr_user_id: null },
+    { status: "approved" as const, amount: 500_000, due_date: "2026-10-30", job_id: "j2", referrer_id: null, hr_user_id: "u-thao" },
+    { status: "due" as const, amount: null, due_date: "2026-11-05", job_id: "j1", referrer_id: "r-cat", hr_user_id: null },
+    { status: "paid" as const, amount: 2_000_000, due_date: "2026-09-01", job_id: "j1", referrer_id: "r-maiha", hr_user_id: null }];
+  assert.equal(filterPayouts(rows, { statuses: ["due", "approved"], beneficiaryKey: null, jobId: null, month: null }).total, 1_500_000);
+  assert.equal(filterPayouts(rows, { statuses: ["due", "approved"], beneficiaryKey: "user:u-thao", jobId: null, month: null }).rows.length, 1);
+  assert.equal(filterPayouts(rows, { statuses: [], beneficiaryKey: null, jobId: "j1", month: "2026-11" }).rows.length, 2);
+  assert.deepEqual(referrerTotals(rows).get("r-maiha"), { paid: 2_000_000, outstanding: 1_000_000 });
+  assert.deepEqual(referrerTotals(rows).get("user:u-thao"), { paid: 0, outstanding: 500_000 });
+  assert.deepEqual(referrerTotals([{ status: "cancelled", amount: 5, referrer_id: "x", hr_user_id: null }]).get("x"), { paid: 0, outstanding: 0 });
+});
+test("parseAppReferralPatch", () => {
+  assert.deepEqual(parseAppReferralPatch({ start_date: "2026-11-02" }), { start_date: "2026-11-02" });
+  assert.deepEqual(parseAppReferralPatch({ left_date: null, recalc: true }), { left_date: null, recalc: true });
+  assert.ok("error" in parseAppReferralPatch({ start_date: "02/11/2026" }));
+  assert.ok("error" in parseAppReferralPatch({}));
+  assert.ok("error" in parseAppReferralPatch({ recalc: false }));
+  assert.ok("error" in parseAppReferralPatch({ referred_by: 5 }));
+  assert.deepEqual(parseAppReferralPatch({ referred_by: "  " }), { referred_by: null });
+  assert.deepEqual(parseAppReferralPatch({ referred_by: "Mai Ha" }), { referred_by: "mai-ha" });
+});
+test("payoutNeedsAttention: khoản approved mà offer không còn accepted", () => {
+  assert.equal(payoutNeedsAttention("approved", "declined"), true);
+  assert.equal(payoutNeedsAttention("approved", null), true);
+  assert.equal(payoutNeedsAttention("approved", "accepted"), false);
+  assert.equal(payoutNeedsAttention("paid", "declined"), false);
+  assert.equal(payoutNeedsAttention("due", "declined"), false);
 });

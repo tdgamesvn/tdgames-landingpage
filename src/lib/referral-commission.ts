@@ -490,3 +490,70 @@ export function parseReferrerInput(
     rule,
   };
 }
+
+// ── Bảng Hoa hồng: lọc, tổng, đọc body hồ sơ ───────────────────────────────
+
+/** statuses [] = mọi trạng thái; month "YYYY-MM" theo due_date. */
+export type PayoutFilter = { statuses: PayoutStatus[]; beneficiaryKey: string | null; jobId: string | null; month: string | null };
+
+/** Khoá người hưởng: referrer_id, không có thì `user:<hr_user_id>`. */
+export function beneficiaryKey(p: { referrer_id: string | null; hr_user_id: string | null }): string {
+  return p.referrer_id ?? `user:${p.hr_user_id}`;
+}
+
+export function filterPayouts<
+  T extends { status: PayoutStatus; amount: number | null; due_date: string | null; job_id: string | null; referrer_id: string | null; hr_user_id: string | null },
+>(rows: T[], f: PayoutFilter): { rows: T[]; total: number } {
+  const out = rows.filter(
+    (p) =>
+      (f.statuses.length === 0 || f.statuses.includes(p.status)) &&
+      (f.beneficiaryKey === null || beneficiaryKey(p) === f.beneficiaryKey) &&
+      (f.jobId === null || p.job_id === f.jobId) &&
+      (f.month === null || (p.due_date !== null && p.due_date.startsWith(f.month))),
+  );
+  return { rows: out, total: out.reduce((s, p) => s + (p.amount ?? 0), 0) };
+}
+
+/** Tổng đã trả / còn phải trả (upcoming|due|approved) theo người hưởng; khoản huỷ không tính. */
+export function referrerTotals(
+  rows: { status: PayoutStatus; amount: number | null; referrer_id: string | null; hr_user_id: string | null }[],
+): Map<string, { paid: number; outstanding: number }> {
+  const m = new Map<string, { paid: number; outstanding: number }>();
+  for (const p of rows) {
+    const key = beneficiaryKey(p);
+    const t = m.get(key) ?? { paid: 0, outstanding: 0 };
+    if (p.status === "paid") t.paid += p.amount ?? 0;
+    else if (p.status !== "cancelled") t.outstanding += p.amount ?? 0;
+    m.set(key, t);
+  }
+  return m;
+}
+
+/** Khoản đã duyệt nhưng offer không còn "Đã nhận": không tự huỷ, UI phải báo để xử lý tay. */
+export function payoutNeedsAttention(status: PayoutStatus, offerStatus: string | null): boolean {
+  return status === "approved" && offerStatus !== "accepted";
+}
+
+/** Đọc body PATCH hồ sơ (tab Hoa hồng); key lạ bỏ qua, cần ít nhất 1 thao tác. */
+export function parseAppReferralPatch(
+  v: unknown,
+): { referred_by?: string | null; start_date?: string | null; left_date?: string | null; recalc?: true } | { error: string } {
+  if (!isRecord(v)) return { error: "Yêu cầu không hợp lệ" };
+  const out: { referred_by?: string | null; start_date?: string | null; left_date?: string | null; recalc?: true } = {};
+  if (v.referred_by !== undefined) {
+    if (v.referred_by !== null && typeof v.referred_by !== "string") return { error: "Mã người giới thiệu không hợp lệ" };
+    out.referred_by = normalizeRefCode(v.referred_by);
+  }
+  for (const k of ["start_date", "left_date"] as const) {
+    const x = v[k];
+    if (x === undefined) continue;
+    if (x !== null && (typeof x !== "string" || !isValidDate(x))) return { error: k === "start_date" ? "Ngày đi làm không hợp lệ" : "Ngày nghỉ việc không hợp lệ" };
+    out[k] = x;
+  }
+  if (v.recalc !== undefined) {
+    if (v.recalc !== true) return { error: "recalc chỉ nhận true" };
+    out.recalc = true;
+  }
+  if (Object.keys(out).length === 0) return { error: "Không có gì để cập nhật" };
+  return out;
+}
