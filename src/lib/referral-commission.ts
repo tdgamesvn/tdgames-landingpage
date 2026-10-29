@@ -3,6 +3,7 @@
 
 import { findRefConflict, normalizeRefCode, parseRefCodes, resolveRefOwner } from "./hr-ref-codes.ts";
 import type { HrRole, PermissionKey } from "./hr-permissions.ts";
+import type { RecipientStaff } from "./hr-notify-recipients.ts";
 import { isValidDate } from "./offer-letter.ts";
 
 export type CommissionKind = "internal" | "external";
@@ -598,4 +599,27 @@ export function parseAppReferralPatch(
   }
   if (Object.keys(out).length === 0) return { error: "Không có gì để cập nhật" };
   return out;
+}
+
+/** Ai nhận nhắc hoa hồng: due → người phụ trách (nếu có referrals.manage) → mặc định → mọi HR → Sếp; approved → Kế toán (referrals.pay) → Sếp. */
+export function referralNotifyTargets(i: {
+  event: "due" | "approved";
+  staff: RecipientStaff[];
+  perms: Map<HrRole, Set<PermissionKey>>;
+  assigneeId: string | null;
+  defaultAssigneeId: string | null;
+}): string[] {
+  const live = i.staff.filter((u) => !u.disabled);
+  const can = (u: RecipientStaff, k: PermissionKey) => !!i.perms.get(u.role)?.has(k);
+  const boss = () => live.filter((u) => u.role === "boss").map((u) => u.id);
+  if (i.event === "approved") {
+    const acc = live.filter((u) => u.role === "accountant" && can(u, "referrals.pay")).map((u) => u.id);
+    return acc.length ? acc : boss();
+  }
+  for (const id of [i.assigneeId, i.defaultAssigneeId]) {
+    const u = id ? live.find((x) => x.id === id) : undefined;
+    if (u && can(u, "referrals.manage")) return [u.id];
+  }
+  const hr = live.filter((u) => u.role === "hr" && can(u, "referrals.manage")).map((u) => u.id);
+  return hr.length ? hr : boss();
 }

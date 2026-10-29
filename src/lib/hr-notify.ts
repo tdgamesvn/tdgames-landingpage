@@ -18,6 +18,8 @@ import {
 import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "@/lib/hr-permissions";
 import type { ScopeInput } from "@/lib/hr-scope";
 import { offerApprovalRecipients } from "@/lib/offer-letter-approval";
+import { referralNotifyTargets, type AmountIssue } from "@/lib/referral-commission";
+import { DEFAULT_ASSIGNEE_KEY } from "@/lib/hr-ref-codes";
 
 export type NotifyStaffCtx = {
   staff: (RecipientStaff & { display_name: string })[];
@@ -462,4 +464,60 @@ export async function notifyOfferApproval(i: {
   results.forEach((r, idx) => {
     if (r.status === "rejected") console.error(`[hr-notify] offer_${i.kind} ${idx === 0 ? "Discord" : "push"} lỗi:`, r.reason);
   });
+}
+
+/**
+ * Nhắc hoa hồng giới thiệu (Discord + push trực tiếp, không xét push.receive). KHÔNG có số tiền, KHÔNG @everyone.
+ * due → người phụ trách/mặc định/HR (kênh HR); approved → Kế toán (kênh offer nếu có, không thì HR).
+ * Không ai có Discord ID → tin thường không tag. Lỗi chỉ log.
+ */
+export async function notifyReferralPayouts(
+  event: "due" | "approved",
+  rows: { application_id: string; candidate_name: string; assignee_user_id: string | null; amount_issue: AmountIssue | null }[],
+): Promise<void> {
+  if (!rows.length) return;
+  try {
+    const staffCtx = await loadNotifyStaff();
+    let defaultAssigneeId: string | null = null;
+    if (event === "due") {
+      const { data } = await getSupabaseAdmin().from("app_settings").select("value").eq("key", DEFAULT_ASSIGNEE_KEY).maybeSingle();
+      defaultAssigneeId = typeof data?.value === "string" && data.value ? data.value : null;
+    }
+    const ids: string[] = [];
+    if (staffCtx) {
+      for (const r of rows) {
+        const t = referralNotifyTargets({
+          event, staff: staffCtx.staff, perms: staffCtx.perms,
+          assigneeId: r.assignee_user_id, defaultAssigneeId,
+        });
+        for (const id of t) if (!ids.includes(id)) ids.push(id);
+      }
+    }
+    const uniq = [...new Set(rows.map((r) => r.candidate_name || "Ứng viên"))];
+    const names = uniq.length > 10 ? `${uniq.slice(0, 10).join(", ")} +${uniq.length - 10}` : uniq.join(", ");
+    const n = rows.length;
+    const noRule = rows.filter((r) => r.amount_issue).length;
+    let content: string;
+    let title: string;
+    let channel: "hr" | "offer" = "hr";
+    if (event === "due") {
+      content = `💰 ${n} khoản hoa hồng đến hạn — xác nhận UV còn làm: ${names} · /hr › Hoa hồng${noRule ? ` · ${noRule} khoản chưa đặt mức` : ""}`;
+      title = `💰 ${n} khoản hoa hồng đến hạn`;
+    } else {
+      content = `💸 ${n} khoản hoa hồng chờ chuyển khoản: ${names}`;
+      title = `💸 ${n} khoản hoa hồng chờ chuyển khoản`;
+      if (process.env.DISCORD_WEBHOOK_OFFER) channel = "offer";
+    }
+    const { tag, allowed_mentions } = discordTagFor({ userIds: ids, everyone: false }, staffCtx?.staff ?? []);
+    const tasks: Promise<unknown>[] = [discordNotify(channel, { allowed_mentions, content: withTag(tag, content) })];
+    if (ids.length) {
+      tasks.push(sendHrPush({ title, body: names, url: "/hr", tag: `hr-referral-${event}` }, { userIds: ids }));
+    }
+    const results = await Promise.allSettled(tasks);
+    results.forEach((r, idx) => {
+      if (r.status === "rejected") console.error(`[hr-notify] referral_${event} ${idx === 0 ? "Discord" : "push"} lỗi:`, r.reason);
+    });
+  } catch (e) {
+    console.error(`[hr-notify] referral_${event} lỗi:`, e);
+  }
 }

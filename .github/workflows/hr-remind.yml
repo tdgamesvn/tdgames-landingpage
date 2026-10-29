@@ -24,3 +24,16 @@ jobs:
             exit 1
           fi
           echo "✅ Done"
+      - name: 💰 Trigger referral commission cron
+        run: |
+          STATUS=$(curl -s -o /tmp/referral_body.txt -w "%{http_code}" \
+            -X GET \
+            -H "x-hr-cron-key: ${{ secrets.HR_CRON_SECRET }}" \
+            "https://tdgamestudio.com/api/hr/referrals/cron")
+          echo "HTTP $STATUS"
+          cat /tmp/referral_body.txt
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Referral cron returned $STATUS"
+            exit 1
+          fi
+          echo "✅ Done"

@@ -2,7 +2,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { effectivePermissions } from "./hr-permissions.ts";
+import { effectivePermissions, HR_ROLES } from "./hr-permissions.ts";
+import type { RecipientStaff } from "./hr-notify-recipients.ts";
 import {
   DEFAULT_RULES,
   checkPayoutAction,
@@ -35,6 +36,7 @@ import {
   computeAmount,
   effectiveStatus,
   parseDefaultRules,
+  referralNotifyTargets,
   parseRule,
   splitSchedule,
   statusAfterDueEdit,
@@ -343,4 +345,24 @@ test("referrerAuditEntries + bankChangedRecent", () => {
   assert.equal(bankChangedRecent("2026-11-01T00:00:00Z", now), true);
   assert.equal(bankChangedRecent("2026-10-01T00:00:00Z", now), false);
   assert.equal(bankChangedRecent(null, now), false);
+});
+
+const nst: RecipientStaff[] = [
+  { id: "u-phuong", role: "hr", disabled: false, discord_user_id: "1" }, { id: "u-dung", role: "hr", disabled: false, discord_user_id: null },
+  { id: "u-thao", role: "accountant", disabled: false, discord_user_id: "2" }, { id: "u-toan", role: "boss", disabled: false, discord_user_id: "3" },
+  { id: "u-lead", role: "leader", disabled: false, discord_user_id: "4" }];
+const nperms = new Map(HR_ROLES.map((r) => [r, effectivePermissions(r, [])]));
+test("referralNotifyTargets", () => {
+  const t = (o: Partial<Parameters<typeof referralNotifyTargets>[0]> & { event: "due" | "approved" }) =>
+    referralNotifyTargets({ staff: nst, perms: nperms, assigneeId: null, defaultAssigneeId: null, ...o });
+  assert.deepEqual(t({ event: "due", assigneeId: "u-phuong" }), ["u-phuong"]);
+  assert.deepEqual(t({ event: "due", assigneeId: "u-lead", defaultAssigneeId: "u-dung" }), ["u-dung"]);
+  assert.deepEqual(t({ event: "due" }), ["u-phuong", "u-dung"]);
+  assert.deepEqual(t({ event: "approved", assigneeId: "u-phuong" }), ["u-thao"]);
+  const noAcc = nst.filter((u) => u.role !== "accountant");
+  assert.deepEqual(t({ event: "approved", staff: noAcc }), ["u-toan"]);
+  // Tài khoản khoá bị bỏ qua
+  const locked = nst.map((u) => (u.id === "u-phuong" ? { ...u, disabled: true } : u));
+  assert.deepEqual(t({ event: "due", staff: locked, assigneeId: "u-phuong", defaultAssigneeId: "u-dung" }), ["u-dung"]);
+  assert.deepEqual(t({ event: "due", staff: nst.filter((u) => u.role !== "hr") }), ["u-toan"]);
 });

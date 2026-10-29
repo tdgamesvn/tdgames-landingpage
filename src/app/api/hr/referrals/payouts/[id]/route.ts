@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser } from "@/lib/hr-session";
 import { vnDateKey } from "@/lib/interview-schedule";
 import { checkPayoutAction, parsePayoutAction, statusAfterDueEdit } from "@/lib/referral-commission";
+import { notifyReferralPayouts } from "@/lib/hr-notify";
 import { loadPayoutRow, toPayoutView } from "@/lib/referral-store";
 
 export const runtime = "nodejs";
@@ -62,6 +63,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         if (action.due_date !== undefined && action.due_date !== row.due_date) {
           patch.due_date = action.due_date;
           patch.status = statusAfterDueEdit(row.status, action.due_date, today);
+          if (patch.status === "upcoming") patch.due_notified_at = null; // lùi hạn → được nhắc lại khi đến hạn mới
           log("due_date", row.due_date, action.due_date);
         }
         if (action.note !== undefined && action.note !== row.note) {
@@ -82,6 +84,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       .select("id");
     if (error) throw new Error(error.message);
     if (!data?.length) return NextResponse.json({ error: "Khoản vừa được người khác cập nhật" }, { status: 409 });
+
+    if (action.action === "approve") {
+      // Báo Kế toán ngay; cron là lưới an toàn nếu bước này lỗi (chưa set approved_notified_at).
+      try {
+        const { data: a } = await getSupabaseAdmin()
+          .from("applications").select("full_name, assignee_user_id").eq("id", row.application_id).maybeSingle();
+        await notifyReferralPayouts("approved", [{
+          application_id: row.application_id, candidate_name: String(a?.full_name ?? "Ứng viên"),
+          assignee_user_id: (a?.assignee_user_id as string | null) ?? null, amount_issue: row.amount_issue,
+        }]);
+        await getSupabaseAdmin().from("referral_payouts").update({ approved_notified_at: now }).eq("id", id).eq("status", "approved");
+      } catch (e) {
+        console.error("[referrals] notify approved", id, e);
+      }
+    }
 
     const fresh = await loadPayoutRow(id);
     if (!fresh) return NextResponse.json({ error: "Not found" }, { status: 404 });
