@@ -42,6 +42,10 @@ export const HR_PERMISSIONS = [
   { key: "jobs.assign_leader", label: "Gán Leader cho job", group: "Job & hệ thống", defaults: d(true, false, false) },
   { key: "ai.run", label: "Chạy AI chấm / xếp hạng / tìm kiếm AI", group: "Job & hệ thống", defaults: d(true, false, false) },
   { key: "push.receive", label: "Nhận thông báo đẩy nhắc lịch PV", group: "Job & hệ thống", defaults: d(true, true, false) },
+  // Sếp chốt 2026-10-29: mọi HR xem được số tiền hoa hồng; Leader không; Kế toán trả tiền.
+  { key: "referrals.view", label: "Xem tab Hoa hồng & số tiền hoa hồng", group: "Hoa hồng giới thiệu", defaults: d(true, false, true) },
+  { key: "referrals.manage", label: "Quản lý người giới thiệu, mức hoa hồng, xác nhận còn làm / huỷ khoản", group: "Hoa hồng giới thiệu", defaults: d(true, false, false) },
+  { key: "referrals.pay", label: "Đánh dấu đã chuyển khoản, sửa số tiền / hạn từng khoản", group: "Hoa hồng giới thiệu", defaults: d(false, false, true) },
 ] as const satisfies readonly PermissionDef[];
 
 export type PermissionKey = (typeof HR_PERMISSIONS)[number]["key"];

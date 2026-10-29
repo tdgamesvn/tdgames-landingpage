@@ -61,3 +61,10 @@ test("key duy nhất và đúng định dạng", () => {
   assert.equal(new Set(keys).size, keys.length);
   for (const k of keys) assert.match(k, /^[a-z_]+\.[a-z_]+$/);
 });
+
+test("referrals.*: HR xem+quản lý, Kế toán xem+trả, Leader không gì", () => {
+  const hr = effectivePermissions("hr", []), acc = effectivePermissions("accountant", []), ld = effectivePermissions("leader", []);
+  assert.ok(hr.has("referrals.view") && hr.has("referrals.manage") && !hr.has("referrals.pay"));
+  assert.ok(acc.has("referrals.view") && acc.has("referrals.pay") && !acc.has("referrals.manage"));
+  assert.ok(!ld.has("referrals.view") && !ld.has("referrals.manage") && !ld.has("referrals.pay"));
+});

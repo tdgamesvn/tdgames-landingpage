@@ -2,8 +2,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
+import { effectivePermissions } from "./hr-permissions.ts";
 import {
   DEFAULT_RULES,
+  checkPayoutAction,
+  parsePayoutAction,
+  parseReferrerInput,
+  type ReferrerInput,
   addMonthsClamped,
   cancelOnLeave,
   cancellableIds,
@@ -159,4 +164,35 @@ test("offerTransition", () => {
   assert.equal(offerTransition("accepted", null), "cancel");
   assert.equal(offerTransition("accepted", "accepted"), null);
   assert.equal(offerTransition("pending", "declined"), null);
+});
+
+const HR = effectivePermissions("hr", []), ACC = effectivePermissions("accountant", []);
+const due = { status: "upcoming" as const, due_date: "2026-11-01", amount: 1_000_000 };
+test("checkPayoutAction", () => {
+  assert.equal(checkPayoutAction(HR, due, { action: "approve" }, "2026-11-01"), null);
+  assert.ok(checkPayoutAction(ACC, due, { action: "approve" }, "2026-11-01"));                       // Kế toán không xác nhận còn làm
+  assert.ok(checkPayoutAction(HR, { ...due, due_date: "2026-12-01" }, { action: "approve" }, "2026-11-01")); // chưa đến hạn
+  assert.ok(checkPayoutAction(HR, { ...due, amount: null }, { action: "approve" }, "2026-11-01"));   // Chưa đặt mức
+  assert.ok(checkPayoutAction(HR, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01"));
+  assert.equal(checkPayoutAction(ACC, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01"), null);
+  assert.ok(checkPayoutAction(ACC, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-02" }, "2026-11-01")); // ngày tương lai
+  assert.ok(checkPayoutAction(ACC, { ...due, status: "paid" }, { action: "edit", amount: 5 }, "2026-11-01"));
+  assert.equal(checkPayoutAction(ACC, { ...due, status: "paid" }, { action: "edit", note: "CK lần 2" }, "2026-11-01"), null);
+  assert.ok(checkPayoutAction(HR, { ...due, status: "paid" }, { action: "cancel", reason: "x" }, "2026-11-01"));
+  assert.ok(checkPayoutAction(HR, due, { action: "edit", amount: 5 }, "2026-11-01"));                  // HR không sửa tiền
+});
+test("parsePayoutAction", () => {
+  assert.ok("error" in parsePayoutAction({ action: "cancel", reason: "  " }));
+  assert.ok("error" in parsePayoutAction({ action: "edit", amount: 1.5 }));
+  assert.ok("error" in parsePayoutAction({ action: "pay", paid_date: "2026-02-30" }));
+  assert.deepEqual(parsePayoutAction({ action: "approve", x: 1 }), { action: "approve" });
+});
+test("parseReferrerInput: trùng mã tài khoản/referrer → 409; gắn tài khoản không có mã riêng", () => {
+  const base = { name: "Cát Tường", kind: "external", ref_codes: ["cat-tuong"] };
+  assert.equal((parseReferrerInput({ ...base, ref_codes: ["ThaoDTX"] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 409);
+  assert.equal((parseReferrerInput({ ...base, ref_codes: ["mai-ha"] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 409);
+  assert.equal((parseReferrerInput({ ...base, ref_codes: ["cat-tuong"] }, { staff, referrers: refs, selfId: "r-cat" }) as ReferrerInput).ref_codes[0], "cat-tuong");
+  assert.equal((parseReferrerInput({ name: "Phương", kind: "internal", ref_codes: ["x"], hr_user_id: "u-phuong" }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400);
+  assert.equal((parseReferrerInput({ name: "", ref_codes: ["a"] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400);
+  assert.equal((parseReferrerInput({ name: "A", ref_codes: [] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400); // không gắn tài khoản thì phải có ≥1 mã
 });

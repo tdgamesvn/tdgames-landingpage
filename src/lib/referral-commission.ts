@@ -1,8 +1,9 @@
 // Hoa hồng giới thiệu (refer) — lõi thuần, không import server (dùng cả client, route, test).
 // Tiền VND số nguyên; ngày YYYY-MM-DD theo giờ VN.
 
-import { normalizeRefCode, resolveRefOwner } from "./hr-ref-codes.ts";
-import type { HrRole } from "./hr-permissions.ts";
+import { findRefConflict, normalizeRefCode, parseRefCodes, resolveRefOwner } from "./hr-ref-codes.ts";
+import type { HrRole, PermissionKey } from "./hr-permissions.ts";
+import { isValidDate } from "./offer-letter.ts";
 
 export type CommissionKind = "internal" | "external";
 export type PayoutStatus = "upcoming" | "due" | "approved" | "paid" | "cancelled";
@@ -290,4 +291,156 @@ export function offerTransition(oldStatus: string | null, newStatus: string | nu
   if (oldStatus !== "accepted" && newStatus === "accepted") return "generate";
   if (oldStatus === "accepted" && newStatus !== "accepted") return "cancel";
   return null;
+}
+
+// ── Thao tác khoản + dữ liệu người giới thiệu ─────────────────────────────
+
+export type PayoutAction =
+  | { action: "approve" }
+  | { action: "cancel"; reason: string }
+  | { action: "pay"; paid_date: string }
+  | { action: "edit"; amount?: number; due_date?: string | null; note?: string };
+
+/** Đọc body thao tác khoản; key lạ bị bỏ qua. */
+export function parsePayoutAction(v: unknown): PayoutAction | { error: string } {
+  if (!isRecord(v)) return { error: "Yêu cầu không hợp lệ" };
+  switch (v.action) {
+    case "approve":
+      return { action: "approve" };
+    case "cancel": {
+      const reason = typeof v.reason === "string" ? v.reason.trim() : "";
+      if (!reason || reason.length > 500) return { error: "Lý do huỷ phải từ 1 đến 500 ký tự" };
+      return { action: "cancel", reason };
+    }
+    case "pay": {
+      if (typeof v.paid_date !== "string" || !isValidDate(v.paid_date)) return { error: "Ngày chuyển khoản không hợp lệ" };
+      return { action: "pay", paid_date: v.paid_date };
+    }
+    case "edit": {
+      const out: Extract<PayoutAction, { action: "edit" }> = { action: "edit" };
+      if (v.amount !== undefined) {
+        if (typeof v.amount !== "number" || !Number.isInteger(v.amount) || v.amount < 0 || v.amount > MAX_VND) {
+          return { error: "Số tiền phải là số nguyên từ 0 đến 1.000.000.000 đồng" };
+        }
+        out.amount = v.amount;
+      }
+      if (v.due_date !== undefined) {
+        if (v.due_date !== null && (typeof v.due_date !== "string" || !isValidDate(v.due_date))) return { error: "Hạn thanh toán không hợp lệ" };
+        out.due_date = v.due_date;
+      }
+      if (v.note !== undefined) {
+        if (typeof v.note !== "string" || v.note.length > 1000) return { error: "Ghi chú tối đa 1000 ký tự" };
+        out.note = v.note;
+      }
+      if (out.amount === undefined && out.due_date === undefined && out.note === undefined) return { error: "Không có gì để sửa" };
+      return out;
+    }
+    default:
+      return { error: "Thao tác không hợp lệ" };
+  }
+}
+
+/** Lỗi tiếng Việt nếu người có quyền `perms` không được làm `a` trên khoản `p`; null = được. */
+export function checkPayoutAction(
+  perms: Set<PermissionKey>,
+  p: { status: PayoutStatus; due_date: string | null; amount: number | null },
+  a: PayoutAction,
+  today: string,
+): string | null {
+  switch (a.action) {
+    case "approve":
+      if (!perms.has("referrals.manage")) return "Bạn không có quyền xác nhận khoản hoa hồng";
+      if (effectiveStatus(p, today) !== "due") return "Khoản chưa đến hạn hoặc không ở trạng thái chờ xác nhận";
+      if (p.amount === null) return "Khoản chưa có số tiền — hãy đặt mức hoa hồng trước";
+      return null;
+    case "cancel":
+      if (!perms.has("referrals.manage")) return "Bạn không có quyền huỷ khoản hoa hồng";
+      if (p.status === "paid") return "Khoản đã chuyển khoản không thể huỷ";
+      if (p.status === "cancelled") return "Khoản đã huỷ rồi";
+      return null;
+    case "pay":
+      if (!perms.has("referrals.pay")) return "Bạn không có quyền đánh dấu đã chuyển khoản";
+      if (p.status !== "approved") return "Chỉ khoản đã được xác nhận còn làm mới đánh dấu chuyển khoản được";
+      if (a.paid_date > today) return "Ngày chuyển khoản không được ở tương lai";
+      return null;
+    case "edit":
+      if (!perms.has("referrals.pay")) return "Bạn không có quyền sửa số tiền / hạn khoản hoa hồng";
+      if (p.status === "cancelled") return "Khoản đã huỷ không sửa được";
+      if (p.status === "paid" && (a.amount !== undefined || a.due_date !== undefined)) return "Khoản đã chuyển khoản chỉ được sửa ghi chú";
+      return null;
+  }
+}
+
+export type ReferrerInput = {
+  name: string;
+  kind: CommissionKind | null;
+  ref_codes: string[];
+  hr_user_id: string | null;
+  phone: string;
+  email: string;
+  bank_info: string;
+  note: string;
+  active: boolean;
+  rule: CommissionRule | null;
+};
+
+/** Đọc + kiểm body tạo/sửa người giới thiệu (400 sai dữ liệu, 409 trùng mã / trùng liên kết tài khoản). */
+export function parseReferrerInput(
+  v: unknown,
+  ctx: { staff: StaffLite[]; referrers: ReferrerLite[]; selfId: string | null },
+): ReferrerInput | { error: string; status: 400 | 409 } {
+  const bad = (error: string, status: 400 | 409 = 400) => ({ error, status });
+  if (!isRecord(v)) return bad("Yêu cầu không hợp lệ");
+  const name = typeof v.name === "string" ? v.name.trim() : "";
+  if (!name || name.length > 120) return bad("Tên người giới thiệu phải từ 1 đến 120 ký tự");
+  const kind = v.kind ?? null;
+  if (kind !== null && kind !== "internal" && kind !== "external") return bad("Loại người giới thiệu không hợp lệ");
+  const codes = parseRefCodes(v.ref_codes);
+  if ("error" in codes) return bad(codes.error);
+
+  const text = (x: unknown, label: string): string | { error: string } => {
+    if (x === undefined || x === null) return "";
+    if (typeof x !== "string" || x.trim().length > 500) return { error: `${label} tối đa 500 ký tự` };
+    return x.trim();
+  };
+  const phone = text(v.phone, "Số điện thoại");
+  const email = text(v.email, "Email");
+  const bank = text(v.bank_info, "Thông tin chuyển khoản");
+  const note = text(v.note, "Ghi chú");
+  for (const t of [phone, email, bank, note]) if (typeof t !== "string") return bad(t.error);
+
+  const hrUserId = v.hr_user_id ?? null;
+  if (hrUserId !== null) {
+    if (typeof hrUserId !== "string" || !ctx.staff.some((u) => u.id === hrUserId)) return bad("Tài khoản /hr không tồn tại");
+    if (codes.length) return bad("Người giới thiệu gắn tài khoản /hr dùng mã của tài khoản, không có mã riêng");
+    if (ctx.referrers.some((r) => r.hr_user_id === hrUserId && r.id !== ctx.selfId)) {
+      return bad("Tài khoản này đã có hồ sơ người giới thiệu", 409);
+    }
+  } else if (!codes.length) {
+    return bad("Cần ít nhất một mã ref");
+  }
+  const acct = findRefConflict(codes, ctx.staff, null);
+  if (acct) return bad(`Mã ${acct.code} đã thuộc tài khoản ${acct.owner.display_name}`, 409);
+  const other = findRefConflict(codes, ctx.referrers, ctx.selfId);
+  if (other) return bad(`Mã ${other.code} đã thuộc người giới thiệu ${other.owner.name}`, 409);
+
+  let rule: CommissionRule | null = null;
+  if (v.rule !== undefined && v.rule !== null) {
+    const r = parseRule(v.rule);
+    if ("error" in r) return bad(r.error);
+    rule = r;
+  }
+  if (v.active !== undefined && typeof v.active !== "boolean") return bad("Trạng thái hoạt động không hợp lệ");
+  return {
+    name,
+    kind,
+    ref_codes: codes,
+    hr_user_id: hrUserId,
+    phone: phone as string,
+    email: email as string,
+    bank_info: bank as string,
+    note: note as string,
+    active: v.active ?? true,
+    rule,
+  };
 }
