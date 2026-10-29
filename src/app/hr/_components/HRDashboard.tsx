@@ -23,6 +23,7 @@ import { avatarColorIndex } from "@/lib/hr-comment-mentions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 import { fetchPdfBlob, openPdfInNewTab } from "./OfferLetterFields";
 import { previousReviewNote } from "@/lib/offer-letter-approval";
+import { normalizeRefCode } from "@/lib/hr-ref-codes";
 import { cvViewerUrl, safeExternalUrl } from "@/lib/cv-viewer";
 import { ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
 
@@ -2022,7 +2023,10 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
   const S = useStatuses();
   const { can, me } = useHrSession();
   // Link job gắn mã ref của TÀI KHOẢN đang đăng nhập (không còn gõ tay / lưu trình duyệt).
-  const refCode = me?.refCode ?? "";
+  const ownRef = me?.refCode ?? "";
+  // HR tạo link cho headhunter (người ngoài, không có tài khoản): gõ mã của họ → Copy Link dùng mã đó.
+  const [hhRef, setHhRef] = useState("");
+  const refCode = normalizeRefCode(hhRef) ?? ownRef;
   const [rankingId, setRankingId] = useState<string | null>(null);
   const [openAppId, setOpenAppId] = useState<string | null>(null);
   const openApp = openAppId ? apps.find((a) => a.id === openAppId) : undefined;
@@ -2118,21 +2122,27 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
         )}
       </div>
 
-      {/* Ref code banner — mã lấy từ tài khoản */}
+      {/* Ref code banner — mã tài khoản, hoặc mã headhunter khi tạo link hộ */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
         <span className="text-xs font-bold text-amber-400/80"><Link2 className="hr-ico" />Mã ref của bạn:</span>
-        {refCode ? (
-          <>
-            <code className="rounded-md bg-amber-500/10 px-2 py-1 text-xs text-amber-300">{refCode}</code>
-            <span className="text-[10px] text-white/40">
-              Nút <b>Copy Link</b> tự gắn <code className="text-amber-300/70">?ref={refCode}</code> — ứng viên nộp qua link sẽ ghi bạn là người giới thiệu.
-            </span>
-          </>
+        {ownRef ? (
+          <code className="rounded-md bg-amber-500/10 px-2 py-1 text-xs text-amber-300">{ownRef}</code>
         ) : (
-          <span className="text-[10px] text-white/40 italic">
-            Tài khoản chưa có mã ref — nhờ Sếp đặt ở tab Tài khoản. Link copy lúc này không gắn người giới thiệu.
-          </span>
+          <span className="text-[10px] text-white/40 italic">chưa có — nhờ Sếp kiểm tra tab Tài khoản</span>
         )}
+        <span className="text-white/20">·</span>
+        <label className="flex items-center gap-2 text-[11px] text-white/50">
+          Tạo link cho headhunter:
+          <input
+            value={hhRef}
+            onChange={(e) => setHhRef(e.target.value)}
+            placeholder="mã của headhunter, vd. cat-tuong"
+            className="w-48 rounded-lg border border-amber-500/30 bg-transparent px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-amber-500/60 focus:outline-none"
+          />
+        </label>
+        <span className="text-[10px] text-white/40">
+          {refCode ? <>Copy Link sẽ gắn <code className="text-amber-300/70">?ref={refCode}</code>{hhRef && normalizeRefCode(hhRef) ? " (headhunter)" : " (của bạn)"}</> : "Copy Link chưa gắn người giới thiệu"}
+        </span>
       </div>
 
       {/* Create form */}

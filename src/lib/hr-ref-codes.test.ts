@@ -99,3 +99,19 @@ test("autoAssigneeFor: chủ mã xem được hồ sơ mới (status new) → gi
   assert.equal(autoAssigneeFor({ id: "a", role: "accountant" }, app, st, null), null);
   assert.equal(autoAssigneeFor(null, app, st, null), null);
 });
+
+import { autoRefCode } from "./hr-ref-codes.ts";
+
+test("autoRefCode: tên gọi + chữ đầu họ & đệm, bỏ dấu", () => {
+  assert.equal(autoRefCode("Nguyễn Thị Minh Phương", []), "phuongntm");
+  assert.equal(autoRefCode("Đặng Thế Toàn", []), "toandt");
+  assert.equal(autoRefCode("Đào Thị Xuân Thảo", []), "thaodtx");
+  assert.equal(autoRefCode("  Nguyễn   Thị Thuỳ Dung ", []), "dungntt");
+  assert.equal(autoRefCode("Linh", []), "linh");
+  assert.equal(autoRefCode("", []), "nv");
+});
+
+test("autoRefCode: trùng → thêm số", () => {
+  assert.equal(autoRefCode("Đặng Thế Toàn", ["toandt"]), "toandt2");
+  assert.equal(autoRefCode("Đặng Thế Toàn", ["ToanDT", "toandt2"]), "toandt3");
+});

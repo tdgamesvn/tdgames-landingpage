@@ -9,7 +9,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { hrFetch, useHrSession } from "./HrSession";
 import { HR_PERMISSIONS, HR_ROLES, ROLE_LABEL, type HrRole } from "@/lib/hr-permissions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
-import { MAX_REF_CODES, normalizeRefCode } from "@/lib/hr-ref-codes";
 
 type UserStatus = "active" | "invited" | "disabled";
 type HrUser = {
@@ -218,11 +217,7 @@ export default function AccountsPanel() {
                       />
                     </td>
                     <td className="px-2 py-2.5 align-top">
-                      <RefCodesCell
-                        user={u}
-                        disabled={busy}
-                        onSave={(codes) => patchUser(u, { ref_codes: codes }, `Đã lưu mã ref của ${u.display_name}`)}
-                      />
+                      <RefCodesCell user={u} />
                     </td>
                     <td className={`px-2 py-2.5 font-semibold ${STATUS_CLS[u.status]}`}>{STATUS_LABEL[u.status]}</td>
                     <td className="px-2 py-2.5 text-white/60">
@@ -351,103 +346,39 @@ function refLink(code: string) {
 }
 
 /**
- * Ô "Mã ref": chip (mã đầu = mã chính), thêm bằng Enter, xoá bằng ×, bấm ★ để đưa lên làm mã chính.
- * Lưu ngay mỗi thay đổi; server chuẩn hoá + chặn mã trùng tài khoản khác (409).
+ * Mã ref của tài khoản — tự sinh theo tên lúc tạo (sếp chốt 2026-10-29), không sửa tay.
+ * Mã đầu = mã chính (link giới thiệu); các mã sau là mã cũ, vẫn nhận để link đã gửi trước đây còn chạy.
  */
-function RefCodesCell({
-  user,
-  disabled,
-  onSave,
-}: {
-  user: HrUser;
-  disabled: boolean;
-  onSave: (codes: string[]) => Promise<boolean>;
-}) {
+function RefCodesCell({ user }: { user: HrUser }) {
   const codes = user.ref_codes ?? [];
-  const [draft, setDraft] = useState("");
   const [copied, setCopied] = useState(false);
-  const preview = normalizeRefCode(draft);
-
-  async function add() {
-    if (!preview || disabled) return;
-    if (codes.includes(preview)) {
-      setDraft("");
-      return;
-    }
-    // Chỉ xoá ô nhập khi server lưu được (vd. 409 trùng mã → giữ nguyên để sửa).
-    if (await onSave([...codes, preview])) setDraft("");
-  }
-
+  if (!codes.length) return <span className="text-white/35">—</span>;
   return (
-    <div className="w-60 space-y-1.5">
-      {codes.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {codes.map((c, i) => (
-            <span
-              key={c}
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11.5px] ${
-                i === 0 ? "bg-[var(--hr-orange)] text-[var(--hr-on-orange)]" : "bg-white/10 text-white/80"
-              }`}
-              title={i === 0 ? "Mã chính (dùng cho link giới thiệu)" : undefined}
-            >
-              {c}
-              {i > 0 && (
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => void onSave([c, ...codes.filter((x) => x !== c)])}
-                  aria-label={`Đặt ${c} làm mã chính`}
-                  title="Đặt làm mã chính"
-                  className="opacity-60 hover:opacity-100 disabled:opacity-30"
-                >
-                  ★
-                </button>
-              )}
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => void onSave(codes.filter((x) => x !== c))}
-                aria-label={`Xoá mã ${c}`}
-                className="opacity-60 hover:opacity-100 disabled:opacity-30"
-              >
-                ×
-              </button>
-            </span>
-          ))}
+    <div className="w-56 space-y-1">
+      <span
+        className="inline-flex rounded-full bg-[var(--hr-orange)] px-2 py-0.5 font-mono text-[11.5px] text-[var(--hr-on-orange)]"
+        title="Mã chính (tự tạo theo tên)"
+      >
+        {codes[0]}
+      </span>
+      {codes.length > 1 && (
+        <div className="text-[10.5px] text-white/40" title="Mã cũ — link có mã này vẫn được tính cho tài khoản">
+          Mã cũ vẫn nhận: <span className="font-mono">{codes.slice(1).join(", ")}</span>
         </div>
       )}
-      {codes.length < MAX_REF_CODES && (
-        <input
-          aria-label={`Thêm mã ref cho ${user.display_name}`}
-          placeholder={codes.length ? "Thêm mã…" : "Thêm mã (vd. thuy-dung)"}
-          value={draft}
-          disabled={disabled}
-          maxLength={60}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void add();
-            if (e.key === "Escape") setDraft("");
-          }}
-          onBlur={() => void add()}
-          title={preview && preview !== draft ? `Sẽ lưu thành: ${preview}` : undefined}
-          className={`${inputCls} w-full py-1 font-mono text-[12px] disabled:opacity-50`}
-        />
-      )}
-      {codes[0] && (
-        <button
-          type="button"
-          onClick={() => {
-            void navigator.clipboard.writeText(refLink(codes[0])).then(() => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            });
-          }}
-          title="Chép link giới thiệu"
-          className="block max-w-full truncate text-left font-mono text-[11px] text-white/45 hover:text-white/80"
-        >
-          {copied ? "Đã chép link" : `…/careers?ref=${codes[0]}`}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard.writeText(refLink(codes[0])).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          });
+        }}
+        title="Chép link giới thiệu"
+        className="block max-w-full truncate text-left font-mono text-[11px] text-white/45 hover:text-white/80"
+      >
+        {copied ? "Đã chép link" : `…/careers?ref=${codes[0]}`}
+      </button>
     </div>
   );
 }
@@ -541,7 +472,6 @@ function AddUserForm({
   const [role, setRole] = useState<HrRole>("leader");
   const [discordId, setDiscordId] = useState("");
   const [phone, setPhone] = useState("");
-  const [refCodes, setRefCodes] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -557,8 +487,6 @@ function AddUserForm({
           role,
           discord_user_id: discordId,
           phone,
-          // "Thuỳ Dung, dung" → ["Thuỳ Dung", "dung"]; server chuẩn hoá ("thuy-dung") + kiểm trùng.
-          ref_codes: refCodes.split(",").map((c) => c.trim()).filter(Boolean),
         }),
       });
       const j = await readJson(res);
@@ -571,7 +499,6 @@ function AddUserForm({
       setName("");
       setDiscordId("");
       setPhone("");
-      setRefCodes("");
       setOpen(false);
     } catch {
       onError("Không kết nối được máy chủ");
@@ -638,15 +565,6 @@ function AddUserForm({
           placeholder="Không bắt buộc"
           value={discordId}
           onChange={(e) => setDiscordId(e.target.value)}
-          className={`${inputCls} mt-1 block w-48 font-mono font-normal normal-case tracking-normal`}
-        />
-      </label>
-      <label className="text-[11px] font-bold uppercase tracking-wider text-white/40" title="Cách nhau bằng dấu phẩy; mã đầu là mã chính">
-        Mã ref
-        <input
-          placeholder="Không bắt buộc"
-          value={refCodes}
-          onChange={(e) => setRefCodes(e.target.value)}
           className={`${inputCls} mt-1 block w-48 font-mono font-normal normal-case tracking-normal`}
         />
       </label>

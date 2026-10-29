@@ -4,7 +4,7 @@ import { requireBoss, hrPublicOrigin, issueToken } from "@/lib/hr-session";
 import { HR_ROLES, ROLE_LABEL, type HrRole } from "@/lib/hr-permissions";
 import { isValidEmail } from "@/lib/hr-email";
 import { parseDiscordId, parsePhone } from "@/lib/hr-users";
-import { findRefConflict, parseRefCodes } from "@/lib/hr-ref-codes";
+import { autoRefCode } from "@/lib/hr-ref-codes";
 import { buildStaffInviteEmail } from "@/lib/hr-staff-email";
 import { sendStaffEmail } from "@/lib/hr-email-send";
 
@@ -62,24 +62,21 @@ export async function POST(req: Request) {
   const phone = parsePhone(body?.phone);
   if (phone === "invalid") return NextResponse.json({ error: "Số điện thoại không hợp lệ (9–13 chữ số, có thể bắt đầu bằng +)" }, { status: 400 });
 
-  const refCodes = parseRefCodes(body?.ref_codes);
-  if ("error" in refCodes) return NextResponse.json({ error: refCodes.error }, { status: 400 });
-
+  // Mã ref tự sinh theo tên (sếp chốt 2026-10-29): không nhận mã do người dùng gửi lên.
   const supabase = getSupabaseAdmin();
-  if (refCodes.length) {
-    const { data: others, error: othersErr } = await supabase.from("hr_users").select("id, display_name, ref_codes");
-    if (othersErr) return NextResponse.json({ error: othersErr.message }, { status: 500 });
-    const conflict = findRefConflict(refCodes, (others ?? []) as { id: string; display_name: string; ref_codes: string[] | null }[], null);
-    if (conflict) {
-      return NextResponse.json(
-        { error: `Mã ref “${conflict.code}” đã thuộc tài khoản ${conflict.owner.display_name}` },
-        { status: 409 },
-      );
-    }
-  }
+  const [{ data: others, error: othersErr }, { data: used, error: usedErr }] = await Promise.all([
+    supabase.from("hr_users").select("ref_codes"),
+    supabase.from("applications").select("referred_by").not("referred_by", "is", null),
+  ]);
+  if (othersErr || usedErr) return NextResponse.json({ error: (othersErr ?? usedErr)!.message }, { status: 500 });
+  const taken = [
+    ...((others ?? []) as { ref_codes: string[] | null }[]).flatMap((u) => u.ref_codes ?? []),
+    ...((used ?? []) as { referred_by: string }[]).map((a) => a.referred_by),
+  ];
+  const refCodes = [autoRefCode(displayName, taken)];
   const { data: user, error } = await supabase
     .from("hr_users")
-    .insert({ email, display_name: displayName, role, discord_user_id: discordId, phone, ...(refCodes.length ? { ref_codes: refCodes } : {}) })
+    .insert({ email, display_name: displayName, role, discord_user_id: discordId, phone, ref_codes: refCodes })
     .select("id, email, display_name, role, disabled, created_at, last_login_at, discord_user_id, phone, ref_codes, password_hash")
     .single();
   if (error) {

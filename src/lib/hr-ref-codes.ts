@@ -25,6 +25,22 @@ export function normalizeRefCode(raw: unknown): string | null {
   return s || null;
 }
 
+/**
+ * Mã ref tự sinh theo tên (sếp chốt 2026-10-29 — không cho đặt tay): tên gọi + chữ cái đầu của họ & đệm,
+ * bỏ dấu, viết thường. "Nguyễn Thị Minh Phương" → "phuongntm", "Đặng Thế Toàn" → "toandt", 1 chữ → chính nó.
+ * Trùng mã trong `taken` (mã mọi tài khoản + mã ref đã có trên hồ sơ) → thêm số 2, 3…
+ */
+export function autoRefCode(displayName: string, taken: Iterable<string>): string {
+  const words = displayName
+    .split(/\s+/)
+    .map((w) => normalizeRefCode(w)?.replace(/-/g, "") ?? "")
+    .filter(Boolean);
+  const base = (words.length ? words[words.length - 1] + words.slice(0, -1).map((w) => w[0]).join("") : "nv").slice(0, MAX_REF_CODE_LEN - 3);
+  const used = new Set([...taken].map((c) => normalizeRefCode(c)).filter(Boolean));
+  if (!used.has(base)) return base;
+  for (let i = 2; ; i++) if (!used.has(`${base}${i}`)) return `${base}${i}`;
+}
+
 /** Mã chính của tài khoản = ref_codes[0] (đã normalize); không có mã → null. */
 export function canonicalRefCode(u: { ref_codes?: string[] | null }): string | null {
   return normalizeRefCode(u.ref_codes?.[0]);
