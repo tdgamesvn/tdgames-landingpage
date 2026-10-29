@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser } from "@/lib/hr-session";
-import { parseReferrerInput } from "@/lib/referral-commission";
+import { parseReferrerInput, referrerAuditEntries } from "@/lib/referral-commission";
 import { loadReferralBasics } from "@/lib/referral-store";
 
 export const runtime = "nodejs";
@@ -21,17 +21,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const db = getSupabaseAdmin();
     const { data: old, error: oldErr } = await db
       .from("referrers")
-      .select("name, kind, ref_codes, hr_user_id, phone, email, bank_info, note, active, rule")
+      .select("name, kind, ref_codes, hr_user_id, phone, email, bank_info, note, active, rule, history")
       .eq("id", id)
       .maybeSingle();
     if (oldErr) throw new Error(oldErr.message);
     if (!old) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const { staff, referrers } = await loadReferralBasics();
-    const input = parseReferrerInput({ ...old, ...(body as Record<string, unknown>) }, { staff, referrers, selfId: id });
+    const input = parseReferrerInput({ ...old, history: undefined, ...(body as Record<string, unknown>) }, { staff, referrers, selfId: id });
     if ("error" in input) return NextResponse.json({ error: input.error }, { status: input.status });
+    const nowIso = new Date().toISOString();
+    const entries = referrerAuditEntries(old, input, { id: auth.ctx.user.id, name: auth.ctx.user.displayName }, nowIso);
+    const audit: Record<string, unknown> = {};
+    if (entries.length) {
+      audit.history = [...(Array.isArray(old.history) ? old.history : []), ...entries];
+      if (entries.some((e) => e.field === "bank_info")) {
+        audit.bank_changed_at = nowIso;
+        audit.bank_changed_by = auth.ctx.user.displayName;
+      }
+    }
     const { data, error } = await db
       .from("referrers")
-      .update({ ...input, updated_at: new Date().toISOString() })
+      .update({ ...input, ...audit, updated_at: nowIso })
       .eq("id", id)
       .select()
       .single();

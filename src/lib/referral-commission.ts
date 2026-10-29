@@ -386,35 +386,77 @@ export function parsePayoutAction(v: unknown): PayoutAction | { error: string } 
   }
 }
 
-/** Lỗi tiếng Việt nếu người có quyền `perms` không được làm `a` trên khoản `p`; null = được. */
+export type PayoutDenied = { code: "forbidden" | "state"; message: string };
+
+/**
+ * Lỗi nếu người có quyền `perms` không được làm `a` trên khoản `p`; null = được.
+ * code "forbidden" → 403 (thiếu quyền), "state" → 400 (sai trạng thái).
+ * offerAccepted = offer của hồ sơ đang ở "Đã nhận"; không thì chỉ huỷ / ghi chú được (duyệt, chuyển khoản bị chặn).
+ */
 export function checkPayoutAction(
   perms: Set<PermissionKey>,
   p: { status: PayoutStatus; due_date: string | null; amount: number | null },
   a: PayoutAction,
   today: string,
-): string | null {
+  offerAccepted: boolean,
+): PayoutDenied | null {
+  const forbidden = (message: string): PayoutDenied => ({ code: "forbidden", message });
+  const state = (message: string): PayoutDenied => ({ code: "state", message });
+  const OFFER_MSG = "Offer của ứng viên không còn ở Đã nhận — cần xử lý tay";
   switch (a.action) {
     case "approve":
-      if (!perms.has("referrals.manage")) return "Bạn không có quyền xác nhận khoản hoa hồng";
-      if (effectiveStatus(p, today) !== "due") return "Khoản chưa đến hạn hoặc không ở trạng thái chờ xác nhận";
-      if (p.amount === null) return "Khoản chưa có số tiền — hãy đặt mức hoa hồng trước";
+      if (!perms.has("referrals.manage")) return forbidden("Bạn không có quyền xác nhận khoản hoa hồng");
+      if (!offerAccepted) return state(OFFER_MSG);
+      if (effectiveStatus(p, today) !== "due") return state("Khoản chưa đến hạn hoặc không ở trạng thái chờ xác nhận");
+      if (p.amount === null) return state("Khoản chưa có số tiền — hãy đặt mức hoa hồng trước");
       return null;
     case "cancel":
-      if (!perms.has("referrals.manage")) return "Bạn không có quyền huỷ khoản hoa hồng";
-      if (p.status === "paid") return "Khoản đã chuyển khoản không thể huỷ";
-      if (p.status === "cancelled") return "Khoản đã huỷ rồi";
+      if (!perms.has("referrals.manage")) return forbidden("Bạn không có quyền huỷ khoản hoa hồng");
+      if (p.status === "paid") return state("Khoản đã chuyển khoản không thể huỷ");
+      if (p.status === "cancelled") return state("Khoản đã huỷ rồi");
       return null;
     case "pay":
-      if (!perms.has("referrals.pay")) return "Bạn không có quyền đánh dấu đã chuyển khoản";
-      if (p.status !== "approved") return "Chỉ khoản đã được xác nhận còn làm mới đánh dấu chuyển khoản được";
-      if (a.paid_date > today) return "Ngày chuyển khoản không được ở tương lai";
+      if (!perms.has("referrals.pay")) return forbidden("Bạn không có quyền đánh dấu đã chuyển khoản");
+      if (p.status !== "approved") return state("Chỉ khoản đã được xác nhận còn làm mới đánh dấu chuyển khoản được");
+      if (!offerAccepted) return state(OFFER_MSG);
+      if (a.paid_date > today) return state("Ngày chuyển khoản không được ở tương lai");
       return null;
     case "edit":
-      if (!perms.has("referrals.pay")) return "Bạn không có quyền sửa số tiền / hạn khoản hoa hồng";
-      if (p.status === "cancelled") return "Khoản đã huỷ không sửa được";
-      if (p.status === "paid" && (a.amount !== undefined || a.due_date !== undefined)) return "Khoản đã chuyển khoản chỉ được sửa ghi chú";
+      if (!perms.has("referrals.pay")) return forbidden("Bạn không có quyền sửa số tiền / hạn khoản hoa hồng");
+      if (p.status === "cancelled") return state("Khoản đã huỷ không sửa được");
+      if (p.status === "paid" && (a.amount !== undefined || a.due_date !== undefined)) return state("Khoản đã chuyển khoản chỉ được sửa ghi chú");
       return null;
   }
+}
+
+/** Có khoản đã duyệt/đã trả → không đổi người giới thiệu của hồ sơ được. */
+export function hasLockedPayout(rows: { status: PayoutStatus }[]): boolean {
+  return rows.some((p) => p.status === "approved" || p.status === "paid");
+}
+
+export type ReferrerAuditEntry = { at: string; by_user_id: string | null; by_name: string; field: string; old: unknown; new: unknown };
+const AUDIT_FIELDS = ["bank_info", "ref_codes", "hr_user_id", "kind", "active"] as const;
+
+/** Dòng lịch sử cho các trường nhạy cảm (đổi tài khoản nhận tiền) đã thay đổi giữa bản cũ và bản mới. */
+export function referrerAuditEntries(
+  old: Record<(typeof AUDIT_FIELDS)[number], unknown>,
+  next: Record<(typeof AUDIT_FIELDS)[number], unknown>,
+  by: { id: string | null; name: string },
+  at: string,
+): ReferrerAuditEntry[] {
+  const out: ReferrerAuditEntry[] = [];
+  for (const f of AUDIT_FIELDS) {
+    if (JSON.stringify(old[f] ?? null) === JSON.stringify(next[f] ?? null)) continue;
+    out.push({ at, by_user_id: by.id, by_name: by.name, field: f, old: old[f] ?? null, new: next[f] ?? null });
+  }
+  return out;
+}
+
+/** Đổi thông tin chuyển khoản trong 30 ngày gần đây? */
+export function bankChangedRecent(changedAt: string | null, nowMs: number): boolean {
+  if (!changedAt) return false;
+  const t = Date.parse(changedAt);
+  return Number.isFinite(t) && nowMs - t <= 30 * 86_400_000 && nowMs - t >= -86_400_000;
 }
 
 export type ReferrerInput = {

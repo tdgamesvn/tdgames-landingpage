@@ -26,11 +26,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const row = await loadPayoutRow(id);
     if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const denied = checkPayoutAction(ctx.perms, row, action, today);
-    if (denied) {
-      const forbidden = denied.startsWith("Bạn không có quyền");
-      return NextResponse.json({ error: denied }, { status: forbidden ? 403 : 400 });
-    }
+    const { data: app, error: appErr } = await getSupabaseAdmin()
+      .from("applications")
+      .select("offer_status")
+      .eq("id", row.application_id)
+      .maybeSingle();
+    if (appErr) throw new Error(appErr.message);
+    const denied = checkPayoutAction(ctx.perms, row, action, today, app?.offer_status === "accepted");
+    if (denied) return NextResponse.json({ error: denied.message }, { status: denied.code === "forbidden" ? 403 : 400 });
 
     const now = new Date().toISOString();
     const by = ctx.user.displayName;

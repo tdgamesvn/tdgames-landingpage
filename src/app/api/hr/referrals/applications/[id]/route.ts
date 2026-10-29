@@ -3,12 +3,14 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import {
   cancelOnLeave,
+  hasLockedPayout,
   parseAppReferralPatch,
   rescheduleDueDates,
   resolveBeneficiary,
   type PayoutLite,
 } from "@/lib/referral-commission";
 import {
+  deleteOpenPayouts,
   effectiveStartDate,
   loadPayouts,
   loadPlacement,
@@ -88,6 +90,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
     let referredBy = (app.referred_by as string | null) ?? null;
     let needSync = patch.recalc === true;
+    const changingReferrer = patch.referred_by !== undefined && patch.referred_by !== referredBy;
+    if (changingReferrer && hasLockedPayout(await loadPayouts(id))) {
+      return NextResponse.json({ error: "Hồ sơ đã có hoa hồng được duyệt/đã trả — không đổi người giới thiệu được" }, { status: 409 });
+    }
 
     if (patch.start_date !== undefined) {
       await savePlacement(id, { start_date: patch.start_date, start_confirmed: patch.start_date !== null });
@@ -111,7 +117,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
     }
 
-    if (patch.referred_by !== undefined && patch.referred_by !== referredBy) {
+    if (changingReferrer) {
+      // Bỏ hết khoản chưa duyệt của người cũ trước (kể cả khi mã mới không ai hưởng) rồi mới sinh lại.
+      await deleteOpenPayouts(id);
       const { error } = await getSupabaseAdmin().from("applications").update({ referred_by: patch.referred_by }).eq("id", id);
       if (error) throw new Error(error.message);
       await savePlacement(id, {}, {
@@ -121,7 +129,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         old: referredBy,
         new: patch.referred_by,
       });
-      referredBy = patch.referred_by;
+      referredBy = patch.referred_by ?? null;
       needSync = true;
     }
 

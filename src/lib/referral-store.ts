@@ -13,6 +13,7 @@ import {
   REFERRAL_DEFAULTS_KEY,
   approvedBaseSalary,
   effectiveStatus,
+  bankChangedRecent,
   isCommissionable,
   milestoneLabel,
   payoutNeedsAttention,
@@ -273,6 +274,8 @@ export type PayoutView = Omit<PayoutRow, "status" | "edits"> & {
   due_estimated: boolean;
   candidate_name: string;
   job_title: string;
+  bank_changed_recent: boolean;
+  bank_changed_by: string | null;
   needs_attention: boolean;
   attention_reason: "offer_changed" | null;
   edits: unknown[];
@@ -292,6 +295,13 @@ async function toPayoutViews(rows: PayoutRow[], today: string): Promise<PayoutVi
   if (jobRes.error) throw new Error(`toPayoutViews.jobs: ${jobRes.error.message}`);
   const apps = new Map((appRes.data ?? []).map((a) => [a.id as string, a as { full_name: string | null; offer_status: string | null }]));
   const jobs = new Map((jobRes.data ?? []).map((j) => [j.id as string, String(j.title ?? "")]));
+  const refIds = [...new Set(rows.map((r) => r.referrer_id).filter((x): x is string => !!x))];
+  const refRes = refIds.length
+    ? await db.from("referrers").select("id, bank_changed_at, bank_changed_by").in("id", refIds)
+    : { data: [], error: null };
+  if (refRes.error) throw new Error(`toPayoutViews.referrers: ${refRes.error.message}`);
+  const banks = new Map((refRes.data ?? []).map((x) => [x.id as string, x as { bank_changed_at: string | null; bank_changed_by: string | null }]));
+  const nowMs = Date.now();
   const { data: pl, error: plErr } = await db
     .from("referral_placements")
     .select("application_id, start_confirmed")
@@ -308,6 +318,8 @@ async function toPayoutViews(rows: PayoutRow[], today: string): Promise<PayoutVi
       due_estimated: r.due_date !== null && confirmed.get(r.application_id) !== true,
       candidate_name: app?.full_name ?? "",
       job_title: r.job_id ? (jobs.get(r.job_id) ?? "") : "",
+      bank_changed_recent: r.referrer_id ? bankChangedRecent(banks.get(r.referrer_id)?.bank_changed_at ?? null, nowMs) : false,
+      bank_changed_by: r.referrer_id && bankChangedRecent(banks.get(r.referrer_id)?.bank_changed_at ?? null, nowMs) ? (banks.get(r.referrer_id)?.bank_changed_by ?? null) : null,
       needs_attention: attention,
       attention_reason: attention ? "offer_changed" : null,
     };
@@ -341,4 +353,16 @@ export async function savePlacement(
   if (historyEntry) row.history = [...(current?.history ?? []), historyEntry];
   const { error } = await getSupabaseAdmin().from("referral_placements").upsert(row, { onConflict: "application_id" });
   if (error) throw new Error(`savePlacement: ${error.message}`);
+}
+
+/** Xoá mọi khoản upcoming/due của hồ sơ (đổi người giới thiệu); không chạm approved/paid. Trả số dòng xoá. */
+export async function deleteOpenPayouts(appId: string): Promise<number> {
+  const { data, error } = await getSupabaseAdmin()
+    .from("referral_payouts")
+    .delete()
+    .eq("application_id", appId)
+    .in("status", ["upcoming", "due"])
+    .select("id");
+  if (error) throw new Error(`deleteOpenPayouts: ${error.message}`);
+  return data?.length ?? 0;
 }

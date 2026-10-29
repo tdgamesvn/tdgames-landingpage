@@ -13,6 +13,9 @@ create table if not exists public.referrers (
   note text not null default '',
   active boolean not null default true,
   rule jsonb,
+  history jsonb not null default '[]', -- nhật ký đổi bank_info / ref_codes / hr_user_id / kind / active
+  bank_changed_at timestamptz,
+  bank_changed_by text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

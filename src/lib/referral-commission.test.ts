@@ -11,6 +11,9 @@ import {
   type ReferrerInput,
   addMonthsClamped,
   filterPayouts,
+  hasLockedPayout,
+  referrerAuditEntries,
+  bankChangedRecent,
   referrerTotals,
   parseAppReferralPatch,
   payoutNeedsAttention,
@@ -178,17 +181,17 @@ test("offerTransition", () => {
 const HR = effectivePermissions("hr", []), ACC = effectivePermissions("accountant", []);
 const due = { status: "upcoming" as const, due_date: "2026-11-01", amount: 1_000_000 };
 test("checkPayoutAction", () => {
-  assert.equal(checkPayoutAction(HR, due, { action: "approve" }, "2026-11-01"), null);
-  assert.ok(checkPayoutAction(ACC, due, { action: "approve" }, "2026-11-01"));                       // Kế toán không xác nhận còn làm
-  assert.ok(checkPayoutAction(HR, { ...due, due_date: "2026-12-01" }, { action: "approve" }, "2026-11-01")); // chưa đến hạn
-  assert.ok(checkPayoutAction(HR, { ...due, amount: null }, { action: "approve" }, "2026-11-01"));   // Chưa đặt mức
-  assert.ok(checkPayoutAction(HR, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01"));
-  assert.equal(checkPayoutAction(ACC, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01"), null);
-  assert.ok(checkPayoutAction(ACC, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-02" }, "2026-11-01")); // ngày tương lai
-  assert.ok(checkPayoutAction(ACC, { ...due, status: "paid" }, { action: "edit", amount: 5 }, "2026-11-01"));
-  assert.equal(checkPayoutAction(ACC, { ...due, status: "paid" }, { action: "edit", note: "CK lần 2" }, "2026-11-01"), null);
-  assert.ok(checkPayoutAction(HR, { ...due, status: "paid" }, { action: "cancel", reason: "x" }, "2026-11-01"));
-  assert.ok(checkPayoutAction(HR, due, { action: "edit", amount: 5 }, "2026-11-01"));                  // HR không sửa tiền
+  assert.equal(checkPayoutAction(HR, due, { action: "approve" }, "2026-11-01", true), null);
+  assert.ok(checkPayoutAction(ACC, due, { action: "approve" }, "2026-11-01", true));                       // Kế toán không xác nhận còn làm
+  assert.ok(checkPayoutAction(HR, { ...due, due_date: "2026-12-01" }, { action: "approve" }, "2026-11-01", true)); // chưa đến hạn
+  assert.ok(checkPayoutAction(HR, { ...due, amount: null }, { action: "approve" }, "2026-11-01", true));   // Chưa đặt mức
+  assert.ok(checkPayoutAction(HR, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01", true));
+  assert.equal(checkPayoutAction(ACC, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01", true), null);
+  assert.ok(checkPayoutAction(ACC, { ...due, status: "approved" }, { action: "pay", paid_date: "2026-11-02" }, "2026-11-01", true)); // ngày tương lai
+  assert.ok(checkPayoutAction(ACC, { ...due, status: "paid" }, { action: "edit", amount: 5 }, "2026-11-01", true));
+  assert.equal(checkPayoutAction(ACC, { ...due, status: "paid" }, { action: "edit", note: "CK lần 2" }, "2026-11-01", true), null);
+  assert.ok(checkPayoutAction(HR, { ...due, status: "paid" }, { action: "cancel", reason: "x" }, "2026-11-01", true));
+  assert.ok(checkPayoutAction(HR, due, { action: "edit", amount: 5 }, "2026-11-01", true));                  // HR không sửa tiền
 });
 test("parsePayoutAction", () => {
   assert.ok("error" in parsePayoutAction({ action: "cancel", reason: "  " }));
@@ -312,4 +315,32 @@ test("payoutNeedsAttention: khoản approved mà offer không còn accepted", ()
   assert.equal(payoutNeedsAttention("approved", "accepted"), false);
   assert.equal(payoutNeedsAttention("paid", "declined"), false);
   assert.equal(payoutNeedsAttention("due", "declined"), false);
+});
+
+test("checkPayoutAction: offer không còn accepted → chặn duyệt/chuyển khoản, vẫn huỷ/ghi chú", () => {
+  const appr = { ...due, status: "approved" as const };
+  assert.equal(checkPayoutAction(HR, due, { action: "approve" }, "2026-11-01", false)?.code, "state");
+  assert.equal(checkPayoutAction(ACC, appr, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01", false)?.code, "state");
+  assert.equal(checkPayoutAction(HR, appr, { action: "cancel", reason: "x" }, "2026-11-01", false), null);
+  assert.equal(checkPayoutAction(ACC, appr, { action: "edit", note: "n" }, "2026-11-01", false), null);
+});
+test("checkPayoutAction: code forbidden vs state", () => {
+  assert.equal(checkPayoutAction(ACC, due, { action: "approve" }, "2026-11-01", true)?.code, "forbidden");
+  assert.equal(checkPayoutAction(HR, { ...due, amount: null }, { action: "approve" }, "2026-11-01", true)?.code, "state");
+});
+test("hasLockedPayout", () => {
+  assert.equal(hasLockedPayout([{ status: "due" }, { status: "cancelled" }]), false);
+  assert.equal(hasLockedPayout([{ status: "due" }, { status: "approved" }]), true);
+  assert.equal(hasLockedPayout([{ status: "paid" }]), true);
+});
+test("referrerAuditEntries + bankChangedRecent", () => {
+  const base = { bank_info: "VCB 1", ref_codes: ["a"], hr_user_id: null, kind: "external", active: true };
+  const e = referrerAuditEntries(base, { ...base, bank_info: "TCB 2", ref_codes: ["a", "b"] }, { id: "u1", name: "Phương" }, "2026-11-01T00:00:00Z");
+  assert.deepEqual(e.map((x) => x.field), ["bank_info", "ref_codes"]);
+  assert.deepEqual(e[0], { at: "2026-11-01T00:00:00Z", by_user_id: "u1", by_name: "Phương", field: "bank_info", old: "VCB 1", new: "TCB 2" });
+  assert.deepEqual(referrerAuditEntries(base, { ...base }, { id: null, name: "x" }, "t"), []);
+  const now = Date.parse("2026-11-30T00:00:00Z");
+  assert.equal(bankChangedRecent("2026-11-01T00:00:00Z", now), true);
+  assert.equal(bankChangedRecent("2026-10-01T00:00:00Z", now), false);
+  assert.equal(bankChangedRecent(null, now), false);
 });
