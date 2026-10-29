@@ -5,6 +5,12 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_RULES,
   addMonthsClamped,
+  cancelOnLeave,
+  cancellableIds,
+  offerTransition,
+  planPayouts,
+  rescheduleDueDates,
+  type PayoutLite,
   approvedBaseSalary,
   isCommissionable,
   pickRule,
@@ -107,4 +113,50 @@ test("isCommissionable + approvedBaseSalary", () => {
 test("unknownRefCodes: bỏ mã tài khoản + mã referrer (kể cả ngừng), gộp sau normalize", () => {
   assert.deepEqual(unknownRefCodes(["cat-tuong", "thaodtx", "dieu-anh", "Dieu Anh", null, "thuy-van", "freelancer"], staff, refs.filter((r) => r.id !== "r-cat")),
     [{ code: "dieu-anh", count: 2 }, { code: "cat-tuong", count: 1 }, { code: "freelancer", count: 1 }]);
+});
+
+const R = DEFAULT_RULES.internal!;
+test("planPayouts: sinh 2 mốc theo ngày đi làm", () => {
+  assert.deepEqual(planPayouts({ existing: [], rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: false }).inserts, [
+    { milestone_months: 1, percent: 50, amount: 1_000_000, amount_issue: null, due_date: "2026-02-28" },
+    { milestone_months: 2, percent: 50, amount: 1_000_000, amount_issue: null, due_date: "2026-03-31" }]);
+});
+test("planPayouts: nhận lại offer — không trùng mốc đã trả/đã duyệt, mốc đã huỷ được sinh lại", () => {
+  const existing: PayoutLite[] = [{ id: "a", milestone_months: 1, status: "paid", due_date: "2026-02-28" }, { id: "b", milestone_months: 2, status: "cancelled", due_date: "2026-03-31" }];
+  const r = planPayouts({ existing, rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: false });
+  assert.deepEqual(r.deleteIds, []);
+  assert.deepEqual(r.inserts.map((x) => x.milestone_months), [2]);
+});
+test("planPayouts: không quy tắc → 1 dòng Chưa đặt mức; thiếu ngày → due_date null; thiếu lương", () => {
+  assert.deepEqual(planPayouts({ existing: [], rule: null, baseSalary: null, startDate: null, leftDate: null, replaceOpen: false }).inserts,
+    [{ milestone_months: 0, percent: 100, amount: null, amount_issue: "no_rule", due_date: null }]);
+  const sm: CommissionRule = { amount: { type: "salary_multiple", multiple: 1 }, schedule: [{ months: 2, percent: 100 }] };
+  assert.equal(planPayouts({ existing: [], rule: sm, baseSalary: null, startDate: "2026-11-02", leftDate: null, replaceOpen: false }).inserts[0].amount_issue, "no_salary");
+});
+test("planPayouts: Tính lại xoá upcoming/due, giữ approved/paid; bỏ mốc sau ngày nghỉ", () => {
+  const existing: PayoutLite[] = [{ id: "p", milestone_months: 0, status: "upcoming", due_date: null }, { id: "q", milestone_months: 1, status: "approved", due_date: "2026-02-28" }];
+  const r = planPayouts({ existing, rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: "2026-03-30", replaceOpen: true });
+  assert.deepEqual(r.deleteIds, ["p"]);
+  assert.deepEqual(r.inserts, []);   // mốc 1 đã approved; mốc 2 (31/3) sau ngày nghỉ 30/3
+});
+test("cancelOnLeave: nghỉ đúng ngày đến hạn vẫn giữ; không đụng paid/cancelled/chưa có ngày", () => {
+  const ps: PayoutLite[] = [
+    { id: "m1", milestone_months: 1, status: "due", due_date: "2026-02-28" },
+    { id: "m2", milestone_months: 2, status: "upcoming", due_date: "2026-03-31" },
+    { id: "m3", milestone_months: 3, status: "paid", due_date: "2026-04-30" },
+    { id: "m4", milestone_months: 4, status: "upcoming", due_date: null }];
+  assert.deepEqual(cancelOnLeave(ps, "2026-02-28"), ["m2"]);
+  assert.deepEqual(cancellableIds(ps), ["m1", "m2", "m4"]);
+});
+test("rescheduleDueDates: chỉ upcoming/due, chỉ dòng đổi ngày", () => {
+  const ps: PayoutLite[] = [{ id: "x", milestone_months: 1, status: "upcoming", due_date: null }, { id: "y", milestone_months: 2, status: "approved", due_date: "2026-03-31" }];
+  assert.deepEqual(rescheduleDueDates(ps, "2026-01-31"), [{ id: "x", due_date: "2026-02-28" }]);
+});
+test("offerTransition", () => {
+  assert.equal(offerTransition("pending", "accepted"), "generate");
+  assert.equal(offerTransition(null, "accepted"), "generate");
+  assert.equal(offerTransition("accepted", "declined"), "cancel");
+  assert.equal(offerTransition("accepted", null), "cancel");
+  assert.equal(offerTransition("accepted", "accepted"), null);
+  assert.equal(offerTransition("pending", "declined"), null);
 });

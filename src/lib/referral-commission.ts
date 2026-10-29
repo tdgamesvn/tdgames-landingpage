@@ -220,3 +220,74 @@ export function unknownRefCodes(
   }
   return [...counts].map(([code, count]) => ({ code, count })).sort((a, b) => b.count - a.count || a.code.localeCompare(b.code));
 }
+
+// ── Lập kế hoạch khoản ─────────────────────────────────────────────────────
+
+export type PayoutLite = { id: string; milestone_months: number; status: PayoutStatus; due_date: string | null };
+export type PayoutDraft = {
+  milestone_months: number;
+  percent: number;
+  amount: number | null;
+  amount_issue: AmountIssue | null;
+  due_date: string | null;
+};
+
+const OPEN: PayoutStatus[] = ["upcoming", "due"];
+
+/**
+ * Các khoản cần sinh mới + id cần xoá. replaceOpen (nút "Tính lại") xoá upcoming/due rồi sinh lại;
+ * mốc đã có (approved/paid/…, trừ cancelled) không sinh trùng; mốc đến hạn sau ngày nghỉ bị bỏ.
+ * Không có quy tắc → 1 dòng "Chưa đặt mức" (mốc 0, 100%).
+ */
+export function planPayouts(i: {
+  existing: PayoutLite[];
+  rule: CommissionRule | null;
+  baseSalary: number | null;
+  startDate: string | null;
+  leftDate: string | null;
+  replaceOpen: boolean;
+}): { deleteIds: string[]; inserts: PayoutDraft[] } {
+  const deleteIds = i.replaceOpen ? i.existing.filter((p) => OPEN.includes(p.status)).map((p) => p.id) : [];
+  const taken = new Set(
+    i.existing.filter((p) => p.status !== "cancelled" && !deleteIds.includes(p.id)).map((p) => p.milestone_months),
+  );
+  const { amount, issue } = computeAmount(i.rule, i.baseSalary);
+  const schedule = i.rule ? i.rule.schedule : [{ months: 0, percent: 100 }];
+  const inserts: PayoutDraft[] = [];
+  for (const s of splitSchedule(amount, schedule)) {
+    if (taken.has(s.months)) continue;
+    const due = i.startDate ? addMonthsClamped(i.startDate, s.months) : null;
+    if (i.leftDate && due && due > i.leftDate) continue;
+    inserts.push({ milestone_months: s.months, percent: s.percent, amount: s.amount, amount_issue: issue, due_date: due });
+  }
+  return { deleteIds, inserts };
+}
+
+/** Đổi ngày đi làm → ngày đến hạn mới của khoản upcoming/due (chỉ dòng đổi ngày). Route ghi kèm status "upcoming". */
+export function rescheduleDueDates(existing: PayoutLite[], startDate: string | null): { id: string; due_date: string | null }[] {
+  const out: { id: string; due_date: string | null }[] = [];
+  for (const p of existing) {
+    if (!OPEN.includes(p.status)) continue;
+    const due = startDate ? addMonthsClamped(startDate, p.milestone_months) : null;
+    if (due !== p.due_date) out.push({ id: p.id, due_date: due });
+  }
+  return out;
+}
+
+/** UV nghỉ: khoản chưa trả có ngày đến hạn SAU ngày nghỉ bị huỷ (nghỉ đúng ngày đến hạn vẫn đủ mốc). */
+export function cancelOnLeave(existing: PayoutLite[], leftDate: string): string[] {
+  return existing
+    .filter((p) => p.status !== "paid" && p.status !== "cancelled" && p.due_date !== null && p.due_date > leftDate)
+    .map((p) => p.id);
+}
+
+/** Khoản còn huỷ được (offer bị rút): upcoming | due | approved. */
+export function cancellableIds(existing: PayoutLite[]): string[] {
+  return existing.filter((p) => p.status === "upcoming" || p.status === "due" || p.status === "approved").map((p) => p.id);
+}
+
+export function offerTransition(oldStatus: string | null, newStatus: string | null): "generate" | "cancel" | null {
+  if (oldStatus !== "accepted" && newStatus === "accepted") return "generate";
+  if (oldStatus === "accepted" && newStatus !== "accepted") return "cancel";
+  return null;
+}
