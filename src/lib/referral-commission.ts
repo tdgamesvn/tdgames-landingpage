@@ -92,8 +92,10 @@ function daysInMonth(y: number, m: number): number {
 }
 
 /** Cộng n tháng vào YYYY-MM-DD, kẹp cuối tháng (31/1 + 1 → 28/2). Không dùng Date (tránh lệch múi giờ). */
-export function addMonthsClamped(ymd: string, n: number): string {
+export function addMonthsClamped(ymd: string, n: number): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
   const [y0, m, d] = ymd.split("-").map(Number);
+  if (m < 1 || m > 12 || d < 1 || d > daysInMonth(y0, m)) return null;
   const m0 = m - 1 + n;
   const y = y0 + Math.floor(m0 / 12);
   const mm = (((m0 % 12) + 12) % 12) + 1;
@@ -123,7 +125,8 @@ export function computeAmount(
   if (!rule) return { amount: null, issue: "no_rule" };
   if (rule.amount.type === "fixed") return { amount: rule.amount.vnd, issue: null };
   if (baseSalary === null || !(baseSalary > 0)) return { amount: null, issue: "no_salary" };
-  return { amount: Math.floor(rule.amount.multiple * baseSalary), issue: null };
+  // Số nguyên (multiple có ≤ 2 chữ số thập phân) — tránh sai số float làm hụt 1 đồng.
+  return { amount: Math.floor((Math.round(rule.amount.multiple * 100) * baseSalary) / 100), issue: null };
 }
 
 /** Trạng thái hiển thị: upcoming đã tới hạn (≤ hôm nay) → due (phòng cron lỗi). */
@@ -165,7 +168,9 @@ export function resolveBeneficiary(code: unknown, staff: StaffLite[], referrers:
   if (!c) return null;
   const owner = resolveRefOwner(c, staff);
   if (owner) {
-    const r = referrers.find((x) => x.active && x.hr_user_id === owner.id);
+    const linked = referrers.find((x) => x.hr_user_id === owner.id);
+    if (linked && !linked.active) return null; // ngừng hoạt động → không hưởng, kể cả Kế toán
+    const r = linked;
     if (r) return { referrerId: r.id, hrUserId: owner.id, name: r.name, kind: r.kind ?? "internal", override: r.rule };
     if (owner.role === "accountant") {
       return { referrerId: null, hrUserId: owner.id, name: owner.display_name, kind: "internal", override: null };
@@ -224,13 +229,34 @@ export function unknownRefCodes(
 
 // ── Lập kế hoạch khoản ─────────────────────────────────────────────────────
 
-export type PayoutLite = { id: string; milestone_months: number; status: PayoutStatus; due_date: string | null };
+/**
+ * rule_key = ruleKey(quy tắc lúc sinh) lưu trên dòng khoản; amount_edited = đã sửa tay số tiền;
+ * amount_issue = lý do chưa có số tiền (placeholder "Chưa đặt mức"). Thiếu → coi như không rõ nguồn.
+ */
+export type PayoutLite = {
+  id: string;
+  milestone_months: number;
+  status: PayoutStatus;
+  due_date: string | null;
+  rule_key?: string | null;
+  amount_edited?: boolean;
+  amount_issue?: AmountIssue | null;
+};
+
+/** Khoá ổn định của quy tắc (snapshot so sánh giữa các lần sinh); null → null. */
+export function ruleKey(rule: CommissionRule | null): string | null {
+  if (!rule) return null;
+  const a = rule.amount.type === "fixed" ? { type: "fixed", vnd: rule.amount.vnd } : { type: "salary_multiple", multiple: rule.amount.multiple };
+  const schedule = [...rule.schedule].sort((x, y) => x.months - y.months).map((x) => ({ months: x.months, percent: x.percent }));
+  return JSON.stringify({ amount: a, schedule });
+}
 export type PayoutDraft = {
   milestone_months: number;
   percent: number;
   amount: number | null;
   amount_issue: AmountIssue | null;
   due_date: string | null;
+  rule_key: string | null;
 };
 
 const OPEN: PayoutStatus[] = ["upcoming", "due"];
@@ -247,11 +273,20 @@ export function planPayouts(i: {
   startDate: string | null;
   leftDate: string | null;
   replaceOpen: boolean;
-}): { deleteIds: string[]; inserts: PayoutDraft[] } {
+}): { deleteIds: string[]; inserts: PayoutDraft[]; needsManual: boolean } {
   const deleteIds = i.replaceOpen ? i.existing.filter((p) => OPEN.includes(p.status)).map((p) => p.id) : [];
   const taken = new Set(
     i.existing.filter((p) => p.status !== "cancelled" && !deleteIds.includes(p.id)).map((p) => p.milestone_months),
   );
+  // Đã có khoản approved/paid: chỉ sinh bù khi tất cả cùng snapshot quy tắc hiện tại, không sửa tay, không phải
+  // placeholder; ngược lại giữ nguyên và báo cần xử lý tay (tránh trả chồng).
+  const key = ruleKey(i.rule);
+  const locked = i.existing.filter((p) => p.status === "approved" || p.status === "paid");
+  if (locked.length && (key === null || locked.some((p) => p.rule_key !== key || p.amount_edited || p.amount_issue))) {
+    return { deleteIds, inserts: [], needsManual: true };
+  }
+  // Đã nghỉ nhưng chưa có ngày đi làm → không biết mốc nào còn hiệu lực: không sinh.
+  if (i.leftDate && !i.startDate) return { deleteIds, inserts: [], needsManual: false };
   const { amount, issue } = computeAmount(i.rule, i.baseSalary);
   const schedule = i.rule ? i.rule.schedule : [{ months: 0, percent: 100 }];
   const inserts: PayoutDraft[] = [];
@@ -259,9 +294,9 @@ export function planPayouts(i: {
     if (taken.has(s.months)) continue;
     const due = i.startDate ? addMonthsClamped(i.startDate, s.months) : null;
     if (i.leftDate && due && due > i.leftDate) continue;
-    inserts.push({ milestone_months: s.months, percent: s.percent, amount: s.amount, amount_issue: issue, due_date: due });
+    inserts.push({ milestone_months: s.months, percent: s.percent, amount: s.amount, amount_issue: issue, due_date: due, rule_key: key });
   }
-  return { deleteIds, inserts };
+  return { deleteIds, inserts, needsManual: false };
 }
 
 /** Đổi ngày đi làm → ngày đến hạn mới của khoản upcoming/due (chỉ dòng đổi ngày). Route ghi kèm status "upcoming". */
@@ -433,7 +468,7 @@ export function parseReferrerInput(
   if (v.active !== undefined && typeof v.active !== "boolean") return bad("Trạng thái hoạt động không hợp lệ");
   return {
     name,
-    kind,
+    kind: hrUserId !== null ? "internal" : kind,
     ref_codes: codes,
     hr_user_id: hrUserId,
     phone: phone as string,

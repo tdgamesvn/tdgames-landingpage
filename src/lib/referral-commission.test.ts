@@ -14,6 +14,7 @@ import {
   cancellableIds,
   offerTransition,
   planPayouts,
+  ruleKey,
   rescheduleDueDates,
   type PayoutLite,
   approvedBaseSalary,
@@ -122,27 +123,29 @@ test("unknownRefCodes: bỏ mã tài khoản + mã referrer (kể cả ngừng),
 
 const R = DEFAULT_RULES.internal!;
 test("planPayouts: sinh 2 mốc theo ngày đi làm", () => {
+  const k = ruleKey(R);
   assert.deepEqual(planPayouts({ existing: [], rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: false }).inserts, [
-    { milestone_months: 1, percent: 50, amount: 1_000_000, amount_issue: null, due_date: "2026-02-28" },
-    { milestone_months: 2, percent: 50, amount: 1_000_000, amount_issue: null, due_date: "2026-03-31" }]);
+    { milestone_months: 1, percent: 50, amount: 1_000_000, amount_issue: null, due_date: "2026-02-28", rule_key: k },
+    { milestone_months: 2, percent: 50, amount: 1_000_000, amount_issue: null, due_date: "2026-03-31", rule_key: k }]);
 });
 test("planPayouts: nhận lại offer — không trùng mốc đã trả/đã duyệt, mốc đã huỷ được sinh lại", () => {
-  const existing: PayoutLite[] = [{ id: "a", milestone_months: 1, status: "paid", due_date: "2026-02-28" }, { id: "b", milestone_months: 2, status: "cancelled", due_date: "2026-03-31" }];
+  const existing: PayoutLite[] = [{ id: "a", milestone_months: 1, status: "paid", due_date: "2026-02-28", rule_key: ruleKey(R) }, { id: "b", milestone_months: 2, status: "cancelled", due_date: "2026-03-31" }];
   const r = planPayouts({ existing, rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: false });
   assert.deepEqual(r.deleteIds, []);
   assert.deepEqual(r.inserts.map((x) => x.milestone_months), [2]);
 });
 test("planPayouts: không quy tắc → 1 dòng Chưa đặt mức; thiếu ngày → due_date null; thiếu lương", () => {
   assert.deepEqual(planPayouts({ existing: [], rule: null, baseSalary: null, startDate: null, leftDate: null, replaceOpen: false }).inserts,
-    [{ milestone_months: 0, percent: 100, amount: null, amount_issue: "no_rule", due_date: null }]);
+    [{ milestone_months: 0, percent: 100, amount: null, amount_issue: "no_rule", due_date: null, rule_key: null }]);
   const sm: CommissionRule = { amount: { type: "salary_multiple", multiple: 1 }, schedule: [{ months: 2, percent: 100 }] };
   assert.equal(planPayouts({ existing: [], rule: sm, baseSalary: null, startDate: "2026-11-02", leftDate: null, replaceOpen: false }).inserts[0].amount_issue, "no_salary");
 });
 test("planPayouts: Tính lại xoá upcoming/due, giữ approved/paid; bỏ mốc sau ngày nghỉ", () => {
-  const existing: PayoutLite[] = [{ id: "p", milestone_months: 0, status: "upcoming", due_date: null }, { id: "q", milestone_months: 1, status: "approved", due_date: "2026-02-28" }];
+  const existing: PayoutLite[] = [{ id: "p", milestone_months: 0, status: "upcoming", due_date: null }, { id: "q", milestone_months: 1, status: "approved", due_date: "2026-02-28", rule_key: ruleKey(R) }];
   const r = planPayouts({ existing, rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: "2026-03-30", replaceOpen: true });
   assert.deepEqual(r.deleteIds, ["p"]);
-  assert.deepEqual(r.inserts, []);   // mốc 1 đã approved; mốc 2 (31/3) sau ngày nghỉ 30/3
+  assert.deepEqual(r.inserts, []);
+  assert.equal(r.needsManual, false);   // mốc 1 đã approved; mốc 2 (31/3) sau ngày nghỉ 30/3
 });
 test("cancelOnLeave: nghỉ đúng ngày đến hạn vẫn giữ; không đụng paid/cancelled/chưa có ngày", () => {
   const ps: PayoutLite[] = [
@@ -195,4 +198,57 @@ test("parseReferrerInput: trùng mã tài khoản/referrer → 409; gắn tài k
   assert.equal((parseReferrerInput({ name: "Phương", kind: "internal", ref_codes: ["x"], hr_user_id: "u-phuong" }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400);
   assert.equal((parseReferrerInput({ name: "", ref_codes: ["a"] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400);
   assert.equal((parseReferrerInput({ name: "A", ref_codes: [] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400); // không gắn tài khoản thì phải có ≥1 mã
+});
+
+test("computeAmount: số nguyên, không hụt 1 đồng do float", () => {
+  const sm = (m: number): CommissionRule => ({ amount: { type: "salary_multiple", multiple: m }, schedule: [{ months: 2, percent: 100 }] });
+  assert.equal(computeAmount(sm(0.29), 12_500_000).amount, 3_625_000);
+  assert.equal(computeAmount(sm(0.41), 10_000_000).amount, 4_100_000);
+  for (let c = 1; c <= 300; c++) {
+    const exact = Number((BigInt(c) * BigInt(12_500_000)) / BigInt(100));
+    assert.equal(computeAmount(sm(c / 100), 12_500_000).amount, exact, `multiple ${c / 100}`);
+  }
+});
+test("addMonthsClamped: input sai định dạng → null", () => {
+  assert.equal(addMonthsClamped("2026-01-31T00:00:00Z", 1), null);
+  assert.equal(addMonthsClamped("2026-02-30", 1), null);
+  assert.equal(addMonthsClamped("abc", 1), null);
+});
+test("planPayouts: placeholder đã trả → Tính lại không sinh, cần xử lý tay", () => {
+  const existing: PayoutLite[] = [{ id: "ph", milestone_months: 0, status: "paid", due_date: null, rule_key: null, amount_issue: "no_rule", amount_edited: true }];
+  const r = planPayouts({ existing, rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: true });
+  assert.deepEqual(r.inserts, []);
+  assert.equal(r.needsManual, true);
+});
+test("planPayouts: quy tắc đổi sau khi đã trả mốc 1 → không sinh, cần xử lý tay", () => {
+  const existing: PayoutLite[] = [{ id: "a", milestone_months: 1, status: "paid", due_date: "2026-02-28", rule_key: ruleKey(R) }];
+  const nu: CommissionRule = { amount: { type: "fixed", vnd: 3_000_000 }, schedule: [{ months: 2, percent: 100 }] };
+  const r = planPayouts({ existing, rule: nu, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: false });
+  assert.deepEqual(r.inserts, []);
+  assert.equal(r.needsManual, true);
+});
+test("planPayouts: khoản đã trả bị sửa tay số tiền → cần xử lý tay", () => {
+  const existing: PayoutLite[] = [{ id: "a", milestone_months: 1, status: "paid", due_date: "2026-02-28", rule_key: ruleKey(R), amount_edited: true }];
+  const r = planPayouts({ existing, rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: false });
+  assert.equal(r.needsManual, true);
+  assert.deepEqual(r.inserts, []);
+});
+test("planPayouts: cùng quy tắc, offer huỷ rồi nhận lại sau khi mốc 1 đã trả → chỉ sinh mốc 2", () => {
+  const existing: PayoutLite[] = [
+    { id: "a", milestone_months: 1, status: "paid", due_date: "2026-02-28", rule_key: ruleKey(R) },
+    { id: "b", milestone_months: 2, status: "cancelled", due_date: "2026-03-31", rule_key: ruleKey(R) }];
+  const r = planPayouts({ existing, rule: R, baseSalary: null, startDate: "2026-01-31", leftDate: null, replaceOpen: false });
+  assert.deepEqual(r.inserts.map((x) => x.milestone_months), [2]);
+  assert.equal(r.needsManual, false);
+});
+test("planPayouts: có ngày nghỉ mà chưa có ngày đi làm → không sinh", () => {
+  assert.deepEqual(planPayouts({ existing: [], rule: R, baseSalary: null, startDate: null, leftDate: "2026-01-01", replaceOpen: false }).inserts, []);
+});
+test("resolveBeneficiary: referrer gắn tài khoản bị ngừng → không hưởng, kể cả Kế toán", () => {
+  const off: ReferrerLite[] = [{ id: "r-t", name: "Thảo", kind: null, ref_codes: [], hr_user_id: "u-thao", active: false, rule: null }];
+  assert.equal(resolveBeneficiary("thaodtx", staff, off), null);
+});
+test("parseReferrerInput: gắn tài khoản → kind ép về internal", () => {
+  const r = parseReferrerInput({ name: "Phương", kind: "external", hr_user_id: "u-phuong" }, { staff, referrers: refs, selfId: null }) as ReferrerInput;
+  assert.equal(r.kind, "internal");
 });
