@@ -29,6 +29,7 @@ import {
   parseDefaultRules,
   parseRule,
   splitSchedule,
+  statusAfterDueEdit,
   type CommissionRule,
 } from "./referral-commission.ts";
 
@@ -251,4 +252,13 @@ test("resolveBeneficiary: referrer gắn tài khoản bị ngừng → không h�
 test("parseReferrerInput: gắn tài khoản → kind ép về internal", () => {
   const r = parseReferrerInput({ name: "Phương", kind: "external", hr_user_id: "u-phuong" }, { staff, referrers: refs, selfId: null }) as ReferrerInput;
   assert.equal(r.kind, "internal");
+});
+
+test("statusAfterDueEdit: đổi hạn → due/upcoming theo hôm nay; approved/paid giữ nguyên", () => {
+  assert.equal(statusAfterDueEdit("due", "2026-12-01", "2026-11-01"), "upcoming");
+  assert.equal(statusAfterDueEdit("upcoming", "2026-10-01", "2026-11-01"), "due");
+  assert.equal(statusAfterDueEdit("upcoming", "2026-11-01", "2026-11-01"), "due");
+  assert.equal(statusAfterDueEdit("due", null, "2026-11-01"), "upcoming");
+  assert.equal(statusAfterDueEdit("approved", "2027-01-01", "2026-11-01"), "approved");
+  assert.equal(statusAfterDueEdit("paid", "2027-01-01", "2026-11-01"), "paid");
 });

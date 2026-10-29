@@ -134,6 +134,12 @@ export function effectiveStatus(p: { status: PayoutStatus; due_date: string | nu
   return p.status === "upcoming" && p.due_date !== null && p.due_date <= today ? "due" : p.status;
 }
 
+/** Trạng thái sau khi sửa hạn: upcoming/due tính lại theo hạn mới (hạn ≤ hôm nay → due, còn lại upcoming); approved/paid/cancelled giữ nguyên. */
+export function statusAfterDueEdit(status: PayoutStatus, newDue: string | null, today: string): PayoutStatus {
+  if (status !== "upcoming" && status !== "due") return status;
+  return newDue !== null && newDue <= today ? "due" : "upcoming";
+}
+
 export function milestoneLabel(months: number): string {
   return months === 0 ? "Ngay khi đi làm" : `Đủ ${months} tháng`;
 }

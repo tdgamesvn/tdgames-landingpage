@@ -5,6 +5,8 @@ import { checkAppPatch, OFFER_STATUSES } from "@/lib/hr-app-patch";
 import { notifyApplicationUpdate } from "@/lib/hr-notify";
 import { redactApplication } from "@/lib/hr-scope";
 import { loadAssignableMembers } from "@/lib/hr-comment-members";
+import { cancellableIds, offerTransition } from "@/lib/referral-commission";
+import { loadPayouts, setPayoutStatus, syncApplicationPayouts } from "@/lib/referral-store";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -153,6 +155,23 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Hoa hồng giới thiệu: nhận offer → sinh khoản; offer không còn "Đã nhận" → huỷ khoản chưa trả.
+  // Lỗi chỉ ghi log — không làm hỏng việc đổi kết quả offer.
+  if ("offer_status" in allowed) {
+    try {
+      const transition = offerTransition(oldApp.offer_status, allowed.offer_status as string | null);
+      if (transition === "generate") {
+        const r = await syncApplicationPayouts(id, { replaceOpen: false });
+        if (r.needsManual) console.error(`[referral] hồ sơ ${id}: cần Sếp/Kế toán xử lý tay khoản hoa hồng đã duyệt/đã trả`);
+      } else if (transition === "cancel") {
+        const ids = cancellableIds(await loadPayouts(id));
+        await setPayoutStatus(ids, "cancelled", "Offer không còn ở Đã nhận");
+      }
+    } catch (e) {
+      console.error("[referral] không cập nhật được khoản hoa hồng", id, e);
+    }
+  }
 
   // Fire-and-forget Discord notification
   if (oldApp) {
