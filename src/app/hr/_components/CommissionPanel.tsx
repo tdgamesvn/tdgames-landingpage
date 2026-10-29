@@ -61,7 +61,12 @@ export default function CommissionPanel() {
           ))}
         </div>
       </div>
-      {loadError && <p role="alert" className="text-[13px] text-red-400">{loadError}</p>}
+      {loadError && (
+        <p role="alert" className="text-[13px] text-red-400">
+          {loadError}{" "}
+          <button type="button" className="underline" onClick={() => void load()}>Thử lại</button>
+        </p>
+      )}
       {!data && !loadError && <p className="text-[13px] text-white/50">Đang tải…</p>}
       {data && section === "payouts" && <CommissionPayouts payouts={data.payouts} referrers={data.referrers} today={data.today} onPayout={onPayoutAndReload} />}
       {data && section === "referrers" && <CommissionReferrers referrers={data.referrers} unknownCodes={data.unknownCodes} onReload={load} />}
@@ -185,6 +190,42 @@ export function JobRulesFields({ jobId }: { jobId: string | null }) {
   );
 }
 
+/** Ô ngày chỉ ghi khi bấm "Lưu": đủ YYYY-MM-DD, năm ≥ 2020 (hoặc rỗng để xoá). */
+function DateField(p: {
+  label: string;
+  saved: string;
+  hint?: string;
+  canEdit: boolean;
+  busy: boolean;
+  confirmText?: string;
+  onSave: (d: string | null) => Promise<void>;
+}) {
+  const [val, setVal] = useState(p.saved);
+  useEffect(() => setVal(p.saved), [p.saved]);
+  const valid = val === "" || (/^\d{4}-\d{2}-\d{2}$/.test(val) && Number(val.slice(0, 4)) >= 2020);
+  const dirty = val !== p.saved;
+  return (
+    <label className="flex flex-wrap items-center gap-2 text-[13px] text-white/60">
+      {p.label}
+      <input type="date" className={inputCls} value={val} min="2020-01-01" disabled={!p.canEdit || p.busy} onChange={(e) => setVal(e.target.value)} />
+      {p.canEdit && dirty && (
+        <button
+          type="button"
+          disabled={!valid || p.busy}
+          className="hr-secondary-btn hr-secondary-btn--sm"
+          onClick={() => {
+            if (val !== "" && p.confirmText && !confirm(p.confirmText)) return;
+            void p.onSave(val || null);
+          }}
+        >
+          Lưu
+        </button>
+      )}
+      {p.hint && <span className="text-[11px] text-white/40">{p.hint}</span>}
+    </label>
+  );
+}
+
 type AppReferral = {
   referred_by: string | null;
   beneficiary: { name: string; kind: "internal" | "external" | null } | null;
@@ -238,13 +279,6 @@ export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offe
     else if (okText) setNote({ manual: false, text: okText });
   }
 
-  const dateRow = (label: string, value: string, onSet: (d: string | null) => void, hint?: string) => (
-    <label className="flex flex-wrap items-center gap-2 text-[13px] text-white/60">
-      {label}
-      <input type="date" className={inputCls} value={value} disabled={!canManage || busy} onChange={(e) => onSet(e.target.value || null)} />
-      {hint && <span className="text-[11px] text-white/40">{hint}</span>}
-    </label>
-  );
 
   return (
     <div className="space-y-2 border-t border-white/10 pt-3" data-testid="referral-offer-block">
@@ -258,13 +292,22 @@ export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offe
             {" · "}Hoa hồng: {v.payoutCount > 0 ? `${v.payoutCount} mốc` : "không có"}
           </p>
           {v.referred_by && <p className="text-[12px] text-white/45">Mã ref trên hồ sơ: <code>{v.referred_by}</code></p>}
-          {dateRow(
-            "Ngày đi làm thực tế",
-            v.start.date ?? "",
-            (d) => void patch({ start_date: d }),
-            v.start.confirmed ? undefined : "dự kiến từ thư mời",
-          )}
-          {dateRow("Ngày nghỉ việc", v.left_date ?? "", (d) => void patch({ left_date: d }))}
+          <DateField
+            label="Ngày đi làm thực tế"
+            saved={v.start.date ?? ""}
+            hint={v.start.confirmed ? undefined : "dự kiến từ thư mời"}
+            canEdit={canManage}
+            busy={busy}
+            onSave={(d) => patch({ start_date: d })}
+          />
+          <DateField
+            label="Ngày nghỉ việc"
+            saved={v.left_date ?? ""}
+            canEdit={canManage}
+            busy={busy}
+            confirmText="Các khoản chưa duyệt có hạn sau ngày nghỉ sẽ bị huỷ — tiếp tục?"
+            onSave={(d) => patch({ left_date: d })}
+          />
           {canManage && (
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex items-center gap-2 text-[13px] text-white/60">

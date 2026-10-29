@@ -235,6 +235,9 @@ export default function CommissionPayouts({
                     </div>
                     {isOpen && open?.kind === "pay" && (
                       <div className="mt-2 space-y-2 text-right">
+                        {p.bank_changed_recent && (
+                          <p className={warnCls}>TK nhận tiền vừa đổi bởi {p.bank_changed_by ?? "ai đó"} — kiểm tra trước khi chuyển</p>
+                        )}
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           <label className="text-[12px] text-white/60">Ngày chuyển <input type="date" className={inputCls} value={fDate} max={today} onChange={(e) => setFDate(e.target.value)} /></label>
                           <button type="button" disabled={busy === p.id || !fDate} className="hr-primary-btn h-8 px-3 text-[12px] font-semibold" onClick={() => void send(p, { action: "pay", paid_date: fDate })}>Xác nhận</button>

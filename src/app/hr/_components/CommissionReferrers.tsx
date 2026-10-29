@@ -147,7 +147,7 @@ export default function CommissionReferrers({
                 <>
                   <select className={inputCls} value={mergeTo} onChange={(e) => setMergeTo(e.target.value)} aria-label="Gộp vào người">
                     <option value="">Chọn người giới thiệu</option>
-                    {referrers.filter((r) => !r.hr_user_id).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    {referrers.filter((r) => !r.hr_user_id && r.active).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
                   <button type="button" disabled={!mergeTo || busy} className="hr-primary-btn h-8 px-3 text-[12px] font-semibold" onClick={() => void merge(u.code)}>Gộp</button>
                 </>
