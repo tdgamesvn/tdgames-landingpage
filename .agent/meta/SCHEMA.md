@@ -157,3 +157,9 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 ## Mail cảm ơn ứng tuyển (2026-10-28, migration `20261028030000_application_received_mail` — chưa áp prod)
 - CHECK `kind` của `candidate_emails` (`candidate_emails_kind_check`) và `hr_email_templates` (`hr_email_templates_kind_check`) thêm `application_received`.
 - `app_settings` key `hr_auto_ack`: giá trị `off` = tắt tự gửi; không có dòng = bật.
+
+## Hoa hồng giới thiệu (2026-10-29, migration `20261029000000_referral_commissions` — ĐÃ áp prod 2026-10-29)
+- `referrers`: name, kind internal|external|null(chưa phân loại), ref_codes[], hr_user_id (unique, ngoại lệ HR/Kế toán), phone, email, bank_info, note, active, rule (mức riêng), history jsonb, bank_changed_at/by.
+- `referral_job_rules` (job_id, kind) → rule jsonb. Mặc định công ty: `app_settings.referral_default_rules` (JSON text).
+- `referral_placements` (application_id PK): start_date, start_confirmed, left_date, history, needs_manual, needs_manual_reason.
+- `referral_payouts`: application_id (ON DELETE RESTRICT), referrer_id, hr_user_id, beneficiary_name/kind, job_id, milestone_months 0–36, percent 1–100, amount ≥0 (null khi amount_issue no_rule/no_salary), amount_edited, rule_key/rule_snapshot/rule_source, due_date, status upcoming|due|approved|paid|cancelled, approved_*/paid_*/cancel_reason/note/edits, due_notified_at/approved_notified_at. Unique (application_id, milestone_months) where status<>'cancelled'. RLS bật, không policy.

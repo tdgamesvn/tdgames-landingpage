@@ -176,3 +176,14 @@ Mọi request ghi (POST/PATCH/PUT/DELETE) phải cùng nguồn: header `Origin` 
 - Mail offer: `GET .../emails/draft?kind=offer` bắt buộc đã lưu thư (chưa → 400 `{error:"Chưa soạn thư mời…", code:"no_offer_letter"}`; thiếu trường → 400 `code:"offer_letter_invalid"`), trả thêm `attachment: { filename }` và `notice` khi hạn xác nhận đã lưu đã qua (“Hạn xác nhận đã qua — đã tự đổi thành …”, tính lại = hôm nay giờ VN + 3 ngày làm việc). `{muc_luong}` luôn “…”. `POST .../emails` kind offer: đọc lại thư đã lưu → render PDF → Resend `attachments` (base64) → ghi `candidate_emails.attachments`. `GET .../emails` trả `attachments: [{filename, kind}]` (không snapshot).
 
 - Mail "Cảm ơn ứng tuyển" tự động (`application_received`): `POST /api/applications` chạy nền `after()` gửi mail cho ứng viên (không CC; From/Reply-To/chữ ký theo người support vừa giao; test/live theo `HR_EMAIL_MODE`; ghi `candidate_emails` sent_by "Hệ thống (tự động)"). Bỏ qua khi tắt, email sai, hoặc đã có ack cùng email + job trong 24h. Lỗi chỉ `console.error`. `POST /api/hr/applications/[id]/emails` và `GET .../emails/draft` với kind này → 400 (chỉ hệ thống gửi). Công tắc (quyền `emails.templates`): `GET /api/hr/email-templates/auto-ack` → `{enabled}` · `PUT {enabled:boolean}` (Tắt ghi app_settings `hr_auto_ack`="off"; Bật xoá dòng). `GET /api/hr/email-templates` giờ trả 7 loại (thêm `application_received`).
+
+### Hoa hồng giới thiệu (2026-10-29, migration `20261029000000_referral_commissions` — ĐÃ áp prod)
+Quyền: `referrals.view` (Sếp, HR, Kế toán), `referrals.manage` (Sếp, HR), `referrals.pay` (Sếp, Kế toán). Không trả lương ra API.
+- `GET /api/hr/referrals` — tổng quan: khoản (status, needs_attention, bank_changed_recent, is_self…), người giới thiệu, mã chưa phân loại, mặc định (view)
+- `PUT /api/hr/referrals/defaults` — mặc định công ty internal/external (manage)
+- `GET|PUT /api/hr/referrals/job-rules/[jobId]` — quy tắc theo job (view / manage)
+- `GET|POST /api/hr/referrals/referrers`, `PATCH /api/hr/referrals/referrers/[id]` — người giới thiệu; gắn tài khoản / mức riêng chỉ Sếp; nhật ký đổi bank/mã
+- `PATCH /api/hr/referrals/payouts/[id]` — `approve` (manage) / `pay` / `edit` (pay) / `cancel` / `note`; không tự duyệt/sửa/trả khoản của mình (trừ Sếp); offer đã đổi → chặn duyệt/trả
+- `GET|PATCH /api/hr/referrals/applications/[id]` — ngày đi làm/nghỉ, đổi người giới thiệu (409 nếu đã có khoản duyệt/trả), Tính lại (trả needsManual)
+- `GET /api/hr/referrals/cron` — `x-hr-cron-key`; upcoming→due + nhắc HR, approved → báo Kế toán (chạy trong hr-remind.yml)
+- PATCH hồ sơ: offer → accepted sinh khoản; rời accepted huỷ khoản upcoming/due. DELETE hồ sơ có khoản duyệt/trả → 409.

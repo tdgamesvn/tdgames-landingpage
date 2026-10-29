@@ -363,3 +363,7 @@ Thư mời nhận việc, duyệt thư, mail offer (lịch sử + mẫu) và ph�
 Kế toán + Sếp thấy. Cổng là quyền `emails.send_offer` (HR mặc định tắt). Mail offer không CC/Reply-To người
 support; Reply-To = Kế toán + hiring@. Discord: kênh riêng `DISCORD_WEBHOOK_OFFER` nếu có, không @everyone.
 Vị trí "Offer" trong pipeline + kết quả offer vẫn hiện cho HR (trạng thái hồ sơ, không có nội dung thư).
+
+## 2026-10-29 — Hoa hồng giới thiệu
+Spec `docs/superpowers/specs/2026-10-29-referral-commission-design.md`, plan `docs/superpowers/plans/2026-10-29-referral-commission.md`.
+Ai hưởng: referrer nội bộ/headhunter + tài khoản Kế toán (internal); HR/Leader/Sếp không (trừ referrer gắn tài khoản do Sếp đặt). UV freelancer không tính. Quy tắc: người > job > mặc định công ty (internal 2tr, 50% đủ 1 tháng + 50% đủ 2 tháng; external chưa đặt). Tiền nguyên VND, làm tròn xuống, dư dồn mốc cuối; salary_multiple × baseSalary thư mời đã duyệt (số nguyên). Khoản đã trả không bao giờ đổi/xoá; đổi quy tắc sau khi đã trả → không tự sinh thêm, cờ "cần xử lý tay". Tách nhiệm vụ: HR xác nhận (approve), Kế toán trả (pay); không ai (trừ Sếp) tự duyệt/sửa/trả khoản của mình; đổi bank có nhật ký + cảnh báo 30 ngày. Rủi ro còn lại: HR tạo headhunter giả mang TK của mình → dựa vào Kế toán kiểm tra khi trả.
