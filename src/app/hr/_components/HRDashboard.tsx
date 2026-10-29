@@ -8,6 +8,7 @@ import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import AccountsPanel from "./AccountsPanel";
 import EmailTemplatesPanel from "./EmailTemplatesPanel";
+import CommissionPanel, { JobRulesFields, ReferralOfferBlock } from "./CommissionPanel";
 import CommentThread from "./CommentThread";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
@@ -1987,6 +1988,8 @@ function JobForm({
         </div>
       )}
 
+      <JobRulesFields jobId={(initial as JobDraft & { id?: string }).id ?? null} />
+
       {/* Active + Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
         <label className="flex cursor-pointer items-center gap-2 text-sm text-white/70">
@@ -2026,6 +2029,22 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
   const ownRef = me?.refCode ?? "";
   // HR tạo link cho headhunter (người ngoài, không có tài khoản): gõ mã của họ → Copy Link dùng mã đó.
   const [hhRef, setHhRef] = useState("");
+  // Danh sách người giới thiệu đã có (gợi ý cho ô mã headhunter) + nhắc khi mã mới được thêm tự động.
+  const canSeeReferrers = can("referrals.view");
+  const canManageReferrers = can("referrals.manage");
+  const [knownReferrers, setKnownReferrers] = useState<{ name: string; ref_codes: string[]; active: boolean }[]>([]);
+  const [hhNote, setHhNote] = useState("");
+  useEffect(() => {
+    if (!canSeeReferrers) return;
+    let alive = true;
+    hrFetch("/api/hr/referrals/referrers")
+      .then((r) => (r.ok ? r.json() : { referrers: [] }))
+      .then((j) => alive && setKnownReferrers(j.referrers ?? []))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [canSeeReferrers]);
   const refCode = normalizeRefCode(hhRef) ?? ownRef;
   const [rankingId, setRankingId] = useState<string | null>(null);
   const [openAppId, setOpenAppId] = useState<string | null>(null);
@@ -2081,6 +2100,28 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
       setCopiedId(job.id);
       setTimeout(() => setCopiedId(null), 2000);
     });
+    void registerTypedReferrer();
+  }
+
+  // Mã headhunter gõ tay chưa có trong danh sách → thêm "chưa phân loại" để Sếp/HR phân loại sau (409 = đã có, bỏ qua).
+  async function registerTypedReferrer() {
+    const code = normalizeRefCode(hhRef);
+    if (!code || !canManageReferrers) return;
+    if (knownReferrers.some((r) => r.ref_codes.some((c) => normalizeRefCode(c) === code))) return;
+    try {
+      const res = await hrFetch("/api/hr/referrals/referrers", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: code, kind: null, ref_codes: [code] }),
+      });
+      if (res.status === 201) {
+        const j = await res.json().catch(() => ({}));
+        if (j.referrer) setKnownReferrers((l) => [...l, { name: j.referrer.name, ref_codes: j.referrer.ref_codes ?? [code], active: true }]);
+        setHhNote(`Mã ${code} đã thêm vào danh sách người giới thiệu, chưa phân loại — vào tab Hoa hồng để phân loại.`);
+      }
+    } catch {
+      /* không chặn việc copy link */
+    }
   }
 
   async function toggleActive(job: Job) {
@@ -2135,11 +2176,20 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
           Tạo link cho headhunter:
           <input
             value={hhRef}
-            onChange={(e) => setHhRef(e.target.value)}
+            onChange={(e) => { setHhRef(e.target.value); setHhNote(""); }}
+            list={canSeeReferrers ? "hr-referrer-codes" : undefined}
             placeholder="mã của headhunter, vd. cat-tuong"
             className="w-48 rounded-lg border border-amber-500/30 bg-transparent px-2.5 py-1.5 text-xs text-white placeholder:text-white/25 focus:border-amber-500/60 focus:outline-none"
           />
         </label>
+        {canSeeReferrers && (
+          <datalist id="hr-referrer-codes">
+            {knownReferrers.filter((r) => r.active && r.ref_codes[0]).map((r) => (
+              <option key={r.ref_codes[0]} value={r.ref_codes[0]}>{`${r.name} — ${r.ref_codes[0]}`}</option>
+            ))}
+          </datalist>
+        )}
+        {hhNote && <span role="status" className="basis-full text-[11px] text-emerald-400">{hhNote}</span>}
         <span className="text-[10px] text-white/40">
           {refCode ? <>Copy Link sẽ gắn <code className="text-amber-300/70">?ref={refCode}</code>{hhRef && normalizeRefCode(hhRef) ? " (headhunter)" : " (của bạn)"}</> : "Copy Link chưa gắn người giới thiệu"}
         </span>
@@ -2923,6 +2973,7 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
           </div>
         )}
         {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
+        <ReferralOfferBlock appId={app.id} offerStatus={app.offer_status ?? null} />
       </div>
     </section>
   );
@@ -2930,7 +2981,7 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type View = "pipeline" | "kpi" | "jobs" | "data" | "templates" | "accounts";
+type View = "pipeline" | "kpi" | "jobs" | "data" | "templates" | "referrals" | "accounts";
 
 type ThemeState = readonly [HrThemePref, (p: HrThemePref) => void];
 
@@ -3185,6 +3236,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     ...(can("apps.view_notes") ? (["kpi"] as View[]) : []),
     ...(can("jobs.manage") ? (["jobs"] as View[]) : []),
     ...(can("emails.templates") ? (["templates"] as View[]) : []),
+    ...(can("referrals.view") ? (["referrals"] as View[]) : []),
     // Tài khoản & quyền: chỉ Sếp.
     ...(me?.role === "boss" ? (["accounts"] as View[]) : []),
   ];
@@ -3214,7 +3266,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <div className="hr-segmented order-last w-full md:order-none md:w-auto" role="group" aria-label="Chế độ xem">
             {views.map((v) => (
               <button key={v} type="button" aria-pressed={activeView === v} onClick={() => setView(v)}>
-                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "templates" ? "Mẫu mail" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
+                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "templates" ? "Mẫu mail" : v === "referrals" ? "Hoa hồng" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
               </button>
             ))}
           </div>
@@ -3276,6 +3328,8 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <KPIView apps={apps} />
         ) : activeView === "templates" ? (
           <EmailTemplatesPanel />
+        ) : activeView === "referrals" ? (
+          <CommissionPanel />
         ) : activeView === "accounts" ? (
           <AccountsPanel />
         ) : (
