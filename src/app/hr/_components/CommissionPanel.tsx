@@ -9,7 +9,7 @@ import { formatVnd } from "@/lib/offer-letter";
 import { hrFetch, useHrSession } from "./HrSession";
 import CommissionPayouts from "./CommissionPayouts";
 import CommissionReferrers from "./CommissionReferrers";
-import { MANUAL_MSG, RuleEditor, callJson, inputCls, kindText, warnCls, type PayoutView, type ReferrerView } from "./CommissionShared";
+import { RuleEditor, callJson, inputCls, kindText, warnCls, type NeedsManualItem, type PayoutView, type ReferrerView } from "./CommissionShared";
 
 export { RuleEditor };
 
@@ -19,6 +19,7 @@ type Overview = {
   referrers: ReferrerView[];
   unknownCodes: { code: string; count: number }[];
   defaults: DefaultRules;
+  manual: NeedsManualItem[];
 };
 type Section = "payouts" | "referrers" | "settings";
 
@@ -68,6 +69,13 @@ export default function CommissionPanel() {
         </p>
       )}
       {!data && !loadError && <p className="text-[13px] text-white/50">Đang tải…</p>}
+      {data && section === "payouts" && data.manual.length > 0 && (
+        <div className={warnCls} role="status" data-testid="referral-needs-manual">
+          <strong>Cần Sếp/Kế toán xử lý tay ({data.manual.length} hồ sơ):</strong>{" "}
+          {data.manual.map((m) => m.candidate_name).join(", ")}
+          <div className="mt-0.5 text-[11px] text-amber-200/80">{data.manual[0].reason ?? "Đã có khoản duyệt/đã trả khác quy tắc hiện tại — chưa sinh các mốc còn lại"}</div>
+        </div>
+      )}
       {data && section === "payouts" && <CommissionPayouts payouts={data.payouts} referrers={data.referrers} today={data.today} onPayout={onPayoutAndReload} />}
       {data && section === "referrers" && <CommissionReferrers referrers={data.referrers} unknownCodes={data.unknownCodes} onReload={load} />}
       {data && section === "settings" && can("referrals.view") && <DefaultsSettings defaults={data.defaults} onSaved={(d) => setData((x) => (x ? { ...x, defaults: d } : x))} />}
@@ -231,6 +239,8 @@ type AppReferral = {
   payoutCount: number;
   start: { date: string | null; confirmed: boolean };
   left_date: string | null;
+  needs_manual: boolean;
+  needs_manual_reason: string | null;
 };
 
 /** Khối hoa hồng trong phần Offer của hồ sơ. null khi không có quyền xem / chưa Đã nhận và chưa có khoản. */
@@ -240,7 +250,7 @@ export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offe
   const canManage = can("referrals.manage");
   const [v, setV] = useState<AppReferral | null>(null);
   const [err, setErr] = useState("");
-  const [note, setNote] = useState<{ manual: boolean; text: string } | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState<string | null>(null);
 
@@ -274,8 +284,8 @@ export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offe
     setBusy(false);
     if (!r.ok) return setErr(r.error);
     apply(r.data);
-    if (r.data.needsManual === true) setNote({ manual: true, text: MANUAL_MSG });
-    else if (okText) setNote({ manual: false, text: okText });
+    // needsManual: cờ đã lưu trên hồ sơ → hiện ở khung cảnh báo bên dưới, không báo "thành công".
+    if (r.data.needsManual !== true && okText) setNote(okText);
   }
 
 
@@ -330,7 +340,12 @@ export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offe
               </button>
             </div>
           )}
-          {note && <p role="status" className={note.manual ? warnCls : "text-[12px] text-emerald-400"}>{note.text}</p>}
+          {v.needs_manual && (
+            <p role="status" className={warnCls} data-testid="referral-needs-manual-app">
+              Cần Sếp/Kế toán xử lý tay: {v.needs_manual_reason ?? "đã có khoản duyệt/đã trả khác quy tắc hiện tại"}
+            </p>
+          )}
+          {note && <p role="status" className="text-[12px] text-emerald-400">{note}</p>}
           {err && <p role="alert" className="text-[12px] text-red-400">{err}</p>}
         </>
       )}

@@ -27,7 +27,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (oldErr) throw new Error(oldErr.message);
     if (!old) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const { staff, referrers } = await loadReferralBasics();
-    const input = parseReferrerInput({ ...old, history: undefined, ...(body as Record<string, unknown>) }, { staff, referrers, selfId: id });
+    const input = parseReferrerInput({ ...old, history: undefined, ...(body as Record<string, unknown>) }, {
+      staff,
+      referrers,
+      selfId: id,
+      actorIsBoss: auth.ctx.role === "boss", // gắn tài khoản /hr và mức riêng: chỉ Sếp
+      previous: { hr_user_id: old.hr_user_id ?? null, rule: old.rule },
+    });
     if ("error" in input) return NextResponse.json({ error: input.error }, { status: input.status });
     const nowIso = new Date().toISOString();
     const entries = referrerAuditEntries(old, input, { id: auth.ctx.user.id, name: auth.ctx.user.displayName }, nowIso);

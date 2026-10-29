@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   try {
     const { staff, referrers } = await loadReferralBasics();
-    const input = parseReferrerInput(body, { staff, referrers, selfId: null });
+    const input = parseReferrerInput(body, { staff, referrers, selfId: null, actorIsBoss: auth.ctx.role === "boss" });
     if ("error" in input) return NextResponse.json({ error: input.error }, { status: input.status });
     const { data, error } = await getSupabaseAdmin().from("referrers").insert(input).select().single();
     if (error) {

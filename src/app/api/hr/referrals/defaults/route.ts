@@ -23,7 +23,8 @@ export async function PUT(req: Request) {
   }
   const { error } = await getSupabaseAdmin()
     .from("app_settings")
-    .upsert({ key: REFERRAL_DEFAULTS_KEY, value: out, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    // app_settings.value là TEXT → lưu chuỗi JSON (đọc lại bằng parseDefaultRules).
+    .upsert({ key: REFERRAL_DEFAULTS_KEY, value: JSON.stringify(out), updated_at: new Date().toISOString() }, { onConflict: "key" });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ defaults: out });
 }

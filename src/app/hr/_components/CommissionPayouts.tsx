@@ -40,7 +40,8 @@ export default function CommissionPayouts({
   today: string;
   onPayout: (p: PayoutView) => void;
 }) {
-  const { can } = useHrSession();
+  const { can, me } = useHrSession();
+  const isBoss = me?.role === "boss";
   const canManage = can("referrals.manage");
   const canPay = can("referrals.pay");
   const [statuses, setStatuses] = useState<PayoutStatus[]>(["due", "approved"]);
@@ -165,10 +166,11 @@ export default function CommissionPayouts({
             )}
             {rows.map((p) => {
               const att = p.needs_attention;
-              const canApprove = canManage && p.status === "due" && !att && p.amount !== null;
+              const selfLock = p.is_self && !isBoss; // khoản của chính mình: nhờ Sếp duyệt/sửa/trả
+              const canApprove = canManage && !selfLock && p.status === "due" && !att && p.amount !== null;
               const canCancel = canManage && p.status !== "paid" && p.status !== "cancelled";
-              const canPayNow = canPay && p.status === "approved" && !att;
-              const canEdit = canPay && p.status !== "cancelled";
+              const canPayNow = canPay && !selfLock && p.status === "approved" && !att;
+              const canEdit = canPay && !selfLock && p.status !== "cancelled";
               const isOpen = open?.id === p.id;
               return (
                 <tr key={p.id} className="border-t border-white/10 align-top" data-testid={`payout-${p.id}`}>
@@ -207,6 +209,9 @@ export default function CommissionPayouts({
                     {att && <div className={`mt-1 ${warnCls}`}>Offer đã đổi — cần xử lý tay</div>}
                     {p.status === "approved" && p.bank_changed_recent && (
                       <div className={`mt-1 ${warnCls}`}>TK nhận tiền vừa đổi bởi {p.bank_changed_by ?? "ai đó"} — kiểm tra trước khi chuyển</div>
+                    )}
+                    {selfLock && p.status !== "paid" && p.status !== "cancelled" && (
+                      <div className="mt-1 max-w-[180px] text-[11px] text-white/45">Khoản của bạn — nhờ Sếp duyệt/trả</div>
                     )}
                     {p.note && <div className="mt-1 max-w-[180px] text-[11px] text-white/45">{p.note}</div>}
                   </td>
@@ -260,6 +265,9 @@ export default function CommissionPayouts({
                           <div className="flex flex-wrap items-center justify-end gap-2">
                             <label className="text-[12px] text-white/60">Số tiền <input className={`${inputCls} w-32`} inputMode="numeric" value={fAmount} onChange={(e) => setFAmount(e.target.value.replace(/[^\d]/g, ""))} /></label>
                             <label className="text-[12px] text-white/60">Hạn <input type="date" className={inputCls} value={fDue} onChange={(e) => setFDue(e.target.value)} /></label>
+                            {p.status === "approved" && !isBoss && (
+                              <span className="w-full text-[11px] text-white/45">Sửa số tiền sẽ đưa khoản về Chờ xác nhận (HR duyệt lại).</span>
+                            )}
                           </div>
                         )}
                         <div className="flex flex-wrap items-center justify-end gap-2">

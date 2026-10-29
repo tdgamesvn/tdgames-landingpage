@@ -35,6 +35,9 @@ create table if not exists public.referral_placements (
   start_confirmed boolean not null default false,
   left_date date,
   history jsonb not null default '[]',
+  -- Lần sinh/Tính lại gần nhất bị chặn (đã có khoản duyệt/trả khác snapshot) → cần Sếp/Kế toán xử lý tay.
+  needs_manual boolean not null default false,
+  needs_manual_reason text,
   updated_at timestamptz not null default now()
 );
 
@@ -46,9 +49,9 @@ create table if not exists public.referral_payouts (
   beneficiary_name text not null,
   beneficiary_kind text check (beneficiary_kind in ('internal','external')),
   job_id uuid,
-  milestone_months int not null,
-  percent int not null,
-  amount bigint,
+  milestone_months int not null check (milestone_months between 0 and 36),
+  percent int not null check (percent between 1 and 100),
+  amount bigint check (amount >= 0),
   amount_issue text check (amount_issue in ('no_rule','no_salary')),
   amount_edited boolean not null default false,
   rule_key text,

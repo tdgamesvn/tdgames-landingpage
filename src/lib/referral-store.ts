@@ -10,11 +10,13 @@ import { getSupabaseAdmin } from "./supabase-admin";
 import { loadOfferLetterRow } from "./offer-letter-store";
 import { isValidDate } from "./offer-letter.ts";
 import {
+  NEEDS_MANUAL_REASON,
   REFERRAL_DEFAULTS_KEY,
   approvedBaseSalary,
   effectiveStatus,
   bankChangedRecent,
   isCommissionable,
+  isSelfPayout,
   milestoneLabel,
   payoutNeedsAttention,
   parseDefaultRules,
@@ -57,7 +59,14 @@ export type PayoutRow = {
   edits: unknown[];
 };
 
-export type Placement = { start_date: string | null; start_confirmed: boolean; left_date: string | null; history: unknown[] };
+export type Placement = {
+  start_date: string | null;
+  start_confirmed: boolean;
+  left_date: string | null;
+  history: unknown[];
+  needs_manual: boolean;
+  needs_manual_reason: string | null;
+};
 
 const PAYOUT_COLUMNS =
   "id, application_id, referrer_id, hr_user_id, beneficiary_name, beneficiary_kind, job_id, milestone_months, percent, amount, amount_issue, amount_edited, rule_key, rule_source, due_date, status, approved_by, paid_by, paid_date, cancel_reason, note, edits";
@@ -87,7 +96,7 @@ export async function loadReferralBasics(): Promise<{ staff: StaffLite[]; referr
   return {
     staff: (staffRes.data ?? []) as StaffLite[],
     referrers,
-    defaults: parseDefaultRules(setRes.data?.value),
+    defaults: parseDefaultRules(setRes.data?.value), // value là TEXT (chuỗi JSON) — parseDefaultRules tự parse
   };
 }
 
@@ -105,7 +114,7 @@ export async function loadJobRules(jobId: string): Promise<Partial<Record<Commis
 export async function loadPlacement(appId: string): Promise<Placement | null> {
   const { data, error } = await getSupabaseAdmin()
     .from("referral_placements")
-    .select("start_date, start_confirmed, left_date, history")
+    .select("start_date, start_confirmed, left_date, history, needs_manual, needs_manual_reason")
     .eq("application_id", appId)
     .maybeSingle();
   if (error) throw new Error(`loadPlacement: ${error.message}`);
@@ -115,6 +124,8 @@ export async function loadPlacement(appId: string): Promise<Placement | null> {
     start_confirmed: data.start_confirmed === true,
     left_date: data.left_date ?? null,
     history: Array.isArray(data.history) ? data.history : [],
+    needs_manual: data.needs_manual === true,
+    needs_manual_reason: (data.needs_manual_reason as string | null) ?? null,
   };
 }
 
@@ -226,7 +237,19 @@ export async function syncApplicationPayouts(
     created++;
   }
 
-  if (created > 0 && !placement) {
+  // Lưu cờ "cần xử lý tay" để UI hiện lâu dài (không chỉ ngay sau lần bấm).
+  if (plan.needsManual || placement?.needs_manual) {
+    const { error } = await db.from("referral_placements").upsert(
+      {
+        application_id: appId,
+        needs_manual: plan.needsManual,
+        needs_manual_reason: plan.needsManual ? NEEDS_MANUAL_REASON : null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "application_id" },
+    );
+    if (error) throw new Error(`syncApplicationPayouts.needsManual: ${error.message}`);
+  } else if (created > 0 && !placement) {
     const { error } = await db
       .from("referral_placements")
       .upsert({ application_id: appId }, { onConflict: "application_id", ignoreDuplicates: true });
@@ -278,29 +301,41 @@ export type PayoutView = Omit<PayoutRow, "status" | "edits"> & {
   bank_changed_by: string | null;
   needs_attention: boolean;
   attention_reason: "offer_changed" | null;
+  /** Người đang xem là người hưởng khoản này (isSelfPayout) — không phải Sếp thì không duyệt/sửa/trả. */
+  is_self: boolean;
   edits: unknown[];
 };
 
+export type PayoutActor = { id: string | null; ref_codes: string[] | null };
+
+/** Mã ref của tài khoản đang thao tác (để nhận ra khoản của chính mình). */
+export async function loadPayoutActor(userId: string | null): Promise<PayoutActor> {
+  if (!userId) return { id: null, ref_codes: [] };
+  const { data, error } = await getSupabaseAdmin().from("hr_users").select("ref_codes").eq("id", userId).maybeSingle();
+  if (error) throw new Error(`loadPayoutActor: ${error.message}`);
+  return { id: userId, ref_codes: Array.isArray(data?.ref_codes) ? (data.ref_codes as string[]) : [] };
+}
+
 /** Gắn tên ứng viên / job / nhãn mốc / trạng thái hiển thị. Không bao giờ chứa lương. */
-async function toPayoutViews(rows: PayoutRow[], today: string): Promise<PayoutView[]> {
+async function toPayoutViews(rows: PayoutRow[], today: string, actor: PayoutActor): Promise<PayoutView[]> {
   if (!rows.length) return [];
   const db = getSupabaseAdmin();
   const appIds = [...new Set(rows.map((r) => r.application_id))];
   const jobIds = [...new Set(rows.map((r) => r.job_id).filter((x): x is string => !!x))];
   const [appRes, jobRes] = await Promise.all([
-    db.from("applications").select("id, full_name, offer_status").in("id", appIds),
+    db.from("applications").select("id, full_name, offer_status, referred_by").in("id", appIds),
     jobIds.length ? db.from("jobs").select("id, title").in("id", jobIds) : Promise.resolve({ data: [], error: null }),
   ]);
   if (appRes.error) throw new Error(`toPayoutViews.apps: ${appRes.error.message}`);
   if (jobRes.error) throw new Error(`toPayoutViews.jobs: ${jobRes.error.message}`);
-  const apps = new Map((appRes.data ?? []).map((a) => [a.id as string, a as { full_name: string | null; offer_status: string | null }]));
+  const apps = new Map((appRes.data ?? []).map((a) => [a.id as string, a as { full_name: string | null; offer_status: string | null; referred_by: string | null }]));
   const jobs = new Map((jobRes.data ?? []).map((j) => [j.id as string, String(j.title ?? "")]));
   const refIds = [...new Set(rows.map((r) => r.referrer_id).filter((x): x is string => !!x))];
   const refRes = refIds.length
-    ? await db.from("referrers").select("id, bank_changed_at, bank_changed_by").in("id", refIds)
+    ? await db.from("referrers").select("id, bank_changed_at, bank_changed_by, hr_user_id").in("id", refIds)
     : { data: [], error: null };
   if (refRes.error) throw new Error(`toPayoutViews.referrers: ${refRes.error.message}`);
-  const banks = new Map((refRes.data ?? []).map((x) => [x.id as string, x as { bank_changed_at: string | null; bank_changed_by: string | null }]));
+  const banks = new Map((refRes.data ?? []).map((x) => [x.id as string, x as { bank_changed_at: string | null; bank_changed_by: string | null; hr_user_id: string | null }]));
   const nowMs = Date.now();
   const { data: pl, error: plErr } = await db
     .from("referral_placements")
@@ -322,14 +357,19 @@ async function toPayoutViews(rows: PayoutRow[], today: string): Promise<PayoutVi
       bank_changed_by: r.referrer_id && bankChangedRecent(banks.get(r.referrer_id)?.bank_changed_at ?? null, nowMs) ? (banks.get(r.referrer_id)?.bank_changed_by ?? null) : null,
       needs_attention: attention,
       attention_reason: attention ? "offer_changed" : null,
+      is_self: isSelfPayout(
+        r,
+        { referrerHrUserId: r.referrer_id ? (banks.get(r.referrer_id)?.hr_user_id ?? null) : null, referredBy: app?.referred_by ?? null },
+        actor,
+      ),
     };
   });
 }
 
-export async function loadAllPayoutViews(today: string): Promise<PayoutView[]> {
+export async function loadAllPayoutViews(today: string, actor: PayoutActor): Promise<PayoutView[]> {
   const { data, error } = await getSupabaseAdmin().from("referral_payouts").select(PAYOUT_COLUMNS).order("due_date", { ascending: true, nullsFirst: false });
   if (error) throw new Error(`loadAllPayoutViews: ${error.message}`);
-  return toPayoutViews((data ?? []) as PayoutRow[], today);
+  return toPayoutViews((data ?? []) as PayoutRow[], today, actor);
 }
 
 export async function loadPayoutRow(id: string): Promise<PayoutRow | null> {
@@ -338,8 +378,21 @@ export async function loadPayoutRow(id: string): Promise<PayoutRow | null> {
   return (data as PayoutRow | null) ?? null;
 }
 
-export async function toPayoutView(row: PayoutRow, today: string): Promise<PayoutView> {
-  return (await toPayoutViews([row], today))[0];
+export async function toPayoutView(row: PayoutRow, today: string, actor: PayoutActor): Promise<PayoutView> {
+  return (await toPayoutViews([row], today, actor))[0];
+}
+
+/** Hồ sơ đang có cờ "cần Sếp/Kế toán xử lý tay" (banner tab Hoa hồng). */
+export async function loadNeedsManual(): Promise<{ application_id: string; candidate_name: string; reason: string | null }[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from("referral_placements")
+    .select("application_id, needs_manual_reason, applications(full_name)")
+    .eq("needs_manual", true);
+  if (error) throw new Error(`loadNeedsManual: ${error.message}`);
+  return (data ?? []).map((r) => {
+    const a = (Array.isArray(r.applications) ? r.applications[0] : r.applications) as { full_name?: string | null } | null | undefined;
+    return { application_id: r.application_id as string, candidate_name: String(a?.full_name ?? "Ứng viên"), reason: (r.needs_manual_reason as string | null) ?? null };
+  });
 }
 
 /** Ghi placement (upsert) và nối thêm 1 dòng lịch sử nếu có. */

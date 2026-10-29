@@ -32,6 +32,8 @@ export type PayoutView = {
   bank_changed_recent: boolean;
   bank_changed_by: string | null;
   needs_attention: boolean;
+  /** Người đang xem là người hưởng khoản này (server tính) — không phải Sếp thì không duyệt/sửa/trả. */
+  is_self: boolean;
 };
 
 export type ReferrerView = {
@@ -54,7 +56,7 @@ export const kindText = (k: CommissionKind | null) => (k ? KIND_LABEL[k] : "Chư
 
 export const money = (n: number) => formatVnd(n);
 
-export const MANUAL_MSG = "Có khoản đã duyệt/đã trả theo quy tắc cũ — cần Sếp/Kế toán xử lý tay";
+export type NeedsManualItem = { application_id: string; candidate_name: string; reason: string | null };
 
 type Fetcher = (u: string, i?: RequestInit) => Promise<Response>;
 

@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
+import { vnDateKey } from "@/lib/interview-schedule";
+import { isValidDate } from "@/lib/offer-letter";
 import {
   cancelOnLeave,
   hasLockedPayout,
   parseAppReferralPatch,
   rescheduleDueDates,
   resolveBeneficiary,
+  statusAfterDueEdit,
   type PayoutLite,
 } from "@/lib/referral-commission";
 import {
@@ -53,6 +56,8 @@ async function buildView(appId: string, referredBy: string | null) {
     payoutCount: rows.filter((p) => p.status !== "cancelled").length,
     start,
     left_date: placement?.left_date ?? null,
+    needs_manual: placement?.needs_manual ?? false,
+    needs_manual_reason: placement?.needs_manual_reason ?? null,
   };
 }
 
@@ -98,22 +103,29 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (patch.start_date !== undefined) {
       await savePlacement(id, { start_date: patch.start_date, start_confirmed: patch.start_date !== null });
       const start = await effectiveStartDate(id);
-      const changes = rescheduleDueDates(lite(await loadPayouts(id)), start.date);
-      for (const c of changes) {
+      const rows = await loadPayouts(id);
+      const today = vnDateKey(new Date());
+      for (const c of rescheduleDueDates(lite(rows), start.date)) {
+        const old = rows.find((r) => r.id === c.id);
+        if (!old) continue;
+        // Hạn đổi → trạng thái theo hạn mới, xoá dấu đã nhắc để được nhắc lại khi tới hạn mới.
         const { error } = await getSupabaseAdmin()
           .from("referral_payouts")
-          .update({ due_date: c.due_date, status: "upcoming" })
+          .update({ due_date: c.due_date, status: statusAfterDueEdit(old.status, c.due_date, today), due_notified_at: null })
           .eq("id", c.id)
-          .in("status", ["upcoming", "due"]);
+          .eq("status", old.status);
         if (error) throw new Error(error.message);
       }
     }
 
-    if (patch.left_date !== undefined) {
-      await savePlacement(id, { left_date: patch.left_date });
-      if (patch.left_date !== null) {
-        const [dd, mm, yyyy] = [patch.left_date.slice(8, 10), patch.left_date.slice(5, 7), patch.left_date.slice(0, 4)];
-        await setPayoutStatus(cancelOnLeave(lite(await loadPayouts(id)), patch.left_date), "cancelled", `UV nghỉ ngày ${dd}/${mm}/${yyyy}`);
+    if (patch.left_date !== undefined) await savePlacement(id, { left_date: patch.left_date });
+
+    // Đổi ngày đi làm hoặc đặt ngày nghỉ: áp lại huỷ mốc sau ngày nghỉ (hạn có thể vừa được tính từ ngày đi làm mới).
+    if (patch.start_date !== undefined || (patch.left_date !== undefined && patch.left_date !== null)) {
+      const left = (await loadPlacement(id))?.left_date ?? null;
+      if (left && isValidDate(left)) {
+        const [dd, mm, yyyy] = [left.slice(8, 10), left.slice(5, 7), left.slice(0, 4)];
+        await setPayoutStatus(cancelOnLeave(lite(await loadPayouts(id)), left), "cancelled", `UV nghỉ ngày ${dd}/${mm}/${yyyy}`);
       }
     }
 

@@ -40,6 +40,9 @@ import {
   parseRule,
   splitSchedule,
   statusAfterDueEdit,
+  statusAfterPayoutEdit,
+  isSelfPayout,
+  SELF_PAYOUT_MSG,
   type CommissionRule,
 } from "./referral-commission.ts";
 
@@ -203,12 +206,12 @@ test("parsePayoutAction", () => {
 });
 test("parseReferrerInput: trùng mã tài khoản/referrer → 409; gắn tài khoản không có mã riêng", () => {
   const base = { name: "Cát Tường", kind: "external", ref_codes: ["cat-tuong"] };
-  assert.equal((parseReferrerInput({ ...base, ref_codes: ["ThaoDTX"] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 409);
-  assert.equal((parseReferrerInput({ ...base, ref_codes: ["mai-ha"] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 409);
-  assert.equal((parseReferrerInput({ ...base, ref_codes: ["cat-tuong"] }, { staff, referrers: refs, selfId: "r-cat" }) as ReferrerInput).ref_codes[0], "cat-tuong");
-  assert.equal((parseReferrerInput({ name: "Phương", kind: "internal", ref_codes: ["x"], hr_user_id: "u-phuong" }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400);
-  assert.equal((parseReferrerInput({ name: "", ref_codes: ["a"] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400);
-  assert.equal((parseReferrerInput({ name: "A", ref_codes: [] }, { staff, referrers: refs, selfId: null }) as { status: number }).status, 400); // không gắn tài khoản thì phải có ≥1 mã
+  assert.equal((parseReferrerInput({ ...base, ref_codes: ["ThaoDTX"] }, { staff, referrers: refs, selfId: null , actorIsBoss: true }) as { status: number }).status, 409);
+  assert.equal((parseReferrerInput({ ...base, ref_codes: ["mai-ha"] }, { staff, referrers: refs, selfId: null , actorIsBoss: true }) as { status: number }).status, 409);
+  assert.equal((parseReferrerInput({ ...base, ref_codes: ["cat-tuong"] }, { staff, referrers: refs, selfId: "r-cat" , actorIsBoss: true }) as ReferrerInput).ref_codes[0], "cat-tuong");
+  assert.equal((parseReferrerInput({ name: "Phương", kind: "internal", ref_codes: ["x"], hr_user_id: "u-phuong" }, { staff, referrers: refs, selfId: null , actorIsBoss: true }) as { status: number }).status, 400);
+  assert.equal((parseReferrerInput({ name: "", ref_codes: ["a"] }, { staff, referrers: refs, selfId: null , actorIsBoss: true }) as { status: number }).status, 400);
+  assert.equal((parseReferrerInput({ name: "A", ref_codes: [] }, { staff, referrers: refs, selfId: null , actorIsBoss: true }) as { status: number }).status, 400); // không gắn tài khoản thì phải có ≥1 mã
 });
 
 test("computeAmount: số nguyên, không hụt 1 đồng do float", () => {
@@ -260,7 +263,7 @@ test("resolveBeneficiary: referrer gắn tài khoản bị ngừng → không h�
   assert.equal(resolveBeneficiary("thaodtx", staff, off), null);
 });
 test("parseReferrerInput: gắn tài khoản → kind ép về internal", () => {
-  const r = parseReferrerInput({ name: "Phương", kind: "external", hr_user_id: "u-phuong" }, { staff, referrers: refs, selfId: null }) as ReferrerInput;
+  const r = parseReferrerInput({ name: "Phương", kind: "external", hr_user_id: "u-phuong" }, { staff, referrers: refs, selfId: null , actorIsBoss: true }) as ReferrerInput;
   assert.equal(r.kind, "internal");
 });
 
@@ -365,4 +368,64 @@ test("referralNotifyTargets", () => {
   const locked = nst.map((u) => (u.id === "u-phuong" ? { ...u, disabled: true } : u));
   assert.deepEqual(t({ event: "due", staff: locked, assigneeId: "u-phuong", defaultAssigneeId: "u-dung" }), ["u-dung"]);
   assert.deepEqual(t({ event: "due", staff: nst.filter((u) => u.role !== "hr") }), ["u-toan"]);
+});
+
+test("parseDefaultRules: app_settings.value là TEXT — chuỗi JSON được đọc, JSON hỏng → mặc định", () => {
+  const custom = { internal: { amount: { type: "fixed", vnd: 3_000_000 }, schedule: [{ months: 1, percent: 100 }] }, external: null };
+  const r = parseDefaultRules(JSON.stringify(custom));
+  assert.deepEqual(r.internal, custom.internal);
+  assert.equal(r.external, null);
+  assert.deepEqual(parseDefaultRules("{khong-phai-json"), DEFAULT_RULES);
+  assert.deepEqual(parseDefaultRules(custom), r); // object (đã parse) vẫn nhận
+});
+
+test("isSelfPayout: gắn tài khoản, referrer gắn tài khoản, hoặc mã ref của chính mình", () => {
+  const thao = { id: "u-thao", ref_codes: ["thaodtx"] };
+  assert.equal(isSelfPayout({ hr_user_id: "u-thao" }, { referrerHrUserId: null, referredBy: null }, thao), true);
+  assert.equal(isSelfPayout({ hr_user_id: null }, { referrerHrUserId: "u-thao", referredBy: null }, thao), true);
+  assert.equal(isSelfPayout({ hr_user_id: null }, { referrerHrUserId: null, referredBy: "ThaoDTX" }, thao), true);
+  assert.equal(isSelfPayout({ hr_user_id: "u-phuong" }, { referrerHrUserId: null, referredBy: "mai-ha" }, thao), false);
+  assert.equal(isSelfPayout({ hr_user_id: null }, { referrerHrUserId: null, referredBy: null }, { id: null, ref_codes: [] }), false);
+});
+
+test("checkPayoutAction: không phải Sếp không duyệt/sửa/trả khoản của chính mình; Sếp được; huỷ vẫn được", () => {
+  const BOSS = effectivePermissions("boss", []);
+  const self = { boss: false, self: true };
+  const appr = { ...due, status: "approved" as const };
+  const d1 = checkPayoutAction(HR, due, { action: "approve" }, "2026-11-01", true, self);
+  assert.deepEqual(d1, { code: "forbidden", message: SELF_PAYOUT_MSG });
+  assert.equal(checkPayoutAction(ACC, appr, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01", true, self)?.code, "forbidden");
+  assert.equal(checkPayoutAction(ACC, appr, { action: "edit", amount: 50_000_000 }, "2026-11-01", true, self)?.code, "forbidden");
+  assert.equal(checkPayoutAction(ACC, appr, { action: "edit", note: "x" }, "2026-11-01", true, self)?.code, "forbidden");
+  assert.equal(checkPayoutAction(HR, due, { action: "cancel", reason: "x" }, "2026-11-01", true, self), null);
+  assert.equal(checkPayoutAction(BOSS, due, { action: "approve" }, "2026-11-01", true, { boss: true, self: true }), null);
+  assert.equal(checkPayoutAction(BOSS, appr, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01", true, { boss: true, self: true }), null);
+  assert.equal(checkPayoutAction(ACC, appr, { action: "pay", paid_date: "2026-11-01" }, "2026-11-01", true, { boss: false, self: false }), null);
+});
+
+test("statusAfterPayoutEdit: không phải Sếp sửa tiền khoản đã duyệt → due; Sếp giữ approved; đổi hạn như statusAfterDueEdit", () => {
+  const e = (x: Partial<{ amountChanged: boolean; dueChanged: boolean; newDue: string | null; oldDue: string | null }>) =>
+    ({ amountChanged: false, dueChanged: false, newDue: null, oldDue: "2026-11-01", ...x });
+  assert.equal(statusAfterPayoutEdit("approved", e({ amountChanged: true }), false, "2026-11-01"), "due");
+  assert.equal(statusAfterPayoutEdit("approved", e({ amountChanged: true }), true, "2026-11-01"), "approved");
+  assert.equal(statusAfterPayoutEdit("approved", e({ amountChanged: true, dueChanged: true, newDue: "2026-12-01" }), false, "2026-11-01"), "upcoming");
+  assert.equal(statusAfterPayoutEdit("approved", e({ dueChanged: true, newDue: "2026-12-01" }), false, "2026-11-01"), "approved");
+  assert.equal(statusAfterPayoutEdit("due", e({ dueChanged: true, newDue: "2026-12-01" }), false, "2026-11-01"), "upcoming");
+  assert.equal(statusAfterPayoutEdit("due", e({ amountChanged: true }), false, "2026-11-01"), "due");
+  assert.equal(statusAfterPayoutEdit("paid", e({}), false, "2026-11-01"), "paid");
+});
+
+test("parseReferrerInput: gắn tài khoản / mức riêng chỉ Sếp (403), sửa trường khác giữ nguyên thì được", () => {
+  const own = { amount: { type: "fixed", vnd: 500_000 }, schedule: [{ months: 0, percent: 100 }] };
+  const ctx = { staff, referrers: refs, selfId: null, actorIsBoss: false };
+  assert.equal((parseReferrerInput({ name: "Phương", hr_user_id: "u-phuong" }, ctx) as { status: number }).status, 403);
+  assert.equal((parseReferrerInput({ name: "Mới", kind: "external", ref_codes: ["moi"], rule: own }, ctx) as { status: number }).status, 403);
+  assert.equal((parseReferrerInput({ name: "Mới", kind: "external", ref_codes: ["moi"] }, ctx) as ReferrerInput).name, "Mới");
+  // Sửa: giữ nguyên hr_user_id + mức riêng (kể cả lịch khác thứ tự) → được; đổi → 403
+  const prev = { hr_user_id: "u-phuong", rule: own };
+  const edit = { staff, referrers: refs, selfId: "r-ph", actorIsBoss: false, previous: prev };
+  assert.equal((parseReferrerInput({ name: "Phương 2", hr_user_id: "u-phuong", rule: own }, edit) as ReferrerInput).name, "Phương 2");
+  assert.equal((parseReferrerInput({ name: "Phương", hr_user_id: null, ref_codes: ["phuong-x"], rule: own }, edit) as { status: number }).status, 403);
+  assert.equal((parseReferrerInput({ name: "Phương", hr_user_id: "u-phuong", rule: null }, edit) as { status: number }).status, 403);
+  assert.equal((parseReferrerInput({ name: "Phương", hr_user_id: "u-phuong", rule: own }, { ...edit, actorIsBoss: true, previous: null }) as ReferrerInput).hr_user_id, "u-phuong");
 });

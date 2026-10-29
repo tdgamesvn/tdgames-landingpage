@@ -33,8 +33,9 @@ export default function CommissionReferrers({
   unknownCodes: { code: string; count: number }[];
   onReload: () => Promise<void>;
 }) {
-  const { can } = useHrSession();
+  const { can, me } = useHrSession();
   const canManage = can("referrals.manage");
+  const isBoss = me?.role === "boss"; // gắn tài khoản /hr + mức riêng: chỉ Sếp (server cũng chặn)
   const [form, setForm] = useState<Form | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [ruleErr, setRuleErr] = useState<string | null>(null);
@@ -172,7 +173,7 @@ export default function CommissionReferrers({
             </div>
             <div>
               <label className={lbl}>Tài khoản /hr (nếu là nhân sự)</label>
-              <select className={`${inputCls} w-full`} value={form.hr_user_id} onChange={(e) => set("hr_user_id", e.target.value)}>
+              <select className={`${inputCls} w-full`} value={form.hr_user_id} disabled={!isBoss} title={isBoss ? undefined : "Chỉ Sếp được gắn tài khoản"} onChange={(e) => set("hr_user_id", e.target.value)}>
                 <option value="">Không gắn tài khoản</option>
                 {users.map((u) => <option key={u.id} value={u.id}>{u.display_name}</option>)}
               </select>
@@ -196,7 +197,8 @@ export default function CommissionReferrers({
           </label>
           <div>
             <label className={lbl}>Mức hoa hồng riêng</label>
-            <RuleEditor key={formKey} value={form.rule} allowEmpty emptyLabel="Dùng mức theo job / mặc định công ty" onChange={(v) => set("rule", v)} onInvalid={setRuleErr} />
+            <RuleEditor key={formKey} value={form.rule} allowEmpty emptyLabel="Dùng mức theo job / mặc định công ty" disabled={!isBoss} onChange={(v) => set("rule", v)} onInvalid={setRuleErr} />
+            {!isBoss && <p className="mt-1 text-[11px] text-white/40">Chỉ Sếp được gắn tài khoản /hr hoặc đặt mức riêng.</p>}
           </div>
           {err && <p role="alert" className="text-[13px] text-red-400">{err}</p>}
           <div className="flex gap-2">

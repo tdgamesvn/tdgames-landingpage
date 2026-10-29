@@ -3,21 +3,24 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser } from "@/lib/hr-session";
 import { vnDateKey } from "@/lib/interview-schedule";
 import { referrerTotals, unknownRefCodes } from "@/lib/referral-commission";
-import { loadAllPayoutViews, loadReferralBasics } from "@/lib/referral-store";
+import { loadAllPayoutViews, loadNeedsManual, loadReferralBasics } from "@/lib/referral-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Tổng quan tab Hoa hồng: khoản, người giới thiệu (kèm tổng), mã ref lạ, mặc định công ty. Không có lương. */
+/** Tổng quan tab Hoa hồng: khoản, người giới thiệu (kèm tổng), mã ref lạ, mặc định công ty, hồ sơ cần xử lý tay. Không có lương. */
 export async function GET(req: Request) {
   const auth = await requireHrUser(req, "referrals.view");
   if ("response" in auth) return auth.response;
   const today = vnDateKey(new Date());
   try {
     const db = getSupabaseAdmin();
-    const [payouts, basics, refRes, appRes] = await Promise.all([
-      loadAllPayoutViews(today),
-      loadReferralBasics(),
+    const basics = await loadReferralBasics();
+    const me = basics.staff.find((u) => u.id === auth.ctx.user.id);
+    const actor = { id: auth.ctx.user.id, ref_codes: me?.ref_codes ?? [] };
+    const [payouts, manual, refRes, appRes] = await Promise.all([
+      loadAllPayoutViews(today, actor),
+      loadNeedsManual(),
       db.from("referrers").select("id, phone, email, bank_info, note"),
       db.from("applications").select("referred_by").not("referred_by", "is", null),
     ]);
@@ -37,7 +40,7 @@ export async function GET(req: Request) {
       };
     });
     const unknownCodes = unknownRefCodes((appRes.data ?? []).map((a) => a.referred_by as string | null), basics.staff, basics.referrers);
-    return NextResponse.json({ today, payouts, referrers, unknownCodes, defaults: basics.defaults });
+    return NextResponse.json({ today, payouts, referrers, unknownCodes, defaults: basics.defaults, manual });
   } catch (e) {
     console.error("[referrals] GET", e);
     return NextResponse.json({ error: "Không đọc được dữ liệu hoa hồng" }, { status: 500 });

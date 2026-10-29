@@ -75,9 +75,20 @@ export function parseRule(v: unknown): CommissionRule | { error: string } {
   return { amount, schedule };
 }
 
-/** Đọc mặc định công ty từ app_settings; phần thiếu/hỏng → DEFAULT_RULES của loại đó. */
+/**
+ * Đọc mặc định công ty từ app_settings; phần thiếu/hỏng → DEFAULT_RULES của loại đó.
+ * app_settings.value là TEXT → nhận chuỗi JSON (JSON hỏng → mặc định) hoặc object đã parse.
+ */
 export function parseDefaultRules(v: unknown): DefaultRules {
-  const src = isRecord(v) ? v : {};
+  let raw = v;
+  if (typeof raw === "string") {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      raw = null;
+    }
+  }
+  const src = isRecord(raw) ? raw : {};
   const one = (kind: CommissionKind): CommissionRule | null => {
     if (!(kind in src)) return DEFAULT_RULES[kind];
     if (src[kind] === null) return null;
@@ -306,6 +317,9 @@ export function planPayouts(i: {
   return { deleteIds, inserts, needsManual: false };
 }
 
+/** Lý do lưu trên referral_placements.needs_manual_reason khi planPayouts trả needsManual. */
+export const NEEDS_MANUAL_REASON = "Đã có khoản duyệt/đã trả theo quy tắc cũ hoặc đã sửa tay — chưa sinh các mốc còn lại";
+
 /** Đổi ngày đi làm → ngày đến hạn mới của khoản upcoming/due (chỉ dòng đổi ngày). Route ghi kèm status "upcoming". */
 export function rescheduleDueDates(existing: PayoutLite[], startDate: string | null): { id: string; due_date: string | null }[] {
   const out: { id: string; due_date: string | null }[] = [];
@@ -389,10 +403,27 @@ export function parsePayoutAction(v: unknown): PayoutAction | { error: string } 
 
 export type PayoutDenied = { code: "forbidden" | "state"; message: string };
 
+export const SELF_PAYOUT_MSG = "Không tự duyệt/sửa/trả khoản hoa hồng của chính mình — nhờ Sếp";
+
+/**
+ * Khoản hoa hồng mà người đang thao tác chính là người hưởng: khoản gắn tài khoản của họ, referrer gắn tài khoản
+ * của họ, hoặc mã ref trên hồ sơ là mã tài khoản của họ (vd. Kế toán Thảo qua "thaodtx").
+ */
+export function isSelfPayout(
+  p: { hr_user_id: string | null },
+  extra: { referrerHrUserId: string | null; referredBy: string | null },
+  actor: { id: string | null; ref_codes: string[] | null },
+): boolean {
+  if (!actor.id) return false;
+  if (p.hr_user_id === actor.id || extra.referrerHrUserId === actor.id) return true;
+  return resolveRefOwner(extra.referredBy, [actor]) !== null;
+}
+
 /**
  * Lỗi nếu người có quyền `perms` không được làm `a` trên khoản `p`; null = được.
  * code "forbidden" → 403 (thiếu quyền), "state" → 400 (sai trạng thái).
  * offerAccepted = offer của hồ sơ đang ở "Đã nhận"; không thì chỉ huỷ / ghi chú được (duyệt, chuyển khoản bị chặn).
+ * actor.self = khoản của chính người thao tác (isSelfPayout): không phải Sếp thì không duyệt/sửa/trả được.
  */
 export function checkPayoutAction(
   perms: Set<PermissionKey>,
@@ -400,13 +431,16 @@ export function checkPayoutAction(
   a: PayoutAction,
   today: string,
   offerAccepted: boolean,
+  actor: { boss: boolean; self: boolean } = { boss: false, self: false },
 ): PayoutDenied | null {
   const forbidden = (message: string): PayoutDenied => ({ code: "forbidden", message });
   const state = (message: string): PayoutDenied => ({ code: "state", message });
   const OFFER_MSG = "Offer của ứng viên không còn ở Đã nhận — cần xử lý tay";
+  const selfLocked = actor.self && !actor.boss;
   switch (a.action) {
     case "approve":
       if (!perms.has("referrals.manage")) return forbidden("Bạn không có quyền xác nhận khoản hoa hồng");
+      if (selfLocked) return forbidden(SELF_PAYOUT_MSG);
       if (!offerAccepted) return state(OFFER_MSG);
       if (effectiveStatus(p, today) !== "due") return state("Khoản chưa đến hạn hoặc không ở trạng thái chờ xác nhận");
       if (p.amount === null) return state("Khoản chưa có số tiền — hãy đặt mức hoa hồng trước");
@@ -418,16 +452,34 @@ export function checkPayoutAction(
       return null;
     case "pay":
       if (!perms.has("referrals.pay")) return forbidden("Bạn không có quyền đánh dấu đã chuyển khoản");
+      if (selfLocked) return forbidden(SELF_PAYOUT_MSG);
       if (p.status !== "approved") return state("Chỉ khoản đã được xác nhận còn làm mới đánh dấu chuyển khoản được");
       if (!offerAccepted) return state(OFFER_MSG);
       if (a.paid_date > today) return state("Ngày chuyển khoản không được ở tương lai");
       return null;
     case "edit":
       if (!perms.has("referrals.pay")) return forbidden("Bạn không có quyền sửa số tiền / hạn khoản hoa hồng");
+      if (selfLocked) return forbidden(SELF_PAYOUT_MSG);
       if (p.status === "cancelled") return state("Khoản đã huỷ không sửa được");
       if (p.status === "paid" && (a.amount !== undefined || a.due_date !== undefined)) return state("Khoản đã chuyển khoản chỉ được sửa ghi chú");
       return null;
   }
+}
+
+/**
+ * Trạng thái sau khi sửa khoản: người không phải Sếp sửa số tiền khoản đã duyệt → về "due" (phải duyệt lại);
+ * đổi hạn → statusAfterDueEdit (upcoming/due theo hạn mới; approved/paid giữ nguyên).
+ */
+export function statusAfterPayoutEdit(
+  status: PayoutStatus,
+  e: { amountChanged: boolean; dueChanged: boolean; newDue: string | null; oldDue: string | null },
+  boss: boolean,
+  today: string,
+): PayoutStatus {
+  let s = status;
+  if (e.amountChanged && s === "approved" && !boss) s = "due";
+  if (e.dueChanged || s !== status) s = statusAfterDueEdit(s, e.dueChanged ? e.newDue : e.oldDue, today);
+  return s;
 }
 
 /** Có khoản đã duyệt/đã trả → không đổi người giới thiệu của hồ sơ được. */
@@ -473,12 +525,23 @@ export type ReferrerInput = {
   rule: CommissionRule | null;
 };
 
-/** Đọc + kiểm body tạo/sửa người giới thiệu (400 sai dữ liệu, 409 trùng mã / trùng liên kết tài khoản). */
+export const REFERRER_BOSS_ONLY_MSG = "Chỉ Sếp được gắn tài khoản /hr hoặc đặt mức hoa hồng riêng cho người giới thiệu";
+
+/**
+ * Đọc + kiểm body tạo/sửa người giới thiệu (400 sai dữ liệu, 409 trùng mã / trùng liên kết tài khoản,
+ * 403 người không phải Sếp đặt/đổi hr_user_id hoặc mức riêng). previous = bản đang lưu (sửa); không có = tạo mới.
+ */
 export function parseReferrerInput(
   v: unknown,
-  ctx: { staff: StaffLite[]; referrers: ReferrerLite[]; selfId: string | null },
-): ReferrerInput | { error: string; status: 400 | 409 } {
-  const bad = (error: string, status: 400 | 409 = 400) => ({ error, status });
+  ctx: {
+    staff: StaffLite[];
+    referrers: ReferrerLite[];
+    selfId: string | null;
+    actorIsBoss: boolean;
+    previous?: { hr_user_id: string | null; rule: unknown } | null;
+  },
+): ReferrerInput | { error: string; status: 400 | 403 | 409 } {
+  const bad = (error: string, status: 400 | 403 | 409 = 400) => ({ error, status });
   if (!isRecord(v)) return bad("Yêu cầu không hợp lệ");
   const name = typeof v.name === "string" ? v.name.trim() : "";
   if (!name || name.length > 120) return bad("Tên người giới thiệu phải từ 1 đến 120 ký tự");
@@ -520,6 +583,12 @@ export function parseReferrerInput(
     rule = r;
   }
   if (v.active !== undefined && typeof v.active !== "boolean") return bad("Trạng thái hoạt động không hợp lệ");
+  if (!ctx.actorIsBoss) {
+    const prevHr = ctx.previous?.hr_user_id ?? null;
+    const prevParsed = ctx.previous?.rule == null ? null : parseRule(ctx.previous.rule);
+    const prevRule = prevParsed && !("error" in prevParsed) ? prevParsed : null;
+    if (hrUserId !== prevHr || ruleKey(rule) !== ruleKey(prevRule)) return bad(REFERRER_BOSS_ONLY_MSG, 403);
+  }
   return {
     name,
     kind: hrUserId !== null ? "internal" : kind,
