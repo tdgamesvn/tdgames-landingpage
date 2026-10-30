@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
+import { getActiveJob } from "@/lib/jobs-data";
 import { ogImages } from "@/lib/seo";
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 /**
  * Metadata cho link chia sẻ 1 job (Zalo/Messenger/LinkedIn preview):
  * tên job + lương/tóm tắt + ảnh banner. Job không tồn tại/đã đóng → null.
  */
 export async function jobMetadata(slug: string, url: string): Promise<Metadata | null> {
-  if (!/^[a-z0-9-]{1,120}$/i.test(slug)) return null;
-  const { data: job } = await getSupabaseAdmin()
-    .from("jobs")
-    .select("title, summary, description, salary, location, image_url")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
+  const job = await getActiveJob(slug);
   if (!job) return null;
 
   const title = `${job.title} — Careers at TD Games`;
