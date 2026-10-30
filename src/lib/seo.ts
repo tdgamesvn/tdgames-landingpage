@@ -23,6 +23,15 @@ export function ogImages(image?: string | OgImage | null): OgImage[] {
 }
 
 /**
+ * Case study con của Monster Legends (monster-legends-fire, -water…): nội dung gần trùng
+ * nhau và trùng hub → noindex,follow + bỏ khỏi sitemap. Hub /portfolio/monster-legends vẫn index
+ * và vẫn link tới các trang này. Canonical vẫn tự trỏ chính nó (nội dung khác hub).
+ */
+export function isNoindexCaseStudy(slug: string): boolean {
+  return /^monster-legends-.+/.test(slug);
+}
+
+/**
  * Metadata cho trang case study portfolio: title/description riêng + canonical.
  * Không có hàm này thì 16 case study kế thừa chung title "Portfolio" từ portfolio/layout
  * → Google coi là trùng lặp.
@@ -39,6 +48,7 @@ export function caseStudyMetadata(
     title: { absolute: `${title} | TD Games` },
     description,
     alternates: { canonical: path },
+    ...(isNoindexCaseStudy(slug) ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       title: `${title} — TD Games Studio`,
       description,

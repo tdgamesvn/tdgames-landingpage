@@ -4,6 +4,7 @@ import path from "node:path";
 import type { MetadataRoute } from "next";
 
 import { listActiveJobs } from "@/lib/jobs-data";
+import { isNoindexCaseStudy } from "@/lib/seo";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const BASE_URL = "https://tdgamestudio.com";
@@ -54,12 +55,17 @@ const FALLBACK_PORTFOLIO_SLUGS = [
   "stickman-legend", "summoner-era", "summoner-era-2020", "summoner-era-arena-of-heroes", "yomi-2",
 ];
 
-/** Slug case study = thư mục con của src/app/portfolio có page.tsx (bỏ thư mục `_` nội bộ). */
+/**
+ * Slug case study = thư mục con của src/app/portfolio có page.tsx (bỏ thư mục `_` nội bộ).
+ * Bỏ trang noindex (monster-legends-<element>) — sitemap chỉ chứa URL muốn index.
+ */
 function portfolioSlugs(): string[] {
-  const slugs = readPortfolioSlugs();
-  if (slugs.length) return slugs;
-  console.warn("[sitemap] không đọc được slug portfolio → dùng FALLBACK_PORTFOLIO_SLUGS");
-  return FALLBACK_PORTFOLIO_SLUGS;
+  let slugs = readPortfolioSlugs();
+  if (!slugs.length) {
+    console.warn("[sitemap] không đọc được slug portfolio → dùng FALLBACK_PORTFOLIO_SLUGS");
+    slugs = FALLBACK_PORTFOLIO_SLUGS;
+  }
+  return slugs.filter((slug) => !isNoindexCaseStudy(slug));
 }
 
 function readPortfolioSlugs(): string[] {
