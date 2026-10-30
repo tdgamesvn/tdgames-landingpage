@@ -13,6 +13,7 @@ import CommentThread from "./CommentThread";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
 import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
+import CloseOutDialog, { countOpenCandidates } from "./CloseOutDialog";
 import ThemeToggle, { useHrTheme, type HrThemePref } from "./ThemeToggle";
 import { HrSessionProvider, hrFetch, useHrSession } from "./HrSession";
 import HrAuthCard, { AUTH_INPUT, AUTH_LINK } from "./HrAuthCard";
@@ -76,6 +77,9 @@ const useStatuses = () => useContext(StatusContext);
 /** Tên tài khoản chưa khoá (id → tên) — để hiện người phụ trách trên card / hồ sơ. */
 const StaffContext = createContext<Map<string, string>>(new Map());
 const useStaffNames = () => useContext(StaffContext);
+
+/** Đổi status nhiều hồ sơ tại chỗ (sau "Báo đã tuyển đủ" — kể cả khi mở từ hồ sơ khác). */
+const AppsMovedContext = createContext<(ids: string[], status: ApplicationStatus) => void>(() => {});
 
 const AVATAR_COLORS = ["#b45309", "#0f766e", "#4f46e5", "#be185d", "#15803d", "#7c3aed", "#0369a1", "#a16207"];
 
@@ -2047,6 +2051,8 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
   }, [canSeeReferrers]);
   const refCode = normalizeRefCode(hhRef) ?? ownRef;
   const [rankingId, setRankingId] = useState<string | null>(null);
+  const [closeOutId, setCloseOutId] = useState<string | null>(null);
+  const moveApps = useContext(AppsMovedContext);
   const [openAppId, setOpenAppId] = useState<string | null>(null);
   const openApp = openAppId ? apps.find((a) => a.id === openAppId) : undefined;
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -2299,6 +2305,15 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
                 </button>
                 )}
 
+                {/* Báo đã tuyển đủ: mail "Vị trí đã tuyển đủ" + chuyển ứng viên đang mở sang Lưu hồ sơ */}
+                {can("apps.edit") && (
+                  <button
+                    onClick={() => setCloseOutId(job.id)}
+                    className="rounded-lg border border-white/15 px-3 py-1 text-[10px] text-white/60 hover:bg-white/5 transition-colors">
+                    <CircleCheck className="hr-ico" />Đã tuyển đủ
+                  </button>
+                )}
+
                 {/* Bài test */}
                 <button
                   onClick={() => setTestsId(testsId === job.id ? null : job.id)}
@@ -2357,6 +2372,15 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
           </div>
         ))}
       </div>
+
+      {closeOutId && (
+        <CloseOutDialog
+          jobId={closeOutId}
+          statusLabel={(k) => S.label(k as ApplicationStatus)}
+          onClose={() => setCloseOutId(null)}
+          onMoved={(ids, status) => moveApps(ids, status as ApplicationStatus)}
+        />
+      )}
 
       {openApp && (
         <CandidateModalHost
@@ -2683,8 +2707,13 @@ type OfferApprovalView = {
  */
 function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
   const { can, me } = useHrSession();
+  const S = useStatuses();
+  const moveApps = useContext(AppsMovedContext);
   const { prompt, openOfferLetter, lastSentAt, dialogOpen } = useCandidateMail();
   const [saving, setSaving] = useState(false);
+  // Vừa đặt "Đã nhận" + job còn ứng viên mở khác → gợi ý "Báo đã tuyển đủ" (số ứng viên; null = không gợi ý).
+  const [filledHint, setFilledHint] = useState<number | null>(null);
+  const [closeOutOpen, setCloseOutOpen] = useState(false);
   const [error, setError] = useState("");
   // Trạng thái bước: thư mời đã lưu chưa (ai, lúc nào, duyệt chưa) + mail offer đã gửi chưa (lần gần nhất).
   const [letter, setLetter] = useState<{ saved: boolean; by: string | null; at: string | null; data: unknown; approval: OfferApprovalView } | null>(null);
@@ -2753,6 +2782,11 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
       onPatch({ offer_status: j.application?.offer_status ?? v });
+      setFilledHint(null);
+      if (v === "accepted" && can("apps.edit")) {
+        const n = await countOpenCandidates(app.job_id, app.id);
+        setFilledHint(n > 0 ? n : null);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Không lưu được kết quả offer");
     } finally {
@@ -2971,6 +3005,29 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
               ))}
             </div>
           </div>
+        )}
+        {filledHint !== null && app.offer_status === "accepted" && (
+          <div role="status" className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[13px] text-white/80">
+            <span>Job này còn {filledHint} ứng viên đang mở — Báo đã tuyển đủ?</span>
+            <button type="button" onClick={() => setCloseOutOpen(true)} className="hr-secondary-btn">
+              Báo đã tuyển đủ
+            </button>
+            <button type="button" onClick={() => setFilledHint(null)} className="text-white/40 hover:text-white/70" aria-label="Ẩn gợi ý">
+              <X className="hr-ico-solo" />
+            </button>
+          </div>
+        )}
+        {closeOutOpen && (
+          <CloseOutDialog
+            jobId={app.job_id}
+            excludeId={app.id}
+            statusLabel={(k) => S.label(k as ApplicationStatus)}
+            onClose={() => setCloseOutOpen(false)}
+            onMoved={(ids, status) => {
+              moveApps(ids, status as ApplicationStatus);
+              setFilledHint(null);
+            }}
+          />
         )}
         {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
         <ReferralOfferBlock appId={app.id} offerStatus={app.offer_status ?? null} />
@@ -3229,6 +3286,11 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     setApps((prev) => prev.filter((a) => a.id !== id));
   }
 
+  const moveApps = useCallback((ids: string[], status: ApplicationStatus) => {
+    const set = new Set(ids);
+    setApps((prev) => prev.map((a) => (set.has(a.id) ? { ...a, status } : a)));
+  }, []);
+
   // Tab theo quyền: Jobs = quản lý job; KPI dựa trên người giới thiệu + lý do loại (apps.view_notes).
   const views: View[] = [
     "pipeline",
@@ -3252,6 +3314,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
   return (
     <StatusContext.Provider value={statusApi}>
     <StaffContext.Provider value={staffNames}>
+    <AppsMovedContext.Provider value={moveApps}>
     <CandidateMailProvider>
     <div className="hr-app min-h-screen text-white">
       {/* Thanh công cụ kiểu macOS: tiêu đề trái, segmented control giữa, nút văn bản phải.
@@ -3365,6 +3428,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
       )}
     </div>
     </CandidateMailProvider>
+    </AppsMovedContext.Provider>
     </StaffContext.Provider>
     </StatusContext.Provider>
   );

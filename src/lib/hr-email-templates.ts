@@ -11,6 +11,7 @@ import {
   buildSignature,
   HIRING_EMAIL,
   formatInterviewLong,
+  holdReplyBy,
   whereLines,
   isCandidateKind,
   type CandidateEmailKind,
@@ -33,6 +34,8 @@ export const KIND_VARS: Record<CandidateEmailKind, string[]> = {
     "muc_luong",
   ],
   application_received: [...COMMON_VARS],
+  on_hold: [...COMMON_VARS, "han_phan_hoi"],
+  position_filled: [...COMMON_VARS],
 };
 
 /** Biến còn hợp lệ (mẫu cũ không lỗi) nhưng không gợi ý chèn trong tab Mẫu mail. */
@@ -57,6 +60,7 @@ export const VAR_HELP: Record<string, string> = {
   han_xac_nhan: "Hạn xác nhận offer, vd “Thứ Sáu 30/10/2026”",
   nguoi_lien_he: "Người liên hệ: tên · SĐT · email (Kế toán/HR gửi → chính người đó; Sếp gửi → Kế toán)",
   ten_file: "Tên file thư mời nhận việc đính kèm (PDF)",
+  han_phan_hoi: "Hạn TD Games phản hồi = ngày gửi + 14 ngày, vd “Thứ Sáu 13/11/2026”",
 };
 
 export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
@@ -134,7 +138,28 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
       "Chào {ten_ung_vien},",
       "Cảm ơn bạn đã quan tâm và ứng tuyển vị trí {vi_tri} tại TD Games. Chúng mình đã nhận được hồ sơ của bạn.",
       "Bộ phận tuyển dụng sẽ xem xét hồ sơ và phản hồi bạn sớm nhất có thể. Trong thời gian này, nếu cần bổ sung thông tin (CV, portfolio…) hoặc có câu hỏi, bạn cứ trả lời trực tiếp email này nhé.",
+      "Nếu sau 14 ngày bạn chưa nhận được phản hồi, nghĩa là hồ sơ chưa phù hợp ở thời điểm này — TD Games vẫn lưu hồ sơ để liên hệ khi có cơ hội phù hợp.",
       "Chúc bạn một ngày tốt lành!",
+      "{chu_ky}",
+    ].join("\n\n"),
+  },
+  on_hold: {
+    subject: "Hồ sơ ứng tuyển đang được xem xét — {vi_tri} | TD Games",
+    body: [
+      "Chào {ten_ung_vien},",
+      "Cảm ơn bạn đã dành thời gian ứng tuyển vị trí {vi_tri} tại TD Games.",
+      "Hiện vị trí {vi_tri} đang trong giai đoạn đánh giá hồ sơ. Chúng mình sẽ phản hồi kết quả cho bạn trước {han_phan_hoi}.",
+      "Trong thời gian này, nếu có câu hỏi hoặc muốn bổ sung thông tin (CV, portfolio…), bạn cứ trả lời trực tiếp email này nhé.",
+      "{chu_ky}",
+    ].join("\n\n"),
+  },
+  position_filled: {
+    subject: "Thông tin vị trí ứng tuyển — {vi_tri} | TD Games",
+    body: [
+      "Chào {ten_ung_vien},",
+      "Cảm ơn bạn đã dành thời gian quan tâm và ứng tuyển vị trí {vi_tri} tại TD Games.",
+      "Chúng mình xin báo vị trí này đã tìm được ứng viên phù hợp ở thời điểm hiện tại. TD Games sẽ lưu hồ sơ của bạn và chủ động liên hệ khi có cơ hội phù hợp.",
+      "Chúc bạn nhiều may mắn và thành công trên con đường sắp tới.",
       "{chu_ky}",
     ].join("\n\n"),
   },
@@ -158,6 +183,7 @@ export function templateVars(input: DraftInput): Record<string, string> {
       ? `Buổi phỏng vấn vị trí ${input.jobTitle.trim() || "vị trí bạn ứng tuyển"} vào lúc ${formatInterviewLong(input.prevScheduledAt)} đã được huỷ.`
       : `Buổi phỏng vấn vị trí ${input.jobTitle.trim() || "vị trí bạn ứng tuyển"} đã được huỷ.`,
     link_bai_test: input.testUrl ?? "(HR bổ sung link)",
+    han_phan_hoi: input.replyBy?.trim() || holdReplyBy(new Date()),
     ...offerVars(input),
   };
 }
@@ -277,6 +303,8 @@ export function SAMPLE_DRAFT_INPUT(kind: CandidateEmailKind): DraftInput {
       return { ...base, prevScheduledAt: "2026-11-02T08:30:00.000Z" };
     case "test_assignment":
       return { ...base, testUrl: "https://tdgamestudio.com/test/mau-xem-truoc" };
+    case "on_hold":
+      return { ...base, replyBy: "Thứ Sáu 13/11/2026" };
     case "offer":
       return {
         ...base,

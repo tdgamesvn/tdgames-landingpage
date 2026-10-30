@@ -218,6 +218,13 @@ test("resolveCc rejection: chỉ hiring@ + người support (không HR khác, kh
   assert.deepEqual(r.fixed, [HIRING]);
 });
 
+test("resolveCc on_hold / position_filled: như rejection — hiring@ + người support, không Leader", () => {
+  for (const kind of ["on_hold", "position_filled"] as const) {
+    const r = resolveCc(liveCfg, kind, staff, { assigneeId: "h3", jobLeaderId: "l1", senderEmail: "x@td.com" });
+    assert.deepEqual(r.ccPreview, [HIRING, "hr3@td.com"], kind);
+  }
+});
+
 test("resolveCc: người support là người gửi → không CC lại; chưa có support → chỉ hiring@", () => {
   assert.deepEqual(resolveCc(liveCfg, "rejection", staff, { assigneeId: "h3", jobLeaderId: null, senderEmail: "HR3@td.com" }).ccPreview, [HIRING]);
   assert.deepEqual(resolveCc(liveCfg, "rejection", staff, { assigneeId: null, jobLeaderId: null, senderEmail: "" }).ccPreview, [HIRING]);

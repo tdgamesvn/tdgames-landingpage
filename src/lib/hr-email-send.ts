@@ -1,6 +1,15 @@
 import "server-only";
 
-import { fromFor, getHrEmailConfig, replyToFor, resolveCc, textToHtml, type CandidateEmailKind, type HrEmailConfig } from "./hr-email";
+import {
+  fromFor,
+  getHrEmailConfig,
+  replyToFor,
+  resolveCc,
+  resolveRecipient,
+  textToHtml,
+  type CandidateEmailKind,
+  type HrEmailConfig,
+} from "./hr-email";
 import { offerContactUser } from "./hr-email-templates";
 import { getSupabaseAdmin } from "./supabase-admin";
 import type { HrContext } from "./hr-session";
@@ -120,4 +129,68 @@ export async function resolveCcForApplication(
     from: fromFor(cfg, assignee && !assignee.disabled ? assignee.display_name : null),
     support: assignee && !assignee.disabled && assignee.display_name ? { name: assignee.display_name, phone: assignee.phone } : null,
   };
+}
+
+/**
+ * Gửi 1 mail ứng viên đã soạn xong + ghi lịch sử `candidate_emails` (dùng chung cho gửi tay từ hồ sơ và
+ * "Báo đã tuyển đủ" hàng loạt). Người nhận do server quyết (test → hộp nội bộ); CC/From/Reply-To lấy từ
+ * `resolveCcForApplication` (người gọi có thể đã lọc CC). Không throw.
+ * - `{ error }`: gửi thất bại (chưa có gì đi).
+ * - `{ row, warning? }`: đã gửi; lỗi ghi lịch sử chỉ thành `warning` (đừng báo "thất bại" → HR gửi lại → trùng).
+ */
+export async function deliverCandidateEmail(
+  cfg: HrEmailConfig,
+  ctx: HrContext,
+  m: {
+    applicationId: string;
+    kind: CandidateEmailKind;
+    candidateEmail: string;
+    interviewId?: string | null;
+    subject: string;
+    text: string;
+    cc: string[];
+    from: string;
+    replyTo: string[];
+    /** File đính kèm (base64) + dòng ghi vào cột `attachments` của lịch sử. */
+    attachment?: { filename: string; content: string; record: Record<string, unknown> } | null;
+  },
+): Promise<{ error: string } | { row: Record<string, unknown> | null; warning?: string }> {
+  const candidateEmail = m.candidateEmail.trim();
+  const r = resolveRecipient(cfg, candidateEmail, m.subject);
+  const html = textToHtml(m.text);
+  const sent = await sendViaResend(cfg, {
+    to: r.to,
+    subject: r.subject,
+    html,
+    text: m.text,
+    cc: m.cc,
+    from: m.from,
+    replyTo: m.replyTo,
+    ...(m.attachment ? { attachments: [{ filename: m.attachment.filename, content: m.attachment.content }] } : {}),
+  });
+  if ("error" in sent) return { error: sent.error };
+
+  const { data, error } = await getSupabaseAdmin()
+    .from("candidate_emails")
+    .insert({
+      application_id: m.applicationId,
+      interview_id: m.interviewId ?? null,
+      kind: m.kind,
+      to_email: candidateEmail,
+      sent_to: r.to,
+      cc_emails: m.cc,
+      test_mode: r.testMode,
+      subject: r.subject,
+      body_text: m.text,
+      body_html: html,
+      resend_id: sent.id,
+      sent_by: ctx.user.displayName,
+      sent_by_user_id: ctx.user.id,
+      // Chỉ ghi cột khi có file (mail loại khác không phụ thuộc cột mới).
+      ...(m.attachment ? { attachments: [m.attachment.record] } : {}),
+    })
+    .select()
+    .single();
+  if (error) return { row: null, warning: `Đã gửi nhưng không lưu được lịch sử: ${error.message}` };
+  return { row: data as Record<string, unknown> };
 }

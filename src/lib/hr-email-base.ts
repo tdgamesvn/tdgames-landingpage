@@ -5,6 +5,7 @@
  */
 
 import { GOOGLE_MAPS_URL, OFFICE_ADDRESS } from "./company-location.ts";
+import { addDays, formatDateVi, vnDateString } from "./offer-letter.ts";
 
 export const CANDIDATE_EMAIL_KINDS = [
   "interview_invite",
@@ -14,6 +15,8 @@ export const CANDIDATE_EMAIL_KINDS = [
   "rejection",
   "offer",
   "application_received",
+  "on_hold",
+  "position_filled",
 ] as const;
 
 export type CandidateEmailKind = (typeof CANDIDATE_EMAIL_KINDS)[number];
@@ -26,6 +29,8 @@ export const KIND_LABEL: Record<CandidateEmailKind, string> = {
   rejection: "Báo kết quả (không phù hợp)",
   offer: "Gửi offer",
   application_received: "Cảm ơn ứng tuyển",
+  on_hold: "Hồ sơ đang được xem xét",
+  position_filled: "Vị trí đã tuyển đủ",
 };
 
 /** Loại mail chỉ hệ thống gửi (tự động khi ứng viên nộp đơn) — HR không gửi tay từ hồ sơ. */
@@ -49,6 +54,14 @@ export function formatInterviewLong(iso: string) {
   return `${time}, ${WEEKDAY_LONG[wd] ?? wd} ${date}`;
 }
 
+/** Mail "Hồ sơ đang được xem xét": TD Games hẹn phản hồi trong số ngày này (sếp chốt 2026-10-30). */
+export const HOLD_REPLY_DAYS = 14;
+
+/** Hạn phản hồi `{han_phan_hoi}` = hôm nay (giờ VN) + 14 ngày, dạng "Thứ Sáu 13/11/2026" (như hạn xác nhận offer). */
+export function holdReplyBy(now: Date): string {
+  return formatDateVi(addDays(vnDateString(now), HOLD_REPLY_DAYS));
+}
+
 export type DraftInput = {
   kind: CandidateEmailKind;
   candidateName: string;
@@ -63,6 +76,8 @@ export type DraftInput = {
   } | null;
   prevScheduledAt?: string | null;
   testUrl?: string | null;
+  /** Mail on_hold: hạn phản hồi đã định dạng (`holdReplyBy`); trống → tự tính từ hôm nay. */
+  replyBy?: string | null;
   /** Hồ sơ đã có kết quả MBTI → mail mời PV không nhắc làm trắc nghiệm nữa. */
   hasMbti?: boolean;
   /**

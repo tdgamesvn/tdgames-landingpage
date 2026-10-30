@@ -482,6 +482,8 @@ export function CandidateMailSection({
               {can("apps.view_tests") && (
                 <button role="menuitem" onClick={() => pick("test_assignment")} className="hr-menu-item">{KIND_LABEL.test_assignment}</button>
               )}
+              <button role="menuitem" onClick={() => pick("on_hold")} className="hr-menu-item">{KIND_LABEL.on_hold}</button>
+              <button role="menuitem" onClick={() => pick("position_filled")} className="hr-menu-item">{KIND_LABEL.position_filled}</button>
               <button role="menuitem" onClick={() => pick("rejection")} className="hr-menu-item">{KIND_LABEL.rejection}</button>
             </div>
           )}

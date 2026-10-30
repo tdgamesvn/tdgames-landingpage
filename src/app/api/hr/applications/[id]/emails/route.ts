@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
-import { getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail, resolveRecipient, textToHtml } from "@/lib/hr-email";
-import { sendViaResend, resolveCcForApplication } from "@/lib/hr-email-send";
+import { getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail } from "@/lib/hr-email";
+import { deliverCandidateEmail, resolveCcForApplication } from "@/lib/hr-email-send";
 import { redactEmailRow } from "@/lib/hr-scope";
 import { NO_OFFER_LETTER, offerFileName, validateOfferLetter, type OfferLetterData } from "@/lib/offer-letter";
 import { pdfErrorResponse, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
@@ -120,45 +120,26 @@ export async function POST(request: Request, { params }: Ctx) {
   const keep = (list: string[]) => (wanted ? list.filter((e) => wanted.has(e) || resolved.fixed.includes(e)) : list);
   const cc = keep(resolved.cc);
 
-  const candidateEmail = (appEmail as string).trim();
-  const r = resolveRecipient(cfg, candidateEmail, subject);
-  const html = textToHtml(text);
-  const sent = await sendViaResend(cfg, {
-    to: r.to,
-    subject: r.subject,
-    html,
+  const sent = await deliverCandidateEmail(cfg, ctx, {
+    applicationId: id,
+    kind,
+    candidateEmail: appEmail as string,
+    interviewId,
+    subject,
     text,
     cc,
     from: resolved.from,
     replyTo: resolved.replyTo,
-    ...(offerAttachment ? { attachments: [{ filename: offerAttachment.filename, content: offerAttachment.content }] } : {}),
+    attachment: offerAttachment
+      ? {
+          filename: offerAttachment.filename,
+          content: offerAttachment.content,
+          record: { filename: offerAttachment.filename, kind: "offer_letter", snapshot: offerAttachment.snapshot },
+        }
+      : null,
   });
   if ("error" in sent) return NextResponse.json({ error: `Gửi thất bại: ${sent.error}` }, { status: 502 });
-
-  const { data, error } = await getSupabaseAdmin()
-    .from("candidate_emails")
-    .insert({
-      application_id: id,
-      interview_id: interviewId,
-      kind,
-      to_email: candidateEmail,
-      sent_to: r.to,
-      cc_emails: cc,
-      test_mode: r.testMode,
-      subject: r.subject,
-      body_text: text,
-      body_html: html,
-      resend_id: sent.id,
-      sent_by: ctx.user.displayName,
-      sent_by_user_id: ctx.user.id,
-      // Chỉ ghi cột khi có file (mail loại khác không phụ thuộc cột mới).
-      ...(offerAttachment
-        ? { attachments: [{ filename: offerAttachment.filename, kind: "offer_letter", snapshot: offerAttachment.snapshot }] }
-        : {}),
-    })
-    .select()
-    .single();
   // Mail đã đi rồi — lỗi ghi log không được báo "gửi thất bại" (HR sẽ gửi lại → trùng).
-  if (error) return NextResponse.json({ email: null, cc_preview: resolved.ccPreview, warning: `Đã gửi nhưng không lưu được lịch sử: ${error.message}` });
-  return NextResponse.json({ email: redactEmailRow(data, ctx.perms), cc_preview: resolved.ccPreview });
+  if (!sent.row) return NextResponse.json({ email: null, cc_preview: resolved.ccPreview, warning: sent.warning });
+  return NextResponse.json({ email: redactEmailRow(sent.row, ctx.perms), cc_preview: resolved.ccPreview });
 }

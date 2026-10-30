@@ -106,6 +106,8 @@ function legacyBuildDraft(input: DraftInput): { subject: string; text: string } 
       body = [
         `Cảm ơn bạn đã quan tâm và ứng tuyển vị trí ${job} tại TD Games. Chúng mình đã nhận được hồ sơ của bạn.`,
         "Bộ phận tuyển dụng sẽ xem xét hồ sơ và phản hồi bạn sớm nhất có thể. Trong thời gian này, nếu cần bổ sung thông tin (CV, portfolio…) hoặc có câu hỏi, bạn cứ trả lời trực tiếp email này nhé.",
+        // Thêm có chủ đích 2026-10-30 (sếp duyệt mục D): hẹn 14 ngày.
+        "Nếu sau 14 ngày bạn chưa nhận được phản hồi, nghĩa là hồ sơ chưa phù hợp ở thời điểm này — TD Games vẫn lưu hồ sơ để liên hệ khi có cơ hội phù hợp.",
         "Chúc bạn một ngày tốt lành!",
       ];
       break;
@@ -131,6 +133,8 @@ function legacyBuildDraft(input: DraftInput): { subject: string; text: string } 
       ].join("\n\n");
       return { subject, text };
     }
+    default:
+      throw new Error(`Không có bản cũ cho ${input.kind}`);
   }
 
   return { subject, text: [hello, ...body, SIGNATURE_LEGACY].join("\n\n") };
@@ -161,7 +165,9 @@ const fullOffer = {
 for (const offer of [null, undefined, { startDate: "" }, { startDate: "01/12" }, {}, fullOffer, { ...fullOffer, title: " ", contact: "" }]) {
   cases.push({ kind: "offer", candidateName: "A", jobTitle: "Dev", offer });
 }
-for (const kind of CANDIDATE_EMAIL_KINDS) {
+// Loại mới (2026-10-30) không có bản cũ để đối chiếu — test riêng ở cuối file.
+const NEW_KINDS: readonly string[] = ["on_hold", "position_filled"];
+for (const kind of CANDIDATE_EMAIL_KINDS.filter((k) => !NEW_KINDS.includes(k))) {
   cases.push({ kind, candidateName: "  ", jobTitle: "" });
 }
 
@@ -244,7 +250,7 @@ test("SAMPLE_DRAFT_INPUT: render sạch, không còn biến chưa thay", () => {
     assert.doesNotMatch(d.subject + d.text, /\{[a-z_]+\}/, k);
     assert.match(d.text, /Nguyễn Văn A/);
   }
-  assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 18);
+  assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 19);
 });
 
 test("validate: biến viết gần đúng bị từ chối, ngoặc lẻ vẫn được", () => {
@@ -324,4 +330,64 @@ test("chữ ký {chu_ky}: có người support → tên + SĐT + hiring@; không
   assert.equal(buildSignature(null), "Trân trọng,\nTD Games Studio — Phòng Nhân sự\nhiring@tdgamestudio.com · https://tdgamestudio.com");
   const d = buildDraft({ kind: "rejection", candidateName: "Lan", jobTitle: "Dev", support: { name: "Thuỳ Dung", phone: "+84336828903" } });
   assert.ok(d.text.endsWith("Thuỳ Dung — Phòng Nhân sự TD Games\n+84336828903 · hiring@tdgamestudio.com · https://tdgamestudio.com"));
+});
+
+// ── Mail "Hồ sơ đang được xem xét" / "Vị trí đã tuyển đủ" (2026-10-30) ──
+import { KIND_LABEL, isSystemOnlyKind } from "./hr-email-base.ts";
+
+test("on_hold + position_filled: nhãn, biến, gửi tay được", () => {
+  assert.equal(KIND_LABEL.on_hold, "Hồ sơ đang được xem xét");
+  assert.equal(KIND_LABEL.position_filled, "Vị trí đã tuyển đủ");
+  assert.deepEqual(KIND_VARS.on_hold, ["ten_ung_vien", "vi_tri", "chu_ky", "han_phan_hoi"]);
+  assert.deepEqual(KIND_VARS.position_filled, ["ten_ung_vien", "vi_tri", "chu_ky"]);
+  assert.equal(isSystemOnlyKind("on_hold"), false);
+  assert.equal(isSystemOnlyKind("position_filled"), false);
+  assert.ok(VAR_HELP.han_phan_hoi);
+  // han_phan_hoi chỉ dùng được ở on_hold.
+  assert.match(validateTemplate("rejection", "T", "{han_phan_hoi}") ?? "", /han_phan_hoi/);
+});
+
+test("on_hold: có vị trí, hạn phản hồi, mời trả lời mail, chữ ký người support", () => {
+  const d = buildDraft({
+    kind: "on_hold",
+    candidateName: "Lan",
+    jobTitle: "2D Artist",
+    support: { name: "Phương", phone: "0385456273" },
+    replyBy: "Thứ Sáu 13/11/2026",
+  });
+  assert.match(d.subject, /2D Artist/);
+  assert.ok(d.text.startsWith("Chào Lan,\n\nCảm ơn bạn"));
+  assert.ok(d.text.includes("vị trí 2D Artist"));
+  assert.ok(d.text.includes("giai đoạn đánh giá hồ sơ"));
+  assert.ok(d.text.includes("trước Thứ Sáu 13/11/2026"));
+  assert.match(d.text, /trả lời (trực tiếp )?(email|mail) này/);
+  assert.ok(d.text.endsWith("Phương — Phòng Nhân sự TD Games\n0385 456 273 · hiring@tdgamestudio.com · https://tdgamestudio.com"));
+});
+
+test("on_hold: thiếu replyBy → tự tính hôm nay + 14 ngày (không để trống)", () => {
+  const vars = templateVars({ kind: "on_hold", candidateName: "A", jobTitle: "Dev" });
+  assert.match(vars.han_phan_hoi, /^Thứ (Hai|Ba|Tư|Năm|Sáu|Bảy) \d{2}\/\d{2}\/\d{4}$|^Chủ Nhật \d{2}\/\d{2}\/\d{4}$/);
+});
+
+test("position_filled: cảm ơn, đã tìm được ứng viên phù hợp, lưu hồ sơ, không chê hồ sơ", () => {
+  const d = buildDraft({ kind: "position_filled", candidateName: "", jobTitle: "2D Artist" });
+  assert.match(d.subject, /2D Artist/);
+  assert.ok(d.text.startsWith("Chào bạn,"));
+  assert.ok(d.text.includes("ứng tuyển vị trí 2D Artist"));
+  assert.ok(d.text.includes("đã tìm được ứng viên phù hợp"));
+  assert.ok(d.text.includes("lưu hồ sơ"));
+  assert.match(d.text, /chúc bạn/i);
+  assert.doesNotMatch(d.text, /chưa phù hợp|không phù hợp|không đạt/);
+});
+
+test("application_received: thêm câu hẹn 14 ngày, giữ các câu cũ", () => {
+  const d = buildDraft({ kind: "application_received", candidateName: "Lan", jobTitle: "Dev" });
+  assert.ok(d.text.includes("Chúng mình đã nhận được hồ sơ của bạn."));
+  assert.ok(d.text.includes("bạn cứ trả lời trực tiếp email này nhé."));
+  assert.ok(
+    d.text.includes(
+      "Nếu sau 14 ngày bạn chưa nhận được phản hồi, nghĩa là hồ sơ chưa phù hợp ở thời điểm này — TD Games vẫn lưu hồ sơ để liên hệ khi có cơ hội phù hợp.",
+    ),
+  );
+  assert.ok(d.text.includes("Chúc bạn một ngày tốt lành!"));
 });

@@ -4,6 +4,7 @@ import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken } from "@/lib/hr-tests";
 import { resolveCcForApplication } from "@/lib/hr-email-send";
 import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail, type DraftInput } from "@/lib/hr-email";
+import { holdReplyBy } from "@/lib/hr-email-base";
 import { NO_OFFER_LETTER, offerDraftFields, offerFileName, validateOfferLetter } from "@/lib/offer-letter";
 import { loadOfferContact, loadOfferLetterRow, approvalForClient } from "@/lib/offer-letter-store";
 import { canSendOffer, OFFER_NOT_APPROVED } from "@/lib/offer-letter-approval";
@@ -157,6 +158,8 @@ export async function GET(request: Request, { params }: Ctx) {
     testUrl,
     hasMbti: Boolean(app.mbti_type || app.mbti_url),
     offer,
+    // Mail "Hồ sơ đang được xem xét": hẹn phản hồi = hôm nay (giờ VN) + 14 ngày.
+    replyBy: kind === "on_hold" ? holdReplyBy(new Date()) : null,
   }, template);
 
   const { data: last } = await supabase
