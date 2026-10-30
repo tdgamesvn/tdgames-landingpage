@@ -59,6 +59,8 @@ export default async function Service2DVfxPage() {
   const cards = await resolveServiceCards("services-2d-vfx", DEFAULT_CARDS);
   return (
     <ServicePageTemplate
+      path="/services/2d-vfx"
+      serviceType="2D game VFX outsourcing"
       eyebrow=""
       title="2D VFX"
       subtitle="Impactful effects that enhance action without overwhelming the scene."

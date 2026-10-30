@@ -8,7 +8,9 @@ import { Changa_One, Nunito_Sans } from "next/font/google";
 import ServiceCapabilitiesGrid, {
   type ServiceCapabilityItem,
 } from "@/components/service-capabilities-grid";
+import JsonLd from "@/components/json-ld";
 import SiteHeader from "@/components/site-header";
+import { ORG_ID, absoluteUrl, breadcrumbJsonLd } from "@/lib/json-ld";
 
 const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
 const nunitoSans = Nunito_Sans({
@@ -17,6 +19,10 @@ const nunitoSans = Nunito_Sans({
 });
 
 type ServicePageTemplateProps = {
+  /** Đường dẫn trang (vd. "/services/2d-art") — có thì render JSON-LD Service + BreadcrumbList. */
+  path?: string;
+  /** Mô tả ngắn cho Service schema (mặc định: hero.description hoặc subtitle). */
+  serviceType?: string;
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -46,6 +52,8 @@ type ServicePageTemplateProps = {
 };
 
 export default function ServicePageTemplate({
+  path,
+  serviceType,
   eyebrow,
   title,
   subtitle,
@@ -62,8 +70,30 @@ export default function ServicePageTemplate({
       : `/${hero.image}`
     : "";
 
+  // /services (hub) redirect về "/" → breadcrumb chỉ Home > dịch vụ.
+  const jsonLd = path
+    ? [
+        {
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: title,
+          ...(serviceType ? { serviceType } : {}),
+          url: absoluteUrl(path),
+          description: hero?.description || subtitle,
+          ...(hero && !isVideoUrl(heroImageSrc) ? { image: absoluteUrl(heroImageSrc) } : {}),
+          provider: { "@id": ORG_ID },
+          areaServed: "Worldwide",
+        },
+        breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: title, path },
+        ]),
+      ]
+    : null;
+
   return (
     <>
+      {jsonLd ? <JsonLd data={jsonLd} /> : null}
       <SiteHeader />
       <main className="min-h-screen bg-[#090a10] text-white">
         {hero ? (

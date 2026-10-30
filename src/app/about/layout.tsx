@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 
+import JsonLd from "@/components/json-ld";
+import { breadcrumbJsonLd } from "@/lib/json-ld";
+
 export const metadata: Metadata = {
   title: "About Us",
   description:
@@ -16,5 +19,15 @@ export const metadata: Metadata = {
 };
 
 export default function AboutLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "About", path: "/about" },
+        ])}
+      />
+      {children}
+    </>
+  );
 }

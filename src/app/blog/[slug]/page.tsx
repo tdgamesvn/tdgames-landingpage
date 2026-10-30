@@ -6,9 +6,12 @@ import { notFound } from "next/navigation";
 import { Nunito_Sans } from "next/font/google";
 import { marked } from "marked";
 
+import JsonLd from "@/components/json-ld";
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { ORG_ID, ORG_LOGO, breadcrumbJsonLd, toIsoDate } from "@/lib/json-ld";
+import { DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 const nunitoSans = Nunito_Sans({
   weight: ["400", "600", "700"],
@@ -45,6 +48,11 @@ async function getPost(slug: string) {
 }
 
 const BASE_URL = "https://tdgamestudio.com";
+
+/** post.author rỗng hoặc là tên studio → tác giả là Organization. */
+function isOrgAuthor(author: string | null | undefined) {
+  return !author || /^td\s*games/i.test(author.trim());
+}
 
 type RelatedPost = { slug: string; title: string; tag: string; cover_image: string; created_at: string };
 
@@ -144,36 +152,43 @@ export default async function BlogPostPage({ params }: Props) {
   const { related, prev, next } = await getRelated(slug, post.tag);
 
   // JSON-LD cho Google rich result. Bản nháp thì thôi, khỏi rác.
+  const postUrl = `${BASE_URL}/blog/${slug}`;
   const jsonLd = post.isPreview
     ? null
-    : {
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        headline: post.title,
-        description: post.excerpt || undefined,
-        image: post.cover_image || undefined,
-        datePublished: post.created_at,
-        dateModified: post.updated_at ?? post.created_at,
-        author: { "@type": "Organization", name: post.author },
-        publisher: {
-          "@type": "Organization",
-          name: "TD Games",
-          logo: { "@type": "ImageObject", url: `${BASE_URL}/icon.png` },
+    : [
+        {
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: post.title,
+          description: post.excerpt || undefined,
+          // image là thuộc tính Google khuyến nghị → luôn có (bài không có cover dùng ảnh mặc định site).
+          image: post.cover_image || DEFAULT_OG_IMAGE.url,
+          datePublished: toIsoDate(post.created_at),
+          dateModified: toIsoDate(post.updated_at ?? post.created_at),
+          // Toàn bộ bài hiện ký tên "TD Games" → tác giả là Organization (@id ở root layout).
+          // Tên khác (người thật) → Person.
+          author: isOrgAuthor(post.author)
+            ? { "@type": "Organization", "@id": ORG_ID, name: "TD Games", url: BASE_URL }
+            : { "@type": "Person", name: post.author },
+          publisher: {
+            "@type": "Organization",
+            "@id": ORG_ID,
+            name: "TD Games",
+            logo: { "@type": "ImageObject", url: ORG_LOGO },
+          },
+          mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+          url: postUrl,
         },
-        mainEntityOfPage: `${BASE_URL}/blog/${slug}`,
-      };
+        breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Blog", path: "/blog" },
+          { name: post.title, path: `/blog/${slug}` },
+        ]),
+      ];
 
   return (
     <>
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          // escape `<` để title chứa "</script>" không thoát ra khỏi thẻ.
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
-      )}
+      {jsonLd && <JsonLd data={jsonLd} />}
       {/* Không để sếp nhầm bản nháp với bài đã đăng thật. */}
       {post.isPreview && (
         <div className="sticky top-0 z-50 bg-[#f59e0b] px-4 py-2 text-center text-sm font-bold text-black">

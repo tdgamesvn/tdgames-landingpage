@@ -59,6 +59,8 @@ export default async function Service2DAnimationPage() {
   const cards = await resolveServiceCards("services-2d-animation", DEFAULT_CARDS);
   return (
     <ServicePageTemplate
+      path="/services/2d-animation"
+      serviceType="2D game animation outsourcing"
       eyebrow=""
       title="2D Animation"
       subtitle="Smooth, expressive motion tuned for gameplay clarity and efficient production."

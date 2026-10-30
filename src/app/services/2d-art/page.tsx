@@ -55,6 +55,8 @@ export default async function Service2DArtPage() {
   const cards = await resolveServiceCards("services-2d-art", DEFAULT_CARDS);
   return (
     <ServicePageTemplate
+      path="/services/2d-art"
+      serviceType="2D game art outsourcing"
       eyebrow=""
       title="2D Art"
       subtitle="Stylized visuals built for readability, consistency, and game-ready production."

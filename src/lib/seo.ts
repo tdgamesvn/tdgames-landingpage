@@ -1,6 +1,18 @@
 import type { Metadata } from "next";
 
 /**
+ * Ảnh OG mặc định toàn site (+ fallback image cho BlogPosting). CDN không có ảnh
+ * brand 1200×630 → dùng key art Summoner Era (hero mặc định /services/2d-art),
+ * 2400×1306 ≈ 1.84:1, gần tỉ lệ 1.91:1 của OG. Có ảnh OG chuẩn thì thay ở đây.
+ */
+export const DEFAULT_OG_IMAGE = {
+  url: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
+  width: 2400,
+  height: 1306,
+  alt: "TD Games — 2D game art, animation & VFX outsourcing studio",
+} as const;
+
+/**
  * Metadata cho trang case study portfolio: title/description riêng + canonical.
  * Không có hàm này thì 16 case study kế thừa chung title "Portfolio" từ portfolio/layout
  * → Google coi là trùng lặp.

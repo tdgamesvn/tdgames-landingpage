@@ -4,7 +4,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Changa_One, Nunito_Sans } from "next/font/google";
 import { useCallback, useEffect, useRef, useState } from "react";
+import JsonLd from "@/components/json-ld";
 import SiteHeader from "@/components/site-header";
+import { breadcrumbJsonLd } from "@/lib/json-ld";
 import PortfolioGridApi from "@/components/portfolio-grid-api";
 import { AccentHighlight } from "@/components/accent-highlight";
 
@@ -154,6 +156,12 @@ export default function PortfolioPage() {
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Portfolio", path: "/portfolio" },
+        ])}
+      />
       <SiteHeader />
       <main
         className={`relative min-h-screen bg-black ${nunitoSans.className}`}

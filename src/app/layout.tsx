@@ -5,6 +5,8 @@ import ClickSpark from "@/components/ClickSpark";
 import GoogleAnalytics from "@/components/google-analytics";
 import HashScrollOnNav from "@/components/hash-scroll-on-nav";
 import { HeroRootStyles } from "@/components/hero-layout-state";
+import JsonLd from "@/components/json-ld";
+import { ORG_ID, ORG_LOGO, SITE_URL, WEBSITE_ID } from "@/lib/json-ld";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -73,15 +75,33 @@ export const metadata: Metadata = {
   },
 };
 
+// Profile mạng xã hội THẬT đang được link trên site (trang /apply/[slug] — khối "Follow us").
+// Thêm profile mới (YouTube…) thì thêm vào đây, đừng bịa link.
+const SAME_AS = [
+  "https://www.behance.net/tdgamesstudio",
+  "https://www.artstation.com/td_games",
+  "https://www.facebook.com/tdgamesstudio",
+  "https://www.linkedin.com/company/td-games-company-limited",
+];
+
 // Structured data cho Google: tên công ty, logo, dịch vụ → hiện đẹp hơn trên kết quả tìm kiếm.
+// Organization có @id — Service/BlogPosting/WebSite trỏ về ORG_ID thay vì lặp lại.
 const ORGANIZATION_JSON_LD = {
-  "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": ORG_ID,
   name: "TD Games",
   alternateName: "TD Games Studio",
-  url: "https://tdgamestudio.com",
-  logo: "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td_notext.png",
+  url: SITE_URL,
+  logo: { "@type": "ImageObject", url: ORG_LOGO },
   email: "tdgames.vn@gmail.com",
+  sameAs: SAME_AS,
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "sales",
+    email: "tdgames.vn@gmail.com",
+    url: `${SITE_URL}/contact`,
+    availableLanguage: ["English", "Vietnamese"],
+  },
   description:
     "Vietnam-based outsourcing studio specializing in 2D Art, Animation, and VFX for mobile games.",
   address: {
@@ -113,8 +133,23 @@ const ORGANIZATION_JSON_LD = {
     ["Full Game Production", "/services/full-game-production"],
   ].map(([name, path]) => ({
     "@type": "Offer",
-    itemOffered: { "@type": "Service", name, url: `https://tdgamestudio.com${path}` },
+    itemOffered: { "@type": "Service", name, url: `${SITE_URL}${path}` },
   })),
+};
+
+// Không có SearchAction: site không có trang tìm kiếm.
+const WEBSITE_JSON_LD = {
+  "@type": "WebSite",
+  "@id": WEBSITE_ID,
+  url: SITE_URL,
+  name: "TD Games Studio",
+  inLanguage: "en",
+  publisher: { "@id": ORG_ID },
+};
+
+const SITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [ORGANIZATION_JSON_LD, WEBSITE_JSON_LD],
 };
 
 export const viewport: Viewport = {
@@ -132,10 +167,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} ${rajdhani.variable} ${orbitron.variable} ${barlowCondensed.variable} ${nunitoSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-black text-white">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
-        />
+        <JsonLd data={SITE_JSON_LD} />
         <GoogleAnalytics />
         <HeroRootStyles />
         <HashScrollOnNav />

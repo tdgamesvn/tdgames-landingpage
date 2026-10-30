@@ -199,6 +199,8 @@ export default async function ServiceFullGameProductionPage() {
 
   return (
     <ServicePageTemplate
+      path="/services/full-game-production"
+      serviceType="Full game development outsourcing"
       eyebrow=""
       title="Full Game Production"
       subtitle="One team for game design, art, animation, VFX and development."

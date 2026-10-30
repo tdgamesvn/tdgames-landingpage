@@ -2,8 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
+import JsonLd from "@/components/json-ld";
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
+import { breadcrumbJsonLd } from "@/lib/json-ld";
 
 import {
   CaseStudyShowcaseWithSettings,
@@ -267,8 +269,16 @@ export default function CaseStudyLayout({
   const snapshotBody =
     meta.overview.body.trim() === meta.summary.trim() ? null : meta.overview.body;
 
+  // Layout không biết slug → mục cuối không có URL (Google chấp nhận).
+  const breadcrumb = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Portfolio", path: "/portfolio" },
+    { name: meta.title.replace(/\s+/g, " ").trim() },
+  ]);
+
   return (
     <>
+      <JsonLd data={breadcrumb} />
       <SiteHeader />
       <main className="bg-[#080808] text-white">
         {/* ─── VERTICAL HERO: text left-aligned top, image fills bottom ─── */}
