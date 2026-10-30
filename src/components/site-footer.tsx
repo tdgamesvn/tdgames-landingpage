@@ -17,7 +17,7 @@ type FooterConfig = {
 
 const FOOTER_DEFAULT: FooterConfig = {
   description1:
-    "Founded in 2022, TD Games emerged from a shared passion for creating visually stunning game experiences. What started as a small team of artists has grown into a full-service game art studio trusted by developers worldwide.",
+    "Active since 2022 and formally established as a company in February 2026, TD Games emerged from a shared passion for creating visually stunning game experiences. What started as a small team of artists has grown into a studio of 10+ members and freelance collaborators trusted by developers worldwide.",
   description2:
     "We believe that great art is the foundation of memorable games. Our mission is to help developers bring their creative visions to life with professional-grade assets that enhance gameplay and captivate players.",
   socials: { linkedin: "", facebook: "", instagram: "", behance: "", artstation: "" },

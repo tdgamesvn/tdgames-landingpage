@@ -3,6 +3,14 @@ import Link from "next/link";
 import { Changa_One } from "next/font/google";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
+import JsonLd from "@/components/json-ld";
+import {
+  FOUNDER_ALT_NAME,
+  FOUNDER_IMAGE,
+  FOUNDER_NAME,
+  FOUNDER_TITLE,
+  founderPersonJsonLd,
+} from "@/lib/json-ld";
 import { resolveSlot } from "@/lib/page-slots";
 import siteContent from "@/content/site.json";
 import fs from "node:fs/promises";
@@ -14,6 +22,9 @@ const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
 
 type TeamMember = { id: string; name: string; title: string; photo: string };
 type AboutData = { heroImage: string };
+
+const FOUNDER_BIO =
+  "Dang The Toan is the Founder & CEO of TD Games, with more than 10 years of experience in the games industry. His core expertise is art and animation. He has worked at Zitga and Sky Mavis, and his notable projects include Summoner Era and Monster Legends. He now leads a studio of 10+ team members who work alongside a network of freelancers.";
 
 const PROCESS_STEPS = [
   {
@@ -75,8 +86,12 @@ async function getTeam(): Promise<TeamMember[]> {
 export default async function AboutPage() {
   const team = await getTeam();
   const about = await getAbout();
+  // Ảnh founder đọc từ team_members (khớp title/tên), không có thì dùng ảnh dự phòng.
+  const founderMember = team.find((m) => /founder/i.test(m.title) || /to[aà]n/i.test(m.name));
+  const founderPhoto = founderMember?.photo || FOUNDER_IMAGE;
   return (
     <>
+      <JsonLd data={founderPersonJsonLd(FOUNDER_BIO, founderPhoto)} />
       <SiteHeader />
       <main className="bg-[#0a0a0a] text-white">
         {/* Hero Section */}
@@ -130,7 +145,7 @@ export default async function AboutPage() {
               </h1>
 
               <p className="mt-8 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
-                Founded in 2022, TD Games is a Vietnam based game outsourcing studio dedicated to delivering high quality Game Art, Animation, VFX, and Game Development services.
+                Active since 2022 and formally established as a company in February 2026, TD Games is a Vietnam based game outsourcing studio dedicated to delivering high quality Game Art, Animation, VFX, and Game Development services.
               </p>
 
               <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
@@ -191,10 +206,10 @@ export default async function AboutPage() {
                   className="mt-4 text-3xl font-black text-white"
                   style={{ fontFamily: "var(--font-rajdhani)" }}
                 >
-                  3+
+                  4+
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wider text-white/50">
-                  YEARS OF EXPERIENCE
+                  YEARS IN OPERATION
                 </p>
               </div>
 
@@ -216,10 +231,10 @@ export default async function AboutPage() {
                   className="mt-4 text-3xl font-black text-white"
                   style={{ fontFamily: "var(--font-rajdhani)" }}
                 >
-                  7
+                  10+
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wider text-white/50">
-                  CREATIVE TEAM
+                  TEAM MEMBERS + FREELANCERS
                 </p>
               </div>
 
@@ -274,6 +289,49 @@ export default async function AboutPage() {
           </div>
         </section>
 
+        {/* Founder Section */}
+        <section id="founder" className="scroll-mt-24 border-b border-white/10 py-16 md:py-20">
+          <div
+            className="mx-auto px-4"
+            style={{ width: "min(90%, 1280px)" }}
+          >
+            <div className="mb-4 flex items-center gap-4">
+              <span className="text-sm font-black italic tracking-tighter text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
+                // 02
+              </span>
+              <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#f59e0b]/55 to-white/12" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
+                Founder
+              </span>
+            </div>
+            <div className="mt-8 grid items-center gap-8 md:grid-cols-[280px_1fr] md:gap-12">
+              <div className="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-xl border border-white/10">
+                <Image
+                  src={founderPhoto}
+                  alt={`${FOUNDER_NAME} (${FOUNDER_ALT_NAME}), ${FOUNDER_TITLE} of TD Games`}
+                  fill
+                  sizes="280px"
+                  className="object-cover"
+                />
+              </div>
+              <div>
+                <h2
+                  className="text-3xl font-black uppercase tracking-tight md:text-4xl"
+                  style={{ fontFamily: "var(--font-rajdhani)" }}
+                >
+                  {FOUNDER_ALT_NAME}
+                </h2>
+                <p className="mt-1 text-sm font-bold uppercase tracking-widest text-[#f59e0b]">
+                  {FOUNDER_TITLE}
+                </p>
+                <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/70">
+                  {FOUNDER_BIO}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* How We Work — engagement process */}
         <section className="border-b border-white/10 py-16 md:py-20">
           <div
@@ -282,7 +340,7 @@ export default async function AboutPage() {
           >
             <div className="mb-4 flex items-center gap-4">
               <span className="text-sm font-black italic tracking-tighter text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
-                // 02
+                // 03
               </span>
               <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#f59e0b]/55 to-white/12" />
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
@@ -351,7 +409,7 @@ export default async function AboutPage() {
           >
             <div className="mb-4 flex items-center gap-4">
               <span className="text-sm font-black italic tracking-tighter text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
-                // 03
+                // 04
               </span>
               <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#f59e0b]/55 to-white/12" />
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
@@ -446,7 +504,7 @@ export default async function AboutPage() {
           >
             <div className="mb-4 flex items-center gap-4">
               <span className="text-sm font-black italic tracking-tighter text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
-                // 04
+                // 05
               </span>
               <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#f59e0b]/55 to-white/12" />
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
@@ -508,7 +566,7 @@ export default async function AboutPage() {
           >
             <div className="mb-4 flex items-center gap-4">
               <span className="text-sm font-black italic tracking-tighter text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
-                // 05
+                // 06
               </span>
               <div className="h-px w-12 shrink-0 bg-gradient-to-r from-[#f59e0b]/55 to-white/12" />
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#ffcc8e]/80">
