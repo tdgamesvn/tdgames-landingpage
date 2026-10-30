@@ -43,8 +43,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/112053013/Mid-Autumn-Animation-for-Summoner-Era",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
     "https://cdn.tdgamestudio.com/landing/behance/d707664aa91765a0.jpg",
   tools: [],

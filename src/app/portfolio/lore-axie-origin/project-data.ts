@@ -40,8 +40,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/163362313/LORE-AXIE-ORIGIN-CINEMATIC",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
     "https://cdn.tdgamestudio.com/landing/behance/7255b2f8d869fd9b.png",
   tools: [],

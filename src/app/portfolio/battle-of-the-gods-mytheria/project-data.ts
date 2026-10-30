@@ -41,8 +41,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/134047127/Battle-of-the-Gods-Mytheria-Login-Screen",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
     "https://cdn.tdgamestudio.com/landing/behance/9bfe7e73a64fc7d4.png",
   tools: [],

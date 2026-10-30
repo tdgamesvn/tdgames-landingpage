@@ -43,8 +43,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/152527397/ANIMATIONVFX-HEROES-FIRE-SUMMONER-ERA",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
     "https://cdn.tdgamestudio.com/landing/behance/63290b160fe302fc.png",
   tools: [],

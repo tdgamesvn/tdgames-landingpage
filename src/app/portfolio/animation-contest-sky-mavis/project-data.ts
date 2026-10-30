@@ -42,8 +42,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/130561969/Animation-Contest-Sky-Mavis",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
     "https://cdn.tdgamestudio.com/landing/behance/e3eeb2716aa68b48.png",
   tools: [],

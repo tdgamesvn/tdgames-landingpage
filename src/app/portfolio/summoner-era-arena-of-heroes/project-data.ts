@@ -44,8 +44,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/104755019/Animation-for-Summoner-Era-Arena-of-Heroes",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage: "https://cdn.tdgamestudio.com/landing/behance/1a2bf9c55f457909.png",
   tools: [],
   fields: ["Visual Effects"],

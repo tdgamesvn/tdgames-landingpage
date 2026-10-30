@@ -33,8 +33,6 @@ export const projectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/144430837/Summoner-Era-Login-Screen-Animations-%282020%29",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
     "https://cdn.tdgamestudio.com/landing/behance/594349a80b802faf.jpg",
   tools: [] as string[],

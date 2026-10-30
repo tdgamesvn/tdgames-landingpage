@@ -46,8 +46,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/65344203/Game-Animation-Reaper-Lady-Project-OverDrive",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage: "https://cdn.tdgamestudio.com/landing/behance/52c6beca311ad4e9.png",
   credits: [
     { role: "Animator", name: "Toan Dang" },

@@ -316,17 +316,19 @@ export default function SummonerEra2020DetailPage() {
                 {projectMeta.summary}
               </p>
 
-              <div className="mt-2 text-[12px] text-white/55">
-                Made for:{" "}
-                <a
-                  href={projectMeta.madeForUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-semibold text-[#ffd966] underline-offset-2 hover:underline"
-                >
-                  {projectMeta.madeForLabel}
-                </a>
-              </div>
+              {projectMeta.madeForLabel && projectMeta.madeForUrl && (
+                <div className="mt-2 text-[12px] text-white/55">
+                  Made for:{" "}
+                  <a
+                    href={projectMeta.madeForUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[#ffd966] underline-offset-2 hover:underline"
+                  >
+                    {projectMeta.madeForLabel}
+                  </a>
+                </div>
+              )}
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <a

@@ -44,8 +44,6 @@ export const projectMeta: ProjectMeta = {
     ],
   },
   behanceUrl: "https://www.behance.net/gallery/143388227/GAME-ANIMATIONVFX-3Q",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
     "https://cdn.tdgamestudio.com/landing/behance/16c4384f424d1e42.png",
   tools: [],

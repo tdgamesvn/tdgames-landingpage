@@ -43,8 +43,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/67614633/Character-animation-for-Puzzle-Wonderland",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage: "https://cdn.tdgamestudio.com/landing/behance/0658c26a43e63dc4.png",
   credits: [
     { role: "Artist", name: "Hung Ngo" },

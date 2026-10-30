@@ -43,8 +43,6 @@ export const projectMeta: ProjectMeta = {
   },
   behanceUrl:
     "https://www.behance.net/gallery/152981257/BOSS-ANIMATION-THE-TWINS",
-  madeForLabel: "AnimVFX Clan",
-  madeForUrl: "https://www.behance.net/AnimVFXClan",
   coverImage:
     "https://cdn.tdgamestudio.com/landing/behance/70daeb02ca1bc2dc.png",
   tools: [],
