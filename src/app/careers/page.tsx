@@ -40,7 +40,8 @@ type Props = { searchParams: Promise<{ job?: string | string[] }> };
 // /careers?job=<slug> → preview link hiện đúng job; không có job → metadata của layout.
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { job } = await searchParams;
-  if (typeof job !== "string") return {};
+  // Chặn slug rác trước khi vào cache: mỗi chuỗi lạ sẽ thành 1 entry unstable_cache.
+  if (typeof job !== "string" || !/^[a-z0-9-]{1,120}$/i.test(job)) return {};
   return (await cachedJobMetadata(job)) ?? {};
 }
 
