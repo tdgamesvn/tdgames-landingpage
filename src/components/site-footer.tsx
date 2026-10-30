@@ -23,10 +23,15 @@ const FOOTER_DEFAULT: FooterConfig = {
   socials: { linkedin: "", facebook: "", instagram: "", behance: "", artstation: "" },
   contacts: {
     address: "505 Minh Khai, Hanoi, Vietnam",
-    discord: "https://discord.com",
+    discord: "",
     email: "contact@tdgames.vn",
   },
 };
+
+/** Link Discord thật (invite/server). Rỗng hoặc chỉ là trang chủ discord.com = placeholder → ẩn. */
+function hasRealDiscord(url: string | undefined): url is string {
+  return !!url && !/^https?:\/\/(www\.)?discord\.com\/?$/i.test(url.trim());
+}
 
 function ContactIconBox({
   children,
@@ -244,9 +249,11 @@ export default function SiteFooter() {
                     </span>
                   </Link>
                 </li>
+                {/* Discord: chỉ hiện khi /admin → Footer có link thật (hiện DB vẫn là placeholder). */}
+                {hasRealDiscord(cfg.contacts.discord) ? (
                 <li>
                   <a
-                    href={cfg.contacts.discord || "https://discord.com"}
+                    href={cfg.contacts.discord}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group flex min-w-0 items-start gap-3 text-white/65 transition-colors hover:text-[#5865F2]"
@@ -266,6 +273,7 @@ export default function SiteFooter() {
                     </span>
                   </a>
                 </li>
+                ) : null}
                 <li className="min-w-0">
                   <a
                     href={`mailto:${cfg.contacts.email}`}
