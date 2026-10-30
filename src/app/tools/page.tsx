@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ogImages } from "@/lib/seo";
 import Link from "next/link";
 import { Nunito_Sans } from "next/font/google";
 
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
       "Free browser tools for 2D game artists — compress images, upscale art, rig Spine characters, and export VFX sprite sheets.",
     url: "/tools",
     type: "website",
+    images: ogImages(),
   },
 };
 

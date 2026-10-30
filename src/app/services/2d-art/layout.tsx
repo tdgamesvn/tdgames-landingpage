@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 
+import { ogImages } from "@/lib/seo";
+
+const HERO_IMAGE = "https://cdn.tdgamestudio.com/landing/images/summoners.png";
+
 export const metadata: Metadata = {
   title: "2D Game Art Outsourcing — Characters, Concept Art & UI",
   description:
@@ -11,7 +15,10 @@ export const metadata: Metadata = {
     url: "https://tdgamestudio.com/services/2d-art",
     siteName: "TD Games",
     type: "website",
+    // Ảnh hero mặc định của trang (fallback của slot "hero" trong page.tsx).
+    images: ogImages(HERO_IMAGE),
   },
+  twitter: { card: "summary_large_image", images: [HERO_IMAGE] },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

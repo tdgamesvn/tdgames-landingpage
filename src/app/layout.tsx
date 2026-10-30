@@ -7,6 +7,7 @@ import HashScrollOnNav from "@/components/hash-scroll-on-nav";
 import { HeroRootStyles } from "@/components/hero-layout-state";
 import JsonLd from "@/components/json-ld";
 import { ORG_ID, ORG_LOGO, SITE_URL, WEBSITE_ID } from "@/lib/json-ld";
+import { DEFAULT_OG_IMAGE, ogImages } from "@/lib/seo";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -53,11 +54,13 @@ export const metadata: Metadata = {
     siteName: "TD Games",
     type: "website",
     locale: "en_US",
+    images: ogImages(),
   },
   twitter: {
     card: "summary_large_image",
     title: "TD Games — 2D Art & Animation Studio",
     description: "Vietnam-based outsourcing studio for 2D Art, Animation, and VFX.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
   robots: {
     index: true,

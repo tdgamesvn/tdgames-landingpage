@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { ogImages } from "@/lib/seo";
+
 export const metadata: Metadata = {
   title: "Portfolio — 2D Game Art, Animation & VFX Case Studies",
   description:
@@ -12,6 +14,7 @@ export const metadata: Metadata = {
     url: "https://tdgamestudio.com/portfolio",
     siteName: "TD Games",
     type: "website",
+    images: ogImages(),
   },
 };
 

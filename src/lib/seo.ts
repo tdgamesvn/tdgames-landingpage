@@ -12,6 +12,15 @@ export const DEFAULT_OG_IMAGE = {
   alt: "TD Games — 2D game art, animation & VFX outsourcing studio",
 } as const;
 
+type OgImage = { url: string; width?: number; height?: number; alt?: string };
+
+/** openGraph.images: ảnh riêng của trang nếu có, không thì ảnh mặc định site. Encode khoảng trắng trong URL. */
+export function ogImages(image?: string | OgImage | null): OgImage[] {
+  if (!image) return [{ ...DEFAULT_OG_IMAGE }];
+  const img = typeof image === "string" ? { url: image } : image;
+  return [{ ...img, url: img.url.replace(/ /g, "%20") }];
+}
+
 /**
  * Metadata cho trang case study portfolio: title/description riêng + canonical.
  * Không có hàm này thì 16 case study kế thừa chung title "Portfolio" từ portfolio/layout
@@ -19,7 +28,7 @@ export const DEFAULT_OG_IMAGE = {
  */
 export function caseStudyMetadata(
   slug: string,
-  meta: { title: string; summary?: string },
+  meta: { title: string; summary?: string; coverImage?: string },
 ): Metadata {
   const path = `/portfolio/${slug}`;
   const title = meta.title.replace(/\s+/g, " ").trim();
@@ -35,6 +44,13 @@ export function caseStudyMetadata(
       url: `https://tdgamestudio.com${path}`,
       siteName: "TD Games",
       type: "article",
+      images: ogImages(meta.coverImage ? { url: meta.coverImage, alt: title } : null),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} — TD Games Studio`,
+      description,
+      images: ogImages(meta.coverImage).map((i) => i.url),
     },
   };
 }

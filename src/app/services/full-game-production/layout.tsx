@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 
+import { ogImages } from "@/lib/seo";
+
+const HERO_IMAGE = "https://cdn.tdgamestudio.com/projects/2026/09/158deb1a-5ea9-4cb9-b521-fd76c1438e3b-hero-trim.webp";
+
 export const metadata: Metadata = {
   title: "Full-Cycle Game Development Outsourcing",
   description:
@@ -12,7 +16,10 @@ export const metadata: Metadata = {
     url: "https://tdgamestudio.com/services/full-game-production",
     siteName: "TD Games",
     type: "website",
+    // Ảnh hero mặc định của trang (fallback của slot "hero" trong page.tsx).
+    images: ogImages(HERO_IMAGE),
   },
+  twitter: { card: "summary_large_image", images: [HERO_IMAGE] },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

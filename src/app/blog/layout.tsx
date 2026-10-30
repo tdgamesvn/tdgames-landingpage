@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { ogImages } from "@/lib/seo";
+
 // Metadata chung cho blog. /blog tự override canonical theo ?page/?tag; /blog/[slug] override bằng generateMetadata.
 export const metadata: Metadata = {
   title: "Blog — 2D Game Art, Animation & VFX Insights",
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
     url: "https://tdgamestudio.com/blog",
     siteName: "TD Games",
     type: "website",
+    images: ogImages(),
   },
 };
 

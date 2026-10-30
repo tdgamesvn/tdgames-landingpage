@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { ogImages } from "@/lib/seo";
+
 import JsonLd from "@/components/json-ld";
 import { breadcrumbJsonLd } from "@/lib/json-ld";
 
@@ -15,6 +17,7 @@ export const metadata: Metadata = {
     url: "https://tdgamestudio.com/about",
     siteName: "TD Games",
     type: "website",
+    images: ogImages(),
   },
 };
 

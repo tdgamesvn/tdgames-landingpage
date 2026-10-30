@@ -11,7 +11,7 @@ import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { ORG_ID, ORG_LOGO, breadcrumbJsonLd, toIsoDate } from "@/lib/json-ld";
-import { DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, ogImages } from "@/lib/seo";
 
 const nunitoSans = Nunito_Sans({
   weight: ["400", "600", "700"],
@@ -111,7 +111,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return { title: "Not found" };
   const url = `${BASE_URL}/blog/${slug}`;
   const description = post.excerpt || "Read this article on the TD Games blog.";
-  const images = post.cover_image ? [{ url: post.cover_image }] : undefined;
+  const images = ogImages(post.cover_image || null);
   return {
     title: `${post.title} — TD Games Blog`,
     description,
@@ -130,7 +130,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: post.title,
       description,
-      images: post.cover_image ? [post.cover_image] : undefined,
+      images: images.map((i) => i.url),
     },
   };
 }

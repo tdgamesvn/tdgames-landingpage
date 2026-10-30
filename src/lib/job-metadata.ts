@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ogImages } from "@/lib/seo";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 /**
@@ -18,12 +19,12 @@ export async function jobMetadata(slug: string, url: string): Promise<Metadata |
   const title = `${job.title} — Careers at TD Games`;
   const raw = [job.salary, job.summary || job.description].filter(Boolean).join(" · ");
   const description = raw.length > 200 ? raw.slice(0, 197) + "..." : raw;
-  const images = job.image_url ? [{ url: job.image_url, alt: job.title }] : undefined;
+  const images = ogImages(job.image_url ? { url: job.image_url, alt: job.title } : null);
 
   return {
     title: { absolute: title },
     description,
     openGraph: { title, description, url, siteName: "TD Games", type: "website", images },
-    twitter: { card: "summary_large_image", title, description, images: job.image_url ? [job.image_url] : undefined },
+    twitter: { card: "summary_large_image", title, description, images: images.map((i) => i.url) },
   };
 }
