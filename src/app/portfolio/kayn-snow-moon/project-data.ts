@@ -27,6 +27,7 @@ export const projectMeta: ProjectMeta = {
     "Character motion & polish passes",
     "Compositing, VFX, and final grade",
   ],
+  showOverviewSection: true,
   overview: {
     body: "A fan-made login screen for Kayn’s Snow Moon skin direction: stylized motion, cold moonlight, and VFX that read clearly at full-frame promo resolution.",
     stats: [

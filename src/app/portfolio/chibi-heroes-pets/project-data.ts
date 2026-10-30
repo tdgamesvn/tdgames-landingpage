@@ -111,6 +111,7 @@ export const projectMeta: ProjectMeta = {
     "Idle and run cycles for every unit",
     "Extra attack, skill and hurt sets for pets & summons",
   ],
+  showOverviewSection: true,
   overview: {
     body: "The client handed us a big roster of finished chibi designs — heroes, playable characters, companion pets and battle summons — and asked for animation that feels as cute and lively as the art. We rigged every unit in Spine 2D so it runs natively in the game engine, then gave each one a personality through motion: a knight who plants her oversized sword, a ninja whose scarf never stops flowing, a Shiba that bounces on every step and a little rain cloud that floats and drizzles. Big heads and tiny bodies need extra care, so we leaned on squash-and-stretch, overlapping hair and cloth, and snappy run cycles that read clearly even at small sizes on a phone screen.",
     stats: [

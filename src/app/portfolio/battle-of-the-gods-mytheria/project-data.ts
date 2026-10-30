@@ -32,6 +32,7 @@ export const projectMeta: ProjectMeta = {
     "6 hero login loops with VFX",
     "Final graphics banner",
   ],
+  showOverviewSection: true,
   overview: {
     body: "A login-screen drop for Mytheria — Battle of the Gods. We delivered a short cinematic intro, six character motion + VFX loops shown two-up to compare poses and effects, and a final banner that ties the lineup together for marketing.",
     stats: [

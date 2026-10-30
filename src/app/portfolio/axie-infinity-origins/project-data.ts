@@ -32,6 +32,7 @@ export const projectMeta: ProjectMeta = {
     "In-game Axie motion loops",
     "Showcase reels for Origins",
   ],
+  showOverviewSection: true,
   overview: {
     body: 'Characters animation for game "AXIE INFINITY - ORIGINS" — Sky Mavis production. Spine 2D rigs and attack/idle loops for the in-game Axie roster, with Photoshop used for texture and pose prep across the pipeline.',
     stats: [

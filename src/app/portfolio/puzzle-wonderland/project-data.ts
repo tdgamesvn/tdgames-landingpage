@@ -34,6 +34,7 @@ export const projectMeta: ProjectMeta = {
     "7 player hero loops",
     "5 boss reaction loops",
   ],
+  showOverviewSection: true,
   overview: {
     body: "A cute-style Spine 2D animation pack for a casual mobile puzzle title. We took Hung Ngo's character art and rigged each hero with snappy keyframes built for tiny mobile screens — bouncy idles, victory pops, and boss reactions. A portrait login splash anchors the pack, then seven hero loops and five boss reactions cover the in-game lobby + match-end beats.",
     stats: [

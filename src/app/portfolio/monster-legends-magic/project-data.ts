@@ -62,6 +62,7 @@ export const projectMeta: ProjectMeta = {
     "Idle, walk, attack, skill, special, level-up and knock-out sets",
     "Separate rigs for each evolution stage, up to the Awakened form",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Magic monsters in Monster Legends are spellcasters, alchemists and arcane oddities, and their motion has to feel playful yet powerful. We rigged every evolution stage as its own Spine skeleton — bigger spells and more flourish as they evolve, with the Awakened forms pushed furthest in arcane effects and secondary animation. Each rig ships the full battle set the game calls for, from idle and walk to attack, skill, level-up and knock-out.",
     stats: [

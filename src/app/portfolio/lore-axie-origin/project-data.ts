@@ -29,6 +29,7 @@ export const projectMeta: ProjectMeta = {
     "Storyboard & shot breakdown",
     "FX & sequence edit",
   ],
+  showOverviewSection: true,
   overview: {
     body: "A cinematic lore piece for the Axie Infinity Origins world — built from a beat-driven storyboard, animated with stylized 2D motion, then composited with FX and a final color pass for a clean in-world reveal.",
     stats: [

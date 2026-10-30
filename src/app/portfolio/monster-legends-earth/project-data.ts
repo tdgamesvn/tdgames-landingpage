@@ -59,6 +59,7 @@ export const projectMeta: ProjectMeta = {
     "Idle, walk, attack, skill, special, level-up and knock-out sets",
     "Separate rigs for each evolution stage, up to the Awakened form",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Earth monsters in Monster Legends are golems, burrowers and stone-hided bruisers, and their motion has to sell real weight and impact. We rigged every evolution stage as its own Spine skeleton — heavier mass and harder hits as they evolve, with the Awakened forms pushed furthest in power and secondary animation. Each rig ships the full battle set the game calls for, from idle and walk to attack, skill, level-up and knock-out.",
     stats: [

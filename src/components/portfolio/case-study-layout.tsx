@@ -427,6 +427,46 @@ export default function CaseStudyLayout({
           </div>
         </section>
 
+        {/* Overview: đoạn mô tả + số liệu thật của dự án (chữ đọc được cho Google/AI —
+            case study chủ yếu là video). Bật theo từng project bằng showOverviewSection. */}
+        {meta.showOverviewSection && (snapshotBody || meta.overview.stats.length > 0) && (
+          <section className="border-b border-white/8 bg-[#0b0b0b] py-12 md:py-16">
+            <div
+              className="mx-auto px-4 sm:px-0"
+              style={{ width: "min(var(--layout-width, 86%), 1280px)" }}
+            >
+              <SectionTitle eyebrow="Overview" title="Project Snapshot" accent={theme.accent} />
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-12">
+                {snapshotBody && (
+                  <p className="max-w-3xl text-[15px] leading-relaxed text-white/72 md:text-[16px]">
+                    {snapshotBody}
+                  </p>
+                )}
+                {meta.overview.stats.length > 0 && (
+                  <dl className="grid grid-cols-2 gap-3">
+                    {meta.overview.stats.map((s) => (
+                      <div
+                        key={s.label}
+                        className="flex flex-col-reverse rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4"
+                      >
+                        <dt className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
+                          {s.label}
+                        </dt>
+                        <dd
+                          className="text-[26px] font-black leading-none md:text-[30px]"
+                          style={{ color: theme.accent, fontFamily: "var(--font-rajdhani)" }}
+                        >
+                          {s.value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
         <section
           className="border-b border-white/8 py-14 md:py-18"
           style={{ backgroundColor: showcaseBg }}

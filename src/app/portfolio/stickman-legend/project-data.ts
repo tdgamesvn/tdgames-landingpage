@@ -70,6 +70,7 @@ export const projectMeta: ProjectMeta = {
     "Idle, move and basic attack loops",
     "Two signature skill animations per monster",
   ],
+  showOverviewSection: true,
   overview: {
     body: "The client supplied finished monster designs; our job was to bring them to life in Spine 2D. Each creature got a full combat set — an idle that sells its weight, a movement cycle, a basic attack and two signature skills — rigged as lightweight skeletal animation so they run natively in the game engine. The roster is deliberately varied: the three-headed Cerberus Hound, the egg-laden Brood Mother, the Gorehorn Maw, the club-wielding Bonecrusher Brute and the Nightwing Demon, each needing its own rig logic and sense of mass. We kept the black-and-crimson silhouettes readable at a glance and timed every attack with a clear anticipation, strike and recovery so every hit reads clearly in combat.",
     stats: [

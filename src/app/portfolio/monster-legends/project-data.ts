@@ -32,6 +32,7 @@ export const projectMeta: ProjectMeta = {
     "Idle, walk, attack, skill, special, level-up and knock-out sets",
     "Separate rigs for each evolution stage, up to the Awakened form",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Monster Legends lives on its creatures: players collect, breed and evolve hundreds of monsters, and each evolution has to feel like a reward. We rigged and animated monsters across every element of the game, each evolution stage as its own Spine skeleton, with the Awakened forms pushed furthest in effects and secondary animation.",
     stats: [

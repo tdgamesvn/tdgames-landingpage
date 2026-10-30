@@ -32,6 +32,7 @@ export const projectMeta: ProjectMeta = {
     "VFX & skill passes",
     "In-game showcase reels",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Characters animation and VFX for the Fire heroes of Summoner Era. Each unit ships with idle/attack loops rigged in Spine 2D plus After Effects VFX for skill impacts and signature effects, packaged as in-game motion and promo reels.",
     stats: [

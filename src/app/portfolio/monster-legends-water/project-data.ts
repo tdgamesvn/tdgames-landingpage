@@ -56,6 +56,7 @@ export const projectMeta: ProjectMeta = {
     "Idle, walk, attack, skill, special, level-up and knock-out sets",
     "Separate rigs for each evolution stage, up to the Awakened form",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Water monsters in Monster Legends range from armoured crabs and crocodiles to ice-forged warriors, and each needs motion that sells its weight in and out of water. We rigged every evolution stage as its own Spine skeleton — heavier shells and bigger splashes as they evolve, and the Awakened Ancestors pushed furthest with flowing water, ice and the most secondary animation. Each rig ships the full battle set the game calls for, from idle and walk to attack, skill, level-up and knock-out.",
     stats: [

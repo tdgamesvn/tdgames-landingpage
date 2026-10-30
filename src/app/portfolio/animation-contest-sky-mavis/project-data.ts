@@ -32,6 +32,7 @@ export const projectMeta: ProjectMeta = {
     "3 character action loops",
     "End-card banner",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Our submission for the Sky Mavis animation contest. We rigged the heroes in Spine 2D, layered VFX in After Effects, and packaged the result into a cinematic reel plus three looping action GIFs.",
     stats: [

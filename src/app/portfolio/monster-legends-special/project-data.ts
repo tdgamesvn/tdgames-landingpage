@@ -55,6 +55,7 @@ export const projectMeta: ProjectMeta = {
     "Idle, walk, attack, skill, special, level-up and knock-out sets",
     "Separate rigs for each evolution stage, up to the Awakened form",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Special monsters in Monster Legends break the usual rules — event heroes, oddballs and one-of-a-kind legends — and each needs motion with its own personality. We rigged every evolution stage as its own Spine skeleton, with the Awakened forms pushed furthest in effects and secondary animation. Each rig ships the full battle set the game calls for, from idle and walk to attack, skill, level-up and knock-out.",
     stats: [

@@ -46,6 +46,7 @@ export const projectMeta: ProjectMeta = {
     "Motion graphics & camera moves",
     "2D VFX & compositing",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Each super move gets a 4–6 second cinematic cut-in: a dynamic camera push, punchy key poses on the client's illustrated characters, and layered hand-drawn VFX — fire, lightning, ice shards and energy bursts — composited for a 4K ultra-wide frame that reads instantly mid-match.",
     stats: [

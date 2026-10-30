@@ -44,6 +44,7 @@ export const projectMeta: ProjectMeta = {
     "Buff / debuff / status effects",
     "Card-side hit & status feedback",
   ],
+  showOverviewSection: true,
   overview: {
     body: "All effects were built in Spine 2D, so they run natively in the game engine as lightweight skeletal animations instead of heavy video or sprite sheets. Every effect plays twice: once on the battlefield and once on the character card in the party bar, so players always know who was hit, healed or crowd-controlled. We designed a consistent colour language — red for bleed, orange for burn, green for poison and heal, blue for shields and immunity — and tuned timing so each effect lands in 1–6 seconds without slowing the turn flow.",
     stats: [

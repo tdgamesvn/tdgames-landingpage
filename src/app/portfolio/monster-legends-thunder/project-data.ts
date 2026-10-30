@@ -63,6 +63,7 @@ export const projectMeta: ProjectMeta = {
     "Idle, walk, attack, skill, special, level-up and knock-out sets",
     "Separate rigs for each evolution stage, up to the Awakened form",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Thunder monsters in Monster Legends are storm lords, lightning beasts and electric brawlers, and their motion has to feel fast, sharp and charged. We rigged every evolution stage as its own Spine skeleton — more sparks and snappier strikes as they evolve, with the Awakened forms pushed furthest in lightning effects and secondary animation. Each rig ships the full battle set the game calls for, from idle and walk to attack, skill, level-up and knock-out.",
     stats: [

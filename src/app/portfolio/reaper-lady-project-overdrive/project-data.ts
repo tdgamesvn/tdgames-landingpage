@@ -35,6 +35,7 @@ export const projectMeta: ProjectMeta = {
     "Boss-scale motion passes",
     "In-game ready GIF exports",
   ],
+  showOverviewSection: true,
   overview: {
     body: "Game animation pack for Project: OverDrive — Reaper and Lady hero beats built in Spine 2D for mobile combat readability: snappy anticipation, readable silhouettes, and punchy timing aligned with Shadow Fight–style action.",
     stats: [
