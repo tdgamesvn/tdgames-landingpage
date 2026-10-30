@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 
 /**
- * Ảnh OG mặc định toàn site (+ fallback image cho BlogPosting). CDN không có ảnh
- * brand 1200×630 → dùng key art Summoner Era (hero mặc định /services/2d-art),
- * 2400×1306 ≈ 1.84:1, gần tỉ lệ 1.91:1 của OG. Có ảnh OG chuẩn thì thay ở đây.
+ * Ảnh OG mặc định toàn site (+ fallback image cho BlogPosting): brand card 1200×630 JPG
+ * (key art Summoner Era + logo TD Games), sinh 2026-10-30 bằng sharp, upload R2 key mới
+ * qua scripts/upload-r2-new-keys.mjs. JPG chứ không WebP/PNG: vài nền tảng chia sẻ
+ * (Zalo, LinkedIn, Facebook cũ) không đọc WebP. Đổi ảnh thì đặt key MỚI (CDN immutable).
  */
 export const DEFAULT_OG_IMAGE = {
-  url: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
-  width: 2400,
-  height: 1306,
+  url: "https://cdn.tdgamestudio.com/landing/og/tdgames-og-default.jpg",
+  width: 1200,
+  height: 630,
   alt: "TD Games — 2D game art, animation & VFX outsourcing studio",
 } as const;
 
