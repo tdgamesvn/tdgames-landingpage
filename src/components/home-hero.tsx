@@ -17,6 +17,7 @@ import {
   useBgOverlayListener,
   type MediaItem,
 } from "./hero-layout-state";
+import { posterFor } from "@/lib/video-posters";
 
 const changaOne = Changa_One({ weight: '400', subsets: ['latin'] });
 const nunitoSans = Nunito_Sans({ weight: ['400', '600', '700'], subsets: ['latin'] });
@@ -48,7 +49,9 @@ function CardVideo({ src, isActive, className }: { src: string; isActive: boolea
       playsInline
       loop
       autoPlay={isActive}
-      preload={isActive ? "metadata" : "none"}
+      // Thẻ chỉ tải khi được chọn (autoPlay); thẻ còn lại hiện poster nếu có.
+      preload="none"
+      poster={posterFor(src)}
     />
   );
 }
@@ -525,10 +528,13 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
             key={`bg-vid-${activeMedia.id}-${currentIdx}`}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
             src={activeMedia.path}
+            // Poster khung đầu → có hình ngay trong lúc mp4 còn tải (LCP), không nền đen.
+            poster={posterFor(activeMedia.path)}
             autoPlay
             muted
             loop
             playsInline
+            preload="auto"
           />
         ) : (
           <img
