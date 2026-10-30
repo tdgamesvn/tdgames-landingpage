@@ -8,7 +8,7 @@ export default function ContactPage() {
     <>
       <SiteHeader />
       <main className="min-h-screen bg-[#050508] pt-[76px] md:pt-[84px]">
-        <ContactShowcaseSection sectionStep="01" fitBelowHeader />
+        <ContactShowcaseSection sectionStep="01" fitBelowHeader headingLevel="h1" />
         <section
           className="mx-auto py-16"
           style={{ width: "min(var(--layout-width, 85%), 1240px)" }}

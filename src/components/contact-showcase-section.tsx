@@ -20,11 +20,15 @@ export default function ContactShowcaseSection({
   fitBelowHeader = false,
   /** Khi nhĂºng cuá»‘i trang dĂ i (vd. /portfolio): khĂ´ng Ă©p full viewport. */
   embedded = false,
+  /** "h1" khi section này là phần đầu trang (vd. /contact) — mặc định h2. */
+  headingLevel = "h2",
 }: {
   sectionStep?: string;
   fitBelowHeader?: boolean;
   embedded?: boolean;
+  headingLevel?: "h1" | "h2";
 }) {
+  const Heading = headingLevel;
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [channel, setChannel] = useState("");
@@ -139,13 +143,13 @@ export default function ContactShowcaseSection({
           </motion.div>
 
           <motion.div variants={flyIn}>
-            <h2
+            <Heading
               className="text-4xl font-black uppercase leading-[1.06] tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] sm:text-5xl md:text-[2.75rem] lg:text-6xl lg:leading-[1.05] xl:text-[3.35rem]"
               style={{ fontFamily: "var(--font-rajdhani)" }}
             >
               Ready to bring{" "}
               <AccentHighlight>your vision to life?</AccentHighlight>
-            </h2>
+            </Heading>
           </motion.div>
           <motion.p
             variants={flyIn}

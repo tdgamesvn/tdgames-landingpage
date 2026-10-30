@@ -209,7 +209,7 @@ export default function PortfolioPage() {
                 style={{ transform: "translateY(var(--hero-text-y, 0px))" }}
               >
                 <div className="mb-[-10px] overflow-hidden">
-                  <div
+                  <h1
                     className={`leading-[1] font-black uppercase text-white ${changaOne.className}`}
                     style={{ fontSize: "var(--hero-title-size, 100px)" }}
                   >
@@ -221,7 +221,7 @@ export default function PortfolioPage() {
                     >
                       PROJECTS
                     </span>
-                  </div>
+                  </h1>
                 </div>
 
                 <div className="mt-6 flex items-center gap-4">
@@ -231,7 +231,7 @@ export default function PortfolioPage() {
                       backgroundColor: "var(--hero-subtitle-color, #f59e0b)",
                     }}
                   />
-                  <h3
+                  <p
                     className="font-bold uppercase tracking-[0.3em]"
                     style={{
                       fontSize: "var(--hero-subtitle-size, 16px)",
@@ -239,7 +239,7 @@ export default function PortfolioPage() {
                     }}
                   >
                     Take a look at our game art projects!
-                  </h3>
+                  </p>
                 </div>
 
                 <p

@@ -117,28 +117,31 @@ export default function ServicePageTemplate({
                   className="max-w-[606px] tracking-[0.5px]"
                   style={{ transform: "translateY(var(--hero-text-y, 0px))" }}
                 >
-                  <div className="mb-[-10px] overflow-hidden">
-                    <div
-                      className={`leading-[1] font-black uppercase ${changaOne.className}`}
-                      style={{
-                        fontSize: "var(--hero-title-size, 100px)",
-                        color: "var(--hero-highlight-color, #f59e0b)",
-                      }}
-                    >
-                      {hero.titleTop}
-                    </div>
-                  </div>
-                  <div className="overflow-hidden">
-                    <div
-                      className={`leading-[1] font-black uppercase ${changaOne.className}`}
-                      style={{
-                        fontSize: "var(--hero-title-size, 100px)",
-                        color: "var(--hero-title-color, #ffffff)",
-                      }}
-                    >
-                      {hero.titleMain}
-                    </div>
-                  </div>
+                  {/* SEO: titleTop + titleMain là H1 duy nhất của trang dịch vụ */}
+                  <h1>
+                    <span className="mb-[-10px] block overflow-hidden">
+                      <span
+                        className={`block leading-[1] font-black uppercase ${changaOne.className}`}
+                        style={{
+                          fontSize: "var(--hero-title-size, 100px)",
+                          color: "var(--hero-highlight-color, #f59e0b)",
+                        }}
+                      >
+                        {hero.titleTop}
+                      </span>
+                    </span>{" "}
+                    <span className="block overflow-hidden">
+                      <span
+                        className={`block leading-[1] font-black uppercase ${changaOne.className}`}
+                        style={{
+                          fontSize: "var(--hero-title-size, 100px)",
+                          color: "var(--hero-title-color, #ffffff)",
+                        }}
+                      >
+                        {hero.titleMain}
+                      </span>
+                    </span>
+                  </h1>
 
                   <div className="mt-6 flex items-center gap-4">
                     <div
@@ -147,7 +150,7 @@ export default function ServicePageTemplate({
                         backgroundColor: "var(--hero-subtitle-color, #f59e0b)",
                       }}
                     />
-                    <h3
+                    <p
                       className="font-bold uppercase tracking-[0.3em]"
                       style={{
                         fontSize: "var(--hero-subtitle-size, 16px)",
@@ -155,7 +158,7 @@ export default function ServicePageTemplate({
                       }}
                     >
                       {hero.subheading}
-                    </h3>
+                    </p>
                   </div>
 
                   <p

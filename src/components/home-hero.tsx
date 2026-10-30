@@ -560,12 +560,14 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
         <motion.div className="w-full" style={{ y: contentY }}>
           {/* LEFT: Text Content with Y-axis control */}
           <div className="max-w-[606px] tracking-[0.5px]" style={{ transform: "translateY(var(--hero-text-y, 0px))" }}>
-            <div className="mb-[-10px] overflow-hidden">
-              <motion.div
+            {/* SEO: tiêu đề hero là H1 duy nhất của trang chủ (span block giữ nguyên giao diện) */}
+            <h1>
+            <span className="block mb-[-10px] overflow-hidden">
+              <motion.span
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className={`leading-[1] font-black ${changaOne.className}`}
+                className={`block leading-[1] font-black ${changaOne.className}`}
                 style={{
                   // ponytail: 8vw cap giữ chữ trong khung trên mobile, desktop vẫn ăn var của admin
                   // ponytail: thêm cap 10.5vh — màn thấp (768px: iPad ngang, laptop 1366x768)
@@ -576,22 +578,23 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 }}
               >
                 2D ART & ANIMATION
-              </motion.div>
-            </div>
-            <div className="overflow-hidden">
-              <motion.div
+              </motion.span>
+            </span>{" "}
+            <span className="block overflow-hidden">
+              <motion.span
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className={`leading-[1] font-black ${changaOne.className}`}
+                className={`block leading-[1] font-black ${changaOne.className}`}
                 style={{
                   fontSize: "min(var(--hero-title-size, 100px), 11vw, 9vh)",
                   color: "var(--hero-title-color, #ffffff)"
                 }}
               >
                 OUTSOURCING <span style={{ color: "var(--hero-highlight-color, #f59e0b)" }}>STUDIO</span>
-              </motion.div>
-            </div>
+              </motion.span>
+            </span>
+            </h1>
 
             <motion.div
               initial={{ opacity: 0 }}
@@ -600,7 +603,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
               className="flex items-center gap-4 mt-6"
             >
               <div className="w-12 h-[2px]" style={{ backgroundColor: "var(--hero-subtitle-color, #f59e0b)" }} />
-              <h3
+              <p
                 className="font-bold tracking-[0.16em] uppercase"
                 style={{
                   fontSize: "min(var(--hero-subtitle-size, 16px), 3.4vw)",
@@ -608,7 +611,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
                 }}
               >
                 Bring Your Game to Life with High-Quality Art, Animation & VFX
-              </h3>
+              </p>
             </motion.div>
             <p
               className="max-w-[547px] leading-[1.5] mb-[15px] mt-4"
