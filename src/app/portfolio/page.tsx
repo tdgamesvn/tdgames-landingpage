@@ -258,12 +258,11 @@ export default function PortfolioPage() {
                     color: "var(--hero-desc-color, #e5e7eb)",
                   }}
                 >
-                  TD Games&apos; portfolio. We specialize in creating modern 3D
-                  environments, captivating characters, and innovative concept
-                  art for next-gen games. For years of experience in the
-                  industry of game art design, managed to collect a solid game
-                  design portfolio of various artworks made in 2D or 3D and
-                  other directions.
+                  TD Games&apos; portfolio. We specialize in 2D game art —
+                  captivating characters, Spine and frame-by-frame animation,
+                  and eye-catching VFX for mobile and PC games. Years of
+                  production work for studios worldwide have built a solid
+                  portfolio of game-ready 2D art, animation and effects.
                 </p>
 
                 <div className="mb-[15px] mt-[32px]">
