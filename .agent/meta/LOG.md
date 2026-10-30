@@ -6342,3 +6342,16 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Kết quả: SEO Health ≈ 59/100 (Technical 72, Content 52, On-Page 58, Schema 42, Perf ~68 ước tính, AI 57). Kế hoạch + findings: `.superpowers/seo/tdgamestudio.com-audit/` (gitignored — ACTION-PLAN.md, findings/*.md, screenshots/).
 - Chính: thiếu H1 (trang chủ, dịch vụ, /portfolio, /contact); H1 bị cắt trên mobile; không có security headers; schema thiếu WebSite/Breadcrumb/Service/JobPosting, Organization thiếu sameAs; sitemap lastmod giả, thiếu vài trang, /crm + /portfolio-grid-example index được; video hero 5–12 MB; case study mỏng (overview có sẵn nhưng tắt); 11 trang Monster Legends gần trùng; blog 122 bài dồn 3 tháng, không link nội bộ; /careers không có trang từng job.
 - Next Step: chờ sếp chọn — em sửa Phase 1 (code) ngay; Phase 3 cần sếp quyết nội dung.
+- 2026-10-30 sửa SEO Phase 1 + hiệu năng (sếp "OK sửa ngay"), 19 commit 01378f4..20431a7, 2 đợt implementer + review opus, deploy CI success:
+  - H1 đúng 1/trang (trang chủ, 4 dịch vụ, /portfolio, /contact, /showreel, case study có khoảng trắng); H1 mobile hết bị cắt (390px).
+  - Security headers (HSTS 1 năm không includeSubDomains, nosniff, Referrer-Policy, X-Frame-Options SAMEORIGIN, Permissions-Policy camera/mic/geo off; không CSP).
+  - JSON-LD: helper `src/lib/json-ld.ts` (escape <, U+2028/9); Organization @id + sameAs (Behance, ArtStation, Facebook, LinkedIn — lấy từ /apply) + contactPoint, WebSite, BreadcrumbList, Service, BlogPosting sửa.
+  - Sitemap 167 URL: lastmod = mtime file nguồn route (deploy git reset chỉ đổi file thay đổi), blog updated_at; thêm showreel/company-profile/privacy/terms; bỏ changefreq/priority; portfolio slug đọc thư mục (+fallback). robots disallow /hr; /crm + /portfolio-grid-example noindex.
+  - og:image JPG 1200×630 mới trên R2 `landing/og/*.jpg` (default + 4 dịch vụ). Footer ẩn Discord placeholder. /portfolio bỏ "3D environments".
+  - Video hero: nén 5–12 MB → ~2 MB (`landing/video/hero-v2/*.mp4`, key mới) + poster (`landing/video/posters/*.jpg`, map ở `src/lib/video-posters.ts`). ĐÃ đổi DB page_slots home/hero-carousel id 1–5 sang hero-v2 (URL cũ: projects/2026/05/7759fd39-…-cutscene_full_zip.mp4, projects/2026/05/97c5a6d5-…-full_zip.mp4, projects/2026/06/0f5e4297-…-supermove_2_compressed_compressed.mp4, projects/2026/06/0da9b59d-…-thantich_compressed.mp4, projects/2026/06/2a5fe03a-…-hourse_compressed.mp4 — xem video-posters.ts để có key đầy đủ).
+  - Thumbnail hero → next/image, chỉ preload thẻ đầu; font: bỏ Barlow Condensed, Rajdhani/Orbitron preload false (11 → 3 file preload).
+  - /careers cache dữ liệu job 300s (metadata ?job= kiểm slug trước).
+  - Case study: khối "Project Snapshot" (overview + số liệu deliverable thật) bật 19 trang; bỏ hết số Behance (views/appreciations/fields); tắt ở 3q, kayn, axie-infinity-origins, heroes-fire, lore-axie-origin, reaper-lady.
+  - Script mới `scripts/upload-r2-new-keys.mjs` (không ghi đè key, IfNoneMatch *).
+  - Kiểm prod: H1=1 mọi trang mẫu, headers đủ, og JPG, poster, sitemap 167, mobile 2d-art OK.
+- Còn cần sếp: link Discord thật; LinkedIn trong footer DB đang là URL admin; Phase 3 (blog, Monster Legends, trang job riêng, Clutch/GoodFirms, founder) chưa làm.
