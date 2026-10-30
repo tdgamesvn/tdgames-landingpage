@@ -30,7 +30,11 @@ const careersMedia = unstable_cache(
 
 const cachedJobMetadata = unstable_cache(
   (slug: string) =>
-    jobMetadata(slug, `https://tdgamestudio.com/careers?job=${encodeURIComponent(slug)}`),
+    jobMetadata(
+      slug,
+      `https://tdgamestudio.com/careers?job=${encodeURIComponent(slug)}`,
+      `/careers/${slug}`,
+    ),
   ["careers-job-metadata"],
   { revalidate: CACHE_SECONDS },
 );
@@ -42,7 +46,13 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const { job } = await searchParams;
   // Chặn slug rác trước khi vào cache: mỗi chuỗi lạ sẽ thành 1 entry unstable_cache.
   if (typeof job !== "string" || !/^[a-z0-9-]{1,120}$/i.test(job)) return {};
-  return (await cachedJobMetadata(job)) ?? {};
+  try {
+    return (await cachedJobMetadata(job)) ?? {};
+  } catch (err) {
+    // Lỗi DB không được cache (throw) → lần sau thử lại; lần này dùng metadata của layout.
+    console.error("[careers] job metadata", err);
+    return {};
+  }
 }
 
 export default async function CareersPage() {

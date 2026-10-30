@@ -39,6 +39,28 @@ export function parseSalaryRangeVnd(salary: string | null | undefined): { min: n
   return { min: Math.min(...values), max: Math.max(...values) };
 }
 
+// Đơn vị khác tháng ("/dự án", "/giờ"…) → lương không phải VND/tháng.
+const OTHER_UNITS =
+  "(?:dự án|du an|project|giờ|hour|h\\b|ngày|day|tuần|week|năm|year|task|sản phẩm|san pham|asset|frame|ảnh|item)";
+const SLASH_OTHER_UNIT = new RegExp(`\\/\\s*${OTHER_UNITS}`, "iu");
+// "theo dự án", "per hour"… chỉ tính là đơn vị lương khi không có "/tháng"
+// (vd "10–15 triệu/tháng + Thưởng theo dự án" vẫn là lương tháng).
+const PHRASE_OTHER_UNIT = new RegExp(`(?:\\bper|\\btheo|\\bmỗi)\\s+${OTHER_UNITS}`, "iu");
+const PER_MONTH = /\/\s*tháng/iu;
+
+/**
+ * baseSalary cho JobPosting (unitText MONTH): chỉ khi job không phải freelancer, lương có số
+ * "triệu", và ghi "/tháng" hoặc không ghi đơn vị nào khác ("/dự án", "/giờ"… → null).
+ */
+export function monthlySalaryVnd(
+  salary: string | null | undefined,
+  type: string | null | undefined,
+): { min: number; max: number } | null {
+  if (type === "freelancer" || !salary || SLASH_OTHER_UNIT.test(salary)) return null;
+  if (!PER_MONTH.test(salary) && PHRASE_OTHER_UNIT.test(salary)) return null;
+  return parseSalaryRangeVnd(salary);
+}
+
 /** jobs.type → schema.org employmentType. "remote" không nói rõ hình thức → bỏ trống. */
 export function employmentTypeOf(type: string | null | undefined): string | undefined {
   switch (type) {
@@ -99,7 +121,7 @@ export function jobDescriptionHtml(job: JobPostingInput): string {
 
 /** JSON-LD JobPosting. Không có validThrough (không có dữ liệu hạn nộp thật); job đóng → trang 404. */
 export function jobPostingJsonLd(job: JobPostingInput) {
-  const salary = parseSalaryRangeVnd(job.salary);
+  const salary = monthlySalaryVnd(job.salary, job.type);
   const employmentType = employmentTypeOf(job.type);
   const streetAddress = jobStreetAddress(job.location);
   const datePosted = toIsoDate(job.created_at);

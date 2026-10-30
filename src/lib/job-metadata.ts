@@ -4,9 +4,15 @@ import { ogImages } from "@/lib/seo";
 
 /**
  * Metadata cho link chia sẻ 1 job (Zalo/Messenger/LinkedIn preview):
- * tên job + lương/tóm tắt + ảnh banner. Job không tồn tại/đã đóng → null.
+ * tên job + lương/tóm tắt + ảnh banner. Job không tồn tại/đã đóng → null. Lỗi DB → throw.
+ * canonicalPath: link chia sẻ /careers?job=<slug> trỏ canonical về trang riêng /careers/<slug>
+ * (chỉ khi job còn mở — job đóng thì trả null, giữ canonical /careers của layout).
  */
-export async function jobMetadata(slug: string, url: string): Promise<Metadata | null> {
+export async function jobMetadata(
+  slug: string,
+  url: string,
+  canonicalPath?: string,
+): Promise<Metadata | null> {
   const job = await getActiveJob(slug);
   if (!job) return null;
 
@@ -18,6 +24,7 @@ export async function jobMetadata(slug: string, url: string): Promise<Metadata |
   return {
     title: { absolute: title },
     description,
+    ...(canonicalPath ? { alternates: { canonical: canonicalPath } } : {}),
     openGraph: { title, description, url, siteName: "TD Games", type: "website", images },
     twitter: { card: "summary_large_image", title, description, images: images.map((i) => i.url) },
   };

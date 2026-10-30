@@ -11,6 +11,7 @@ import SiteHeader from "@/components/site-header";
 import { AccentHighlight } from "@/components/accent-highlight";
 import SlotMedia from "@/components/slot-media";
 import type { Job } from "@/app/admin/_lib/types";
+import { withRef } from "./with-ref";
 
 const changaOne = Changa_One({ weight: "400", subsets: ["latin"] });
 const nunitoSans = Nunito_Sans({
@@ -520,8 +521,9 @@ export default function CareersClient({
                                   style={{ fontFamily: "var(--font-rajdhani)" }}
                                 >
                                   {/* Link thật tới trang riêng của job (SEO + mở tab mới); nút "View Details" vẫn mở panel. */}
+                                  {/* Danh sách job chỉ render sau fetch ở client → gọi withRef lúc render được. */}
                                   <Link
-                                    href={`/careers/${job.slug}`}
+                                    href={withRef(`/careers/${job.slug}`)}
                                     className="transition-colors hover:text-[#f59e0b]"
                                   >
                                     {job.title}
@@ -792,12 +794,7 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
-  // ?ref= (mã người giới thiệu) đi theo cả link chia sẻ lẫn sang trang apply.
-  function withRef(path: string) {
-    const ref = new URLSearchParams(window.location.search).get("ref");
-    if (!ref) return path;
-    return `${path}${path.includes("?") ? "&" : "?"}ref=${encodeURIComponent(ref)}`;
-  }
+  // ?ref= (mã người giới thiệu) đi theo cả link chia sẻ lẫn sang trang apply / trang chi tiết (withRef).
 
   function copyLink() {
     if (!role) return;
@@ -894,7 +891,7 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
                     </div>
 
                     <Link
-                      href={`/careers/${role.slug}`}
+                      href={withRef(`/careers/${role.slug}`)}
                       className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#f59e0b] hover:underline"
                     >
                       Xem trang chi tiết

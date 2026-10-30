@@ -8,6 +8,7 @@ import {
   jobDescriptionHtml,
   jobPostingJsonLd,
   jobStreetAddress,
+  monthlySalaryVnd,
   parseSalaryRangeVnd,
 } from "./job-posting.ts";
 
@@ -94,4 +95,28 @@ test("jobPostingJsonLd: đủ field, baseSalary VND/MONTH, không validThrough",
 test("jobPostingJsonLd: lương thoả thuận → không có baseSalary", () => {
   const ld = jobPostingJsonLd({ title: "PA", slug: "pa", type: "fulltime", salary: "Thỏa thuận" });
   assert.ok(!("baseSalary" in ld));
+});
+
+test("monthlySalaryVnd: /tháng hoặc không ghi đơn vị → có; đơn vị khác / freelancer → null", () => {
+  assert.deepEqual(monthlySalaryVnd("Junior: 10–15 triệu/tháng | Senior: 15–20 triệu/tháng", "fulltime"), {
+    min: 10_000_000,
+    max: 20_000_000,
+  });
+  assert.deepEqual(monthlySalaryVnd("10–15 triệu", "fulltime"), { min: 10_000_000, max: 15_000_000 });
+  assert.equal(monthlySalaryVnd("5–8 triệu/dự án", "fulltime"), null);
+  assert.equal(monthlySalaryVnd("0,2 triệu/giờ", "parttime"), null);
+  assert.equal(monthlySalaryVnd("2 triệu / sản phẩm", "fulltime"), null);
+  assert.equal(monthlySalaryVnd("Trả theo dự án, 5–10 triệu", "fulltime"), null);
+  assert.equal(monthlySalaryVnd("10–15 triệu/tháng", "freelancer"), null);
+  assert.equal(monthlySalaryVnd("10 triệu/tháng + 2 triệu/dự án", "fulltime"), null);
+  assert.deepEqual(monthlySalaryVnd("10–15 triệu/tháng + Thưởng theo dự án", "fulltime"), {
+    min: 10_000_000,
+    max: 15_000_000,
+  });
+  assert.equal(monthlySalaryVnd("Thoả thuận", "fulltime"), null);
+});
+
+test("jobPostingJsonLd: freelancer hoặc lương /dự án → không có baseSalary", () => {
+  assert.ok(!("baseSalary" in jobPostingJsonLd({ title: "F", slug: "f", type: "freelancer", salary: "10–15 triệu/tháng" })));
+  assert.ok(!("baseSalary" in jobPostingJsonLd({ title: "P", slug: "p", type: "fulltime", salary: "5–8 triệu/dự án" })));
 });

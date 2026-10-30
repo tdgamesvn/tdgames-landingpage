@@ -12,7 +12,7 @@ import { breadcrumbJsonLd } from "@/lib/json-ld";
 import { jobPostingJsonLd } from "@/lib/job-posting";
 import { getActiveJob, isJobSlug, listActiveJobs } from "@/lib/jobs-data";
 import { ogImages } from "@/lib/seo";
-import JobActions from "./job-actions";
+import JobActions, { RefLink } from "./job-actions";
 
 // Trang chi tiết 1 job (tiếng Việt) — trang index được cho từ khoá "tuyển dụng <vị trí> hà nội".
 // /careers?job=<slug> (panel) vẫn giữ; /apply/<slug> là form (noindex).
@@ -157,7 +157,7 @@ export default async function CareerJobPage({ params }: Props) {
               </li>
               <li aria-hidden>/</li>
               <li>
-                <Link href="/careers" className="hover:text-[#f59e0b]">Tuyển dụng</Link>
+                <RefLink href="/careers" className="hover:text-[#f59e0b]">Tuyển dụng</RefLink>
               </li>
               <li aria-hidden>/</li>
               <li className="text-white/75" aria-current="page">{job.title}</li>
@@ -264,7 +264,7 @@ export default async function CareerJobPage({ params }: Props) {
               <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {others.map((o) => (
                   <li key={o.id}>
-                    <Link
+                    <RefLink
                       href={`/careers/${o.slug}`}
                       className="block rounded-lg border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-[#f59e0b]/40 hover:bg-white/[0.05]"
                     >
@@ -272,17 +272,17 @@ export default async function CareerJobPage({ params }: Props) {
                       {o.salary && (
                         <span className="mt-1 block text-xs text-white/55">{o.salary.split("|")[0].trim()}</span>
                       )}
-                    </Link>
+                    </RefLink>
                   </li>
                 ))}
               </ul>
             )}
-            <Link
+            <RefLink
               href="/careers"
               className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#f59e0b] hover:underline"
             >
               ← Xem tất cả vị trí tại TD Games
-            </Link>
+            </RefLink>
           </section>
         </div>
       </main>

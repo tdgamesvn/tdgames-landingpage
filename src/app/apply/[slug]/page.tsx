@@ -17,7 +17,12 @@ const APPLY_ROBOTS: Metadata["robots"] = { index: false, follow: true };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const meta = await jobMetadata(slug, `https://tdgamestudio.com/apply/${slug}`);
+  let meta: Metadata | null = null;
+  try {
+    meta = await jobMetadata(slug, `https://tdgamestudio.com/apply/${slug}`);
+  } catch (err) {
+    console.error("[apply] job metadata", err);
+  }
   return { ...(meta ?? {}), robots: APPLY_ROBOTS };
 }
 

@@ -1,11 +1,34 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-/** Gắn ?ref= (mã người giới thiệu) của URL hiện tại vào path. Chỉ gọi ở client (lúc click). */
-function withRef(path: string): string {
-  const ref = new URLSearchParams(window.location.search).get("ref");
-  return ref ? `${path}?ref=${encodeURIComponent(ref)}` : path;
+import { withRef } from "../with-ref";
+
+/**
+ * Link nội bộ giữ ?ref= của URL hiện tại. href trần lúc SSR (trang cache được); lúc click
+ * có ref thì điều hướng tới href kèm ref. Ctrl/Cmd-click (tab mới) → để trình duyệt tự xử lý.
+ */
+export function RefLink({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) {
+  const router = useRouter();
+  return (
+    <Link
+      href={href}
+      className={className}
+      onClick={(e) => {
+        const target = withRef(href);
+        if (target === href || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) {
+          if (target !== href) e.currentTarget.href = target;
+          return;
+        }
+        e.preventDefault();
+        router.push(target);
+      }}
+    >
+      {children}
+    </Link>
+  );
 }
 
 /**

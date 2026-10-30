@@ -6,15 +6,19 @@ export function isJobSlug(slug: unknown): slug is string {
   return typeof slug === "string" && /^[a-z0-9-]{1,120}$/i.test(slug);
 }
 
-/** 1 job đang tuyển theo slug. Không có / đã đóng / slug rác → null. */
+/**
+ * 1 job đang tuyển theo slug. Không có / đã đóng / slug rác → null.
+ * Lỗi DB → throw (KHÔNG trả null): unstable_cache không cache lỗi, còn null sẽ bị cache thành 404.
+ */
 export async function getActiveJob(slug: string): Promise<Job | null> {
   if (!isJobSlug(slug)) return null;
-  const { data } = await getSupabaseAdmin()
+  const { data, error } = await getSupabaseAdmin()
     .from("jobs")
     .select("*")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
+  if (error) throw error;
   return (data as Job | null) ?? null;
 }
 
