@@ -38,8 +38,6 @@ export const projectMeta: ProjectMeta = {
   overview: {
     body: "A 7-hero spotlight pack for Summoner Era's Arena of Heroes. Each champion ships with a stylised name plate, a full splash banner, a 1400-wide Spine battle reel, plus a two-up GIF combo isolating signature skills. After Effects handled VFX layers and motion graphics; Spine 2D drove the character rig. Output feeds the arena lobby loop and the marketing team's social pipeline.",
     stats: [
-      { value: "136", label: "Appreciations" },
-      { value: "2.2K", label: "Views" },
       { value: "7", label: "Hero reels" },
       { value: "14+", label: "Combo loops" },
     ],

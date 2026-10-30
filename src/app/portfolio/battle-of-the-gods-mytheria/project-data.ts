@@ -36,10 +36,7 @@ export const projectMeta: ProjectMeta = {
   overview: {
     body: "A login-screen drop for Mytheria — Battle of the Gods. We delivered a short cinematic intro, six character motion + VFX loops shown two-up to compare poses and effects, and a final banner that ties the lineup together for marketing.",
     stats: [
-      { value: "112", label: "Appreciations" },
-      { value: "1.9K", label: "Views" },
       { value: "6", label: "Hero loops" },
-      { value: "3", label: "Fields" },
     ],
   },
   behanceUrl:

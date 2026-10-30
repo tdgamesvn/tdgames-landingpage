@@ -438,7 +438,14 @@ export default function CaseStudyLayout({
               style={{ width: "min(var(--layout-width, 86%), 1280px)" }}
             >
               <SectionTitle eyebrow="Overview" title="Project Snapshot" accent={theme.accent} />
-              <div className="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-12">
+              {/* Bao nhiêu stat cũng render (0 → chỉ chữ, không chừa cột trống). */}
+              <div
+                className={`grid gap-8 lg:items-start lg:gap-12 ${
+                  snapshotBody && meta.overview.stats.length > 0
+                    ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]"
+                    : ""
+                }`}
+              >
                 {snapshotBody && (
                   <p className="max-w-3xl text-[15px] leading-relaxed text-white/72 md:text-[16px]">
                     {snapshotBody}

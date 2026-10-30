@@ -34,7 +34,6 @@ export const projectMeta: ProjectMeta = {
     "VFX & comp polish",
     "Texture and pose prep",
   ],
-  showOverviewSection: true,
   overview: {
     body: "A Behance collection of in-game animation and VFX work for a 2D mobile strategy title — hero showcases, readable silhouettes at phone scale, and hand-tuned effects passes that sit cleanly on illustrated assets from the art team.",
     stats: [

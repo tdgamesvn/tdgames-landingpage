@@ -38,10 +38,7 @@ export const projectMeta: ProjectMeta = {
   overview: {
     body: "A cute-style Spine 2D animation pack for a casual mobile puzzle title. We took Hung Ngo's character art and rigged each hero with snappy keyframes built for tiny mobile screens — bouncy idles, victory pops, and boss reactions. A portrait login splash anchors the pack, then seven hero loops and five boss reactions cover the in-game lobby + match-end beats.",
     stats: [
-      { value: "239", label: "Appreciations" },
-      { value: "3.4K", label: "Views" },
       { value: "12", label: "Animations" },
-      { value: "10", label: "Comments" },
     ],
   },
   behanceUrl:
@@ -54,7 +51,7 @@ export const projectMeta: ProjectMeta = {
     { role: "Animator", name: "Toan Dang" },
   ],
   tools: [],
-  fields: ["Visual Effects", "Digital Art"],
+  fields: ["Character Animation", "Spine 2D"],
   tags: [
     "animation",
     "spine 2D",

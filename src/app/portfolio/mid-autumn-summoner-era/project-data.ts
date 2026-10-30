@@ -38,10 +38,7 @@ export const projectMeta: ProjectMeta = {
   overview: {
     body: "A seasonal Mid-Autumn pack for Summoner Era. We rigged eight heroes in festival skins, paired each with a stylised name plate, opened with a banner splash, and closed with a celebratory wide-shot. Loops were optimised to feel snappy on mobile login + lobby screens.",
     stats: [
-      { value: "161", label: "Appreciations" },
-      { value: "2K", label: "Views" },
       { value: "8", label: "Hero loops" },
-      { value: "3", label: "Fields" },
     ],
   },
   behanceUrl:

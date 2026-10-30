@@ -36,8 +36,6 @@ export const projectMeta: ProjectMeta = {
   overview: {
     body: "Our submission for the Sky Mavis animation contest. We rigged the heroes in Spine 2D, layered VFX in After Effects, and packaged the result into a cinematic reel plus three looping action GIFs.",
     stats: [
-      { value: "218", label: "Appreciations" },
-      { value: "3.2K", label: "Views" },
       { value: "3", label: "Hero loops" },
       { value: "1", label: "Cinematic" },
     ],
