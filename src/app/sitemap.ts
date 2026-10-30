@@ -40,8 +40,28 @@ function lastModifiedOf(...relPaths: string[]): Date | undefined {
   return latest > 0 ? new Date(latest) : undefined;
 }
 
+// Danh sách tĩnh dự phòng (chụp 2026-10-30) — chỉ dùng khi không đọc được src/app/portfolio
+// lúc chạy (vd standalone build không kèm source) để sitemap không mất trắng 30 case study.
+const FALLBACK_PORTFOLIO_SLUGS = [
+  "animation-contest-sky-mavis", "axie-infinity-origins", "battle-of-the-gods-mytheria",
+  "boss-animation", "chibi-heroes-pets", "epic-card", "game-animation-vfx-3q", "heroes-fire",
+  "horse-racing", "kayn-snow-moon", "lore-axie-origin", "mid-autumn-summoner-era",
+  "monster-legends", "monster-legends-dark", "monster-legends-earth", "monster-legends-fire",
+  "monster-legends-light", "monster-legends-magic", "monster-legends-metal",
+  "monster-legends-nature", "monster-legends-special", "monster-legends-thunder",
+  "monster-legends-water", "puzzle-wonderland", "reaper-lady-project-overdrive",
+  "stickman-legend", "summoner-era", "summoner-era-2020", "summoner-era-arena-of-heroes", "yomi-2",
+];
+
 /** Slug case study = thư mục con của src/app/portfolio có page.tsx (bỏ thư mục `_` nội bộ). */
 function portfolioSlugs(): string[] {
+  const slugs = readPortfolioSlugs();
+  if (slugs.length) return slugs;
+  console.warn("[sitemap] không đọc được slug portfolio → dùng FALLBACK_PORTFOLIO_SLUGS");
+  return FALLBACK_PORTFOLIO_SLUGS;
+}
+
+function readPortfolioSlugs(): string[] {
   try {
     return fs
       .readdirSync(path.join(APP_DIR, "portfolio"), { withFileTypes: true })

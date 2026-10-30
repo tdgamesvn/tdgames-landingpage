@@ -27,6 +27,9 @@ export default function ShowreelPage() {
         backgroundAttachment: "fixed",
       }}
     >
+      {/* H1 cho SEO, ẩn mắt thường (giao diện showreel chỉ có logo + tab). Đặt ngoài
+          Suspense để luôn có trong HTML server render. */}
+      <h1 className="sr-only">TD Games Showreel — 2D Art, Animation &amp; VFX</h1>
       {/* Suspense: ShowreelGallery dùng useSearchParams (?tab=) */}
       <Suspense>
         <ShowreelGallery />

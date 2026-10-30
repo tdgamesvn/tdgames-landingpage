@@ -73,6 +73,8 @@ function HeroTitleBlock({
           </span>
         ))}
       </span>
+      {/* Khoảng trắng: 2 span block dính nhau thành "ANIMATION/VFXHeroes" trong text H1 (Google/AT đọc). */}
+      {heroTitle.subtitle && " "}
       {heroTitle.subtitle && (
         <span className="mt-1 block text-[0.62em] font-black tracking-[0.06em] md:text-[0.58em]">
           {heroTitle.subtitle.map((s, i) => (

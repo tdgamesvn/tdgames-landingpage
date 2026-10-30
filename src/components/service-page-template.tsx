@@ -80,7 +80,7 @@ export default function ServicePageTemplate({
           ...(serviceType ? { serviceType } : {}),
           url: absoluteUrl(path),
           description: hero?.description || subtitle,
-          ...(hero && !isVideoUrl(heroImageSrc) ? { image: absoluteUrl(heroImageSrc) } : {}),
+          ...(hero && !isVideoUrl(heroImageSrc) ? { image: absoluteUrl(heroImageSrc).replace(/ /g, "%20") } : {}),
           provider: { "@id": ORG_ID },
           areaServed: "Worldwide",
         },

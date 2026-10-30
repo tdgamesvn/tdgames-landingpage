@@ -8,7 +8,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/api/", "/hr", "/crm"],
+        // /crm KHÔNG chặn ở đây: trang đó dùng meta noindex, mà bot bị chặn crawl thì
+        // không đọc được noindex → URL vẫn có thể lọt index (dạng "no information").
+        disallow: ["/admin", "/api/", "/hr"],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,
