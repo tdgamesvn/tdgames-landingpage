@@ -205,13 +205,14 @@ export default function PortfolioPage() {
               style={{ width: "var(--layout-width, 75%)" }}
             >
               <div
-                className="relative z-20 max-w-[606px] tracking-[0.5px]"
+                className="relative z-20 min-w-0 max-w-[606px] tracking-[0.5px]"
                 style={{ transform: "translateY(var(--hero-text-y, 0px))" }}
               >
                 <div className="mb-[-10px] overflow-hidden">
                   <h1
-                    className={`leading-[1] font-black uppercase text-white ${changaOne.className}`}
-                    style={{ fontSize: "var(--hero-title-size, 100px)" }}
+                    className={`break-words leading-[1] font-black uppercase text-white ${changaOne.className}`}
+                    // 12vw cap: mobile không tràn phải ("PROJECT"), desktop vẫn dùng var admin
+                    style={{ fontSize: "min(var(--hero-title-size, 100px), 12vw)" }}
                   >
                     OUR{" "}
                     <span

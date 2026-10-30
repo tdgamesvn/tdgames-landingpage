@@ -109,21 +109,22 @@ export default function ServicePageTemplate({
             />
 
             <div
-              className="relative z-[2] mx-auto flex min-h-screen items-center"
+              className="relative z-[2] mx-auto flex min-h-screen items-center pb-16 pt-28 md:py-0"
               style={{ width: "var(--layout-width, 75%)" }}
             >
               <div className="w-full">
                 <div
-                  className="max-w-[606px] tracking-[0.5px]"
+                  className="min-w-0 max-w-[606px] tracking-[0.5px]"
                   style={{ transform: "translateY(var(--hero-text-y, 0px))" }}
                 >
                   {/* SEO: titleTop + titleMain là H1 duy nhất của trang dịch vụ */}
                   <h1>
                     <span className="mb-[-10px] block overflow-hidden">
                       <span
-                        className={`block leading-[1] font-black uppercase ${changaOne.className}`}
+                        className={`block break-words leading-[1] font-black uppercase ${changaOne.className}`}
                         style={{
-                          fontSize: "var(--hero-title-size, 100px)",
+                          // 12vw cap: mobile 390px không cắt chữ ("SERVIC"), desktop vẫn dùng var admin
+                          fontSize: "min(var(--hero-title-size, 100px), 12vw)",
                           color: "var(--hero-highlight-color, #f59e0b)",
                         }}
                       >
@@ -132,9 +133,10 @@ export default function ServicePageTemplate({
                     </span>{" "}
                     <span className="block overflow-hidden">
                       <span
-                        className={`block leading-[1] font-black uppercase ${changaOne.className}`}
+                        className={`block break-words leading-[1] font-black uppercase ${changaOne.className}`}
                         style={{
-                          fontSize: "var(--hero-title-size, 100px)",
+                          // 12vw cap: mobile 390px không cắt chữ ("SERVIC"), desktop vẫn dùng var admin
+                          fontSize: "min(var(--hero-title-size, 100px), 12vw)",
                           color: "var(--hero-title-color, #ffffff)",
                         }}
                       >
