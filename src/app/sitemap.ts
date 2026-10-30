@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import type { MetadataRoute } from "next";
 
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
@@ -8,80 +11,110 @@ const BASE_URL = "https://tdgamestudio.com";
 // (fetch cache giữ lại danh sách 8 bài cũ) → render theo từng request.
 export const dynamic = "force-dynamic";
 
-const portfolioSlugs = [
-  "animation-contest-sky-mavis",
-  "axie-infinity-origins",
-  "battle-of-the-gods-mytheria",
-  "boss-animation",
-  "game-animation-vfx-3q",
-  "yomi-2",
-  "epic-card",
-  "stickman-legend",
-  "chibi-heroes-pets",
-  "monster-legends",
-  "monster-legends-fire",
-  "monster-legends-water",
-  "monster-legends-dark",
-  "monster-legends-light",
-  "monster-legends-earth",
-  "monster-legends-magic",
-  "monster-legends-metal",
-  "monster-legends-nature",
-  "monster-legends-thunder",
-  "monster-legends-special",
-  "heroes-fire",
-  "horse-racing",
-  "kayn-snow-moon",
-  "lore-axie-origin",
-  "mid-autumn-summoner-era",
-  "puzzle-wonderland",
-  "reaper-lady-project-overdrive",
-  "summoner-era",
-  "summoner-era-2020",
-  "summoner-era-arena-of-heroes",
+// Server chạy `next start` từ gốc repo (VPS /opt/tdgames-landingpage) nên src/ có sẵn.
+const APP_DIR = path.join(process.cwd(), "src", "app");
+
+/**
+ * lastmod thật = mtime mới nhất của file nguồn trong thư mục route (không đệ quy).
+ * Deploy dùng `git reset --hard` → git chỉ ghi lại file ĐÃ ĐỔI, nên mtime ≈ lần
+ * cuối nội dung trang thay đổi trên server. KHÔNG dùng new Date() (Google sẽ
+ * học cách bỏ qua lastmod). Đọc lỗi → bỏ lastmod chứ không bịa.
+ */
+function lastModifiedOf(...relPaths: string[]): Date | undefined {
+  let latest = 0;
+  for (const rel of relPaths) {
+    const abs = path.join(APP_DIR, rel);
+    try {
+      const st = fs.statSync(abs);
+      const files = st.isDirectory()
+        ? fs
+            .readdirSync(abs, { withFileTypes: true })
+            .filter((e) => e.isFile() && /\.(tsx?|json|md)$/.test(e.name))
+            .map((e) => path.join(abs, e.name))
+        : [abs];
+      for (const f of files) latest = Math.max(latest, fs.statSync(f).mtimeMs);
+    } catch {
+      // file/thư mục không có → bỏ qua
+    }
+  }
+  return latest > 0 ? new Date(latest) : undefined;
+}
+
+/** Slug case study = thư mục con của src/app/portfolio có page.tsx (bỏ thư mục `_` nội bộ). */
+function portfolioSlugs(): string[] {
+  try {
+    return fs
+      .readdirSync(path.join(APP_DIR, "portfolio"), { withFileTypes: true })
+      .filter(
+        (e) =>
+          e.isDirectory() &&
+          !e.name.startsWith("_") &&
+          !e.name.startsWith("[") &&
+          fs.existsSync(path.join(APP_DIR, "portfolio", e.name, "page.tsx")),
+      )
+      .map((e) => e.name)
+      .sort();
+  } catch (err) {
+    console.error("[sitemap] portfolio dir", err);
+    return [];
+  }
+}
+
+// Trang tĩnh: [path, các file/thư mục nguồn (tương đối src/app) để lấy lastmod].
+// /services (hub) redirect về "/" nên không đưa vào. /blog lấy lastmod theo bài mới nhất.
+const STATIC_ROUTES: [string, string[]][] = [
+  ["/", ["page.tsx", "../content/site.json"]],
+  ["/about", ["about"]],
+  ["/services/2d-art", ["services/2d-art"]],
+  ["/services/2d-animation", ["services/2d-animation"]],
+  ["/services/2d-vfx", ["services/2d-vfx"]],
+  ["/services/full-game-production", ["services/full-game-production"]],
+  ["/portfolio", ["portfolio"]],
+  ["/showreel", ["showreel"]],
+  ["/tools", ["tools"]],
+  ["/careers", ["careers"]],
+  ["/contact", ["contact"]],
+  ["/company-profile", ["company-profile"]],
+  ["/privacy-policy", ["privacy-policy"]],
+  ["/terms-of-use", ["terms-of-use"]],
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-
-  const staticRoutes: MetadataRoute.Sitemap = [
-    { url: BASE_URL, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
-    { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/services/2d-art`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/services/2d-animation`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/services/2d-vfx`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/services/full-game-production`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/portfolio`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE_URL}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${BASE_URL}/tools`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${BASE_URL}/careers`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-  ];
-
-  const portfolioRoutes: MetadataRoute.Sitemap = portfolioSlugs.map((slug) => ({
-    url: `${BASE_URL}/portfolio/${slug}`,
-    lastModified: now,
-    changeFrequency: "monthly",
-    priority: 0.7,
-  }));
+  const url = (p: string) => (p === "/" ? BASE_URL : `${BASE_URL}${p}`);
 
   // ponytail: blog nằm ở Supabase, không phải site.json. DB lỗi → bỏ qua blog
   // routes chứ không để cả sitemap fail.
   let blogRoutes: MetadataRoute.Sitemap = [];
+  let blogLatest: Date | undefined;
   try {
     const { data } = await getSupabaseAdmin()
       .from("blog_posts")
-      .select("slug, created_at")
+      .select("slug, created_at, updated_at")
       .eq("published", true);
-    blogRoutes = (data ?? []).map((post) => ({
-      url: `${BASE_URL}/blog/${post.slug}`,
-      lastModified: post.created_at ? new Date(post.created_at) : now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    }));
+    blogRoutes = (data ?? []).map((post) => {
+      const raw = post.updated_at ?? post.created_at;
+      const lastModified = raw ? new Date(raw) : undefined;
+      if (lastModified && (!blogLatest || lastModified > blogLatest)) blogLatest = lastModified;
+      return { url: `${BASE_URL}/blog/${post.slug}`, ...(lastModified ? { lastModified } : {}) };
+    });
   } catch (err) {
     console.error("[sitemap] blog_posts", err);
   }
+
+  const staticRoutes: MetadataRoute.Sitemap = STATIC_ROUTES.map(([p, sources]) => {
+    const lastModified = lastModifiedOf(...sources);
+    return { url: url(p), ...(lastModified ? { lastModified } : {}) };
+  });
+  const blogIndexLastMod = blogLatest ?? lastModifiedOf("blog");
+  staticRoutes.splice(7, 0, {
+    url: url("/blog"),
+    ...(blogIndexLastMod ? { lastModified: blogIndexLastMod } : {}),
+  });
+
+  const portfolioRoutes: MetadataRoute.Sitemap = portfolioSlugs().map((slug) => {
+    const lastModified = lastModifiedOf(`portfolio/${slug}`);
+    return { url: `${BASE_URL}/portfolio/${slug}`, ...(lastModified ? { lastModified } : {}) };
+  });
 
   return [...staticRoutes, ...portfolioRoutes, ...blogRoutes];
 }
