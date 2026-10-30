@@ -10,7 +10,15 @@ import JsonLd from "@/components/json-ld";
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { ORG_ID, ORG_LOGO, breadcrumbJsonLd, toIsoDate } from "@/lib/json-ld";
+import {
+  FOUNDER_ALT_NAME,
+  FOUNDER_ID,
+  FOUNDER_TITLE,
+  ORG_ID,
+  ORG_LOGO,
+  breadcrumbJsonLd,
+  toIsoDate,
+} from "@/lib/json-ld";
 import { DEFAULT_OG_IMAGE, ogImages } from "@/lib/seo";
 
 const nunitoSans = Nunito_Sans({
@@ -49,7 +57,7 @@ async function getPost(slug: string) {
 
 const BASE_URL = "https://tdgamestudio.com";
 
-/** post.author rỗng hoặc là tên studio → tác giả là Organization. */
+/** post.author rỗng hoặc là tên studio → hiển thị/ghi nhận founder làm tác giả (không sửa DB). */
 function isOrgAuthor(author: string | null | undefined) {
   return !author || /^td\s*games/i.test(author.trim());
 }
@@ -123,7 +131,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       publishedTime: post.created_at,
       modifiedTime: post.updated_at ?? post.created_at,
-      authors: [post.author],
+      authors: [isOrgAuthor(post.author) ? FOUNDER_ALT_NAME : post.author],
       images,
     },
     twitter: {
@@ -165,10 +173,10 @@ export default async function BlogPostPage({ params }: Props) {
           image: post.cover_image || DEFAULT_OG_IMAGE.url,
           datePublished: toIsoDate(post.created_at),
           dateModified: toIsoDate(post.updated_at ?? post.created_at),
-          // Toàn bộ bài hiện ký tên "TD Games" → tác giả là Organization (@id ở root layout).
-          // Tên khác (người thật) → Person.
+          // Bài ký "TD Games"/trống → tác giả là Person founder (@id khai ở /about#founder).
+          // Tên khác (người thật) → Person theo tên đó. Publisher vẫn là Organization.
           author: isOrgAuthor(post.author)
-            ? { "@type": "Organization", "@id": ORG_ID, name: "TD Games", url: BASE_URL }
+            ? { "@type": "Person", "@id": FOUNDER_ID, name: FOUNDER_ALT_NAME, jobTitle: FOUNDER_TITLE, url: FOUNDER_ID }
             : { "@type": "Person", name: post.author },
           publisher: {
             "@type": "Organization",
@@ -219,7 +227,13 @@ export default async function BlogPostPage({ params }: Props) {
 
           {/* Meta row */}
           <div className="mt-5 flex flex-wrap items-center gap-4 text-sm text-white/45">
-            <span>{post.author}</span>
+            {isOrgAuthor(post.author) ? (
+              <Link href="/about#founder" className="hover:text-white/70">
+                {FOUNDER_ALT_NAME} · {FOUNDER_TITLE}
+              </Link>
+            ) : (
+              <span>{post.author}</span>
+            )}
             <span>·</span>
             <span>{fmtDate(post.created_at)}</span>
             <span>·</span>
