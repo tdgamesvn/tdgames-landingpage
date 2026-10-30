@@ -3,9 +3,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  CLOSE_OUT_CHUNK,
   CLOSE_OUT_MAX,
   TALENT_POOL_STATUS,
   closeOutCandidates,
+  closeOutMailAction,
   closeOutSkipReason,
   closeOutSummary,
   parseCloseOutBody,
@@ -26,9 +28,11 @@ const leader: ScopeInput = { role: "leader", userId: "u2", leaderJobIds: ["j1"],
 
 const ID = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
-test("hằng số: talent_pool, tối đa 100, hạn phản hồi 14 ngày", () => {
+test("hằng số: talent_pool, tối đa 30/lần, client gửi 10/lần, hạn phản hồi 14 ngày", () => {
   assert.equal(TALENT_POOL_STATUS, "talent_pool");
-  assert.equal(CLOSE_OUT_MAX, 100);
+  assert.equal(CLOSE_OUT_MAX, 30);
+  assert.equal(CLOSE_OUT_CHUNK, 10);
+  assert.ok(CLOSE_OUT_CHUNK <= CLOSE_OUT_MAX);
   assert.equal(HOLD_REPLY_DAYS, 14);
 });
 
@@ -57,9 +61,10 @@ test("parseCloseOutBody: lỗi rõ ràng", () => {
   };
   assert.match(err(null), /không hợp lệ/);
   assert.match(err([]), /không hợp lệ/);
-  assert.match(err({ application_ids: [], send_mail: true }), /1 đến 100/);
-  assert.match(err({ application_ids: "x", send_mail: true }), /1 đến 100/);
-  assert.match(err({ application_ids: Array.from({ length: 101 }, (_, i) => ID(i)), send_mail: true }), /1 đến 100/);
+  assert.match(err({ application_ids: [], send_mail: true }), /1 đến 30/);
+  assert.match(err({ application_ids: "x", send_mail: true }), /1 đến 30/);
+  assert.match(err({ application_ids: Array.from({ length: 31 }, (_, i) => ID(i)), send_mail: true }), /1 đến 30/);
+  assert.ok(!("error" in parseCloseOutBody({ application_ids: Array.from({ length: 30 }, (_, i) => ID(i)), send_mail: true })));
   assert.match(err({ application_ids: ["abc"], send_mail: true }), /Mã hồ sơ/);
   assert.match(err({ application_ids: [ID(1)] }), /send_mail/);
   assert.match(err({ application_ids: [ID(1)], send_mail: "true" }), /send_mail/);
@@ -116,4 +121,12 @@ test("closeOutSummary: 1 dòng Discord, không tag", () => {
   const s = closeOutSummary({ actor: "Phương", job: "2D Artist", mailed: 3, moved: 4 });
   assert.equal(s, "📮 Phương báo vị trí đã tuyển đủ — 2D Artist: gửi mail 3 ứng viên, chuyển 4 hồ sơ sang Lưu hồ sơ");
   assert.ok(!s.includes("@"));
+});
+
+test("closeOutMailAction: không gửi lại mail position_filled đã gửi; không email → báo; tắt mail → không gửi", () => {
+  assert.equal(closeOutMailAction({ sendMail: true, email: "a@b.co", alreadyMailed: false }), "send");
+  assert.equal(closeOutMailAction({ sendMail: true, email: "a@b.co", alreadyMailed: true }), "already_mailed");
+  assert.equal(closeOutMailAction({ sendMail: true, email: "sai", alreadyMailed: false }), "no_email");
+  assert.equal(closeOutMailAction({ sendMail: true, email: null, alreadyMailed: true }), "already_mailed");
+  assert.equal(closeOutMailAction({ sendMail: false, email: "a@b.co", alreadyMailed: false }), "skip");
 });

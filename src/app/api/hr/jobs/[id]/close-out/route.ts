@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScope, jobInScope, type HrContext } from "@/lib/hr-session";
-import { buildDraft, getHrEmailConfig, isValidEmail } from "@/lib/hr-email";
+import { buildDraft, getHrEmailConfig } from "@/lib/hr-email";
 import { deliverCandidateEmail, resolveCcForApplication } from "@/lib/hr-email-send";
 import {
   CLOSE_OUT_GAP_MS,
   TALENT_POOL_MISSING,
   TALENT_POOL_STATUS,
   closeOutCandidates,
+  closeOutMailAction,
   closeOutSkipReason,
   closeOutSummary,
   parseCloseOutBody,
@@ -123,6 +124,17 @@ export async function POST(request: Request, { params }: Ctx) {
   const byId = new Map(((rows ?? []) as unknown as (CloseOutApp & { assignee_user_id: string | null })[]).map((r) => [r.id, r]));
   const openKeys = scope.statuses.filter((s) => s.kind === "open").map((s) => s.key);
   const template = sendMail ? await loadTemplate() : null;
+  // Chống gửi trùng (bấm lại / lô trước lỗi giữa chừng): hồ sơ đã có mail position_filled thì không gửi nữa.
+  const alreadyMailed = new Set<string>();
+  if (sendMail) {
+    const { data: prev, error: prevErr } = await supabase
+      .from("candidate_emails")
+      .select("application_id")
+      .eq("kind", "position_filled")
+      .in("application_id", ids);
+    if (prevErr) return NextResponse.json({ error: `Không kiểm tra được mail đã gửi: ${prevErr.message}` }, { status: 500 });
+    for (const r of prev ?? []) alreadyMailed.add(String(r.application_id));
+  }
 
   const results: { id: string; name: string; mailed: boolean; moved: boolean; error?: string }[] = [];
   let sentAny = false;
@@ -137,42 +149,41 @@ export async function POST(request: Request, { params }: Ctx) {
     let mailed = false;
     const notes: string[] = [];
 
-    if (sendMail) {
-      if (!isValidEmail(app.email)) {
-        notes.push("Không có email");
-      } else {
-        if (sentAny) await sleep(CLOSE_OUT_GAP_MS);
-        sentAny = true;
-        try {
-          const resolved = await resolveCcForApplication(cfg, "position_filled", ctx, {
-            jobId: app.job_id,
-            assigneeId: app.assignee_user_id ?? null,
-          });
-          const draft = buildDraft(
-            { kind: "position_filled", candidateName: name, jobTitle: job.title, support: resolved.support },
-            template,
-          );
-          const sent = await deliverCandidateEmail(cfg, ctx, {
-            applicationId: app.id,
-            kind: "position_filled",
-            candidateEmail: app.email as string,
-            subject: draft.subject,
-            text: draft.text,
-            cc: resolved.cc,
-            from: resolved.from,
-            replyTo: resolved.replyTo,
-          });
-          if ("error" in sent) {
-            // Chưa báo được ứng viên → giữ nguyên trạng thái để HR xử lý lại.
-            results.push({ id: appId, name, mailed: false, moved: false, error: `Gửi mail thất bại: ${sent.error}` });
-            continue;
-          }
-          mailed = true;
-          if (sent.warning) notes.push(sent.warning);
-        } catch (e) {
-          results.push({ id: appId, name, mailed: false, moved: false, error: e instanceof Error ? e.message : "Gửi mail thất bại" });
+    const action = closeOutMailAction({ sendMail, email: app.email, alreadyMailed: alreadyMailed.has(app.id) });
+    if (action === "already_mailed") notes.push("Đã gửi mail này trước đó — không gửi lại");
+    else if (action === "no_email") notes.push("Không có email");
+    else if (action === "send") {
+      if (sentAny) await sleep(CLOSE_OUT_GAP_MS);
+      sentAny = true;
+      try {
+        const resolved = await resolveCcForApplication(cfg, "position_filled", ctx, {
+          jobId: app.job_id,
+          assigneeId: app.assignee_user_id ?? null,
+        });
+        const draft = buildDraft(
+          { kind: "position_filled", candidateName: name, jobTitle: job.title, support: resolved.support },
+          template,
+        );
+        const sent = await deliverCandidateEmail(cfg, ctx, {
+          applicationId: app.id,
+          kind: "position_filled",
+          candidateEmail: app.email as string,
+          subject: draft.subject,
+          text: draft.text,
+          cc: resolved.cc,
+          from: resolved.from,
+          replyTo: resolved.replyTo,
+        });
+        if ("error" in sent) {
+          // Chưa báo được ứng viên → giữ nguyên trạng thái để HR xử lý lại.
+          results.push({ id: appId, name, mailed: false, moved: false, error: `Gửi mail thất bại: ${sent.error}` });
           continue;
         }
+        mailed = true;
+        if (sent.warning) notes.push(sent.warning);
+      } catch (e) {
+        results.push({ id: appId, name, mailed: false, moved: false, error: e instanceof Error ? e.message : "Gửi mail thất bại" });
+        continue;
       }
     }
 

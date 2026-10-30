@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { CircleAlert, CircleCheck, Send, X } from "lucide-react";
 import { hrFetch, useHrSession } from "./HrSession";
 import { KIND_LABEL } from "@/lib/hr-email";
-import { TALENT_POOL_STATUS } from "@/lib/hr-close-out";
+import { CLOSE_OUT_CHUNK, TALENT_POOL_STATUS } from "@/lib/hr-close-out";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
 type Candidate = { id: string; name: string; status: string; created_at: string; has_email: boolean };
@@ -57,6 +57,8 @@ export default function CloseOutDialog({
   const [running, setRunning] = useState(false);
   const [runError, setRunError] = useState("");
   const [results, setResults] = useState<Result[] | null>(null);
+  // Tiến độ khi chạy theo lô: số hồ sơ đã xử lý / tổng.
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -105,32 +107,42 @@ export default function CloseOutDialog({
 
   async function run() {
     if (!info || chosen.length === 0) return;
-    const ask = mailing
+    const ask = mailCount > 0
       ? `Gửi mail “${KIND_LABEL.position_filled}” tới ${mailCount} ứng viên${info.mode === "live" ? " (GỬI THẬT)" : ""} và chuyển ${chosen.length} hồ sơ sang Lưu hồ sơ?`
       : `Chuyển ${chosen.length} hồ sơ sang Lưu hồ sơ (không gửi mail)?`;
     if (!confirm(ask)) return;
     setRunning(true);
     setRunError("");
+    const ids = chosen.map((c) => c.id);
+    const acc: Result[] = [];
+    setProgress({ done: 0, total: ids.length });
+    // Lô nhỏ, lần lượt: mỗi request ngắn (không chạm timeout proxy). Lô lỗi → dừng, giữ kết quả các lô trước.
     try {
-      const res = await hrFetch(`/api/hr/jobs/${jobId}/close-out`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ application_ids: chosen.map((c) => c.id), send_mail: mailing }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
-      const r = (j.results ?? []) as Result[];
-      setResults(r);
-      const moved = r.filter((x) => x.moved).map((x) => x.id);
-      if (moved.length) onMoved(moved, TALENT_POOL_STATUS);
+      for (let i = 0; i < ids.length; i += CLOSE_OUT_CHUNK) {
+        const res = await hrFetch(`/api/hr/jobs/${jobId}/close-out`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ application_ids: ids.slice(i, i + CLOSE_OUT_CHUNK), send_mail: mailing }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+        const r = (j.results ?? []) as Result[];
+        acc.push(...r);
+        setResults([...acc]);
+        setProgress({ done: Math.min(i + CLOSE_OUT_CHUNK, ids.length), total: ids.length });
+        const moved = r.filter((x) => x.moved).map((x) => x.id);
+        if (moved.length) onMoved(moved, TALENT_POOL_STATUS);
+      }
     } catch (e) {
-      setRunError(e instanceof Error ? e.message : "Không thực hiện được");
+      const msg = e instanceof Error ? e.message : "Không thực hiện được";
+      setRunError(`Dừng giữa chừng (${acc.length}/${ids.length} hồ sơ đã xử lý): ${msg}`);
+      setResults([...acc]);
     } finally {
       setRunning(false);
     }
   }
 
-  const runLabel = mailing
+  const runLabel = mailCount > 0
     ? `Gửi ${mailCount} mail & chuyển sang Lưu hồ sơ`
     : `Chuyển ${chosen.length} hồ sơ sang Lưu hồ sơ`;
 
@@ -217,6 +229,12 @@ export default function CloseOutDialog({
               </>
             )}
           </>
+        )}
+
+        {progress && (
+          <p role="status" className="text-[13px] text-white/70">
+            {running ? "Đang xử lý… " : ""}Đã xử lý {progress.done}/{progress.total}
+          </p>
         )}
 
         {results && (

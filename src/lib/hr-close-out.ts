@@ -11,8 +11,10 @@ export const TALENT_POOL_STATUS = "talent_pool";
 export const TALENT_POOL_MISSING =
   "Chưa có trạng thái “Lưu hồ sơ” (key talent_pool) — vào Trạng thái pipeline tạo lại (đúng key talent_pool) rồi thử lại";
 
-/** Tối đa số hồ sơ mỗi lần bấm. */
-export const CLOSE_OUT_MAX = 100;
+/** Tối đa số hồ sơ mỗi request (giữ request ngắn, dưới timeout proxy). */
+export const CLOSE_OUT_MAX = 30;
+/** Hộp thoại chia danh sách đã chọn thành từng lô cỡ này, gửi lần lượt. */
+export const CLOSE_OUT_CHUNK = 10;
 /** Khoảng nghỉ giữa 2 mail liên tiếp (tránh dồn Resend). */
 export const CLOSE_OUT_GAP_MS = 600;
 
@@ -68,6 +70,21 @@ export function closeOutCandidates(apps: CloseOutApp[], o: Opts & { excludeId?: 
       created_at: a.created_at,
       has_email: isValidEmail(a.email),
     }));
+}
+
+/**
+ * Mail cho 1 hồ sơ: "send" | "already_mailed" (đã có mail position_filled trước đó → không gửi lại) |
+ * "no_email" | "skip" (không bật gửi mail). Hồ sơ vẫn được chuyển sang Lưu hồ sơ ở mọi trường hợp trừ gửi lỗi.
+ */
+export function closeOutMailAction(i: {
+  sendMail: boolean;
+  email: string | null | undefined;
+  alreadyMailed: boolean;
+}): "send" | "already_mailed" | "no_email" | "skip" {
+  if (!i.sendMail) return "skip";
+  if (i.alreadyMailed) return "already_mailed";
+  if (!isValidEmail(i.email)) return "no_email";
+  return "send";
 }
 
 /** 1 dòng Discord (kênh hr, không tag ai). */

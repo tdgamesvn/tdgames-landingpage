@@ -148,8 +148,9 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
     body: [
       "Chào {ten_ung_vien},",
       "Cảm ơn bạn đã dành thời gian ứng tuyển vị trí {vi_tri} tại TD Games.",
-      "Hiện vị trí {vi_tri} đang trong giai đoạn đánh giá hồ sơ. Chúng mình sẽ phản hồi kết quả cho bạn trước {han_phan_hoi}.",
+      "Hiện vị trí này đang trong giai đoạn đánh giá hồ sơ. Chúng mình sẽ phản hồi kết quả cho bạn trước {han_phan_hoi}.",
       "Trong thời gian này, nếu có câu hỏi hoặc muốn bổ sung thông tin (CV, portfolio…), bạn cứ trả lời trực tiếp email này nhé.",
+      "Chúc bạn một ngày tốt lành!",
       "{chu_ky}",
     ].join("\n\n"),
   },

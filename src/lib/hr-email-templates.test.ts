@@ -358,7 +358,9 @@ test("on_hold: có vị trí, hạn phản hồi, mời trả lời mail, chữ 
   assert.match(d.subject, /2D Artist/);
   assert.ok(d.text.startsWith("Chào Lan,\n\nCảm ơn bạn"));
   assert.ok(d.text.includes("vị trí 2D Artist"));
-  assert.ok(d.text.includes("giai đoạn đánh giá hồ sơ"));
+  assert.ok(d.text.includes("Hiện vị trí này đang trong giai đoạn đánh giá hồ sơ"));
+  assert.equal(d.text.split("2D Artist").length - 1, 1, "chỉ nhắc tên vị trí 1 lần trong thân mail");
+  assert.ok(d.text.includes("Chúc bạn một ngày tốt lành!"));
   assert.ok(d.text.includes("trước Thứ Sáu 13/11/2026"));
   assert.match(d.text, /trả lời (trực tiếp )?(email|mail) này/);
   assert.ok(d.text.endsWith("Phương — Phòng Nhân sự TD Games\n0385 456 273 · hiring@tdgamestudio.com · https://tdgamestudio.com"));
