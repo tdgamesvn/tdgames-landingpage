@@ -519,7 +519,13 @@ export default function CareersClient({
                                   className="text-xl font-bold text-white"
                                   style={{ fontFamily: "var(--font-rajdhani)" }}
                                 >
-                                  {job.title}
+                                  {/* Link thật tới trang riêng của job (SEO + mở tab mới); nút "View Details" vẫn mở panel. */}
+                                  <Link
+                                    href={`/careers/${job.slug}`}
+                                    className="transition-colors hover:text-[#f59e0b]"
+                                  >
+                                    {job.title}
+                                  </Link>
                                 </h3>
                                 <div className="flex flex-wrap gap-1.5">
                                   {job.categories.map((cat) => (
@@ -886,6 +892,16 @@ function RoleDetailPanel({ role, onClose }: RoleDetailPanelProps) {
                         </span>
                       ))}
                     </div>
+
+                    <Link
+                      href={`/careers/${role.slug}`}
+                      className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#f59e0b] hover:underline"
+                    >
+                      Xem trang chi tiết
+                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </Link>
 
                     {/* Meta row */}
                     <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/60">

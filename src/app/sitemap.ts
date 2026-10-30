@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { MetadataRoute } from "next";
 
+import { listActiveJobs } from "@/lib/jobs-data";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const BASE_URL = "https://tdgamestudio.com";
@@ -131,10 +132,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(blogIndexLastMod ? { lastModified: blogIndexLastMod } : {}),
   });
 
+  // Trang riêng từng job đang tuyển (job đóng → 404 nên không đưa vào). DB lỗi → bỏ qua.
+  let jobRoutes: MetadataRoute.Sitemap = [];
+  try {
+    jobRoutes = (await listActiveJobs()).map((job) => {
+      const lastModified = job.created_at ? new Date(job.created_at) : undefined;
+      return { url: `${BASE_URL}/careers/${job.slug}`, ...(lastModified ? { lastModified } : {}) };
+    });
+  } catch (err) {
+    console.error("[sitemap] jobs", err);
+  }
+
   const portfolioRoutes: MetadataRoute.Sitemap = portfolioSlugs().map((slug) => {
     const lastModified = lastModifiedOf(`portfolio/${slug}`);
     return { url: `${BASE_URL}/portfolio/${slug}`, ...(lastModified ? { lastModified } : {}) };
   });
 
-  return [...staticRoutes, ...portfolioRoutes, ...blogRoutes];
+  return [...staticRoutes, ...jobRoutes, ...portfolioRoutes, ...blogRoutes];
 }
