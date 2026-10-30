@@ -6336,3 +6336,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Result: 319 lib test pass, tsc/build sạch trên worktree (company-profile WIP phiên khác chưa commit — loại ra). Chưa kiểm trình duyệt, chưa gửi mail thật nào.
 - Còn (minor): 2 người cùng chạy "Báo đã tuyển đủ" một lúc vẫn có thể gửi trùng (không khoá); mỗi mail CC hiring@ + support → N mail = N bản CC.
 - Next Step: sếp/HR thử "Đã tuyển đủ" trên 1 job (mail đi THẬT — live).
+
+## 2026-10-30 — Cài claude-seo + audit SEO toàn site
+- Sếp tự cài plugin claude-seo 2.5.0; em chạy `/seo setup` (venv Python 3.11 + Chromium, doctor ready) và `/seo audit https://tdgamestudio.com` (10 agent: technical, content, schema, sitemap, performance, visual, geo, agentic, sxo, backlinks).
+- Kết quả: SEO Health ≈ 59/100 (Technical 72, Content 52, On-Page 58, Schema 42, Perf ~68 ước tính, AI 57). Kế hoạch + findings: `.superpowers/seo/tdgamestudio.com-audit/` (gitignored — ACTION-PLAN.md, findings/*.md, screenshots/).
+- Chính: thiếu H1 (trang chủ, dịch vụ, /portfolio, /contact); H1 bị cắt trên mobile; không có security headers; schema thiếu WebSite/Breadcrumb/Service/JobPosting, Organization thiếu sameAs; sitemap lastmod giả, thiếu vài trang, /crm + /portfolio-grid-example index được; video hero 5–12 MB; case study mỏng (overview có sẵn nhưng tắt); 11 trang Monster Legends gần trùng; blog 122 bài dồn 3 tháng, không link nội bộ; /careers không có trang từng job.
+- Next Step: chờ sếp chọn — em sửa Phase 1 (code) ngay; Phase 3 cần sếp quyết nội dung.
