@@ -829,9 +829,9 @@ export default function ApplyPageClient({ job }: Props) {
           </h3>
           <div className="flex flex-wrap gap-3">
             {[
-              { name: "Behance", href: "https://www.behance.net/tdgamesstudio", color: "bg-[#1769ff]" },
+              { name: "Behance", href: "https://www.behance.net/tdgames", color: "bg-[#1769ff]" },
               { name: "ArtStation", href: "https://www.artstation.com/td_games", color: "bg-[#13aff0]" },
-              { name: "Facebook", href: "https://www.facebook.com/tdgamesstudio", color: "bg-[#1877f2]" },
+              { name: "Facebook", href: "https://www.facebook.com/tdgamesvn", color: "bg-[#1877f2]" },
               { name: "LinkedIn", href: "https://www.linkedin.com/company/tdgamesvn", color: "bg-[#0a66c2]" },
             ].map((s) => (
               <a

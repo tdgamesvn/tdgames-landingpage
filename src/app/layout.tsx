@@ -82,9 +82,9 @@ export const metadata: Metadata = {
 // Profile mạng xã hội THẬT đang được link trên site (trang /apply/[slug] — khối "Follow us").
 // Thêm profile mới (YouTube…) thì thêm vào đây, đừng bịa link.
 const SAME_AS = [
-  "https://www.behance.net/tdgamesstudio",
+  "https://www.behance.net/tdgames",
   "https://www.artstation.com/td_games",
-  "https://www.facebook.com/tdgamesstudio",
+  "https://www.facebook.com/tdgamesvn",
   "https://www.linkedin.com/company/tdgamesvn",
 ];
 
