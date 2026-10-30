@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Orbitron, Rajdhani, Barlow_Condensed, Nunito_Sans } from "next/font/google";
+import { Geist, Orbitron, Rajdhani, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import ClickSpark from "@/components/ClickSpark";
 import GoogleAnalytics from "@/components/google-analytics";
@@ -9,6 +9,11 @@ import JsonLd from "@/components/json-ld";
 import { ORG_ID, ORG_LOGO, SITE_URL, WEBSITE_ID } from "@/lib/json-ld";
 import { DEFAULT_OG_IMAGE, ogImages } from "@/lib/seo";
 
+// Font preload: chỉ giữ font hiện ngay đầu trang (Geist = chữ body, Nunito Sans = nav
+// header + mô tả hero; Changa One của tiêu đề hero tự preload trong home-hero.tsx).
+// Rajdhani (nhãn/heading phía dưới) và Orbitron (menu mobile, trang legal) preload: false
+// → vẫn tải khi cần, chỉ không chen vào critical path. Barlow Condensed đã bỏ: không
+// chỗ nào dùng --font-barlow-condensed (4 file woff2 preload vô ích).
 const geist = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -18,18 +23,14 @@ const rajdhani = Rajdhani({
   variable: "--font-rajdhani",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
+  preload: false,
 });
 
 const orbitron = Orbitron({
   variable: "--font-orbitron",
   subsets: ["latin"],
   weight: ["500", "700", "800"],
-});
-
-const barlowCondensed = Barlow_Condensed({
-  variable: "--font-barlow-condensed",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  preload: false,
 });
 
 const nunitoSans = Nunito_Sans({
@@ -168,7 +169,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} ${rajdhani.variable} ${orbitron.variable} ${barlowCondensed.variable} ${nunitoSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${geist.variable} ${rajdhani.variable} ${orbitron.variable} ${nunitoSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-black text-white">
         <JsonLd data={SITE_JSON_LD} />
         <GoogleAnalytics />
