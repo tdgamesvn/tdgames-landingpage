@@ -5,6 +5,15 @@ export const SITE_URL = "https://tdgamestudio.com";
 /** @id của Organization (khai ở root layout) — các schema khác trỏ về đây thay vì lặp lại. */
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
+export const ABOUT_URL = `${SITE_URL}/about`;
+/** @id của Person founder — Organization.founder, BlogPosting.author và /about cùng trỏ về đây. */
+export const FOUNDER_ID = `${ABOUT_URL}#founder`;
+export const FOUNDER_NAME = "Đặng Thế Toàn";
+export const FOUNDER_ALT_NAME = "Dang The Toan";
+export const FOUNDER_TITLE = "Founder & CEO";
+/** Ảnh dự phòng khi không đọc được team_members (trang /about ưu tiên ảnh trong DB). */
+export const FOUNDER_IMAGE =
+  "https://cdn.tdgamestudio.com/projects/2026/05/f104ee79-426e-4b86-a39f-e3dec45deaaa-chatgpt-image-22_35_12-25-thg-5--2026.png";
 export const ORG_LOGO = "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td_notext.png";
 
 /**
@@ -47,4 +56,28 @@ export function toIsoDate(value: string | Date | null | undefined): string | und
   if (!value) return undefined;
   const d = value instanceof Date ? value : new Date(value);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+/** Person founder rút gọn (dùng trong Organization.founder). */
+export function founderRefJsonLd(image: string = FOUNDER_IMAGE) {
+  return {
+    "@type": "Person",
+    "@id": FOUNDER_ID,
+    name: FOUNDER_NAME,
+    alternateName: FOUNDER_ALT_NAME,
+    jobTitle: FOUNDER_TITLE,
+    image,
+  };
+}
+
+/** Person đầy đủ cho trang /about. */
+export function founderPersonJsonLd(description: string, image: string = FOUNDER_IMAGE) {
+  return {
+    "@context": "https://schema.org",
+    ...founderRefJsonLd(image),
+    url: FOUNDER_ID,
+    description,
+    worksFor: { "@id": ORG_ID },
+    knowsAbout: ["2D game art", "Game animation", "Spine animation", "VFX"],
+  };
 }

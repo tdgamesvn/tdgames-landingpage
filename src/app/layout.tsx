@@ -6,7 +6,7 @@ import GoogleAnalytics from "@/components/google-analytics";
 import HashScrollOnNav from "@/components/hash-scroll-on-nav";
 import { HeroRootStyles } from "@/components/hero-layout-state";
 import JsonLd from "@/components/json-ld";
-import { ORG_ID, ORG_LOGO, SITE_URL, WEBSITE_ID } from "@/lib/json-ld";
+import { ORG_ID, ORG_LOGO, SITE_URL, WEBSITE_ID, founderRefJsonLd } from "@/lib/json-ld";
 import { DEFAULT_OG_IMAGE, ogImages } from "@/lib/seo";
 
 // Font preload: chỉ giữ font hiện ngay đầu trang (Geist = chữ body, Nunito Sans = nav
@@ -98,6 +98,10 @@ const ORGANIZATION_JSON_LD = {
   url: SITE_URL,
   logo: { "@type": "ImageObject", url: ORG_LOGO },
   email: "tdgames.vn@gmail.com",
+  // Hoạt động từ 2022 (dưới pháp nhân khác), pháp nhân chính thức 2/2026 → foundingDate theo năm bắt đầu hoạt động.
+  foundingDate: "2022",
+  founder: founderRefJsonLd(),
+  numberOfEmployees: { "@type": "QuantitativeValue", minValue: 10 },
   sameAs: SAME_AS,
   contactPoint: {
     "@type": "ContactPoint",
