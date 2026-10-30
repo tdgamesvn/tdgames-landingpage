@@ -23,6 +23,23 @@ const nextConfig: NextConfig = {
       { source: "/services/vfx", destination: "/services/2d-vfx", permanent: true },
     ];
   },
+  // Security headers cho mọi route. HSTS cố ý KHÔNG includeSubDomains/preload
+  // (subdomain khác chưa chắc toàn HTTPS). Không có CSP (chưa audit nguồn script).
+  // microphone=(): grep src không có getUserMedia/MediaRecorder (kể cả /hr) → khoá hết.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=31536000" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
