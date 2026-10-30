@@ -85,7 +85,7 @@ const SAME_AS = [
   "https://www.behance.net/tdgamesstudio",
   "https://www.artstation.com/td_games",
   "https://www.facebook.com/tdgamesstudio",
-  "https://www.linkedin.com/company/td-games-company-limited",
+  "https://www.linkedin.com/company/tdgamesvn",
 ];
 
 // Structured data cho Google: tên công ty, logo, dịch vụ → hiện đẹp hơn trên kết quả tìm kiếm.

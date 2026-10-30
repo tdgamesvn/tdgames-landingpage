@@ -6355,3 +6355,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - Script mới `scripts/upload-r2-new-keys.mjs` (không ghi đè key, IfNoneMatch *).
   - Kiểm prod: H1=1 mọi trang mẫu, headers đủ, og JPG, poster, sitemap 167, mobile 2d-art OK.
 - Còn cần sếp: link Discord thật; LinkedIn trong footer DB đang là URL admin; Phase 3 (blog, Monster Legends, trang job riêng, Clutch/GoodFirms, founder) chưa làm.
+- 2026-10-30 LinkedIn công ty = https://www.linkedin.com/company/tdgamesvn (sếp gửi): sửa footer DB site_config.socials.linkedin (trước là URL admin dashboard), schema sameAs (layout.tsx) + trang /apply (trước td-games-company-limited). Behance/Facebook đang lệch giữa footer (behance.net/tdgames, facebook tdgamesvn) và schema+/apply (behance tdgamesstudio, facebook tdgamesstudio) — chờ sếp xác nhận.

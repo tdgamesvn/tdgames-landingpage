@@ -832,7 +832,7 @@ export default function ApplyPageClient({ job }: Props) {
               { name: "Behance", href: "https://www.behance.net/tdgamesstudio", color: "bg-[#1769ff]" },
               { name: "ArtStation", href: "https://www.artstation.com/td_games", color: "bg-[#13aff0]" },
               { name: "Facebook", href: "https://www.facebook.com/tdgamesstudio", color: "bg-[#1877f2]" },
-              { name: "LinkedIn", href: "https://www.linkedin.com/company/td-games-company-limited", color: "bg-[#0a66c2]" },
+              { name: "LinkedIn", href: "https://www.linkedin.com/company/tdgamesvn", color: "bg-[#0a66c2]" },
             ].map((s) => (
               <a
                 key={s.name}
