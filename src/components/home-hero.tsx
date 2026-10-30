@@ -60,9 +60,11 @@ function CardVideo({ src, isActive, className }: { src: string; isActive: boolea
 // Ảnh thẻ (thumbnail) — next/image: lazy, không tự preload (React chèn <link preload>
 // cho mọi <img> thường → 5 JPG ~1.3 MB tranh băng thông với video hero), và resize về
 // cỡ thẻ 256px. URL ngoài CDN của mình (blob: khi admin preview…) thì unoptimized.
-function CardThumb({ src, alt, className }: { src: string; alt: string; className: string }) {
+// Thẻ đầu (lcp) là LCP thật trên desktop (đo PerformanceObserver: H1 đang animate từ
+// opacity 0, video nền không tính) → chỉ thẻ này preload, bản resize ~256px.
+function CardThumb({ src, alt, className, lcp = false }: { src: string; alt: string; className: string; lcp?: boolean }) {
   const optimizable = /^https:\/\/([a-z0-9-]+\.)*tdgamestudio\.com\//i.test(src);
-  return <Image src={src} alt={alt} fill sizes="256px" unoptimized={!optimizable} className={className} />;
+  return <Image src={src} alt={alt} fill sizes="256px" preload={lcp} unoptimized={!optimizable} className={className} />;
 }
 
 // --- 1. CLASSIC THUMBNAIL CARD ---
@@ -85,7 +87,7 @@ function ClassicThumbnailCard({ video, isActive, onClick, index, cardDim, cardVi
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
-          <CardThumb src={video.thumbnail} alt={video.name} className="absolute inset-0 w-full h-full object-cover" />
+          <CardThumb src={video.thumbnail} alt={video.name} lcp={index === 0} className="absolute inset-0 w-full h-full object-cover" />
         )}
         <div className={`absolute inset-0 transition-all duration-300 ${isActive ? "bg-black/8" : ""}`} style={!isActive ? { backgroundColor: `rgba(0,0,0,${cardDim / 100})` } : {}} />
         {isActive && <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none animate-[scan_3s_linear_infinite]" />}
@@ -168,7 +170,7 @@ function FancyThumbnailCard({ video, isActive, onClick, index, cardDim, cardVign
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
-            <CardThumb src={video.thumbnail} alt={video.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            <CardThumb src={video.thumbnail} alt={video.name} lcp={index === 0} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
           )}
           <div className={`absolute inset-0 transition-colors duration-300 ${isActive ? 'bg-black/0' : ''}`} style={!isActive ? { backgroundColor: `rgba(0,0,0,${cardDim / 100})` } : {}} />
           {cardVignette && <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/95 via-black/80 to-transparent" />}
@@ -216,7 +218,7 @@ function FantasyOrnateCard({ video, isActive, onClick, index, cardDim, cardVigne
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
             />
           ) : (
-            <CardThumb src={video.thumbnail} alt={video.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+            <CardThumb src={video.thumbnail} alt={video.name} lcp={index === 0} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
           )}
           <div className={`absolute inset-0 transition-colors duration-300`} style={!isActive ? { backgroundColor: `rgba(0,0,0,${cardDim / 100})` } : {}} />
           {cardVignette && <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/80 to-transparent" />}
@@ -276,7 +278,7 @@ function ImageFrameThumbnailCard({ video, isActive, onClick, index, cardDim, car
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
           />
         ) : (
-          <CardThumb src={video.thumbnail} alt={video.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+          <CardThumb src={video.thumbnail} alt={video.name} lcp={index === 0} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
         )}
 
         {/* DIM OVERLAY */}
