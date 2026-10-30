@@ -19,6 +19,10 @@ const pairs = args.filter((a) => a.includes("=")).map((a) => {
 });
 if (!pairs.length) throw new Error("Thiếu <file>=<key>");
 
+for (const k of ["R2_BUCKET", "R2_ENDPOINT", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]) {
+  if (!process.env[k]) throw new Error(`Thiếu env ${k} (chạy với --env-file=.env.local)`);
+}
+
 const TYPES = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".mp4": "video/mp4", ".webm": "video/webm" };
 
 const s3 = new S3Client({
@@ -59,6 +63,8 @@ for (const [file, key] of pairs) {
       Body: body,
       ContentType: type,
       CacheControl: "public, max-age=31536000, immutable",
+      // Chốt chặn thứ 2 ở phía R2: key đã có (kể cả bị tạo giữa HEAD và PUT) → 412, không ghi đè.
+      IfNoneMatch: "*",
     }),
   );
 }
