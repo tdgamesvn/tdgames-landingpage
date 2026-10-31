@@ -5,7 +5,7 @@ import { ogImages } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "Portfolio — 2D Game Art, Animation & VFX Case Studies",
   description:
-    "Browse TD Games' portfolio of 2D art, animation, and VFX projects for top game studios including Axie Infinity, Summoner Era, League of Legends fan works, and more.",
+    "Browse TD Games' portfolio of 2D art, animation, and VFX projects, including Spine 2D animation for Social Point's Monster Legends, super-move cutscenes, battle VFX and more.",
   alternates: { canonical: "/portfolio" },
   openGraph: {
     title: "Portfolio — 2D Game Art, Animation & VFX Case Studies | TD Games",

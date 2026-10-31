@@ -28,22 +28,22 @@ const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
 });
 
-/* ── Hero video carousel data ── */
+/* ── Hero video carousel data (fallback khi DB trống) — chỉ tư liệu dự án của studio ── */
 const HERO_VIDEOS = [
   {
     id: "v1",
-    thumbnail: "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/1big.mp4",
-    video: "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video1.mp4",
+    thumbnail: "https://cdn.tdgamestudio.com/landing/video/posters/yomi-2-supermove.jpg",
+    video: "https://cdn.tdgamestudio.com/landing/video/hero-v2/yomi-2-supermove.mp4",
   },
   {
     id: "v2",
-    thumbnail: "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/2big.mp4",
-    video: "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video_summoner_3_skill_1_skin_2.mp4",
+    thumbnail: "https://cdn.tdgamestudio.com/landing/video/posters/horse-race.jpg",
+    video: "https://cdn.tdgamestudio.com/landing/video/hero-v2/horse-race.mp4",
   },
   {
     id: "v3",
-    thumbnail: "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/3big.mp4",
-    video: "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video_summoner_4_skill_1_skin_2.mp4",
+    thumbnail: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.jpg",
+    video: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.mp4",
   },
   {
     id: "v4",

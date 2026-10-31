@@ -3,28 +3,28 @@
     "media": [
       {
         "id": "1",
-        "name": "MALEFICA",
-        "label": "Skin 2 – I",
-        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/1big.mp4",
-        "path": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video1.mp4",
+        "name": "YOMI 2",
+        "label": "Super Move",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/posters/yomi-2-supermove.jpg",
+        "path": "https://cdn.tdgamestudio.com/landing/video/hero-v2/yomi-2-supermove.mp4",
         "isBgVideo": true,
         "isIframe": false
       },
       {
         "id": "2",
-        "name": "VESTA",
-        "label": "Skin 2 – III",
-        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/2big.mp4",
-        "path": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video_summoner_3_skill_1_skin_2.mp4",
+        "name": "HORSE RACING",
+        "label": "Splash Art",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/posters/horse-race.jpg",
+        "path": "https://cdn.tdgamestudio.com/landing/video/hero-v2/horse-race.mp4",
         "isBgVideo": true,
         "isIframe": false
       },
       {
         "id": "3",
-        "name": "FABER",
-        "label": "Skin 2 – IV",
-        "thumbnail": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/3big.mp4",
-        "path": "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/video_summoner_4_skill_1_skin_2.mp4",
+        "name": "EPIC CARD",
+        "label": "Battle VFX",
+        "thumbnail": "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.jpg",
+        "path": "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.mp4",
         "isBgVideo": true,
         "isIframe": false
       },
@@ -57,10 +57,10 @@
         "slug": "kayn-snow-moon"
       },
       {
-        "title": "Axie Infinity Origins",
-        "category": "Game Animation",
-        "image": "https://cdn.tdgamestudio.com/landing/behance/b173c85213385cf6.png",
-        "slug": "axie-infinity-origins"
+        "title": "Monster Legends - Social Point",
+        "category": "Spine 2D Animation",
+        "image": "https://cdn.tdgamestudio.com/landing/portfolio/monster-legends-all/splash-ai-v4.jpg",
+        "slug": "monster-legends"
       },
       {
         "title": "Boss Animation - The Twins",
@@ -69,10 +69,10 @@
         "slug": "boss-animation"
       },
       {
-        "title": "Summoner Era - Heroes Light/Dark",
-        "category": "2D Animation & VFX",
-        "image": "https://cdn.tdgamestudio.com/landing/images/summonerDetail.png",
-        "slug": "summoner-era"
+        "title": "Yomi 2 - Super Move Cutscenes",
+        "category": "Animation & VFX",
+        "image": "https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/gwen-desperation.jpg",
+        "slug": "yomi-2"
       },
       {
         "title": "Horse Racing - Splash Art",
@@ -87,10 +87,10 @@
         "slug": "battle-of-the-gods-mytheria"
       },
       {
-        "title": "Animation Contest - Sky Mavis",
-        "category": "Animation & VFX",
-        "image": "https://cdn.tdgamestudio.com/landing/behance/e3eeb2716aa68b48.png",
-        "slug": "animation-contest-sky-mavis"
+        "title": "Epic Card - Battle VFX",
+        "category": "2D VFX",
+        "image": "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.jpg",
+        "slug": "epic-card"
       },
       {
         "title": "Reaper & Lady - Project OverDrive",
