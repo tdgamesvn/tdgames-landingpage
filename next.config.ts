@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+import blogRedirects from "./src/content/blog-redirects.json";
+import { buildBlogRedirects } from "./src/lib/blog-redirects";
+
 const nextConfig: NextConfig = {
   // Deploy build vào thư mục tạm (NEXT_DIST_DIR=.next-new) rồi mới swap sang .next,
   // để app đang chạy không mất file giữa chừng — xem .github/workflows/deploy.yml.
@@ -21,6 +24,8 @@ const nextConfig: NextConfig = {
       { source: "/services/art", destination: "/services/2d-art", permanent: true },
       { source: "/services/animation", destination: "/services/2d-animation", permanent: true },
       { source: "/services/vfx", destination: "/services/2d-vfx", permanent: true },
+      // Bài blog đã gộp vào bài trụ cột → 301 (giữ vĩnh viễn, không có chuỗi). Dữ liệu sai thì build throw.
+      ...buildBlogRedirects(blogRedirects),
     ];
   },
   // Security headers cho mọi route. HSTS cố ý KHÔNG includeSubDomains/preload
