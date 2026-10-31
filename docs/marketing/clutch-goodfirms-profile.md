@@ -58,6 +58,22 @@
 | 12 | **Ngân sách, thời gian và năm từng dự án** (trường tuỳ chọn trong portfolio) | Clutch | Website không ghi giá hay thời gian của dự án nào. Để trống hoặc sếp điền số thật. |
 | 13 | **Danh sách khách được mời review** | Cả hai | Xem mục 4. |
 
+### 1.5 Câu trả lời của sếp (2026-10-31)
+
+| # | Trường | Giá trị chốt |
+|---|---|---|
+| 1 | Legal name | Công ty TNHH TD Games / **TD Games Company Limited** |
+| 2 | Mã số thuế | **0111386855** |
+| 3 | Điện thoại | ⚠️ sếp gửi "+84 3608491" (thiếu số) — đang xác nhận, khả năng là **+84 362 608 491** |
+| 4 | Hourly rate | **$25–$49/hr** (giá thực tế ~$25–30/hr) |
+| 5 | Minimum project size | **$1,000+** |
+| 6 | Service focus | **2D Animation 40% · 2D Art/Illustration 30% · VFX 20% · Full game development 10%** |
+| 7 | Client size | **Small Business 100%** |
+| 8 | Industry | **Gaming 100%** |
+| 9 | Nêu tên khách | Giữ đúng mức website đang công khai: tên game/IP cho cả 7 dự án; tên công ty khách chỉ ở 2 dự án site đã ghi (Social Point – Monster Legends, INVINCIBLE GG – Horse Racing). Các dự án còn lại không nêu tên công ty. |
+| 10 | Ngân sách/thời gian dự án | **Để private** (Clutch cho phép ẩn ngân sách); có thể điền năm nếu chắc chắn. |
+| 11 | Khách mời review | Sếp đang kiểm tra lại. |
+
 ---
 
 ## 2. English copy, ready to paste
