@@ -95,6 +95,10 @@ const ORGANIZATION_JSON_LD = {
   "@id": ORG_ID,
   name: "TD Games",
   alternateName: "TD Games Studio",
+  // Pháp nhân + MST + SĐT khớp hồ sơ Clutch/GoodFirms (sếp xác nhận 2026-10-31).
+  legalName: "TD Games Company Limited",
+  taxID: "0111386855",
+  telephone: "+84 362 608 491",
   url: SITE_URL,
   logo: { "@type": "ImageObject", url: ORG_LOGO },
   email: "info@tdgamestudio.com",
@@ -107,6 +111,7 @@ const ORGANIZATION_JSON_LD = {
     "@type": "ContactPoint",
     contactType: "sales",
     email: "info@tdgamestudio.com",
+    telephone: "+84 362 608 491",
     url: `${SITE_URL}/contact`,
     availableLanguage: ["English", "Vietnamese"],
   },

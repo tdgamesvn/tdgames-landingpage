@@ -64,7 +64,7 @@
 |---|---|---|
 | 1 | Legal name | Công ty TNHH TD Games / **TD Games Company Limited** |
 | 2 | Mã số thuế | **0111386855** |
-| 3 | Điện thoại | ⚠️ sếp gửi "+84 3608491" (thiếu số) — đang xác nhận, khả năng là **+84 362 608 491** |
+| 3 | Điện thoại | **+84 362 608 491** (sếp xác nhận) |
 | 4 | Hourly rate | **$25–$49/hr** (giá thực tế ~$25–30/hr) |
 | 5 | Minimum project size | **$1,000+** |
 | 6 | Service focus | **2D Animation 40% · 2D Art/Illustration 30% · VFX 20% · Full game development 10%** |
