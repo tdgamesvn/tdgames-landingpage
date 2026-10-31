@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -8,8 +9,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "Mid Autumn Animation for Summoner Era",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["mid-autumn-summoner-era"],
   summary:
-    "Mid-Autumn event drop for Summoner Era. Spine character pack with festival-themed costumes, intro splash, hero name plates, and a closing reel — bouncy keyframes built for short loops on mobile.",
+    "Mid-Autumn event drop for Summoner Era, animated by our founder while at Zitga. Spine character pack with festival-themed costumes, intro splash, hero name plates, and a closing reel — bouncy keyframes built for short loops on mobile.",
   heroTitle: {
     primary: [
       { text: "Mid Autumn", color: "accent" },
@@ -36,7 +38,7 @@ export const projectMeta: ProjectMeta = {
   ],
   showOverviewSection: true,
   overview: {
-    body: "A seasonal Mid-Autumn pack for Summoner Era. We rigged eight heroes in festival skins, paired each with a stylised name plate, opened with a banner splash, and closed with a celebratory wide-shot. Loops were optimised to feel snappy on mobile login + lobby screens.",
+    body: "A seasonal Mid-Autumn pack for Summoner Era, made by our founder while at Zitga. Eight heroes were rigged in festival skins, each paired with a stylised name plate, opened with a banner splash, and closed with a celebratory wide-shot. Loops were optimised to feel snappy on mobile login + lobby screens.",
     stats: [
       { value: "8", label: "Hero loops" },
     ],

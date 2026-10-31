@@ -38,10 +38,19 @@ export function isNoindexCaseStudy(slug: string): boolean {
  */
 export function caseStudyMetadata(
   slug: string,
-  meta: { title: string; summary?: string; coverImage?: string },
+  meta: {
+    title: string;
+    summary?: string;
+    coverImage?: string;
+    /** Dự án founder làm ở công ty cũ → title/OG ghi rõ, không để ngụ ý là việc của studio. */
+    provenance?: { company: string; kind: string };
+  },
 ): Metadata {
   const path = `/portfolio/${slug}`;
-  const title = meta.title.replace(/\s+/g, " ").trim();
+  const baseTitle = meta.title.replace(/\s+/g, " ").trim();
+  const title = meta.provenance
+    ? `${baseTitle} (${meta.provenance.kind === "founder-personal" ? "founder's personal work" : `by our founder at ${meta.provenance.company}`})`
+    : baseTitle;
   const description = meta.summary?.replace(/\s+/g, " ").trim();
   return {
     // absolute: template "%s | TD Games" của root không tới được đây vì portfolio/layout đặt title dạng string.

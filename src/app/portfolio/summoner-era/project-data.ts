@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -7,8 +8,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "Summoner Era — Heroes Light & Dark Animation & VFX",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["summoner-era"],
   summary:
-    "Login-screen hero packages for Summoner Era: looping character motion, key-art presentation, and VFX passes tuned for in-game and promo use.",
+    "Login-screen hero packages for Summoner Era, created by our founder while at Zitga: looping character motion, key-art presentation, and VFX passes tuned for in-game and promo use.",
   heroTitle: {
     primary: [{ text: "ANIMATION/VFX", color: "white" }],
     subtitle: [
@@ -31,7 +33,7 @@ export const projectMeta: ProjectMeta = {
     "VFX integrated with key art",
   ],
   overview: {
-    body: "We created a set of hero login animations and VFX for Summoner Era, combining stylized character motion with impactful visual effects to enhance both the in-game experience and promotional materials.",
+    body: "Our founder created this set of hero login animations and VFX for Summoner Era while working at Zitga, combining stylized character motion with impactful visual effects to enhance both the in-game experience and promotional materials.",
     stats: [
       { value: "12+", label: "Heroes Animated" },
       { value: "30+", label: "VFX Assets" },

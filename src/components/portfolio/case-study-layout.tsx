@@ -6,6 +6,7 @@ import JsonLd from "@/components/json-ld";
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
 import { breadcrumbJsonLd } from "@/lib/json-ld";
+import { provenanceCardLabel, provenanceFor, studioFirst } from "@/lib/project-provenance";
 
 import {
   CaseStudyShowcaseWithSettings,
@@ -19,6 +20,7 @@ import type {
   RelatedProject,
 } from "./case-study-types";
 import { hexToRgba } from "./portfolio-color-utils";
+import { ProvenanceChip, ProvenanceNotice } from "./provenance-badge";
 
 function defaultHeroBackground(theme: ProjectTheme) {
   const a = hexToRgba(theme.accent, 0.2);
@@ -199,6 +201,7 @@ function RelatedCard({
     // Tailwind does not support inline hover colors, so keep the neutral border.
   };
   void hoverStyle;
+  const provenance = project.internal ? provenanceFor(project.href) : undefined;
 
   const body = (
     <>
@@ -210,6 +213,9 @@ function RelatedCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 320px"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
         />
+        {provenance && (
+          <ProvenanceChip label={provenanceCardLabel(provenance)} className="absolute left-3 top-3" />
+        )}
       </div>
       <div className="p-5">
         <div
@@ -324,6 +330,8 @@ export default function CaseStudyLayout({
                   <p className="mt-3 max-w-2xl text-[14px] leading-relaxed text-white/70 md:text-[15px]">
                     {meta.summary}
                   </p>
+
+                  {meta.provenance && <ProvenanceNotice provenance={meta.provenance} />}
 
                   {meta.credits && meta.credits.length > 0 && (
                     <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-white/55">
@@ -510,7 +518,7 @@ export default function CaseStudyLayout({
                 accent={theme.accent}
               />
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {related.map((project) => (
+                {studioFirst(related, (p) => (p.internal ? p.href : undefined)).map((project) => (
                   <RelatedCard
                     key={project.id}
                     project={project}

@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -8,8 +9,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "Animation Contest - Sky Mavis",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["animation-contest-sky-mavis"],
   summary:
-    "Entry for the Sky Mavis Contest. A short cinematic reel and three character action loops showcasing combat timing, secondary motion, and stylised VFX.",
+    "Our founder's personal entry for the Sky Mavis animation contest. A short cinematic reel and three character action loops showcasing combat timing, secondary motion, and stylised VFX.",
   heroTitle: {
     primary: [
       { text: "Animation", color: "soft" },
@@ -34,7 +36,7 @@ export const projectMeta: ProjectMeta = {
   ],
   showOverviewSection: true,
   overview: {
-    body: "Our submission for the Sky Mavis animation contest. We rigged the heroes in Spine 2D, layered VFX in After Effects, and packaged the result into a cinematic reel plus three looping action GIFs.",
+    body: "A personal submission by our founder for the Sky Mavis animation contest. He rigged the heroes in Spine 2D, layered VFX in After Effects, and packaged the result into a cinematic reel plus three looping action GIFs.",
     stats: [
       { value: "3", label: "Hero loops" },
       { value: "1", label: "Cinematic" },

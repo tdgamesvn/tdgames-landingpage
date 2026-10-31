@@ -1,8 +1,10 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 export const projectMeta = {
   title: "Summoner Era — Login Screen Animations (2020)",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["summoner-era-2020"],
   summary:
-    "Splash art (login screens) for Summoner Era at Zitga Studio in 2020 — story-driven loops that introduce new champions, events and game updates.",
+    "Splash art (login screens) our founder animated for Summoner Era while at Zitga Studio in 2020 — story-driven loops that introduce new champions, events and game updates.",
   heroTitle: {
     primary: [{ text: "SUMMONER ERA", color: "accent" }],
     subtitle: [
@@ -23,7 +25,7 @@ export const projectMeta = {
     "VFX passes for skills and ambient FX",
   ] as const,
   overview: {
-    body: "Animated splash art (login screens) created for the mobile game Summoner Era at Zitga Studio in 2020. Each time players launch the game, the first thing they see is one of these animated digital paintings showing what's new — from champion launches like Charon and Diadora to seasonal events: Birthday, Easter and Mid Autumn. Static illustrations from the Art team were brought to life with Spine 2D, After Effects and Photoshop.",
+    body: "Animated splash art (login screens) created by our founder for the mobile game Summoner Era while he worked at Zitga Studio in 2020, before TD Games. Each time players launch the game, the first thing they see is one of these animated digital paintings showing what's new — from champion launches like Charon and Diadora to seasonal events: Birthday, Easter and Mid Autumn. Static illustrations from the Art team were brought to life with Spine 2D, After Effects and Photoshop.",
     stats: [
       { value: "89", label: "Appreciations" },
       { value: "1.7K", label: "Views" },

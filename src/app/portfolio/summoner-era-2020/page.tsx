@@ -5,6 +5,8 @@ import Link from "next/link";
 
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
+import { ProvenanceChip, ProvenanceNotice } from "@/components/portfolio/provenance-badge";
+import { provenanceCardLabel, provenanceFor, studioFirst } from "@/lib/project-provenance";
 import { projectMeta, relatedProjects, showcaseModules } from "./project-data";
 
 function FactIcon({ name }: { name: string }) {
@@ -216,6 +218,7 @@ function RelatedCard({
   const hoverStyle = { 
     borderColor: `${accentColor}66` 
   };
+  const provenance = project.internal ? provenanceFor(project.href) : undefined;
   
   const body = (
     <>
@@ -227,6 +230,9 @@ function RelatedCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 320px"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
         />
+        {provenance && (
+          <ProvenanceChip label={provenanceCardLabel(provenance)} className="absolute left-3 top-3" />
+        )}
       </div>
       <div className="p-5">
         <div 
@@ -315,6 +321,8 @@ export default function SummonerEra2020DetailPage() {
               <p className="mt-4 max-w-xl text-[13px] leading-6 text-white/70 md:text-sm">
                 {projectMeta.summary}
               </p>
+
+              <ProvenanceNotice provenance={projectMeta.provenance} />
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <a
@@ -665,7 +673,7 @@ export default function SummonerEra2020DetailPage() {
           >
             <SectionTitle eyebrow="More Projects" title="Related Work" />
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {relatedProjects.map((project) => (
+              {studioFirst(relatedProjects, (p) => (p.internal ? p.href : undefined)).map((project) => (
                 <RelatedCard key={project.id} project={project} />
               ))}
             </div>

@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -8,8 +9,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "Axie Infinity: Origins — Character Animation",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["axie-infinity-origins"],
   summary:
-    "Character work for Axie Infinity: Origins — in-game Axie rigs, attack loops, and showcase reels for Sky Mavis production.",
+    "Character work for Axie Infinity: Origins, created by our founder while at Sky Mavis — in-game Axie rigs, attack loops, and showcase reels.",
   heroTitle: {
     primary: [
       { text: "Axie Infinity", color: "accent" },
@@ -33,7 +35,7 @@ export const projectMeta: ProjectMeta = {
     "Showcase reels for Origins",
   ],
   overview: {
-    body: 'Characters animation for game "AXIE INFINITY - ORIGINS" — Sky Mavis production. Spine 2D rigs and attack/idle loops for the in-game Axie roster, with Photoshop used for texture and pose prep across the pipeline.',
+    body: 'Character animation for the game "AXIE INFINITY - ORIGINS", created by our founder while working at Sky Mavis. Spine 2D rigs and attack/idle loops for the in-game Axie roster, with Photoshop used for texture and pose prep across the pipeline.',
     stats: [
       { value: "1.1K", label: "Appreciations" },
       { value: "12.2K", label: "Views" },

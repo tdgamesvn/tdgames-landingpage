@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -8,8 +9,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "Animation for Summoner Era - Arena of Heroes",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["summoner-era-arena-of-heroes"],
   summary:
-    "Cinematic hero showcase for Summoner Era's Arena of Heroes mode. Seven champions, each shipped with a name plate, splash, full battle reel, and a two-up combo loop — built to feed the in-game arena lobby and marketing pipeline.",
+    "Cinematic hero showcase for Summoner Era's Arena of Heroes mode, created by our founder while at Zitga. Seven champions, each shipped with a name plate, splash, full battle reel, and a two-up combo loop — built to feed the in-game arena lobby and marketing pipeline.",
   heroTitle: {
     primary: [
       { text: "Arena", color: "accentSoft" },
@@ -36,7 +38,7 @@ export const projectMeta: ProjectMeta = {
   ],
   showOverviewSection: true,
   overview: {
-    body: "A 7-hero spotlight pack for Summoner Era's Arena of Heroes. Each champion ships with a stylised name plate, a full splash banner, a 1400-wide Spine battle reel, plus a two-up GIF combo isolating signature skills. After Effects handled VFX layers and motion graphics; Spine 2D drove the character rig. Output feeds the arena lobby loop and the marketing team's social pipeline.",
+    body: "A 7-hero spotlight pack for Summoner Era's Arena of Heroes, made by our founder while at Zitga. Each champion ships with a stylised name plate, a full splash banner, a 1400-wide Spine battle reel, plus a two-up GIF combo isolating signature skills. After Effects handled VFX layers and motion graphics; Spine 2D drove the character rig. Output feeds the arena lobby loop and the marketing team's social pipeline.",
     stats: [
       { value: "7", label: "Hero reels" },
       { value: "14+", label: "Combo loops" },

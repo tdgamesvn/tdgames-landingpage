@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -8,8 +9,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "Summoner Era — Heroes Fire Animation & VFX",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["heroes-fire"],
   summary:
-    "2D character and VFX for Summoner Era — Fire heroes: in-game attack loops, skill effects, and showcase reels.",
+    "2D character and VFX for Summoner Era — Fire heroes, created by our founder while at Zitga: in-game attack loops, skill effects, and showcase reels.",
   heroTitle: {
     primary: [
       { text: "Heroes", color: "accent" },
@@ -33,7 +35,7 @@ export const projectMeta: ProjectMeta = {
     "In-game showcase reels",
   ],
   overview: {
-    body: "Characters animation and VFX for the Fire heroes of Summoner Era. Each unit ships with idle/attack loops rigged in Spine 2D plus After Effects VFX for skill impacts and signature effects, packaged as in-game motion and promo reels.",
+    body: "Character animation and VFX for the Fire heroes of Summoner Era, created by our founder while at Zitga. Each unit ships with idle/attack loops rigged in Spine 2D plus After Effects VFX for skill impacts and signature effects, packaged as in-game motion and promo reels.",
     stats: [
       { value: "627", label: "Appreciations" },
       { value: "6.0K", label: "Views" },

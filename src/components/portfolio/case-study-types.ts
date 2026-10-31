@@ -1,3 +1,5 @@
+import type { ProjectProvenance } from "@/lib/project-provenance";
+
 export type ProjectTheme = {
   /** Primary accent (hex). */
   accent: string;
@@ -83,6 +85,11 @@ export type ProjectMeta = {
    */
   coverAspectMobile?: number;
   credits?: readonly Credit[];
+  /**
+   * Dự án founder làm ở công ty cũ / bài cá nhân (không phải việc của studio) → hero hiện
+   * badge + 1 dòng ghi rõ nguồn gốc. Lấy từ PROJECT_PROVENANCE (src/lib/project-provenance.ts).
+   */
+  provenance?: ProjectProvenance;
   tools: readonly string[];
   fields: readonly string[];
   tags?: readonly string[];

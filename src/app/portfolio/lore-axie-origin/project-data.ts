@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -7,8 +8,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "Axie Origins Lore — Cinematic Animation",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["lore-axie-origin"],
   summary:
-    "Cinematic lore trailer for Axie Infinity Origins — storyboard-led sequence with character beats, environment FX, and pacing tuned for an in-world reveal.",
+    "Cinematic lore trailer for Axie Infinity Origins, created by our founder while at Sky Mavis — storyboard-led sequence with character beats, environment FX, and pacing tuned for an in-world reveal.",
   heroTitle: {
     primary: [
       { text: "Lore", color: "accentSoft" },
@@ -30,7 +32,7 @@ export const projectMeta: ProjectMeta = {
     "FX & sequence edit",
   ],
   overview: {
-    body: "A cinematic lore piece for the Axie Infinity Origins world — built from a beat-driven storyboard, animated with stylized 2D motion, then composited with FX and a final color pass for a clean in-world reveal.",
+    body: "A cinematic lore piece for the Axie Infinity Origins world, made by our founder while at Sky Mavis — built from a beat-driven storyboard, animated with stylized 2D motion, then composited with FX and a final color pass for a clean in-world reveal.",
     stats: [
       { value: "138", label: "Appreciations" },
       { value: "1.8K", label: "Views" },
