@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 
 /**
  * Ảnh OG mặc định toàn site (+ fallback image cho BlogPosting): brand card 1200×630 JPG
- * (key art Summoner Era + logo TD Games), sinh 2026-10-30 bằng sharp, upload R2 key mới
+ * (v2 2026-10-31: crop artwork Yomi 2 — dự án khách của studio; v1 cắt từ Summoner Era là
+ * dự án founder làm ở công ty cũ nên đã thay), sinh bằng sharp, upload R2 key mới
  * qua scripts/upload-r2-new-keys.mjs. JPG chứ không WebP/PNG: vài nền tảng chia sẻ
  * (Zalo, LinkedIn, Facebook cũ) không đọc WebP. Đổi ảnh thì đặt key MỚI (CDN immutable).
  */
 export const DEFAULT_OG_IMAGE = {
-  url: "https://cdn.tdgamestudio.com/landing/og/tdgames-og-default.jpg",
+  url: "https://cdn.tdgamestudio.com/landing/og/tdgames-og-default-v2.jpg",
   width: 1200,
   height: 630,
   alt: "TD Games — 2D game art, animation & VFX outsourcing studio",
