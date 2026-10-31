@@ -617,7 +617,7 @@ export default async function AboutPage() {
         <section className="relative overflow-hidden bg-gradient-to-br from-[#f59e0b]/10 via-black to-black py-20 md:py-28">
           <div className="absolute right-0 top-0 h-full w-1/2 opacity-20">
             <Image
-              src="https://cdn.tdgamestudio.com/landing/images/summoners.png"
+              src="https://cdn.tdgamestudio.com/landing/portfolio/monster-legends-all/splash-ai-v4.jpg"
               alt=""
               fill
               className="object-cover"

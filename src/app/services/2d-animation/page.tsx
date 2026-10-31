@@ -21,7 +21,7 @@ const DEFAULT_CARDS: ServiceCapabilityItem[] = [
     title: "UI Animation",
     description:
       "Menu, reward, and tutorial motion that guides the eye without noise.",
-    image: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-07 233917.png",
+    image: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/stat-buff.jpg",
   },
   {
     title: "Login Animation",
@@ -33,13 +33,13 @@ const DEFAULT_CARDS: ServiceCapabilityItem[] = [
     title: "Cutscene",
     description:
       "Skill and ultimate cutscenes timed to the ability itself, so every cast reads as a payoff.",
-    image: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg",
+    image: "https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/bigby-long-arm-of-the-law.jpg",
   },
   {
     title: "Cinematic",
     description:
       "Trailer and promo motion graphics — key art cut to music for store pages, ads, and launch beats.",
-    image: "https://cdn.tdgamestudio.com/landing/images/minh-hong-minh-hong-thumbnail-2.jpg",
+    image: "https://cdn.tdgamestudio.com/landing/video/posters/horse-race.jpg",
   },
   {
     title: "3D Animation",

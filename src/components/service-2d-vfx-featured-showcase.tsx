@@ -12,7 +12,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "VFX effects created",
     description:
       "Punchy hit frames, elemental pops, and combo accents authored for atlas efficiency.",
-    image: "https://cdn.tdgamestudio.com/landing/images/summoners.png",
+    image: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/smash.jpg",
   },
   {
     title: "Environment VFX",

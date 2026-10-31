@@ -12,7 +12,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "Combat animations",
     description:
       "Attack chains, cancels, and hit reactions timed for gameplay feedback and marketing trailers.",
-    image: "https://cdn.tdgamestudio.com/landing/images/ourproject.jpg",
+    image: "https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/gwen-desperation.jpg",
   },
   {
     title: "Character Animation",
@@ -32,7 +32,7 @@ const cards: StudioServiceCard[] = [
     statLabel: "Motion graphics delivered",
     description:
       "Menu flourishes, reward reveals, and lightweight motion that supports UX without noise.",
-    image: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-07 233917.png",
+    image: "https://cdn.tdgamestudio.com/landing/video/posters/yomi-2-supermove.jpg",
   },
 ];
 

@@ -15,7 +15,7 @@ const DEFAULT_CARDS: ServiceCapabilityItem[] = [
     title: "Character VFX",
     description:
       "Skill and elemental effects built around each character's kit and silhouette.",
-    image: "https://cdn.tdgamestudio.com/landing/images/3067c837-e030-403f-b7c5-0c7246bfe15f.png",
+    image: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.jpg",
   },
   {
     title: "Combat VFX",

@@ -50,7 +50,7 @@ export default async function Service2DArtPage() {
   const heroImage = await resolveSlot(
     "services-2d-art",
     "hero",
-    "https://cdn.tdgamestudio.com/landing/images/summoners.png",
+    "https://cdn.tdgamestudio.com/landing/images/Environment_Art-1024x683.jpg",
   );
   const cards = await resolveServiceCards("services-2d-art", DEFAULT_CARDS);
   return (

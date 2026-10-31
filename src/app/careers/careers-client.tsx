@@ -739,7 +739,7 @@ export default function CareersClient({
           <div className="mx-auto px-4" style={{ width: "min(var(--layout-width, 90%), 1280px)" }}>
             <div className="relative overflow-hidden rounded-2xl border border-[#f59e0b]/20 bg-gradient-to-br from-[#1a1410] via-[#0f0d12] to-[#0a0a10] p-8 md:p-12">
               <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 opacity-30">
-                <Image src="https://cdn.tdgamestudio.com/landing/images/summoners.png" alt="" fill className="object-cover object-right" />
+                <Image src="https://cdn.tdgamestudio.com/landing/portfolio/monster-legends-all/splash-ai-v4.jpg" alt="" fill className="object-cover object-right" />
                 <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#0f0d12]/60 to-[#0f0d12]" />
               </div>
               <div className="relative z-10 max-w-2xl">

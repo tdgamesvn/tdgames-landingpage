@@ -27,21 +27,27 @@ và loại việc. Không suy ra thời lượng, số asset, giá, hay tiến �
 
 | Dự án | Loại việc |
 |---|---|
-| Axie Infinity — Origins | Animation |
-| Lore Axie Origin | Cinematic |
-| Sky Mavis — Animation Contest | Animation |
 | Battle of the Gods / Mytheria | Login screen animation |
-| Summoner Era — Heroes Fire | Animation + VFX |
-| Summoner Era — Heroes Light/Dark | Animation + VFX |
-| Summoner Era — Arena of Heroes | Animation |
-| Summoner Era — Login Screen (2020) | Animation |
-| Summoner Era — Mid Autumn | Animation |
 | 3Q | Game animation + VFX |
 | Kayn Snow Moon (League of Legends) | Login screen animation |
 | Horse Racing | Splash art animation |
 | Puzzle Wonderland | Character animation |
 | Reaper & Lady — Project OverDrive | Game animation |
 | Boss Animation — The Twins | Animation |
+
+## KHÔNG phải dự án của studio — việc của founder trước khi có TD Games
+
+Sếp xác nhận 2026-10-31. Các trang này vẫn ở `/portfolio` nhưng có nhãn "Founder's
+previous work". TUYỆT ĐỐI không viết là TD Games / "we" / "our team" làm. Chỉ được nêu
+dạng: "our founder Dang The Toan worked on X while at Zitga/Sky Mavis".
+
+| Dự án | Nguồn gốc |
+|---|---|
+| Summoner Era — Heroes Light/Dark, Heroes Fire, Arena of Heroes, Login Screen (2020), Mid Autumn | Founder làm ở Zitga |
+| Axie Infinity — Origins; Lore Axie Origin | Founder làm ở Sky Mavis |
+| Sky Mavis — Animation Contest | Bài dự thi cá nhân của founder |
+
+Danh sách nhãn trong code: `src/lib/project-provenance.ts`.
 
 Đọc thêm chi tiết từng dự án: `src/app/portfolio/<slug>/project-data.ts`.
 
