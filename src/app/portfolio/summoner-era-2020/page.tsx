@@ -247,10 +247,6 @@ function RelatedCard({
         >
           {project.title}
         </h3>
-        <div className="mt-4 flex gap-4 text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
-          <span>{project.appreciations} Appreciate</span>
-          <span>{project.views} Views</span>
-        </div>
       </div>
     </>
   );
