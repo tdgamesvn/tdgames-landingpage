@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { studioFirst } from "@/lib/project-provenance";
 
 type ProjectRow = {
   id: string;
@@ -39,6 +40,9 @@ export async function GET(request: Request) {
 
     const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 100) : 12;
     const safeOffset = Number.isFinite(offset) ? Math.max(offset, 0) : 0;
+    // ?studioFirst=1 (lưới /portfolio): dự án của founder ở công ty cũ xếp sau dự án studio —
+    // phải sắp trên toàn bộ danh sách rồi mới cắt trang, nên lấy hết (bảng chỉ vài chục dòng).
+    const sortStudioFirst = searchParams.get("studioFirst") === "1";
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -46,7 +50,7 @@ export async function GET(request: Request) {
       .from("projects")
       .select("id,title,subtitle,image,slug,category,created_at,updated_at", { count: "exact" })
       .order("created_at", { ascending: false })
-      .range(safeOffset, safeOffset + safeLimit - 1);
+      .range(sortStudioFirst ? 0 : safeOffset, sortStudioFirst ? 999 : safeOffset + safeLimit - 1);
 
     if (category && category !== "all") {
       query = query.eq("category", category);
@@ -59,7 +63,12 @@ export async function GET(request: Request) {
     }
 
     const total = count ?? 0;
-    const projects = (data ?? []).map((row) => toProjectPayload(row as ProjectRow));
+    const rows = (data ?? []) as ProjectRow[];
+    const projects = (
+      sortStudioFirst
+        ? studioFirst(rows, (r) => r.slug).slice(safeOffset, safeOffset + safeLimit)
+        : rows
+    ).map(toProjectPayload);
 
     return NextResponse.json({
       projects,

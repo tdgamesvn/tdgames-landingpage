@@ -5,6 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Nunito_Sans } from "next/font/google";
 
+import { ProvenanceChip } from "@/components/portfolio/provenance-badge";
+import { provenanceCardLabel, provenanceFor } from "@/lib/project-provenance";
+
 const nunitoSans = Nunito_Sans({
   weight: ["400", "600", "700"],
   subsets: ["latin"],
@@ -45,6 +48,7 @@ export default function PortfolioGridApi({
         const params = new URLSearchParams({
           limit: itemsPerPage.toString(),
           offset: offset.toString(),
+          studioFirst: "1",
         });
 
         if (selectedCategory !== "all") {
@@ -139,7 +143,9 @@ export default function PortfolioGridApi({
       {/* Grid */}
       {!loading && (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {projects.map((project) => (
+          {projects.map((project) => {
+            const provenance = provenanceFor(project.slug);
+            return (
             <article
               key={project.id}
               className="group relative overflow-hidden rounded-xl bg-white/5 shadow-xl transition-all duration-500 hover:scale-105"
@@ -153,6 +159,9 @@ export default function PortfolioGridApi({
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                {provenance && (
+                  <ProvenanceChip label={provenanceCardLabel(provenance)} className="absolute left-3 top-3" />
+                )}
               </div>
 
               <div className="relative p-4">
@@ -177,7 +186,8 @@ export default function PortfolioGridApi({
                 )}
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
 

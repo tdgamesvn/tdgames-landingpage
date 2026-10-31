@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { AccentHighlight } from "@/components/accent-highlight";
+import { ProvenanceChip } from "@/components/portfolio/provenance-badge";
+import { provenanceCardLabel, provenanceFor, studioFirst } from "@/lib/project-provenance";
 
 export type PortfolioGalleryItem = {
   id: string;
@@ -12,8 +14,8 @@ export type PortfolioGalleryItem = {
   href?: string;
 };
 
-/** 10 projects — adjust in production */
-const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
+/** 14 projects — dự án founder làm ở công ty cũ xếp sau dự án studio (studioFirst bên dưới). */
+const RAW_ITEMS: PortfolioGalleryItem[] = [
   {
     id: "kayn-snow-moon",
     title: "Kayn Snow Moon | League of Legends - Login Screen",
@@ -128,6 +130,8 @@ const DEFAULT_ITEMS: PortfolioGalleryItem[] = [
   },
 ];
 
+const DEFAULT_ITEMS = studioFirst(RAW_ITEMS, (item) => item.href);
+
 /**
  * Tight grid (lg+): 3 columns × 12 rows mosaic + 2 full-width banner strips (rows 17–20, 21–24).
  */
@@ -190,6 +194,7 @@ export default function PortfolioGalleryGrid({
           {items.map((item, index) => {
             const n = String(index + 1).padStart(2, "0");
             const lg = BENTO_LG[index] ?? "";
+            const provenance = provenanceFor(item.href);
             return (
               <article
                 key={item.id}
@@ -211,6 +216,9 @@ export default function PortfolioGalleryGrid({
                     {n}
                   </span>
                   <div className="pointer-events-auto">
+                    {provenance && (
+                      <ProvenanceChip label={provenanceCardLabel(provenance)} className="mb-2" />
+                    )}
                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#ff8c3a]">
                       {item.tag}
                     </p>
