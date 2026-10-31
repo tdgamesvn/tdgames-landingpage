@@ -219,7 +219,7 @@ Dang The Toan is the founder and CEO of TD Games Studio. He has more than 10 yea
 > written in first person are the founder's work from before the studio existed, so they are
 > **excluded** from the main list (see 3.2).
 
-### 3.1 Recommended entries (6)
+### 3.1 Recommended entries (7)
 
 **1. Monster Legends: Spine 2D Monster Animation**
 - Client / IP: **Social Point**, *Monster Legends* (site: "Case study · Social Point")
@@ -275,6 +275,15 @@ Dang The Toan is the founder and CEO of TD Games Studio. He has more than 10 yea
 - Cover: https://cdn.tdgamestudio.com/landing/behance/50a462dee6f25801.jpg
 - Description: `Partnership with INVINCIBLE GG to bring their painted horse racing key art to life: character motion, environmental FX and atmospheric passes integrated into a looping splash for their owners club site.`
 
+**7. Battle of the Gods (Mytheria): Login Screen Animation**
+- Client / IP: *Mytheria – Battle of the Gods* (client company not named on site). TD Games outsource work, boss confirmed 2026-10-31.
+- Service line: Animation + VFX
+- What we delivered: a short cinematic intro, six character motion + VFX loops, and a final banner for marketing (per the case study page).
+- Year: **Jan 2022** (published)
+- Link: https://tdgamestudio.com/portfolio/battle-of-the-gods-mytheria
+- Cover: https://cdn.tdgamestudio.com/landing/behance/9bfe7e73a64fc7d4.png
+- Description: `Login-screen package for Mytheria – Battle of the Gods: a short cinematic intro, six character motion and VFX loops, and a final banner that ties the lineup together for marketing.`
+
 ### 3.2 Case studies NOT recommended (personal, fan, contest or pre-studio work)
 
 | Case study | Reason |
@@ -286,9 +295,10 @@ Dang The Toan is the founder and CEO of TD Games Studio. He has more than 10 yea
 | Summoner Era – Login Screen Animations (2020) | Made "at Zitga Studio in 2020", i.e. founder's employment work before the studio. Exclude. |
 | Animation for Summoner Era – Arena of Heroes (Oct 2020) | Predates the studio (2022). Exclude. |
 | Mid Autumn Animation for Summoner Era (Jan 2021) | Predates the studio. Exclude. |
-| Game Animation – Reaper & Lady – Project: OverDrive (May 2018) | Predates the studio. Exclude. |
-| Character animation for Puzzle Wonderland (Jul 2018) | Predates the studio. Exclude. |
-| Summoner Era – Heroes Fire (Sep 2022), 3Q (May 2022), Battle of the Gods / Mytheria (Jan 2022), Axie Origins Lore (Feb 2023) | Client not named on site and dates sit at or before the studio's start. Usable only if the boss confirms they were TD Games contracts. |
+| Game Animation – Reaper & Lady – Project: OverDrive (May 2018) | Founder's previous employer — sếp xác nhận 2026-10-31. Exclude. |
+| Character animation for Puzzle Wonderland (Jul 2018) | Founder's previous employer — sếp xác nhận 2026-10-31. Exclude. |
+| Game Animation/VFX – 3Q (May 2022) | Founder's previous employer — sếp xác nhận 2026-10-31. Exclude. |
+| Summoner Era – Heroes Fire (Sep 2022), Axie Origins Lore (Feb 2023) | Founder's previous employer (Zitga / Sky Mavis) — sếp xác nhận 2026-10-31. Exclude. |
 
 ---
 

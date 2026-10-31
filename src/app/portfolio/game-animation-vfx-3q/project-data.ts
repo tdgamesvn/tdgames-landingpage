@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -8,8 +9,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "3Q — Game Animation & VFX",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["game-animation-vfx-3q"],
   summary:
-    "2D mobile strategy game — hero motion, combat loops and polish passes for a quarterly content drop.",
+    "2D mobile strategy game, created by our founder for a previous employer — hero motion, combat loops and polish passes for a quarterly content drop.",
   heroTitle: {
     primary: [
       { text: "Game", color: "accentSoft" },
@@ -35,7 +37,7 @@ export const projectMeta: ProjectMeta = {
     "Texture and pose prep",
   ],
   overview: {
-    body: "A Behance collection of in-game animation and VFX work for a 2D mobile strategy title — hero showcases, readable silhouettes at phone scale, and hand-tuned effects passes that sit cleanly on illustrated assets from the art team.",
+    body: "A Behance collection of in-game animation and VFX work created by our founder for a previous employer on a 2D mobile strategy title — hero showcases, readable silhouettes at phone scale, and hand-tuned effects passes that sit cleanly on illustrated assets from the art team.",
     stats: [
       { value: "193", label: "Appreciations" },
       { value: "2.5K", label: "Views" },

@@ -28,11 +28,8 @@ và loại việc. Không suy ra thời lượng, số asset, giá, hay tiến �
 | Dự án | Loại việc |
 |---|---|
 | Battle of the Gods / Mytheria | Login screen animation |
-| 3Q | Game animation + VFX |
 | Kayn Snow Moon (League of Legends) | Login screen animation |
 | Horse Racing | Splash art animation |
-| Puzzle Wonderland | Character animation |
-| Reaper & Lady — Project OverDrive | Game animation |
 | Boss Animation — The Twins | Animation |
 
 ## KHÔNG phải dự án của studio — việc của founder trước khi có TD Games
@@ -46,6 +43,7 @@ dạng: "our founder Dang The Toan worked on X while at Zitga/Sky Mavis".
 | Summoner Era — Heroes Light/Dark, Heroes Fire, Arena of Heroes, Login Screen (2020), Mid Autumn | Founder làm ở Zitga |
 | Axie Infinity — Origins; Lore Axie Origin | Founder làm ở Sky Mavis |
 | Sky Mavis — Animation Contest | Bài dự thi cá nhân của founder |
+| 3Q (game-animation-vfx-3q); Puzzle Wonderland; Reaper & Lady — Project OverDrive | Founder làm ở một công ty trước (không nêu tên công ty) |
 
 Danh sách nhãn trong code: `src/lib/project-provenance.ts`.
 

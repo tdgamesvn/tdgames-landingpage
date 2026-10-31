@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -9,8 +10,9 @@ import type { SavedShowcaseUiV4 } from "@/components/portfolio/case-study-showca
 export const projectMeta: ProjectMeta = {
   title: "Game Animation - Reaper & Lady - Project: OverDrive",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["reaper-lady-project-overdrive"],
   summary:
-    "Spine 2D combat animation for Shadow Fight / Overdrive-style mobile heroes — Reaper & Lady: splash-ready loops, boss-scale motion, and in-game attack reads tuned for small screens.",
+    "Spine 2D combat animation, created by our founder for a previous employer, for Shadow Fight / Overdrive-style mobile heroes — Reaper & Lady: splash-ready loops, boss-scale motion, and in-game attack reads tuned for small screens.",
   heroTitle: {
     primary: [
       { text: "Reaper", color: "accent" },
@@ -36,7 +38,7 @@ export const projectMeta: ProjectMeta = {
     "In-game ready GIF exports",
   ],
   overview: {
-    body: "Game animation pack for Project: OverDrive — Reaper and Lady hero beats built in Spine 2D for mobile combat readability: snappy anticipation, readable silhouettes, and punchy timing aligned with Shadow Fight–style action.",
+    body: "Game animation pack for Project: OverDrive, created by our founder for a previous employer — Reaper and Lady hero beats built in Spine 2D for mobile combat readability: snappy anticipation, readable silhouettes, and punchy timing aligned with Shadow Fight–style action.",
     stats: [
       { value: "141", label: "Appreciations" },
       { value: "2.7K", label: "Views" },
@@ -49,7 +51,6 @@ export const projectMeta: ProjectMeta = {
   coverImage: "https://cdn.tdgamestudio.com/landing/behance/52c6beca311ad4e9.png",
   credits: [
     { role: "Animator", name: "Toan Dang" },
-    { role: "Studio", name: "TD GAMES" },
   ],
   tools: [],
   fields: ["Visual Effects"],

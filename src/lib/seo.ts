@@ -50,7 +50,7 @@ export function caseStudyMetadata(
   const path = `/portfolio/${slug}`;
   const baseTitle = meta.title.replace(/\s+/g, " ").trim();
   const title = meta.provenance
-    ? `${baseTitle} (${meta.provenance.kind === "founder-personal" ? "founder's personal work" : `by our founder at ${meta.provenance.company}`})`
+    ? `${baseTitle} (${meta.provenance.kind === "founder-personal" ? "founder's personal work" : meta.provenance.company === "a previous employer" ? "by our founder" : `by our founder at ${meta.provenance.company}`})`
     : baseTitle;
   const description = meta.summary?.replace(/\s+/g, " ").trim();
   return {

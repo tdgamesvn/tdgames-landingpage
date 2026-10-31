@@ -12,13 +12,22 @@ test("nhận slug, href, URL đầy đủ", () => {
 });
 
 test("dự án studio và slug chưa rõ không có nhãn", () => {
-  for (const s of ["monster-legends", "yomi-2", "epic-card", "game-animation-vfx-3q", "battle-of-the-gods-mytheria", "constructor", "", undefined]) {
+  for (const s of ["monster-legends", "yomi-2", "epic-card", "battle-of-the-gods-mytheria", "constructor", "", undefined]) {
     assert.equal(provenanceFor(s), undefined, String(s));
   }
 });
 
-test("đúng 8 trang đã được sếp xác nhận", () => {
-  assert.equal(Object.keys(PROJECT_PROVENANCE).length, 8);
+test("3Q, Puzzle Wonderland, Reaper & Lady: công ty cũ không nêu tên", () => {
+  for (const s of ["game-animation-vfx-3q", "puzzle-wonderland", "reaper-lady-project-overdrive"]) {
+    const p = provenanceFor(s);
+    assert.equal(p?.kind, "founder-previous", s);
+    assert.equal(p?.label, "Founder's previous work", s);
+    assert.ok(!/zitga|sky mavis/i.test(p?.note ?? ""), s);
+  }
+});
+
+test("đúng 11 trang đã được sếp xác nhận", () => {
+  assert.equal(Object.keys(PROJECT_PROVENANCE).length, 11);
 });
 
 test("studioFirst đẩy dự án founder xuống cuối, giữ thứ tự ổn định", () => {

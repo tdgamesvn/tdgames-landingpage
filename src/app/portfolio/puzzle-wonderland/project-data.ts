@@ -1,3 +1,4 @@
+import { PROJECT_PROVENANCE } from "@/lib/project-provenance";
 import type {
   ProjectMeta,
   RelatedProject,
@@ -8,8 +9,9 @@ import type {
 export const projectMeta: ProjectMeta = {
   title: "Character animation for Puzzle Wonderland",
   eyebrow: "Case study",
+  provenance: PROJECT_PROVENANCE["puzzle-wonderland"],
   summary:
-    "Spine 2D character pack for Puzzle Wonderland — a casual mobile puzzle game. Includes a portrait login splash, seven player hero loops, and five boss reactions, all rigged and animated to feel snappy, cute, and replayable on tiny screens.",
+    "Spine 2D character pack for Puzzle Wonderland, created by our founder for a previous employer — a casual mobile puzzle game. Includes a portrait login splash, seven player hero loops, and five boss reactions, all rigged and animated to feel snappy, cute, and replayable on tiny screens.",
   heroTitle: {
     primary: [
       { text: "Puzzle", color: "accent" },
@@ -36,7 +38,7 @@ export const projectMeta: ProjectMeta = {
   ],
   showOverviewSection: true,
   overview: {
-    body: "A cute-style Spine 2D animation pack for a casual mobile puzzle title. We took Hung Ngo's character art and rigged each hero with snappy keyframes built for tiny mobile screens — bouncy idles, victory pops, and boss reactions. A portrait login splash anchors the pack, then seven hero loops and five boss reactions cover the in-game lobby + match-end beats.",
+    body: "A cute-style Spine 2D animation pack for a casual mobile puzzle title, made for a previous employer before TD Games was founded. Our founder took Hung Ngo's character art and rigged each hero with snappy keyframes built for tiny mobile screens — bouncy idles, victory pops, and boss reactions. A portrait login splash anchors the pack, then seven hero loops and five boss reactions cover the in-game lobby + match-end beats.",
     stats: [
       { value: "12", label: "Animations" },
     ],

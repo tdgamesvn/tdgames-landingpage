@@ -1,9 +1,10 @@
 /**
  * Dự án KHÔNG phải của studio: founder Dang The Toan làm khi còn ở công ty trước (Zitga,
- * Sky Mavis) hoặc bài dự thi cá nhân. Sếp xác nhận 2026-10-31 — giữ trên site để tham khảo
- * nhưng phải ghi rõ nguồn gốc ở trang case study, mọi thẻ liệt kê và metadata.
- * Monster Legends là việc thật của studio (khách Social Point) → không nằm ở đây.
- * Chưa rõ nguồn gốc (chưa gắn nhãn): game-animation-vfx-3q, battle-of-the-gods-mytheria.
+ * Sky Mavis, hoặc một công ty khác sếp không nêu tên) hoặc bài dự thi cá nhân. Sếp xác nhận
+ * 2026-10-31 — giữ trên site để tham khảo nhưng phải ghi rõ nguồn gốc ở trang case study,
+ * mọi thẻ liệt kê và metadata.
+ * Là việc thật của studio (không nhãn, không nằm ở đây): Monster Legends (Social Point),
+ * battle-of-the-gods-mytheria (outsource của TD Games).
  */
 export type ProjectProvenance = {
   /** founder-previous: làm khi là nhân viên công ty khác; founder-personal: bài cá nhân. */
@@ -31,6 +32,16 @@ const skyMavis: ProjectProvenance = {
   note: `Created by our founder ${FOUNDER_NAME} while working at Sky Mavis, before TD Games was founded. Shown with credit as a reference for his experience — not a TD Games client project.`,
 };
 
+/** Công ty cũ không được nêu tên (sếp xác nhận 2026-10-31). */
+export const PREVIOUS_EMPLOYER_COMPANY = "a previous employer";
+
+const previousEmployer: ProjectProvenance = {
+  kind: "founder-previous",
+  company: PREVIOUS_EMPLOYER_COMPANY,
+  label: "Founder's previous work",
+  note: `Created by our founder ${FOUNDER_NAME} for a previous employer, before TD Games was founded. Shown with credit as a reference for his experience — not a TD Games client project.`,
+};
+
 export const PROJECT_PROVENANCE: Readonly<Record<string, ProjectProvenance>> = {
   "summoner-era": zitga,
   "summoner-era-2020": zitga,
@@ -39,6 +50,9 @@ export const PROJECT_PROVENANCE: Readonly<Record<string, ProjectProvenance>> = {
   "heroes-fire": zitga,
   "axie-infinity-origins": skyMavis,
   "lore-axie-origin": skyMavis,
+  "game-animation-vfx-3q": previousEmployer,
+  "puzzle-wonderland": previousEmployer,
+  "reaper-lady-project-overdrive": previousEmployer,
   "animation-contest-sky-mavis": {
     kind: "founder-personal",
     company: "Sky Mavis Animation Contest",
