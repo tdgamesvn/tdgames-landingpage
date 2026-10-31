@@ -10,7 +10,7 @@ _Cập nhật: 2026-05-23_
 
 - **Công ty:** TD GAMES COMPANY LIMITED
 - **Địa chỉ:** Xom Ngoai, Dong Anh Commune, Hanoi City, Vietnam
-- **Email:** tdgames.vn@gmail.com
+- **Email:** info@tdgamestudio.com
 - **GitHub:** https://github.com/tdgamesvn/tdgames-landingpage
 - **Brand color:** `#f59e0b` (amber — Tailwind amber-400)
 - **Background:** `#0a0a0a` (near-black dark)

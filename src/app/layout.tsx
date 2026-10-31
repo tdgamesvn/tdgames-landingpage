@@ -97,7 +97,7 @@ const ORGANIZATION_JSON_LD = {
   alternateName: "TD Games Studio",
   url: SITE_URL,
   logo: { "@type": "ImageObject", url: ORG_LOGO },
-  email: "tdgames.vn@gmail.com",
+  email: "info@tdgamestudio.com",
   // Hoạt động từ 2022 (dưới pháp nhân khác), pháp nhân chính thức 2/2026 → foundingDate theo năm bắt đầu hoạt động.
   foundingDate: "2022",
   founder: founderRefJsonLd(),
@@ -106,7 +106,7 @@ const ORGANIZATION_JSON_LD = {
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "sales",
-    email: "tdgames.vn@gmail.com",
+    email: "info@tdgamestudio.com",
     url: `${SITE_URL}/contact`,
     availableLanguage: ["English", "Vietnamese"],
   },

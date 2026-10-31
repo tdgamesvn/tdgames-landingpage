@@ -53,7 +53,7 @@
 | 7 | **Client size focus %** | Clutch (GoodFirms nếu có) | Ba nhóm của Clutch: Small Business (< $10M doanh thu), Midmarket ($10M–$1B), Enterprise (> $1B). Sếp ước lượng theo danh sách khách thật. |
 | 8 | **Industry focus %** | Cả hai | Đề xuất: Gaming là chính. Nếu có khách ngoài game (vd. web3, marketing/agency) thì thêm với % nhỏ. |
 | 9 | **Employees band** | Cả hai | Sếp đã xác nhận 10+ thành viên → chọn `10–49`. Chỉ chọn `2–9` nếu nhân sự chính thức (không tính freelancer) dưới 10. |
-| 10 | **Email liên hệ hiển thị công khai** | Cả hai | Sếp xác nhận `info@tdgamestudio.com`. ⚠️ Schema JSON-LD trong `src/app/layout.tsx` hiện vẫn ghi `tdgames.vn@gmail.com`. Nên thống nhất (xem mục 5). |
+| 10 | **Email liên hệ hiển thị công khai** | Cả hai | `info@tdgamestudio.com` (sếp chốt 2026-10-31; website đã thống nhất). |
 | 11 | **Quyền nêu tên khách** trong portfolio và review | Cả hai | Xem mục 3. Chỉ nêu tên khách khi hợp đồng/NDA cho phép. Website đã có câu "nothing appears in the portfolio without written approval". |
 | 12 | **Ngân sách, thời gian và năm từng dự án** (trường tuỳ chọn trong portfolio) | Clutch | Website không ghi giá hay thời gian của dự án nào. Để trống hoặc sếp điền số thật. |
 | 13 | **Danh sách khách được mời review** | Cả hai | Xem mục 4. |
@@ -219,7 +219,7 @@ Dang The Toan is the founder and CEO of TD Games Studio. He has more than 10 yea
 > written in first person are the founder's work from before the studio existed, so they are
 > **excluded** from the main list (see 3.2).
 
-### 3.1 Recommended entries (8)
+### 3.1 Recommended entries (6)
 
 **1. Monster Legends: Spine 2D Monster Animation**
 - Client / IP: **Social Point**, *Monster Legends* (site: "Case study · Social Point")
@@ -275,27 +275,6 @@ Dang The Toan is the founder and CEO of TD Games Studio. He has more than 10 yea
 - Cover: https://cdn.tdgamestudio.com/landing/behance/50a462dee6f25801.jpg
 - Description: `Partnership with INVINCIBLE GG to bring their painted horse racing key art to life: character motion, environmental FX and atmospheric passes integrated into a looping splash for their owners club site.`
 
-**7. Summoner Era: Heroes Light & Dark Animation & VFX** ⚠️ *sếp xác nhận*
-- Client / IP: *Summoner Era* (site names the game only, no client company)
-- Service line: Animation (+ VFX)
-- What we delivered: hero login loops (light/dark themes), character motion and polish passes, VFX integrated with key art. Site stats: 12+ heroes animated, 30+ VFX assets, 2 themes, 3 weeks.
-- Year: **2024** (showcase)
-- Link: https://tdgamestudio.com/portfolio/summoner-era
-- Cover: https://cdn.tdgamestudio.com/landing/images/summonerDetail.png
-- ⚠️ Sếp xác nhận đây là việc TD Games làm cho khách (không phải việc làm in-house khi sếp còn ở Zitga) và được phép nêu tên game.
-
-**8. Axie Infinity: Origins: Character Animation** ⚠️ *sếp xác nhận*
-- Client / IP: *Axie Infinity: Origins* ("Sky Mavis production" per site)
-- Service line: Animation
-- What we delivered: Spine 2D character rigs, in-game Axie attack/idle motion loops, showcase reels.
-- Year: **Sep 2022** (published)
-- Link: https://tdgamestudio.com/portfolio/axie-infinity-origins
-- Cover: https://cdn.tdgamestudio.com/landing/behance/b173c85213385cf6.png
-- ⚠️ Sếp từng làm ở Sky Mavis. Nếu đây là việc in-house khi còn là nhân viên Sky Mavis thì **không** đưa lên như dự án của studio.
-
-**Optional 9th: own product** (no case study page; source: /services/full-game-production)
-- *Shake It! Water Sort Puzzle*, TD Games' own casual puzzle game on Google Play. Scope per site: game design, character art, animation, VFX, Unity development, live updates. Service line: Game Development. Client: TD Games (in-house). Year: not stated. Link: https://tdgamestudio.com/services/full-game-production. Sếp bổ sung link Google Play và ảnh cover.
-
 ### 3.2 Case studies NOT recommended (personal, fan, contest or pre-studio work)
 
 | Case study | Reason |
@@ -303,6 +282,7 @@ Dang The Toan is the founder and CEO of TD Games Studio. He has more than 10 yea
 | Kayn Snow Moon (League of Legends) | **Fan-made** per site ("Fanmade", Aug 2022). Not client work, and League of Legends is Riot's IP. Exclude. |
 | Animation Contest – Sky Mavis | **Contest entry** (Nov 2021). Exclude. |
 | Boss Animation – The Twins | Written in first person ("I led animation on Boss Samurai and mentored…"). Founder's personal credit, Sep 2022. Exclude, or include only if the boss confirms it was a studio contract. |
+| Summoner Era – Heroes Light & Dark (2024), Axie Infinity: Origins (Sep 2022) | Sếp xác nhận 2026-10-31: làm ở công ty trước (founder's previous employment). Exclude. |
 | Summoner Era – Login Screen Animations (2020) | Made "at Zitga Studio in 2020", i.e. founder's employment work before the studio. Exclude. |
 | Animation for Summoner Era – Arena of Heroes (Oct 2020) | Predates the studio (2022). Exclude. |
 | Mid Autumn Animation for Summoner Era (Jan 2021) | Predates the studio. Exclude. |
@@ -374,7 +354,7 @@ Hi [First name], just a gentle nudge on the Clutch review. Here's the link again
 ## 5. Checklist trước khi đăng (tiếng Việt)
 
 - [ ] **Tên thống nhất:** dùng "TD Games Studio" ở cả hai nền tảng, khớp website, LinkedIn, Behance, ArtStation. Không dùng bất kỳ tên nhóm/tên cũ nào khác.
-- [ ] **Email thống nhất:** hồ sơ dùng `info@tdgamestudio.com`. ⚠️ Schema JSON-LD trong `src/app/layout.tsx` đang ghi `tdgames.vn@gmail.com` (cả `email` lẫn `contactPoint.email`). Nên sửa thành `info@` để Clutch/GoodFirms/Google thấy cùng một email (việc sửa code để task riêng).
+- [ ] **Email thống nhất:** hồ sơ dùng `info@tdgamestudio.com`. Website đã thống nhất `info@tdgamestudio.com` (2026-10-31).
 - [ ] **Địa chỉ thống nhất:** "4th Floor, Hoa Binh Green City, 505 Minh Khai, Vinh Tuy, Hanoi, Vietnam", khớp trang /contact và Google Business Profile. Lưu ý schema chưa có "4th Floor, Vinh Tuy" (không bắt buộc sửa).
 - [ ] **Năm thành lập:** ghi 2022 + câu "incorporated February 2026", khớp /about và schema `foundingDate: 2022`.
 - [ ] **Số liệu chỉ lấy từ website:** 10+ thành viên, 50+ dự án, 1,200+ assets, 12+ studio quay lại, 1 game trên Google Play. Không thêm số mới chưa có trên site.

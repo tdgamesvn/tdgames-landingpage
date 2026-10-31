@@ -8,7 +8,7 @@ import { AccentHighlight } from "@/components/accent-highlight";
 import { trackEvent } from "@/lib/analytics";
 import { LEAD_BUDGETS, LEAD_CONTACT_CHANNELS, LEAD_SERVICES } from "@/lib/leads";
 
-const CONTACT_EMAIL = "tdgames.vn@gmail.com";
+const CONTACT_EMAIL = "info@tdgamestudio.com";
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 /** Full-bleed section art (no overlay on the image). */
