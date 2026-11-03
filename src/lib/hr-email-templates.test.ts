@@ -417,6 +417,7 @@ test("duplicate_rejection: không có người giới thiệu → không nhắc 
     duplicate: { prevAppliedAt: "02/09/2026", reapplyFrom: "02/03/2027", referrerName: null },
   });
   assert.ok(!d.text.includes("giới thiệu"));
+  assert.ok(!/[ \t]\n/.test(d.text), "không có khoảng trắng thừa cuối dòng");
 });
 
 test("duplicate_rejection: chỉ hệ thống gửi, mẫu mặc định hợp lệ, có nhãn + biến", () => {

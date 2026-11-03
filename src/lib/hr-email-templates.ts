@@ -173,7 +173,8 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
     body: [
       "Chào {ten_ung_vien},",
       "Cảm ơn bạn đã tiếp tục quan tâm tới vị trí {vi_tri} tại TD Games.",
-      "Chúng mình ghi nhận bạn đã ứng tuyển vị trí này vào ngày {ngay_ung_tuyen_truoc} và đã nhận kết quả từ chúng mình. {cau_gioi_thieu}",
+      "Chúng mình ghi nhận bạn đã ứng tuyển vị trí này vào ngày {ngay_ung_tuyen_truoc} và đã nhận kết quả từ chúng mình.",
+      "{cau_gioi_thieu}",
       "Để mỗi hồ sơ được xem xét kỹ, TD Games chưa nhận lại hồ sơ cho cùng vị trí trong thời gian này. Bạn có thể ứng tuyển lại vị trí {vi_tri} từ ngày {ngay_duoc_nop_lai}, hoặc ứng tuyển các vị trí khác đang tuyển bất cứ lúc nào.",
       "Nếu có thắc mắc, bạn cứ trả lời trực tiếp email này nhé.",
       "Chúc bạn nhiều thành công trên con đường sắp tới.",
