@@ -158,3 +158,51 @@ test("firstReferral: ref quá 6 tháng → null; khớp SĐT vẫn tính", () =>
   const p = prior({ email: "z@x.com", phone: "0912345678", referred_by: "x", created_at: monthsAgo(1) });
   assert.equal(firstReferral({ email: "a@x.com", phone: "84912345678", now: NOW }, [p])?.id, "p1");
 });
+
+// ── Nội dung tin báo (Task 5) ──
+import {
+  askHrToTellReferrerText,
+  duplicateNoticeLine,
+  referrerAutoRejectText,
+  referrerChanged,
+  referrerTakenText,
+  teamAutoRejectText,
+  formatDateVnShort,
+} from "./hr-duplicates.ts";
+
+test("referrerChanged: so theo chủ mã; tự nộp không mã vẫn chuyển cho người đầu", () => {
+  assert.equal(referrerChanged("u:1", "u:1"), false);
+  assert.equal(referrerChanged("u:2", "u:1"), true);
+  assert.equal(referrerChanged(null, "u:1"), true);
+  assert.equal(referrerChanged("u:2", null), false);
+  assert.equal(referrerChanged(null, null), false);
+});
+
+test("formatDateVnShort: ISO → dd/mm/yyyy giờ VN; YYYY-MM-DD giữ ngày", () => {
+  assert.equal(formatDateVnShort("2026-05-02T20:00:00Z"), "03/05/2026");
+  assert.equal(formatDateVnShort("2027-03-02"), "02/03/2027");
+});
+
+test("referrerAutoRejectText: có tên, vị trí, 2 ngày; không lộ “trượt”", () => {
+  const t = referrerAutoRejectText({ name: "Lan", jobTitle: "2D Artist", prevAppliedAt: "02/09/2026", reapplyFrom: "02/03/2027" });
+  for (const s of ["Lan", "2D Artist", "02/09/2026", "02/03/2027"]) assert.ok(t.includes(s), s);
+  assert.ok(!/trượt/i.test(t));
+});
+
+test("teamAutoRejectText: bắt đầu bằng 🔁 Tự động từ chối, có link hồ sơ cũ", () => {
+  const t = teamAutoRejectText({ name: "Lan", jobTitle: "2D Artist", rejectedAt: "02/09/2026", priorUrl: "https://x/hr?app=1" });
+  assert.ok(t.startsWith("🔁 Tự động từ chối"));
+  assert.ok(t.includes("https://x/hr?app=1"));
+});
+
+test("referrerTakenText + askHrToTellReferrerText + duplicateNoticeLine", () => {
+  const taken = referrerTakenText({ name: "Lan", jobTitle: "UI" });
+  assert.ok(taken.includes("Lan") && taken.includes("UI"));
+  const ask = askHrToTellReferrerText({ referrer: "thuy-headhunt", contact: "0912345678", base: "BASE" });
+  assert.ok(ask.startsWith("BASE"));
+  assert.ok(ask.includes("thuy-headhunt") && ask.includes("0912345678"));
+  assert.ok(!askHrToTellReferrerText({ referrer: "x", contact: null, base: "B" }).includes("null"));
+  const line = duplicateNoticeLine({ kind: "returning", jobTitle: "2D", statusLabel: "Rejected", date: "02/09/2026" });
+  assert.ok(line.includes("2D") && line.includes("Rejected") && line.includes("02/09/2026"));
+  assert.ok(duplicateNoticeLine({ kind: "open_duplicate", jobTitle: "2D", statusLabel: "Test", date: "x" }).includes("trùng"));
+});

@@ -130,3 +130,47 @@ export function firstReferral(input: Who & { now: string }, priors: PriorApp[]):
     .sort((a, b) => -newest(a, b));
   return withRef[0] ?? null;
 }
+
+// ── Tin báo (Discord / push) ──
+// Không bao giờ nêu người giới thiệu trước, lý do, điểm, hay chữ "trượt" ở tin gửi người giới thiệu.
+
+/**
+ * Quyền giới thiệu có chuyển sang người đầu tiên không. Khoá chủ: "u:<hr_user>" / "r:<referrer>" / "c:<mã lạ>".
+ * Không có người đầu → không đổi; tự nộp không mã (null) trong 6 tháng → vẫn thuộc người đầu (sếp chốt 2026-11-03).
+ */
+export function referrerChanged(submittedOwnerKey: string | null, firstOwnerKey: string | null): boolean {
+  if (!firstOwnerKey) return false;
+  return submittedOwnerKey !== firstOwnerKey;
+}
+
+/** "2026-05-02T20:00:00Z" → "03/05/2026" (giờ VN); "2027-03-02" → "02/03/2027". */
+export function formatDateVnShort(isoOrDate: string): string {
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(isoOrDate) ? isoOrDate : vnDate(isoOrDate);
+  const [y, m, d] = day.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+export function teamAutoRejectText(i: { name: string; jobTitle: string; rejectedAt: string; priorUrl: string }): string {
+  return `🔁 Tự động từ chối: **${i.name}** nộp lại **${i.jobTitle}** — hồ sơ trước đã có kết quả không phù hợp ngày ${i.rejectedAt} (${i.priorUrl}). Đã gửi mail báo ứng viên.`;
+}
+
+export function referrerAutoRejectText(i: { name: string; jobTitle: string; prevAppliedAt: string; reapplyFrom: string }): string {
+  return `🔁 Ứng viên **${i.name}** bạn giới thiệu cho vị trí **${i.jobTitle}** đã ứng tuyển vị trí này ngày ${i.prevAppliedAt} và chưa phù hợp. Hệ thống đã tự động từ chối và gửi mail lịch sự cho ứng viên. Có thể giới thiệu lại từ ngày ${i.reapplyFrom}.`;
+}
+
+export function referrerTakenText(i: { name: string; jobTitle: string }): string {
+  return `🔁 Ứng viên **${i.name}** (${i.jobTitle}) bạn giới thiệu đã được giới thiệu trước đó trong vòng 6 tháng. Hồ sơ vẫn được xét bình thường; hoa hồng (nếu có) thuộc người giới thiệu trước.`;
+}
+
+/** Người giới thiệu không có tài khoản /hr → nhờ người phụ trách báo lại. */
+export function askHrToTellReferrerText(i: { referrer: string; contact: string | null; base: string }): string {
+  const who = i.contact ? `${i.referrer} (${i.contact})` : i.referrer;
+  return `${i.base}\n👉 Người giới thiệu: ${who} — chưa có tài khoản /hr, nhờ người phụ trách báo lại giúp.`;
+}
+
+/** Dòng thêm vào tin "đơn mới" khi người này đã từng nộp. */
+export function duplicateNoticeLine(i: { kind: DuplicateKind; jobTitle: string; statusLabel: string; date: string }): string {
+  return i.kind === "open_duplicate"
+    ? `🔁 Nộp trùng — đang xử lý ở hồ sơ cũ: ${i.jobTitle} — ${i.statusLabel} (nộp ${i.date})`
+    : `🔁 Đã từng ứng tuyển: ${i.jobTitle} — ${i.statusLabel} (${i.date})`;
+}
