@@ -153,10 +153,10 @@ test("firstReferral: hồ sơ có ref sớm nhất trong 6 tháng", () => {
   assert.equal(firstReferral({ email: "a@x.com", phone: null, now: NOW }, [c, a])?.id, "a");
 });
 
-test("firstReferral: ref quá 6 tháng → null; khớp SĐT vẫn tính", () => {
+test("firstReferral: ref quá 6 tháng → null; chỉ khớp SĐT không tính (chống mạo danh bằng SĐT)", () => {
   assert.equal(firstReferral({ email: "a@x.com", phone: null, now: NOW }, [prior({ referred_by: "x", created_at: monthsAgo(7) })]), null);
   const p = prior({ email: "z@x.com", phone: "0912345678", referred_by: "x", created_at: monthsAgo(1) });
-  assert.equal(firstReferral({ email: "a@x.com", phone: "84912345678", now: NOW }, [p])?.id, "p1");
+  assert.equal(firstReferral({ email: "a@x.com", phone: "84912345678", now: NOW }, [p]), null);
 });
 
 // ── Nội dung tin báo (Task 5) ──

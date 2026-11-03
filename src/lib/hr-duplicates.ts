@@ -119,14 +119,14 @@ export function classifyDuplicate(
   return { kind: "returning", prior: (same ?? matched[0]).p, rejectedAt: null, reapplyFrom: null };
 }
 
-/** Người giới thiệu đầu tiên còn hiệu lực: hồ sơ khớp (email/SĐT) SỚM NHẤT có mã ref, nộp trong 6 tháng. */
+/**
+ * Người giới thiệu đầu tiên còn hiệu lực: hồ sơ khớp EMAIL sớm nhất có mã ref, nộp trong 6 tháng.
+ * Không tính khớp chỉ SĐT: SĐT dễ đoán → nộp đơn giả bằng SĐT ứng viên để chiếm quyền giới thiệu.
+ */
 export function firstReferral(input: Who & { now: string }, priors: PriorApp[]): PriorApp | null {
   const withRef = priors
     .filter((p) => (p.referred_by ?? "").trim() !== "" && withinWindow(p.created_at, input.now))
-    .filter((p) => {
-      const m = matchBy(input, p);
-      return m.email || m.phone;
-    })
+    .filter((p) => matchBy(input, p).email)
     .sort((a, b) => -newest(a, b));
   return withRef[0] ?? null;
 }
