@@ -177,3 +177,19 @@ test("redactEmailRow: attachments luôn chỉ còn filename + kind (bỏ snapsho
   const junk = redactEmailRow({ ...row, attachments: [null, "x", { filename: 5 }] }, without("emails.send_offer")) as Record<string, unknown>;
   assert.deepEqual(junk.attachments, [{ filename: "", kind: null }, { filename: "", kind: null }, { filename: "", kind: null }]);
 });
+
+test("ứng viên trùng: duplicate_* là BASE; referred_by_submitted / referrer_notified_* cần view_notes", () => {
+  const a = {
+    id: "1", job_id: "j", status: "rejected", duplicate_of: "0", duplicate_kind: "auto_rejected",
+    referred_by_submitted: "thuy", referrer_notified_at: "2026-11-03T00:00:00Z", referrer_notified_by: "Phương",
+  };
+  const leader = redactApplication(a, effectivePermissions("leader", []));
+  assert.equal(leader.duplicate_kind, "auto_rejected");
+  assert.equal(leader.duplicate_of, "0");
+  assert.ok(!("referred_by_submitted" in leader));
+  assert.ok(!("referrer_notified_at" in leader));
+  assert.ok(!("referrer_notified_by" in leader));
+  const notes = redactApplication(a, new Set<PermissionKey>(["apps.view_notes"]));
+  assert.equal(notes.referred_by_submitted, "thuy");
+  assert.equal(notes.referrer_notified_by, "Phương");
+});

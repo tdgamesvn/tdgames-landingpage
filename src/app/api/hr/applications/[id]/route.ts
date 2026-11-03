@@ -118,6 +118,15 @@ export async function PATCH(
     allowed.offer_status_at = new Date().toISOString();
   }
 
+  // Đánh dấu đã báo người giới thiệu (đơn trùng, người giới thiệu không có tài khoản /hr).
+  if ("referrer_notified" in body) {
+    if (body.referrer_notified !== true && body.referrer_notified !== false) {
+      return NextResponse.json({ error: "Giá trị không hợp lệ" }, { status: 400 });
+    }
+    allowed.referrer_notified_at = body.referrer_notified ? new Date().toISOString() : null;
+    allowed.referrer_notified_by = body.referrer_notified ? ctx.user.displayName.slice(0, 80) : null;
+  }
+
   // Người phụ trách: null = chưa giao; id phải là tài khoản chưa khoá xem được hồ sơ này.
   if (wantsAssignee) {
     const v = body.assignee_user_id;

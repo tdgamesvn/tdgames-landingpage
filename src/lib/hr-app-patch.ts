@@ -9,12 +9,16 @@ export function checkAppPatch(
   oldStatus: string,
   body: Record<string, unknown>,
 ): string | null {
+  // "Đã báo người giới thiệu": dòng này lộ tên/SĐT người giới thiệu → luôn cần apps.view_notes.
+  if ("referrer_notified" in body && !ctx.perms.has("apps.view_notes")) return "Bạn không có quyền xem người giới thiệu";
   if (ctx.perms.has("apps.edit")) return null;
   // offer_status chỉ đặt được khi hồ sơ đang ở offer, hoặc chính request này chuyển nó sang offer.
   const reachesOffer = oldStatus === "offer" || body.status === "offer";
   for (const key of Object.keys(body)) {
     if (key === "test_review") {
       if (!ctx.perms.has("apps.review_test")) return "Bạn không có quyền chấm bài test";
+    } else if (key === "referrer_notified") {
+      // đã kiểm apps.view_notes ở đầu hàm
     } else if (key === "offer_status") {
       if (!ctx.perms.has("apps.offer")) return "Bạn không có quyền ghi kết quả offer";
       if (!reachesOffer) return "Chỉ ghi kết quả offer cho hồ sơ đang ở trạng thái Offer";

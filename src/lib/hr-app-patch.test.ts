@@ -52,3 +52,11 @@ test("assignee_user_id: cần apps.edit (leader / kế toán bị chặn, hr/bos
   assert.equal(checkAppPatch(ctx("hr"), "new", { assignee_user_id: "x" }), null);
   assert.equal(checkAppPatch(ctx("boss"), "new", { assignee_user_id: null }), null);
 });
+
+test("referrer_notified: cần apps.view_notes (kể cả khi có apps.edit)", () => {
+  const editNoNotes = { role: "hr" as const, perms: new Set(["apps.edit"] as never[]) };
+  assert.ok(checkAppPatch(editNoNotes, "rejected", { referrer_notified: true }));
+  const notesOnly = { role: "hr" as const, perms: new Set(["apps.view_notes"] as never[]) };
+  assert.equal(checkAppPatch(notesOnly, "rejected", { referrer_notified: true }), null);
+  assert.equal(checkAppPatch(ctx("hr"), "rejected", { referrer_notified: true }), null);
+});

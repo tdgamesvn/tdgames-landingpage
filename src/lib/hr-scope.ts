@@ -37,6 +37,7 @@ export const BASE_FIELDS: readonly string[] = Object.freeze([
   "id", "job_id", "jobs", "full_name", "work_type", "years_experience", "cv_url", "portfolio_url",
   "available_from", "status", "offer_status", "offer_status_at", "created_at", "updated_at",
   "message", "available_hours_per_week", "assignee_user_id", "offer_approval_status",
+  "duplicate_of", "duplicate_kind", "status_changed_at",
 ]);
 
 /** Nhóm field theo quyền; quyền không gắn field trên hồ sơ → []. Key không thuộc nhóm nào bị bỏ. */
@@ -47,7 +48,10 @@ const GROUPS_WITH_FIELDS = {
     "ai_score", "ai_evaluation", "ai_profile", "ai_profile_hash", "ai_digest", "ai_digest_hash",
     "mbti_type", "mbti_url",
   ],
-  "apps.view_notes": ["admin_notes", "rejection_reason", "referred_by", "source", "blocked", "block_reason", "label"],
+  "apps.view_notes": [
+    "admin_notes", "rejection_reason", "referred_by", "source", "blocked", "block_reason", "label",
+    "referred_by_submitted", "referrer_notified_at", "referrer_notified_by",
+  ],
   "apps.view_interviews": ["interview_sessions"],
   "apps.view_tests": ["test_submissions", "test_review", "test_token", "test_eta", "test_eta_set_at"],
 } as const;
