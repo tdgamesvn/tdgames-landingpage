@@ -22,7 +22,7 @@ create index if not exists applications_phone_norm_idx on public.applications (p
 alter table public.applications add column if not exists status_changed_at timestamptz;
 
 create or replace function public.applications_touch_status_changed_at() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = '' as $$
 begin
   new.status_changed_at := now();
   return new;
