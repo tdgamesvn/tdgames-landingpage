@@ -209,7 +209,15 @@ async function sendDuplicateRejectionNow(app: DuplicateRejectionInput): Promise<
   const { data: job, error: jobErr } = await getSupabaseAdmin().from("jobs").select("title").eq("id", app.jobId).maybeSingle();
   if (jobErr) throw new Error(`hr_auto_ack job: ${jobErr.message}`);
   const toEmail = app.email.trim();
-  const decision = shouldSendAck({ enabled, email: toEmail, recentCount: 0, hourlyCount: await countAutoMailsLastHour() });
+  // Chống dùng email người khác để spam: cùng hộp thư đã nhận mail này trong 24 giờ → không gửi nữa.
+  const since = new Date(Date.now() - AUTO_ACK_DEDUPE_HOURS * 3600_000).toISOString();
+  const [recentRes, hourlyCount] = await Promise.all([
+    getSupabaseAdmin().from("candidate_emails").select("to_email").eq("kind", "duplicate_rejection").gte("created_at", since),
+    countAutoMailsLastHour(),
+  ]);
+  if (recentRes.error) throw new Error(`hr_auto_ack dedupe: ${recentRes.error.message}`);
+  const recentCount = (recentRes.data ?? []).filter((r) => String(r.to_email).trim().toLowerCase() === toEmail.toLowerCase()).length;
+  const decision = shouldSendAck({ enabled, email: toEmail, recentCount, hourlyCount });
   if (!decision.send) return { sent: false, reason: decision.reason };
   return reserveAndSend({
     kind: "duplicate_rejection",

@@ -6,7 +6,16 @@ import { HR_ROLES, type HrRole } from "@/lib/hr-permissions";
 import { notifyCandidate } from "@/lib/hr-notify";
 import { clientIp, createLimiter } from "@/lib/hr-rate-limit";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
-import { sendApplicationAck } from "@/lib/hr-auto-ack-send";
+import { sendApplicationAck, sendDuplicateRejection } from "@/lib/hr-auto-ack-send";
+import {
+  classifyDuplicate,
+  duplicateNoticeLine,
+  firstReferral,
+  formatDateVnShort,
+  referrerChanged,
+} from "@/lib/hr-duplicates";
+import { loadPriorApps, loadReferrers, notifyDuplicate, ownerKeyFor } from "@/lib/hr-duplicate-io";
+import { loadNotifyStaff } from "@/lib/hr-notify";
 
 // CV hợp lệ = file đã upload qua /api/applications/upload-cv (R2 public base).
 function cvHost() {
@@ -44,6 +53,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Bạn đã gửi quá nhiều đơn, vui lòng thử lại sau" }, { status: 429 });
   }
 
+  const [{ data: staff, error: staffErr }, job, st, def, priors, referrers] = await Promise.all([
+    supabase.from("hr_users").select("id, role, ref_codes, display_name").eq("disabled", false),
+    supabase.from("jobs").select("leader_user_id, title").eq("id", job_id).maybeSingle(),
+    supabase.from("application_statuses").select("key, position, kind, label"),
+    supabase.from("app_settings").select("value").eq("key", DEFAULT_ASSIGNEE_KEY).maybeSingle(),
+    loadPriorApps(String(email), input.phone ? String(input.phone) : null),
+    loadReferrers(),
+  ]);
+  const activeStaff = staffErr
+    ? []
+    : ((staff ?? []) as { id: string; role: HrRole; ref_codes: string[] | null; display_name: string | null }[]);
+
+  // Ứng viên trùng (spec 2026-11-03): phân loại so với hồ sơ cũ + quyền giới thiệu 6 tháng cho người đầu tiên.
+  // `priors` null (lỗi đọc / migration chưa áp) → nhận đơn như cũ.
+  const now = new Date().toISOString();
+  const jobTitleNow = (job.data as { title?: string | null } | null)?.title ?? null;
+  const who = { email: String(email), phone: input.phone ? String(input.phone) : null, now };
+  const dup = priors ? classifyDuplicate({ ...who, job_id: String(job_id), job_title: jobTitleNow }, priors) : null;
+  const first = priors ? firstReferral(who, priors) : null;
+  const submittedCode = normalizeRefCode(input.referred_by);
+  const submittedOwnerKey = ownerKeyFor(submittedCode, activeStaff, referrers);
+  const refTaken = !!first && referrerChanged(submittedOwnerKey, ownerKeyFor(first.referred_by, activeStaff, referrers));
+  if (refTaken) input.referred_by = first!.referred_by;
+
   // Mã ref: chuẩn hoá; khớp mã của tài khoản /hr (chưa khoá) → lưu mã chính + giao người đó support.
   // Không khớp (ref của người chưa có tài khoản / không có ref) → giao "người support mặc định" (cài đặt),
   // mã ref GIỮ NGUYÊN để tính hoa hồng người giới thiệu.
@@ -51,13 +84,6 @@ export async function POST(request: Request) {
   const ref = normalizeRefCode(input.referred_by);
   let assigneeId: string | null = null;
   input.referred_by = ref;
-  const [{ data: staff, error: staffErr }, job, st, def] = await Promise.all([
-    supabase.from("hr_users").select("id, role, ref_codes").eq("disabled", false),
-    supabase.from("jobs").select("leader_user_id").eq("id", job_id).maybeSingle(),
-    supabase.from("application_statuses").select("key, position, kind"),
-    supabase.from("app_settings").select("value").eq("key", DEFAULT_ASSIGNEE_KEY).maybeSingle(),
-  ]);
-  const activeStaff = staffErr ? [] : ((staff ?? []) as { id: string; role: HrRole; ref_codes: string[] | null }[]);
   const canCheckScope = !job.error && !st.error;
   const statuses = (st.data ?? []).map((r) => ({
     key: String(r.key),
@@ -80,17 +106,99 @@ export async function POST(request: Request) {
   if (!assigneeId && !def.error && def.data?.value) {
     assigneeId = assignable(activeStaff.find((u) => u.id === def.data!.value) ?? null);
   }
+  // Người nộp lại → ưu tiên người phụ trách hồ sơ cũ (nắm lịch sử), nếu còn hoạt động và xem được đơn mới.
+  const priorAssignee = dup?.prior.assignee_user_id ? activeStaff.find((u) => u.id === dup.prior.assignee_user_id) ?? null : null;
+  assigneeId = assignable(priorAssignee) ?? assigneeId;
+
+  const autoRejected = dup?.kind === "auto_rejected";
+  // Chỉ gửi cột tuỳ chọn khi có giá trị (không vỡ insert nếu cột chưa có).
+  const extra: Record<string, unknown> = {};
+  if (assigneeId) extra.assignee_user_id = assigneeId;
+  if (dup) {
+    extra.duplicate_of = dup.prior.id;
+    extra.duplicate_kind = dup.kind;
+  }
+  if (refTaken && submittedCode) extra.referred_by_submitted = submittedCode;
+  if (autoRejected) {
+    extra.status = "rejected";
+    extra.status_changed_at = now;
+    extra.rejection_reason = `Tự động: nộp lại trong 6 tháng sau khi trượt (hồ sơ cũ ngày ${formatDateVnShort(dup!.prior.created_at)})`;
+  }
 
   const { data, error } = await supabase
     .from("applications")
-    // Chỉ gửi assignee_user_id khi có (không vỡ insert nếu cột chưa có và không ai khớp).
-    .insert([assigneeId ? { ...input, assignee_user_id: assigneeId } : input])
+    .insert([{ ...input, ...extra }])
     .select("id")
     .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const statusLabel = (key: string) =>
+    String((st.data ?? []).find((r) => String(r.key) === key)?.label ?? key);
+  const refName = (code: string | null) => {
+    const c = normalizeRefCode(code);
+    if (!c) return null;
+    const u = resolveRefOwner(c, activeStaff);
+    if (u?.display_name?.trim()) return u.display_name.trim();
+    return referrers.find((r) => (r.ref_codes ?? []).some((x) => normalizeRefCode(x) === c))?.name ?? null;
+  };
+
+  // Báo người giới thiệu mới / team cho đơn trùng (nền) — lỗi chỉ log.
+  if (dup && (autoRejected || refTaken)) {
+    after(async () => {
+      try {
+        await notifyDuplicate({
+          kind: autoRejected ? "auto_rejected" : "taken",
+          app: { id: String(data.id), full_name: String(full_name), job_id: String(job_id), status: autoRejected ? "rejected" : "new", assignee_user_id: assigneeId },
+          jobTitle: jobTitleNow ?? "",
+          jobLeaderId: leaderId,
+          submittedOwnerKey: refTaken ? submittedOwnerKey : null,
+          submittedCode,
+          referrers,
+          staffCtx: await loadNotifyStaff(),
+          prevAppliedAt: formatDateVnShort(dup.prior.created_at),
+          reapplyFrom: dup.reapplyFrom ? formatDateVnShort(dup.reapplyFrom) : undefined,
+          rejectedAt: dup.rejectedAt ? formatDateVnShort(dup.rejectedAt) : undefined,
+        });
+      } catch (e) {
+        console.error("[duplicates] báo tin lỗi:", e);
+      }
+    });
+  }
+
+  if (autoRejected) {
+    // Đơn tự động từ chối: không mail "Cảm ơn ứng tuyển", không Telegram, không tin "đơn mới" — chỉ mail từ chối lịch sự.
+    after(async () => {
+      try {
+        const res = await sendDuplicateRejection({
+          applicationId: String(data.id),
+          jobId: String(job_id),
+          email: String(email),
+          fullName: String(full_name),
+          supportUserId: dup!.prior.assignee_user_id,
+          ip,
+          prevAppliedAt: formatDateVnShort(dup!.prior.created_at),
+          reapplyFrom: formatDateVnShort(dup!.reapplyFrom!),
+          referrerName: refName(dup!.prior.referred_by),
+        });
+        if (!res.sent) console.log(`[duplicates] mail từ chối bỏ qua (${res.reason}) application ${data.id}`);
+      } catch (e) {
+        console.error("[duplicates] mail từ chối lỗi:", e);
+      }
+    });
+    return NextResponse.json({ ok: true, id: data.id });
+  }
+
+  const dupLine = dup
+    ? duplicateNoticeLine({
+        kind: dup.kind,
+        jobTitle: dup.prior.job_title ?? "",
+        statusLabel: statusLabel(dup.prior.status),
+        date: formatDateVnShort(dup.prior.created_at),
+      })
+    : null;
 
   // Mail "Cảm ơn ứng tuyển" tự động (nền, sau khi trả lời) — mọi lỗi chỉ log, không ảnh hưởng việc nộp đơn.
   after(async () => {
@@ -148,6 +256,7 @@ export async function POST(request: Request) {
           portfolioUrl ? `🎨 <b>Portfolio:</b> ${h(portfolioUrl)}` : null,
           cvUrl ? `📎 <b>CV:</b> ${h(cvUrl)}` : null,
           referredBy ? `👥 <b>Referred by:</b> ${h(referredBy)}` : null,
+          dupLine ? `\n${h(dupLine)}` : null,
         ].filter(Boolean).join("\n");
 
         await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
@@ -178,7 +287,7 @@ export async function POST(request: Request) {
           ? [...fields, { name: "👤 Người phụ trách", value: assigneeName, inline: true }]
           : fields;
         return {
-          content: `🎯 **New application for ${jobTitle}** from **${String(full_name)}**`,
+          content: `🎯 **New application for ${jobTitle}** from **${String(full_name)}**${dupLine ? `\n${dupLine}` : ""}`,
           embeds: [
             {
               title: `Application — ${jobTitle}`,
