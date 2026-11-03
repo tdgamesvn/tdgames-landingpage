@@ -206,3 +206,50 @@ test("referrerTakenText + askHrToTellReferrerText + duplicateNoticeLine", () => 
   assert.ok(line.includes("2D") && line.includes("Rejected") && line.includes("02/09/2026"));
   assert.ok(duplicateNoticeLine({ kind: "open_duplicate", jobTitle: "2D", statusLabel: "Test", date: "x" }).includes("trùng"));
 });
+
+// ── Final review fixes ──
+test("firstReferral: hồ sơ thừa kế mã (nộp lại trong hạn) không gia hạn quyền của người đầu", () => {
+  const a = prior({ id: "a", referred_by: "mai-ha", created_at: monthsAgo(10), status_changed_at: monthsAgo(10) });
+  const inherited = prior({ id: "inh", referred_by: "mai-ha", created_at: monthsAgo(5), status_changed_at: monthsAgo(5) });
+  assert.equal(firstReferral({ email: "a@x.com", phone: null, now: NOW }, [inherited, a]), null);
+});
+
+test("firstReferral: đơn auto_rejected không giữ quyền giới thiệu", () => {
+  const auto = prior({ id: "auto", referred_by: "thuy", created_at: monthsAgo(1), duplicate_kind: "auto_rejected" });
+  assert.equal(firstReferral({ email: "a@x.com", phone: null, now: NOW }, [auto]), null);
+});
+
+test("firstReferral: quyền người đầu hết hạn → người giới thiệu sau (còn hạn) giữ", () => {
+  const a = prior({ id: "a", referred_by: "mai-ha", created_at: monthsAgo(10) });
+  const c = prior({ id: "c", referred_by: "thuy", created_at: monthsAgo(2) });
+  assert.equal(firstReferral({ email: "a@x.com", phone: null, now: NOW }, [a, c])?.id, "c");
+});
+
+import { referralDecision } from "./hr-duplicates.ts";
+
+test("referralDecision: auto-reject không có người giới thiệu đầu → vẫn báo B", () => {
+  assert.deepEqual(referralDecision({ dupKind: "auto_rejected", submittedOwnerKey: "u:b", firstOwnerKey: null }), {
+    overwrite: false, notify: "auto_rejected", needsManualNotice: false,
+  });
+});
+
+test("referralDecision: B là người ngoài → cần HR báo tay; B có tài khoản → không", () => {
+  assert.equal(referralDecision({ dupKind: "auto_rejected", submittedOwnerKey: "r:x", firstOwnerKey: "u:a" }).needsManualNotice, true);
+  assert.equal(referralDecision({ dupKind: "auto_rejected", submittedOwnerKey: "c:la", firstOwnerKey: null }).needsManualNotice, true);
+  assert.equal(referralDecision({ dupKind: "returning", submittedOwnerKey: "u:b", firstOwnerKey: "u:a" }).needsManualNotice, false);
+});
+
+test("referralDecision: chuyển quyền khi khác người đầu; cùng người / không mã auto-reject → không báo", () => {
+  assert.deepEqual(referralDecision({ dupKind: "returning", submittedOwnerKey: "u:b", firstOwnerKey: "u:a" }), {
+    overwrite: true, notify: "taken", needsManualNotice: false,
+  });
+  assert.deepEqual(referralDecision({ dupKind: "returning", submittedOwnerKey: null, firstOwnerKey: "u:a" }), {
+    overwrite: true, notify: null, needsManualNotice: false,
+  });
+  assert.deepEqual(referralDecision({ dupKind: "auto_rejected", submittedOwnerKey: "u:a", firstOwnerKey: "u:a" }), {
+    overwrite: false, notify: null, needsManualNotice: false,
+  });
+  assert.deepEqual(referralDecision({ dupKind: null, submittedOwnerKey: "u:b", firstOwnerKey: null }), {
+    overwrite: false, notify: null, needsManualNotice: false,
+  });
+});

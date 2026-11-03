@@ -120,15 +120,20 @@ export function classifyDuplicate(
 }
 
 /**
- * Người giới thiệu đầu tiên còn hiệu lực: hồ sơ khớp EMAIL sớm nhất có mã ref, nộp trong 6 tháng.
- * Không tính khớp chỉ SĐT: SĐT dễ đoán → nộp đơn giả bằng SĐT ứng viên để chiếm quyền giới thiệu.
+ * Người giới thiệu đầu tiên còn hiệu lực. Đi theo thời gian qua các hồ sơ khớp EMAIL có mã ref: hồ sơ đầu tiên giữ
+ * quyền 6 tháng tính từ ngày nộp; hồ sơ có mã trong thời hạn đó (thừa kế mã, hoặc người khác refer) không gia hạn
+ * và không cướp quyền; hết hạn thì hồ sơ có mã kế tiếp mở quyền mới. Bỏ qua đơn auto_rejected (bị từ chối thì không
+ * giữ quyền). Không tính khớp chỉ SĐT: SĐT dễ đoán → nộp đơn giả bằng SĐT ứng viên để chiếm quyền giới thiệu.
  */
 export function firstReferral(input: Who & { now: string }, priors: PriorApp[]): PriorApp | null {
-  const withRef = priors
-    .filter((p) => (p.referred_by ?? "").trim() !== "" && withinWindow(p.created_at, input.now))
-    .filter((p) => matchBy(input, p).email)
+  const rows = priors
+    .filter((p) => (p.referred_by ?? "").trim() !== "" && p.duplicate_kind !== "auto_rejected" && matchBy(input, p).email)
     .sort((a, b) => -newest(a, b));
-  return withRef[0] ?? null;
+  let anchor: PriorApp | null = null;
+  for (const p of rows) {
+    if (!anchor || !withinWindow(anchor.created_at, p.created_at)) anchor = p;
+  }
+  return anchor && withinWindow(anchor.created_at, input.now) ? anchor : null;
 }
 
 // ── Tin báo (Discord / push) ──
@@ -141,6 +146,22 @@ export function firstReferral(input: Who & { now: string }, priors: PriorApp[]):
 export function referrerChanged(submittedOwnerKey: string | null, firstOwnerKey: string | null): boolean {
   if (!firstOwnerKey) return false;
   return submittedOwnerKey !== firstOwnerKey;
+}
+
+/**
+ * Quyết định về người giới thiệu cho đơn mới. `overwrite`: ghi mã người đầu thay mã B (B lưu ở referred_by_submitted).
+ * `notify`: báo B ("auto_rejected" — B khác người đầu, kể cả khi không có người đầu; "taken" — quyền thuộc người đầu).
+ * `needsManualNotice`: B không có tài khoản /hr → HR phải báo tay (dòng "Cần báo người giới thiệu").
+ */
+export function referralDecision(i: {
+  dupKind: DuplicateKind | null;
+  submittedOwnerKey: string | null;
+  firstOwnerKey: string | null;
+}): { overwrite: boolean; notify: "auto_rejected" | "taken" | null; needsManualNotice: boolean } {
+  const overwrite = referrerChanged(i.submittedOwnerKey, i.firstOwnerKey);
+  const bIsOther = !!i.submittedOwnerKey && i.submittedOwnerKey !== i.firstOwnerKey;
+  const notify = i.dupKind === "auto_rejected" && bIsOther ? "auto_rejected" : overwrite && i.submittedOwnerKey ? "taken" : null;
+  return { overwrite, notify, needsManualNotice: !!notify && !i.submittedOwnerKey!.startsWith("u:") };
 }
 
 /** "2026-05-02T20:00:00Z" → "03/05/2026" (giờ VN); "2027-03-02" → "02/03/2027". */

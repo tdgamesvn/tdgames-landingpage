@@ -180,7 +180,9 @@ function DuplicateSection({ app, onPatch }: { app: Application; onPatch: (patch:
         <div className="hr-group flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-[13px]">
           <p className="min-w-0 text-white/80">
             Người giới thiệu lần này: <span className="font-semibold text-amber-300">{app.referred_by_submitted}</span>
-            {" "}— quyền giới thiệu thuộc người trước ({app.referred_by ?? "?"}).
+            {app.referred_by && app.referred_by !== app.referred_by_submitted
+              ? ` — quyền giới thiệu thuộc người trước (${app.referred_by}).`
+              : " — ứng viên đã ứng tuyển vị trí này trước đó."}
             {app.referrer_notified_at ? (
               <span className="block text-[12px] text-white/50">
                 Đã báo bởi {app.referrer_notified_by ?? "?"} lúc {new Date(app.referrer_notified_at).toLocaleString("vi-VN")}

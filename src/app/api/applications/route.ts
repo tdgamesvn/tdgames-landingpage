@@ -12,7 +12,7 @@ import {
   duplicateNoticeLine,
   firstReferral,
   formatDateVnShort,
-  referrerChanged,
+  referralDecision,
 } from "@/lib/hr-duplicates";
 import { loadPriorApps, loadReferrers, notifyDuplicate, ownerKeyFor } from "@/lib/hr-duplicate-io";
 import { loadNotifyStaff } from "@/lib/hr-notify";
@@ -74,8 +74,16 @@ export async function POST(request: Request) {
   const first = priors ? firstReferral(who, priors) : null;
   const submittedCode = normalizeRefCode(input.referred_by);
   const submittedOwnerKey = ownerKeyFor(submittedCode, activeStaff, referrers);
-  const refTaken = !!first && referrerChanged(submittedOwnerKey, ownerKeyFor(first.referred_by, activeStaff, referrers));
-  if (refTaken) input.referred_by = first!.referred_by;
+  const refDecision = referralDecision({
+    dupKind: dup?.kind ?? null,
+    submittedOwnerKey,
+    firstOwnerKey: first ? ownerKeyFor(first.referred_by, activeStaff, referrers) : null,
+  });
+  if (refDecision.overwrite) input.referred_by = first!.referred_by;
+  // B có tài khoản /hr còn hoạt động → được tag trực tiếp, không cần HR báo tay.
+  const bHasAccount =
+    !!submittedOwnerKey?.startsWith("u:") && activeStaff.some((u) => `u:${u.id}` === submittedOwnerKey);
+  const needsManualNotice = !!refDecision.notify && !bHasAccount;
 
   // Mã ref: chuẩn hoá; khớp mã của tài khoản /hr (chưa khoá) → lưu mã chính + giao người đó support.
   // Không khớp (ref của người chưa có tài khoản / không có ref) → giao "người support mặc định" (cài đặt),
@@ -118,7 +126,13 @@ export async function POST(request: Request) {
     extra.duplicate_of = dup.prior.id;
     extra.duplicate_kind = dup.kind;
   }
-  if (refTaken && submittedCode) extra.referred_by_submitted = submittedCode;
+  if (refDecision.notify && submittedCode) {
+    extra.referred_by_submitted = submittedCode;
+    if (!needsManualNotice) {
+      extra.referrer_notified_at = now;
+      extra.referrer_notified_by = "Hệ thống (đã tag trên Discord)";
+    }
+  }
   if (autoRejected) {
     extra.status = "rejected";
     extra.status_changed_at = now;
@@ -146,15 +160,16 @@ export async function POST(request: Request) {
   };
 
   // Báo người giới thiệu mới / team cho đơn trùng (nền) — lỗi chỉ log.
-  if (dup && (autoRejected || refTaken)) {
+  if (dup && (autoRejected || refDecision.notify)) {
     after(async () => {
       try {
         await notifyDuplicate({
-          kind: autoRejected ? "auto_rejected" : "taken",
+          kind: refDecision.notify ?? "auto_rejected",
           app: { id: String(data.id), full_name: String(full_name), job_id: String(job_id), status: autoRejected ? "rejected" : "new", assignee_user_id: assigneeId },
           jobTitle: jobTitleNow ?? "",
           jobLeaderId: leaderId,
-          submittedOwnerKey: refTaken ? submittedOwnerKey : null,
+          submittedOwnerKey: refDecision.notify ? submittedOwnerKey : null,
+          bHasAccount,
           submittedCode,
           referrers,
           staffCtx: await loadNotifyStaff(),

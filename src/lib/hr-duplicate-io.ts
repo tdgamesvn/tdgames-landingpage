@@ -102,6 +102,8 @@ type NotifyDupInput = {
   /** Người giới thiệu mới (B) — khoá chủ + mã đã nhập. */
   submittedOwnerKey: string | null;
   submittedCode: string | null;
+  /** B là tài khoản /hr còn hoạt động (route đã tính) — sai thì đi đường nhờ HR báo tay. */
+  bHasAccount: boolean;
   referrers: RefReferrer[];
   staffCtx: NotifyStaffCtx | null;
   /** auto_rejected: dd/mm/yyyy */
@@ -134,7 +136,7 @@ export async function notifyDuplicate(i: NotifyDupInput): Promise<void> {
         : referrerTakenText({ name, jobTitle: i.jobTitle });
     const staff = i.staffCtx?.staff ?? [];
     const bId = i.submittedOwnerKey.startsWith("u:") ? i.submittedOwnerKey.slice(2) : null;
-    const b = bId ? staff.find((u) => u.id === bId && !u.disabled) : undefined;
+    const b = i.bHasAccount && bId ? staff.find((u) => u.id === bId && !u.disabled) : undefined;
 
     if (b) {
       const tag = b.discord_user_id ? `<@${b.discord_user_id}>` : "";
