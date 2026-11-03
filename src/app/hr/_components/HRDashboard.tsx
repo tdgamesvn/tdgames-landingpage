@@ -80,6 +80,139 @@ const useStaffNames = () => useContext(StaffContext);
 
 /** Đổi status nhiều hồ sơ tại chỗ (sau "Báo đã tuyển đủ" — kể cả khi mở từ hồ sơ khác). */
 const AppsMovedContext = createContext<(ids: string[], status: ApplicationStatus) => void>(() => {});
+/** Mở popup 1 hồ sơ theo id (mục "Hồ sơ khác của người này"). */
+const OpenAppContext = createContext<(id: string) => void>(() => {});
+
+const DUPLICATE_BADGE: Record<NonNullable<Application["duplicate_kind"]>, { label: string; cls: string; title: string }> = {
+  auto_rejected: {
+    label: "Tự động từ chối",
+    cls: "border-red-500/40 bg-red-500/10 text-red-300",
+    title: "Nộp lại đúng vị trí trong 6 tháng sau khi bị reject — hệ thống đã từ chối và gửi mail",
+  },
+  open_duplicate: {
+    label: "Nộp trùng",
+    cls: "border-orange-500/40 bg-orange-500/10 text-orange-300",
+    title: "Người này đang có hồ sơ khác cùng vị trí chưa xử lý xong",
+  },
+  returning: {
+    label: "Ứng viên cũ",
+    cls: "border-sky-500/40 bg-sky-500/10 text-sky-300",
+    title: "Người này đã từng ứng tuyển — xem mục Hồ sơ khác",
+  },
+};
+
+/** Đơn trùng mà người giới thiệu mới chưa được báo (quyền giới thiệu thuộc người trước). */
+function needsReferrerNotice(a: Application): boolean {
+  return !!a.referred_by_submitted && !a.referrer_notified_at;
+}
+
+function DuplicateBadges({ app }: { app: Application }) {
+  const b = app.duplicate_kind ? DUPLICATE_BADGE[app.duplicate_kind] : null;
+  return (
+    <>
+      {b && (
+        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${b.cls}`} title={b.title}>
+          {b.label}
+        </span>
+      )}
+      {needsReferrerNotice(app) && (
+        <span
+          className="rounded-full border border-yellow-500/40 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-bold text-yellow-300"
+          title={`Cần báo người giới thiệu ${app.referred_by_submitted}`}
+        >
+          Cần báo người giới thiệu
+        </span>
+      )}
+    </>
+  );
+}
+
+type RelatedApp = { id: string; job_title: string | null; status: string; created_at: string; ai_score: number | null; duplicate_kind: string | null };
+
+/** Mục "Hồ sơ khác của người này" + dòng nhắc báo người giới thiệu trong popup hồ sơ. */
+function DuplicateSection({ app, onPatch }: { app: Application; onPatch: (patch: Partial<Application>) => void }) {
+  const S = useStatuses();
+  const openApp = useContext(OpenAppContext);
+  const [data, setData] = useState<{ related: RelatedApp[]; hidden: number } | null>(null);
+  const [marking, setMarking] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    hrFetch(`/api/hr/applications/${app.id}/related`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (alive && j) setData({ related: j.related ?? [], hidden: Number(j.hidden ?? 0) });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [app.id]);
+
+  async function markNotified(v: boolean) {
+    setMarking(true);
+    setErr(null);
+    try {
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ referrer_notified: v }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "Không lưu được");
+      onPatch({ referrer_notified_at: j.application?.referrer_notified_at ?? null, referrer_notified_by: j.application?.referrer_notified_by ?? null });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Không lưu được");
+    } finally {
+      setMarking(false);
+    }
+  }
+
+  const list = data?.related ?? [];
+  const hidden = data?.hidden ?? 0;
+  if (!app.referred_by_submitted && list.length === 0 && hidden === 0) return null;
+
+  return (
+    <section className="space-y-2">
+      <h4 className="hr-section-title px-1">Hồ sơ khác của người này</h4>
+      {app.referred_by_submitted && (
+        <div className="hr-group flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-[13px]">
+          <p className="min-w-0 text-white/80">
+            Người giới thiệu lần này: <span className="font-semibold text-amber-300">{app.referred_by_submitted}</span>
+            {" "}— quyền giới thiệu thuộc người trước ({app.referred_by ?? "?"}).
+            {app.referrer_notified_at ? (
+              <span className="block text-[12px] text-white/50">
+                Đã báo bởi {app.referrer_notified_by ?? "?"} lúc {new Date(app.referrer_notified_at).toLocaleString("vi-VN")}
+              </span>
+            ) : (
+              <span className="block text-[12px] text-yellow-300">Cần báo lại người giới thiệu (không có tài khoản /hr thì báo tay).</span>
+            )}
+          </p>
+          <button onClick={() => void markNotified(!app.referrer_notified_at)} disabled={marking} className="hr-secondary-btn hr-secondary-btn--sm">
+            {marking ? "Đang lưu…" : app.referrer_notified_at ? "Bỏ đánh dấu" : "Đã báo"}
+          </button>
+          {err && <p className="w-full text-[12px] text-red-400">{err}</p>}
+        </div>
+      )}
+      {(list.length > 0 || hidden > 0) && (
+        <div className="hr-group hr-rows">
+          {list.map((r) => (
+            <button key={r.id} onClick={() => openApp(r.id)} className="hr-row w-full text-left hover:bg-white/[0.04]">
+              <span className="hr-row-label">{new Date(r.created_at).toLocaleDateString("vi-VN")}</span>
+              <span className="min-w-0 flex-1 break-words">
+                {r.job_title ?? "?"} · <span className="font-semibold">{S.label(r.status)}</span>
+                {r.ai_score != null && <span className="text-white/50"> · AI {r.ai_score}</span>}
+                {r.duplicate_kind === "auto_rejected" && <span className="text-red-300"> · tự động từ chối</span>}
+              </span>
+            </button>
+          ))}
+          {hidden > 0 && <p className="hr-row text-[12px] text-white/50">+{hidden} hồ sơ bạn không có quyền xem</p>}
+        </div>
+      )}
+    </section>
+  );
+}
 
 const AVATAR_COLORS = ["#b45309", "#0f766e", "#4f46e5", "#be185d", "#15803d", "#7c3aed", "#0369a1", "#a16207"];
 
@@ -892,6 +1025,8 @@ function CandidateModal({
               </div>
             </section>
 
+            <DuplicateSection app={app} onPatch={onPatch} />
+
             {app.message && (
               <section className="space-y-2">
                 <h4 className="hr-section-title px-1">Lời nhắn của ứng viên</h4>
@@ -1210,6 +1345,7 @@ function AppCard({
             Chờ duyệt offer
           </span>
         )}
+        <DuplicateBadges app={app} />
         {app.referred_by && (
           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
             via {app.referred_by}
@@ -2413,6 +2549,7 @@ function DataView({
   const [filterJob, setFilterJob] = useState<string>("all");
   const [filterSource, setFilterSource] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [filterDup, setFilterDup] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -2434,6 +2571,8 @@ function DataView({
     if (filterJob !== "all") list = list.filter((a) => a.job_id === filterJob);
     if (filterSource !== "all") list = list.filter((a) => a.source === filterSource);
     if (filterType !== "all") list = list.filter((a) => a.work_type === filterType);
+    if (filterDup === "notify") list = list.filter(needsReferrerNotice);
+    else if (filterDup !== "all") list = list.filter((a) => a.duplicate_kind === filterDup);
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -2445,7 +2584,7 @@ function DataView({
       );
     }
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [apps, filterStatus, filterJob, filterSource, filterType, search]);
+  }, [apps, filterStatus, filterJob, filterSource, filterType, filterDup, search]);
 
   const selectCls = "rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white focus:border-amber-500/50 focus:outline-none";
 
@@ -2507,6 +2646,13 @@ function DataView({
         <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className={selectCls}>
           <option value="all">All Sources</option>
           {sources.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select value={filterDup} onChange={(e) => setFilterDup(e.target.value)} className={selectCls}>
+          <option value="all">Tất cả (trùng)</option>
+          <option value="auto_rejected">Tự động từ chối</option>
+          <option value="open_duplicate">Nộp trùng</option>
+          <option value="returning">Ứng viên cũ</option>
+          {can("apps.view_notes") && <option value="notify">Cần báo người giới thiệu</option>}
         </select>
         <span className="text-[10px] text-white/40 ml-auto">{filtered.length} / {apps.length} applicants</span>
       </div>
@@ -3315,6 +3461,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     <StatusContext.Provider value={statusApi}>
     <StaffContext.Provider value={staffNames}>
     <AppsMovedContext.Provider value={moveApps}>
+    <OpenAppContext.Provider value={setSearchOpenId}>
     <CandidateMailProvider>
     <div className="hr-app min-h-screen text-white">
       {/* Thanh công cụ kiểu macOS: tiêu đề trái, segmented control giữa, nút văn bản phải.
@@ -3428,6 +3575,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
       )}
     </div>
     </CandidateMailProvider>
+    </OpenAppContext.Provider>
     </AppsMovedContext.Provider>
     </StaffContext.Provider>
     </StatusContext.Provider>

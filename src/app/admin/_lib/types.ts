@@ -192,6 +192,13 @@ export type Application = {
   admin_notes: string | null;
   rejection_reason: string | null;
   referred_by: string | null;
+  /** Ứng viên trùng (2026-11-03): hồ sơ cũ khớp + loại trùng. */
+  duplicate_of?: string | null;
+  duplicate_kind?: "auto_rejected" | "open_duplicate" | "returning" | null;
+  /** Mã người giới thiệu đã nhập khi quyền giới thiệu thuộc người trước (cần apps.view_notes). */
+  referred_by_submitted?: string | null;
+  referrer_notified_at?: string | null;
+  referrer_notified_by?: string | null;
   /** Người phụ trách hồ sơ (hr_users.id) — nhận mọi thông báo của hồ sơ; null = chưa giao. */
   assignee_user_id?: string | null;
   /** HR nhập — AI đọc khi chấm. */
