@@ -17,6 +17,7 @@ export const CANDIDATE_EMAIL_KINDS = [
   "application_received",
   "on_hold",
   "position_filled",
+  "duplicate_rejection",
 ] as const;
 
 export type CandidateEmailKind = (typeof CANDIDATE_EMAIL_KINDS)[number];
@@ -31,10 +32,11 @@ export const KIND_LABEL: Record<CandidateEmailKind, string> = {
   application_received: "Cảm ơn ứng tuyển",
   on_hold: "Hồ sơ đang được xem xét",
   position_filled: "Vị trí đã tuyển đủ",
+  duplicate_rejection: "Đã ứng tuyển trước đó (tự động)",
 };
 
 /** Loại mail chỉ hệ thống gửi (tự động khi ứng viên nộp đơn) — HR không gửi tay từ hồ sơ. */
-export const SYSTEM_ONLY_EMAIL_KINDS: readonly CandidateEmailKind[] = ["application_received"];
+export const SYSTEM_ONLY_EMAIL_KINDS: readonly CandidateEmailKind[] = ["application_received", "duplicate_rejection"];
 
 export function isSystemOnlyKind(kind: CandidateEmailKind): boolean {
   return SYSTEM_ONLY_EMAIL_KINDS.includes(kind);
@@ -95,6 +97,8 @@ export type DraftInput = {
     contact?: string;
     fileName?: string;
   } | null;
+  /** Mail duplicate_rejection: ngày đã định dạng dd/mm/yyyy; `referrerName` null → không nhắc người giới thiệu. */
+  duplicate?: { prevAppliedAt: string; reapplyFrom: string; referrerName: string | null } | null;
 };
 
 /** Trắc nghiệm MBTI gửi ứng viên trước buổi PV (sếp chọn, 2026-10-26). */

@@ -166,7 +166,7 @@ for (const offer of [null, undefined, { startDate: "" }, { startDate: "01/12" },
   cases.push({ kind: "offer", candidateName: "A", jobTitle: "Dev", offer });
 }
 // Loại mới (2026-10-30) không có bản cũ để đối chiếu — test riêng ở cuối file.
-const NEW_KINDS: readonly string[] = ["on_hold", "position_filled"];
+const NEW_KINDS: readonly string[] = ["on_hold", "position_filled", "duplicate_rejection"];
 for (const kind of CANDIDATE_EMAIL_KINDS.filter((k) => !NEW_KINDS.includes(k))) {
   cases.push({ kind, candidateName: "  ", jobTitle: "" });
 }
@@ -250,7 +250,7 @@ test("SAMPLE_DRAFT_INPUT: render sạch, không còn biến chưa thay", () => {
     assert.doesNotMatch(d.subject + d.text, /\{[a-z_]+\}/, k);
     assert.match(d.text, /Nguyễn Văn A/);
   }
-  assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 19);
+  assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 22);
 });
 
 test("validate: biến viết gần đúng bị từ chối, ngoặc lẻ vẫn được", () => {
@@ -392,4 +392,42 @@ test("application_received: thêm câu hẹn 14 ngày, giữ các câu cũ", () 
     ),
   );
   assert.ok(d.text.includes("Chúc bạn một ngày tốt lành!"));
+});
+
+// ── Mail "Đã ứng tuyển trước đó" (auto-reject nộp lại trong 6 tháng, 2026-11-03) ──
+test("duplicate_rejection: có ngày ứng tuyển trước, ngày được nộp lại, người giới thiệu; không có chữ “trượt”", () => {
+  const d = buildDraft({
+    kind: "duplicate_rejection",
+    candidateName: "Lan",
+    jobTitle: "2D Artist",
+    duplicate: { prevAppliedAt: "02/09/2026", reapplyFrom: "02/03/2027", referrerName: "Mai Hà" },
+  });
+  assert.ok(d.text.includes("02/09/2026"));
+  assert.ok(d.text.includes("02/03/2027"));
+  assert.ok(d.text.includes("Mai Hà"));
+  assert.ok(d.text.includes("2D Artist"));
+  assert.ok(!/trượt/i.test(d.text + d.subject));
+});
+
+test("duplicate_rejection: không có người giới thiệu → không nhắc “giới thiệu”", () => {
+  const d = buildDraft({
+    kind: "duplicate_rejection",
+    candidateName: "Lan",
+    jobTitle: "2D Artist",
+    duplicate: { prevAppliedAt: "02/09/2026", reapplyFrom: "02/03/2027", referrerName: null },
+  });
+  assert.ok(!d.text.includes("giới thiệu"));
+});
+
+test("duplicate_rejection: chỉ hệ thống gửi, mẫu mặc định hợp lệ, có nhãn + biến", () => {
+  assert.equal(isSystemOnlyKind("duplicate_rejection"), true);
+  const t = DEFAULT_TEMPLATES.duplicate_rejection;
+  assert.equal(validateTemplate("duplicate_rejection", t.subject, t.body), null);
+  assert.ok(KIND_LABEL.duplicate_rejection);
+  for (const v of ["ngay_ung_tuyen_truoc", "ngay_duoc_nop_lai", "cau_gioi_thieu"]) {
+    assert.ok(KIND_VARS.duplicate_rejection.includes(v));
+    assert.ok(VAR_HELP[v]);
+  }
+  // Biến riêng của loại này không dùng được ở loại khác.
+  assert.match(validateTemplate("rejection", "T", "{ngay_duoc_nop_lai}") ?? "", /ngay_duoc_nop_lai/);
 });

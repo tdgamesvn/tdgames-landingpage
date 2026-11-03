@@ -36,6 +36,7 @@ export const KIND_VARS: Record<CandidateEmailKind, string[]> = {
   application_received: [...COMMON_VARS],
   on_hold: [...COMMON_VARS, "han_phan_hoi"],
   position_filled: [...COMMON_VARS],
+  duplicate_rejection: [...COMMON_VARS, "ngay_ung_tuyen_truoc", "ngay_duoc_nop_lai", "cau_gioi_thieu"],
 };
 
 /** Biến còn hợp lệ (mẫu cũ không lỗi) nhưng không gợi ý chèn trong tab Mẫu mail. */
@@ -61,6 +62,9 @@ export const VAR_HELP: Record<string, string> = {
   nguoi_lien_he: "Người liên hệ: tên · SĐT · email (Kế toán/HR gửi → chính người đó; Sếp gửi → Kế toán)",
   ten_file: "Tên file thư mời nhận việc đính kèm (PDF)",
   han_phan_hoi: "Hạn TD Games phản hồi = ngày gửi + 14 ngày, vd “Thứ Sáu 13/11/2026”",
+  ngay_ung_tuyen_truoc: "Ngày ứng viên nộp hồ sơ lần trước cho vị trí này, vd “02/09/2026”",
+  ngay_duoc_nop_lai: "Ngày được ứng tuyển lại vị trí này (6 tháng sau kết quả lần trước)",
+  cau_gioi_thieu: "Câu “Lần trước bạn ứng tuyển qua giới thiệu của …” (trống nếu không qua giới thiệu)",
 };
 
 export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
@@ -164,6 +168,18 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
       "{chu_ky}",
     ].join("\n\n"),
   },
+  duplicate_rejection: {
+    subject: "Thông tin hồ sơ ứng tuyển — {vi_tri} | TD Games",
+    body: [
+      "Chào {ten_ung_vien},",
+      "Cảm ơn bạn đã tiếp tục quan tâm tới vị trí {vi_tri} tại TD Games.",
+      "Chúng mình ghi nhận bạn đã ứng tuyển vị trí này vào ngày {ngay_ung_tuyen_truoc} và đã nhận kết quả từ chúng mình. {cau_gioi_thieu}",
+      "Để mỗi hồ sơ được xem xét kỹ, TD Games chưa nhận lại hồ sơ cho cùng vị trí trong thời gian này. Bạn có thể ứng tuyển lại vị trí {vi_tri} từ ngày {ngay_duoc_nop_lai}, hoặc ứng tuyển các vị trí khác đang tuyển bất cứ lúc nào.",
+      "Nếu có thắc mắc, bạn cứ trả lời trực tiếp email này nhé.",
+      "Chúc bạn nhiều thành công trên con đường sắp tới.",
+      "{chu_ky}",
+    ].join("\n\n"),
+  },
 };
 
 /** Giá trị biến cho một bản nháp. Có đủ mọi biến; biến không thuộc loại thì validate đã chặn khi lưu. */
@@ -185,6 +201,11 @@ export function templateVars(input: DraftInput): Record<string, string> {
       : `Buổi phỏng vấn vị trí ${input.jobTitle.trim() || "vị trí bạn ứng tuyển"} đã được huỷ.`,
     link_bai_test: input.testUrl ?? "(HR bổ sung link)",
     han_phan_hoi: input.replyBy?.trim() || holdReplyBy(new Date()),
+    ngay_ung_tuyen_truoc: input.duplicate?.prevAppliedAt ?? "…",
+    ngay_duoc_nop_lai: input.duplicate?.reapplyFrom ?? "…",
+    cau_gioi_thieu: input.duplicate?.referrerName?.trim()
+      ? `Lần trước bạn ứng tuyển qua giới thiệu của ${input.duplicate.referrerName.trim()}.`
+      : "",
     ...offerVars(input),
   };
 }
@@ -306,6 +327,8 @@ export function SAMPLE_DRAFT_INPUT(kind: CandidateEmailKind): DraftInput {
       return { ...base, testUrl: "https://tdgamestudio.com/test/mau-xem-truoc" };
     case "on_hold":
       return { ...base, replyBy: "Thứ Sáu 13/11/2026" };
+    case "duplicate_rejection":
+      return { ...base, duplicate: { prevAppliedAt: "02/09/2026", reapplyFrom: "02/03/2027", referrerName: "Mai Hà" } };
     case "offer":
       return {
         ...base,
