@@ -27,12 +27,17 @@ export function normalizeEmail(s: unknown): string | null {
   return s.trim().toLowerCase() || null;
 }
 
-/** Khớp cột sinh `phone_norm`: chỉ giữ chữ số, `84` + 9 số → `0…`, dưới 9 chữ số → null. */
+/**
+ * Khớp cột sinh `phone_norm` (migration 20261103010000): chỉ giữ chữ số; `84` + 9 số hoặc `840` + 9 số → `0…`;
+ * 9 số bắt đầu 2/3/5/7/8/9 (số VN thiếu 0 đầu) → `0…`; dưới 9 chữ số → null. Số nước ngoài giữ nguyên.
+ */
 export function normalizePhone(s: unknown): string | null {
   if (typeof s !== "string") return null;
   const d = s.replace(/\D/g, "");
   if (d.length < 9) return null;
-  return /^84\d{9}$/.test(d) ? `0${d.slice(2)}` : d;
+  if (/^840?\d{9}$/.test(d)) return `0${d.slice(-9)}`;
+  if (/^[235789]\d{8}$/.test(d)) return `0${d}`;
+  return d;
 }
 
 const VN_OFFSET_MS = 7 * 3600_000;
@@ -57,7 +62,7 @@ function withinWindow(since: string, now: string): boolean {
   return vnDate(now) < addMonthsVn(since, DUPLICATE_WINDOW_MONTHS);
 }
 
-const titleKey = (t: string | null) => (t ?? "").trim().toLowerCase();
+const titleKey = (t: string | null) => (t ?? "").normalize("NFC").replace(/\s+/g, " ").trim().toLowerCase();
 
 /** Cùng vị trí: cùng job, hoặc job đăng lại có tiêu đề giống hệt (trim, không phân biệt hoa thường). */
 export function sameRole(
@@ -115,8 +120,11 @@ export function classifyDuplicate(
   const open = matched.find(({ p }) => p.status_kind === "open" && sameRole(input, p));
   if (open) return { kind: "open_duplicate", prior: open.p, rejectedAt: null, reapplyFrom: null };
 
-  const same = matched.find(({ p }) => sameRole(input, p));
-  return { kind: "returning", prior: (same ?? matched[0]).p, rejectedAt: null, reapplyFrom: null };
+  // Ưu tiên hồ sơ thật (không phải đơn auto_rejected) làm hồ sơ gốc.
+  const real = matched.filter(({ p }) => p.duplicate_kind !== "auto_rejected");
+  const pool = real.length > 0 ? real : matched;
+  const same = pool.find(({ p }) => sameRole(input, p));
+  return { kind: "returning", prior: (same ?? pool[0]).p, rejectedAt: null, reapplyFrom: null };
 }
 
 /**
@@ -171,8 +179,9 @@ export function formatDateVnShort(isoOrDate: string): string {
   return `${d}/${m}/${y}`;
 }
 
-export function teamAutoRejectText(i: { name: string; jobTitle: string; rejectedAt: string; priorUrl: string }): string {
-  return `🔁 Tự động từ chối: **${i.name}** nộp lại **${i.jobTitle}** — hồ sơ trước đã có kết quả không phù hợp ngày ${i.rejectedAt} (${i.priorUrl}). Đã gửi mail báo ứng viên.`;
+export function teamAutoRejectText(i: { name: string; jobTitle: string; rejectedAt: string; priorUrl: string; mailSent: boolean }): string {
+  const mail = i.mailSent ? "Đã gửi mail báo ứng viên." : "Chưa gửi được mail cho ứng viên (mail tự động đang tắt / chạm giới hạn / vừa gửi trong 24 giờ) — HR gửi tay nếu cần.";
+  return `🔁 Tự động từ chối: **${i.name}** nộp lại **${i.jobTitle}** — hồ sơ trước đã có kết quả không phù hợp ngày ${i.rejectedAt} (${i.priorUrl}). ${mail}`;
 }
 
 export function referrerAutoRejectText(i: { name: string; jobTitle: string; prevAppliedAt: string; reapplyFrom: string }): string {

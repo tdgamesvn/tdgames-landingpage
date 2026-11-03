@@ -159,9 +159,33 @@ export async function POST(request: Request) {
     return referrers.find((r) => (r.ref_codes ?? []).some((x) => normalizeRefCode(x) === c))?.name ?? null;
   };
 
+  // Đơn tự động từ chối: không mail "Cảm ơn ứng tuyển", không Telegram, không tin "đơn mới" — chỉ mail từ chối lịch sự.
+  // Gửi mail trước để tin team nói đúng mail đã đi hay chưa. Lỗi chỉ log.
+  const sendRejectMail = async (): Promise<boolean> => {
+    try {
+      const res = await sendDuplicateRejection({
+        applicationId: String(data.id),
+        jobId: String(job_id),
+        email: String(email),
+        fullName: String(full_name),
+        supportUserId: dup!.prior.assignee_user_id,
+        ip,
+        prevAppliedAt: formatDateVnShort(dup!.prior.created_at),
+        reapplyFrom: formatDateVnShort(dup!.reapplyFrom!),
+        referrerName: refName(dup!.prior.referred_by),
+      });
+      if (!res.sent) console.log(`[duplicates] mail từ chối bỏ qua (${res.reason}) application ${data.id}`);
+      return res.sent;
+    } catch (e) {
+      console.error("[duplicates] mail từ chối lỗi:", e);
+      return false;
+    }
+  };
+
   // Báo người giới thiệu mới / team cho đơn trùng (nền) — lỗi chỉ log.
   if (dup && (autoRejected || refDecision.notify)) {
     after(async () => {
+      const mailSent = autoRejected ? await sendRejectMail() : false;
       try {
         await notifyDuplicate({
           kind: refDecision.notify ?? "auto_rejected",
@@ -176,6 +200,7 @@ export async function POST(request: Request) {
           prevAppliedAt: formatDateVnShort(dup.prior.created_at),
           reapplyFrom: dup.reapplyFrom ? formatDateVnShort(dup.reapplyFrom) : undefined,
           rejectedAt: dup.rejectedAt ? formatDateVnShort(dup.rejectedAt) : undefined,
+          mailSent,
         });
       } catch (e) {
         console.error("[duplicates] báo tin lỗi:", e);
@@ -183,28 +208,7 @@ export async function POST(request: Request) {
     });
   }
 
-  if (autoRejected) {
-    // Đơn tự động từ chối: không mail "Cảm ơn ứng tuyển", không Telegram, không tin "đơn mới" — chỉ mail từ chối lịch sự.
-    after(async () => {
-      try {
-        const res = await sendDuplicateRejection({
-          applicationId: String(data.id),
-          jobId: String(job_id),
-          email: String(email),
-          fullName: String(full_name),
-          supportUserId: dup!.prior.assignee_user_id,
-          ip,
-          prevAppliedAt: formatDateVnShort(dup!.prior.created_at),
-          reapplyFrom: formatDateVnShort(dup!.reapplyFrom!),
-          referrerName: refName(dup!.prior.referred_by),
-        });
-        if (!res.sent) console.log(`[duplicates] mail từ chối bỏ qua (${res.reason}) application ${data.id}`);
-      } catch (e) {
-        console.error("[duplicates] mail từ chối lỗi:", e);
-      }
-    });
-    return NextResponse.json({ ok: true, id: data.id });
-  }
+  if (autoRejected) return NextResponse.json({ ok: true, id: data.id });
 
   const dupLine = dup
     ? duplicateNoticeLine({

@@ -110,6 +110,8 @@ type NotifyDupInput = {
   prevAppliedAt?: string;
   reapplyFrom?: string;
   rejectedAt?: string;
+  /** auto_rejected: mail từ chối đã gửi được chưa (tin team nói đúng). */
+  mailSent?: boolean;
 };
 
 /**
@@ -123,7 +125,7 @@ export async function notifyDuplicate(i: NotifyDupInput): Promise<void> {
   if (i.kind === "auto_rejected") {
     tasks.push(
       discordNotify("hr", {
-        content: teamAutoRejectText({ name, jobTitle: i.jobTitle, rejectedAt: i.rejectedAt ?? "…", priorUrl: HR_URL }),
+        content: teamAutoRejectText({ name, jobTitle: i.jobTitle, rejectedAt: i.rejectedAt ?? "…", priorUrl: HR_URL, mailSent: !!i.mailSent }),
         allowed_mentions: { parse: [] },
       }),
     );

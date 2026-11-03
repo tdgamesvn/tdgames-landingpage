@@ -190,7 +190,7 @@ test("referrerAutoRejectText: có tên, vị trí, 2 ngày; không lộ “trư�
 });
 
 test("teamAutoRejectText: bắt đầu bằng 🔁 Tự động từ chối, có link hồ sơ cũ", () => {
-  const t = teamAutoRejectText({ name: "Lan", jobTitle: "2D Artist", rejectedAt: "02/09/2026", priorUrl: "https://x/hr?app=1" });
+  const t = teamAutoRejectText({ name: "Lan", jobTitle: "2D Artist", rejectedAt: "02/09/2026", priorUrl: "https://x/hr?app=1", mailSent: true });
   assert.ok(t.startsWith("🔁 Tự động từ chối"));
   assert.ok(t.includes("https://x/hr?app=1"));
 });
@@ -252,4 +252,36 @@ test("referralDecision: chuyển quyền khi khác người đầu; cùng ngư�
   assert.deepEqual(referralDecision({ dupKind: null, submittedOwnerKey: "u:b", firstOwnerKey: null }), {
     overwrite: false, notify: null, needsManualNotice: false,
   });
+});
+
+// ── Minor còn tồn (2026-11-03, sếp "Fix nốt") ──
+test("normalizePhone: số VN 9 chữ số thiếu 0 đầu và dạng +84 0… về 0…; số nước ngoài giữ nguyên", () => {
+  assert.equal(normalizePhone("912 345 678"), "0912345678");
+  assert.equal(normalizePhone("+84 0912 345 678"), "0912345678");
+  assert.equal(normalizePhone("+34 678 567 960"), "34678567960");
+  assert.equal(normalizePhone("123456789"), "123456789");
+});
+
+test("normalizeEmail: bỏ tab/NBSP đầu cuối", () => {
+  assert.equal(normalizeEmail(" \tA@x.com "), "a@x.com");
+});
+
+test("sameRole: gộp khoảng trắng giữa + chuẩn Unicode NFC", () => {
+  assert.equal(sameRole({ job_id: JOB, job_title: "2D  Artist" }, { job_id: OTHER_JOB, job_title: "2d artist" }), true);
+  const nfd = "Họa sĩ 2D".normalize("NFD");
+  assert.equal(sameRole({ job_id: JOB, job_title: nfd }, { job_id: OTHER_JOB, job_title: "Họa sĩ 2D" }), true);
+});
+
+test("returning: duplicate_of ưu tiên hồ sơ thật, không trỏ vào đơn auto_rejected", () => {
+  const real = prior({ id: "real", job_id: OTHER_JOB, job_title: "UI", status: "rejected", created_at: monthsAgo(3), status_changed_at: monthsAgo(3) });
+  const auto = prior({ id: "auto", job_id: OTHER_JOB, job_title: "UI", status: "rejected", created_at: monthsAgo(1), status_changed_at: monthsAgo(1), duplicate_kind: "auto_rejected" });
+  assert.equal(classifyDuplicate(input, [auto, real])?.prior.id, "real");
+});
+
+test("teamAutoRejectText: nói đúng mail đã gửi hay chưa", () => {
+  const base = { name: "Lan", jobTitle: "2D", rejectedAt: "02/09/2026", priorUrl: "u" };
+  assert.ok(teamAutoRejectText({ ...base, mailSent: true }).includes("Đã gửi mail"));
+  const no = teamAutoRejectText({ ...base, mailSent: false });
+  assert.ok(!no.includes("Đã gửi mail"));
+  assert.ok(no.includes("Chưa gửi được mail"));
 });
