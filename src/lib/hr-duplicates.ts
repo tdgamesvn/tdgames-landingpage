@@ -179,13 +179,23 @@ export function formatDateVnShort(isoOrDate: string): string {
   return `${d}/${m}/${y}`;
 }
 
-export function teamAutoRejectText(i: { name: string; jobTitle: string; rejectedAt: string; priorUrl: string; mailSent: boolean }): string {
+export function teamAutoRejectText(i: {
+  name: string;
+  jobTitle: string;
+  rejectedAt: string;
+  priorUrl: string;
+  mailSent: boolean;
+  /** Mã người giới thiệu lần này — để lại dấu vết (chống dùng form công khai dò ứng viên). */
+  submittedCode?: string | null;
+}): string {
   const mail = i.mailSent ? "Đã gửi mail báo ứng viên." : "Chưa gửi được mail cho ứng viên (mail tự động đang tắt / chạm giới hạn / vừa gửi trong 24 giờ) — HR gửi tay nếu cần.";
-  return `🔁 Tự động từ chối: **${i.name}** nộp lại **${i.jobTitle}** — hồ sơ trước đã có kết quả không phù hợp ngày ${i.rejectedAt} (${i.priorUrl}). ${mail}`;
+  const via = i.submittedCode ? ` (giới thiệu lần này: ${i.submittedCode})` : "";
+  return `🔁 Tự động từ chối: **${i.name}** nộp lại **${i.jobTitle}**${via} — hồ sơ trước đã có kết quả không phù hợp ngày ${i.rejectedAt} (${i.priorUrl}). ${mail}`;
 }
 
-export function referrerAutoRejectText(i: { name: string; jobTitle: string; prevAppliedAt: string; reapplyFrom: string }): string {
-  return `🔁 Ứng viên **${i.name}** bạn giới thiệu cho vị trí **${i.jobTitle}** đã ứng tuyển vị trí này ngày ${i.prevAppliedAt} và chưa phù hợp. Hệ thống đã tự động từ chối và gửi mail lịch sự cho ứng viên. Có thể giới thiệu lại từ ngày ${i.reapplyFrom}.`;
+/** Tin cho người giới thiệu B: không nêu ngày nộp cũ / kết quả (B có thể dùng form công khai để dò). */
+export function referrerAutoRejectText(i: { name: string; jobTitle: string; reapplyFrom: string }): string {
+  return `🔁 Ứng viên **${i.name}** bạn giới thiệu cho vị trí **${i.jobTitle}** đã có hồ sơ cho vị trí này gần đây nên hệ thống không nhận thêm hồ sơ lần này (đã gửi mail lịch sự cho ứng viên). Có thể giới thiệu lại từ ngày ${i.reapplyFrom}.`;
 }
 
 export function referrerTakenText(i: { name: string; jobTitle: string }): string {
@@ -199,8 +209,9 @@ export function askHrToTellReferrerText(i: { referrer: string; contact: string |
 }
 
 /** Dòng thêm vào tin "đơn mới" khi người này đã từng nộp. */
-export function duplicateNoticeLine(i: { kind: DuplicateKind; jobTitle: string; statusLabel: string; date: string }): string {
+/** Dòng thêm vào tin "đơn mới" (kênh chung): chỉ báo có hồ sơ cũ, chi tiết xem trên /hr (có phân quyền). */
+export function duplicateNoticeLine(i: { kind: DuplicateKind }): string {
   return i.kind === "open_duplicate"
-    ? `🔁 Nộp trùng — đang xử lý ở hồ sơ cũ: ${i.jobTitle} — ${i.statusLabel} (nộp ${i.date})`
-    : `🔁 Đã từng ứng tuyển: ${i.jobTitle} — ${i.statusLabel} (${i.date})`;
+    ? "🔁 Nộp trùng — người này đang có hồ sơ khác cùng vị trí (xem mục Hồ sơ khác trên /hr)"
+    : "🔁 Đã từng ứng tuyển (xem mục Hồ sơ khác trên /hr)";
 }

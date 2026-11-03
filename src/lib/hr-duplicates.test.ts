@@ -183,10 +183,10 @@ test("formatDateVnShort: ISO → dd/mm/yyyy giờ VN; YYYY-MM-DD giữ ngày", (
   assert.equal(formatDateVnShort("2027-03-02"), "02/03/2027");
 });
 
-test("referrerAutoRejectText: có tên, vị trí, 2 ngày; không lộ “trượt”", () => {
-  const t = referrerAutoRejectText({ name: "Lan", jobTitle: "2D Artist", prevAppliedAt: "02/09/2026", reapplyFrom: "02/03/2027" });
-  for (const s of ["Lan", "2D Artist", "02/09/2026", "02/03/2027"]) assert.ok(t.includes(s), s);
-  assert.ok(!/trượt/i.test(t));
+test("referrerAutoRejectText: có tên, vị trí, ngày được giới thiệu lại; không lộ ngày nộp cũ / kết quả", () => {
+  const t = referrerAutoRejectText({ name: "Lan", jobTitle: "2D Artist", reapplyFrom: "02/03/2027" });
+  for (const s of ["Lan", "2D Artist", "02/03/2027"]) assert.ok(t.includes(s), s);
+  assert.ok(!/trượt|chưa phù hợp|không phù hợp/i.test(t));
 });
 
 test("teamAutoRejectText: bắt đầu bằng 🔁 Tự động từ chối, có link hồ sơ cũ", () => {
@@ -202,9 +202,10 @@ test("referrerTakenText + askHrToTellReferrerText + duplicateNoticeLine", () => 
   assert.ok(ask.startsWith("BASE"));
   assert.ok(ask.includes("thuy-headhunt") && ask.includes("0912345678"));
   assert.ok(!askHrToTellReferrerText({ referrer: "x", contact: null, base: "B" }).includes("null"));
-  const line = duplicateNoticeLine({ kind: "returning", jobTitle: "2D", statusLabel: "Rejected", date: "02/09/2026" });
-  assert.ok(line.includes("2D") && line.includes("Rejected") && line.includes("02/09/2026"));
-  assert.ok(duplicateNoticeLine({ kind: "open_duplicate", jobTitle: "2D", statusLabel: "Test", date: "x" }).includes("trùng"));
+  // Kênh Discord chung: không lộ vị trí / trạng thái / ngày của hồ sơ cũ — chỉ báo có, xem chi tiết trên /hr.
+  const line = duplicateNoticeLine({ kind: "returning" });
+  assert.ok(line.includes("Đã từng ứng tuyển") && line.includes("/hr"));
+  assert.ok(duplicateNoticeLine({ kind: "open_duplicate" }).includes("trùng"));
 });
 
 // ── Final review fixes ──
@@ -284,4 +285,10 @@ test("teamAutoRejectText: nói đúng mail đã gửi hay chưa", () => {
   const no = teamAutoRejectText({ ...base, mailSent: false });
   assert.ok(!no.includes("Đã gửi mail"));
   assert.ok(no.includes("Chưa gửi được mail"));
+});
+
+test("teamAutoRejectText: ghi mã người giới thiệu lần này (để lại dấu vết), không có thì thôi", () => {
+  const base = { name: "Lan", jobTitle: "2D", rejectedAt: "02/09/2026", priorUrl: "u", mailSent: true };
+  assert.ok(teamAutoRejectText({ ...base, submittedCode: "zz-b" }).includes("zz-b"));
+  assert.ok(!teamAutoRejectText({ ...base, submittedCode: null }).includes("giới thiệu"));
 });

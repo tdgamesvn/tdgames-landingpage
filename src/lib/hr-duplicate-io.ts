@@ -125,7 +125,7 @@ export async function notifyDuplicate(i: NotifyDupInput): Promise<void> {
   if (i.kind === "auto_rejected") {
     tasks.push(
       discordNotify("hr", {
-        content: teamAutoRejectText({ name, jobTitle: i.jobTitle, rejectedAt: i.rejectedAt ?? "…", priorUrl: HR_URL, mailSent: !!i.mailSent }),
+        content: teamAutoRejectText({ name, jobTitle: i.jobTitle, rejectedAt: i.rejectedAt ?? "…", priorUrl: HR_URL, mailSent: !!i.mailSent, submittedCode: i.submittedCode }),
         allowed_mentions: { parse: [] },
       }),
     );
@@ -134,7 +134,7 @@ export async function notifyDuplicate(i: NotifyDupInput): Promise<void> {
   if (i.submittedOwnerKey) {
     const text =
       i.kind === "auto_rejected"
-        ? referrerAutoRejectText({ name, jobTitle: i.jobTitle, prevAppliedAt: i.prevAppliedAt ?? "…", reapplyFrom: i.reapplyFrom ?? "…" })
+        ? referrerAutoRejectText({ name, jobTitle: i.jobTitle, reapplyFrom: i.reapplyFrom ?? "…" })
         : referrerTakenText({ name, jobTitle: i.jobTitle });
     const staff = i.staffCtx?.staff ?? [];
     const bId = i.submittedOwnerKey.startsWith("u:") ? i.submittedOwnerKey.slice(2) : null;

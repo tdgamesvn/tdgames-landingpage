@@ -185,11 +185,13 @@ test("ứng viên trùng: duplicate_* là BASE; referred_by_submitted / referrer
   };
   const leader = redactApplication(a, effectivePermissions("leader", []));
   assert.equal(leader.duplicate_kind, "auto_rejected");
-  assert.equal(leader.duplicate_of, "0");
+  // duplicate_of trỏ tới hồ sơ có thể ngoài phạm vi người xem → chỉ người có view_notes thấy.
+  assert.ok(!("duplicate_of" in leader));
   assert.ok(!("referred_by_submitted" in leader));
   assert.ok(!("referrer_notified_at" in leader));
   assert.ok(!("referrer_notified_by" in leader));
   const notes = redactApplication(a, new Set<PermissionKey>(["apps.view_notes"]));
   assert.equal(notes.referred_by_submitted, "thuy");
+  assert.equal(notes.duplicate_of, "0");
   assert.equal(notes.referrer_notified_by, "Phương");
 });

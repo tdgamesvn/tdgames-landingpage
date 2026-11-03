@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   const [{ data: staff, error: staffErr }, job, st, def, priors, referrers] = await Promise.all([
     supabase.from("hr_users").select("id, role, ref_codes, display_name").eq("disabled", false),
     supabase.from("jobs").select("leader_user_id, title").eq("id", job_id).maybeSingle(),
-    supabase.from("application_statuses").select("key, position, kind, label"),
+    supabase.from("application_statuses").select("key, position, kind"),
     supabase.from("app_settings").select("value").eq("key", DEFAULT_ASSIGNEE_KEY).maybeSingle(),
     loadPriorApps(String(email), input.phone ? String(input.phone) : null),
     loadReferrers(),
@@ -149,8 +149,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const statusLabel = (key: string) =>
-    String((st.data ?? []).find((r) => String(r.key) === key)?.label ?? key);
   const refName = (code: string | null) => {
     const c = normalizeRefCode(code);
     if (!c) return null;
@@ -211,12 +209,7 @@ export async function POST(request: Request) {
   if (autoRejected) return NextResponse.json({ ok: true, id: data.id });
 
   const dupLine = dup
-    ? duplicateNoticeLine({
-        kind: dup.kind,
-        jobTitle: dup.prior.job_title ?? "",
-        statusLabel: statusLabel(dup.prior.status),
-        date: formatDateVnShort(dup.prior.created_at),
-      })
+    ? duplicateNoticeLine({ kind: dup.kind })
     : null;
 
   // Mail "Cảm ơn ứng tuyển" tự động (nền, sau khi trả lời) — mọi lỗi chỉ log, không ảnh hưởng việc nộp đơn.
