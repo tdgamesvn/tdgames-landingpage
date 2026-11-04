@@ -270,7 +270,7 @@ export default function EmailTemplatesPanel() {
         </div>
       </div>
 
-      {!letterOpen && kind === "application_received" && (
+      {!letterOpen && (kind === "application_received" || kind === "freelance_received" || kind === "freelance_not_open") && (
         <div className={`${surface} flex flex-wrap items-center justify-between gap-3 px-5 py-3`}>
           <div className="min-w-0">
             <p className="text-[14px] font-semibold text-[var(--hr-ink)]">

@@ -37,6 +37,8 @@ export const KIND_VARS: Record<CandidateEmailKind, string[]> = {
   on_hold: [...COMMON_VARS, "han_phan_hoi"],
   position_filled: [...COMMON_VARS],
   duplicate_rejection: [...COMMON_VARS, "ngay_ung_tuyen_truoc", "ngay_duoc_nop_lai", "cau_gioi_thieu"],
+  freelance_received: [...COMMON_VARS],
+  freelance_not_open: [...COMMON_VARS],
 };
 
 /** Biến còn hợp lệ (mẫu cũ không lỗi) nhưng không gợi ý chèn trong tab Mẫu mail. */
@@ -177,6 +179,28 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
       "{cau_gioi_thieu}",
       "Để mỗi hồ sơ được xem xét kỹ, TD Games chưa nhận lại hồ sơ cho cùng vị trí trong thời gian này. Bạn có thể ứng tuyển lại vị trí {vi_tri} từ ngày {ngay_duoc_nop_lai}, hoặc ứng tuyển các vị trí khác đang tuyển bất cứ lúc nào.",
       "Nếu có thắc mắc, bạn cứ trả lời trực tiếp email này nhé.",
+      "Chúc bạn nhiều thành công trên con đường sắp tới.",
+      "{chu_ky}",
+    ].join("\n\n"),
+  },
+  freelance_received: {
+    subject: "[TD Games] Đã nhận hồ sơ cộng tác freelance — {vi_tri}",
+    body: [
+      "Chào {ten_ung_vien},",
+      "Cảm ơn bạn đã quan tâm và ứng tuyển vị trí {vi_tri} theo hình thức freelance tại TD Games. Chúng mình đã nhận được hồ sơ của bạn.",
+      "Bộ phận tuyển dụng sẽ xem xét hồ sơ, nếu phù hợp chúng mình sẽ chủ động liên hệ lại với bạn để trao đổi thêm về dự án và cách cộng tác.",
+      "Trong thời gian này, nếu muốn bổ sung thông tin (portfolio, CV, mức rate…) hoặc có câu hỏi, bạn cứ trả lời trực tiếp email này nhé.",
+      "Chúc bạn một ngày tốt lành!",
+      "{chu_ky}",
+    ].join("\n\n"),
+  },
+  freelance_not_open: {
+    subject: "[TD Games] Thông tin hồ sơ ứng tuyển — {vi_tri}",
+    body: [
+      "Chào {ten_ung_vien},",
+      "Cảm ơn bạn đã quan tâm và ứng tuyển vị trí {vi_tri} tại TD Games.",
+      "Hiện tại vị trí này chưa mở hình thức cộng tác freelance. TD Games sẽ lưu lại thông tin liên hệ và hồ sơ của bạn, khi có nhu cầu cộng tác freelance phù hợp chúng mình sẽ chủ động liên hệ lại.",
+      "Nếu có câu hỏi, bạn cứ trả lời trực tiếp email này nhé.",
       "Chúc bạn nhiều thành công trên con đường sắp tới.",
       "{chu_ky}",
     ].join("\n\n"),

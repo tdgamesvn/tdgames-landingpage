@@ -3,11 +3,13 @@ import "server-only";
 import { fromFor, getHrEmailConfig, replyToFor, resolveRecipient, buildDraft, textToHtml, type DraftInput } from "./hr-email";
 import { sendViaResend } from "./hr-email-send";
 import {
+  ACK_KINDS,
   AUTO_ACK_DEDUPE_HOURS,
   AUTO_ACK_HOURLY_CAP,
   AUTO_ACK_IP_MAX,
   AUTO_ACK_KEY,
   AUTO_ACK_SENT_BY,
+  type AckKind,
   isAutoAckEnabled,
   sanitizeAckName,
   shouldSendAck,
@@ -25,10 +27,12 @@ export async function readAutoAckEnabled(): Promise<boolean> {
 }
 
 /**
- * Gửi mail "Cảm ơn ứng tuyển" cho hồ sơ vừa nộp. Chạy nền (after()) — nhà gọi bắt lỗi chỉ để log.
+ * Gửi mail cảm ơn cho hồ sơ vừa nộp. Chạy nền (after()) — nhà gọi bắt lỗi chỉ để log.
  * Không CC ai; chữ ký / From / Reply-To theo người support (assignee vừa giao).
+ * `kind` mặc định "application_received"; ứng viên freelancer → freelance_received / freelance_not_open.
  */
 type AckInput = {
+  kind?: AckKind;
   applicationId: string;
   jobId: string;
   email: string;
@@ -58,9 +62,9 @@ async function sendApplicationAckNow(app: AckInput): Promise<{ sent: boolean; re
 
   const toEmail = app.email.trim();
   const since = new Date(Date.now() - AUTO_ACK_DEDUPE_HOURS * 3600_000).toISOString();
-  // Cùng email trong 24 giờ qua, MỌI job (so lower-case trong JS, tránh ilike với `_`).
+  // Cùng email trong 24 giờ qua, MỌI job, mọi loại mail cảm ơn (so lower-case trong JS, tránh ilike với `_`).
   const [recentRes, hourlyCount] = await Promise.all([
-    supabase.from("candidate_emails").select("to_email").eq("kind", "application_received").gte("created_at", since),
+    supabase.from("candidate_emails").select("to_email").in("kind", ACK_KINDS).gte("created_at", since),
     countAutoMailsLastHour(),
   ]);
   if (recentRes.error) throw new Error(`hr_auto_ack dedupe: ${recentRes.error.message}`);
@@ -71,7 +75,7 @@ async function sendApplicationAckNow(app: AckInput): Promise<{ sent: boolean; re
     return { sent: false, reason: decision.reason };
   }
   return reserveAndSend({
-    kind: "application_received",
+    kind: app.kind ?? "application_received",
     applicationId: app.applicationId,
     toEmail,
     ip: app.ip,
@@ -80,7 +84,7 @@ async function sendApplicationAckNow(app: AckInput): Promise<{ sent: boolean; re
   });
 }
 
-/** Mail tự động (ack + duplicate_rejection) trong 1 giờ qua — chung trần AUTO_ACK_HOURLY_CAP. */
+/** Mail tự động (mail cảm ơn + duplicate_rejection) trong 1 giờ qua — chung trần AUTO_ACK_HOURLY_CAP. */
 async function countAutoMailsLastHour(): Promise<number> {
   const { count, error } = await getSupabaseAdmin()
     .from("candidate_emails")
@@ -91,7 +95,7 @@ async function countAutoMailsLastHour(): Promise<number> {
   return count ?? 0;
 }
 
-const AUTO_MAIL_KINDS = ["application_received", "duplicate_rejection"] as const;
+const AUTO_MAIL_KINDS = [...ACK_KINDS, "duplicate_rejection"] as const;
 
 /**
  * Phần chung của mail tự động: giới hạn IP → mẫu + người support → đặt chỗ `candidate_emails` (index duy nhất

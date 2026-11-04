@@ -7,6 +7,7 @@ import { notifyCandidate } from "@/lib/hr-notify";
 import { clientIp, createLimiter } from "@/lib/hr-rate-limit";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
 import { sendApplicationAck, sendDuplicateRejection } from "@/lib/hr-auto-ack-send";
+import { freelanceIntake, jobAcceptsFreelance } from "@/lib/hr-auto-ack";
 import {
   classifyDuplicate,
   duplicateNoticeLine,
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
 
   const [{ data: staff, error: staffErr }, job, st, def, priors, referrers] = await Promise.all([
     supabase.from("hr_users").select("id, role, ref_codes, display_name").eq("disabled", false),
-    supabase.from("jobs").select("leader_user_id, title").eq("id", job_id).maybeSingle(),
+    supabase.from("jobs").select("leader_user_id, title, type, accepts_freelance").eq("id", job_id).maybeSingle(),
     supabase.from("application_statuses").select("key, position, kind"),
     supabase.from("app_settings").select("value").eq("key", DEFAULT_ASSIGNEE_KEY).maybeSingle(),
     loadPriorApps(String(email), input.phone ? String(input.phone) : null),
@@ -99,10 +100,17 @@ export async function POST(request: Request) {
     kind: r.kind as "open" | "won" | "lost",
   }));
   const leaderId = (job.data as { leader_user_id: string | null } | null)?.leader_user_id ?? null;
-  // Chỉ giao khi người đó xem được hồ sơ mới (status "new" của job này).
+  const autoRejected = dup?.kind === "auto_rejected";
+  // Ứng viên freelancer: job nhận → cột Freelancer, chưa nhận → Lưu hồ sơ; kèm mail cảm ơn riêng.
+  // Đơn tự động từ chối (trùng) vẫn đi luồng từ chối.
+  const freelance = autoRejected
+    ? null
+    : freelanceIntake(work_type, jobAcceptsFreelance(job.data as { type?: string | null; accepts_freelance?: boolean | null } | null));
+  const initialStatus = freelance?.status ?? "new";
+  // Chỉ giao khi người đó xem được hồ sơ ở status ban đầu của job này.
   const assignable = (u: { id: string; role: HrRole } | null) =>
     u && canCheckScope && (HR_ROLES as readonly string[]).includes(u.role)
-      ? autoAssigneeFor(u, { job_id: String(job_id), status: "new" }, statuses, leaderId)
+      ? autoAssigneeFor(u, { job_id: String(job_id), status: initialStatus }, statuses, leaderId)
       : null;
   if (ref) {
     const owner = resolveRefOwner(ref, activeStaff);
@@ -118,7 +126,6 @@ export async function POST(request: Request) {
   const priorAssignee = dup?.prior.assignee_user_id ? activeStaff.find((u) => u.id === dup.prior.assignee_user_id) ?? null : null;
   assigneeId = assignable(priorAssignee) ?? assigneeId;
 
-  const autoRejected = dup?.kind === "auto_rejected";
   // Chỉ gửi cột tuỳ chọn khi có giá trị (không vỡ insert nếu cột chưa có).
   const extra: Record<string, unknown> = {};
   if (assigneeId) extra.assignee_user_id = assigneeId;
@@ -137,6 +144,10 @@ export async function POST(request: Request) {
     extra.status = "rejected";
     extra.status_changed_at = now;
     extra.rejection_reason = `Tự động: nộp lại trong 6 tháng sau khi trượt (hồ sơ cũ ngày ${formatDateVnShort(dup!.prior.created_at)})`;
+  }
+  if (freelance) {
+    extra.status = freelance.status;
+    extra.status_changed_at = now;
   }
 
   const { data, error } = await supabase
@@ -187,7 +198,7 @@ export async function POST(request: Request) {
       try {
         await notifyDuplicate({
           kind: refDecision.notify ?? "auto_rejected",
-          app: { id: String(data.id), full_name: String(full_name), job_id: String(job_id), status: autoRejected ? "rejected" : "new", assignee_user_id: assigneeId },
+          app: { id: String(data.id), full_name: String(full_name), job_id: String(job_id), status: autoRejected ? "rejected" : initialStatus, assignee_user_id: assigneeId },
           jobTitle: jobTitleNow ?? "",
           jobLeaderId: leaderId,
           submittedOwnerKey: refDecision.notify ? submittedOwnerKey : null,
@@ -211,11 +222,17 @@ export async function POST(request: Request) {
   const dupLine = dup
     ? duplicateNoticeLine({ kind: dup.kind })
     : null;
+  const freelanceLine = freelance
+    ? freelance.status === "freelancer"
+      ? "🧩 Freelancer — job có nhận freelancer → cột Freelancer"
+      : "🧩 Freelancer — job chưa nhận freelancer → Lưu hồ sơ"
+    : null;
 
-  // Mail "Cảm ơn ứng tuyển" tự động (nền, sau khi trả lời) — mọi lỗi chỉ log, không ảnh hưởng việc nộp đơn.
+  // Mail cảm ơn tự động (nền, sau khi trả lời) — mọi lỗi chỉ log, không ảnh hưởng việc nộp đơn.
   after(async () => {
     try {
       const res = await sendApplicationAck({
+        kind: freelance?.ackKind ?? "application_received",
         applicationId: String(data.id),
         jobId: String(job_id),
         email: String(email),
@@ -268,6 +285,7 @@ export async function POST(request: Request) {
           portfolioUrl ? `🎨 <b>Portfolio:</b> ${h(portfolioUrl)}` : null,
           cvUrl ? `📎 <b>CV:</b> ${h(cvUrl)}` : null,
           referredBy ? `👥 <b>Referred by:</b> ${h(referredBy)}` : null,
+          freelanceLine ? h(freelanceLine) : null,
           dupLine ? `\n${h(dupLine)}` : null,
         ].filter(Boolean).join("\n");
 
@@ -299,7 +317,7 @@ export async function POST(request: Request) {
           ? [...fields, { name: "👤 Người phụ trách", value: assigneeName, inline: true }]
           : fields;
         return {
-          content: `🎯 **New application for ${jobTitle}** from **${String(full_name)}**${dupLine ? `\n${dupLine}` : ""}`,
+          content: `🎯 **New application for ${jobTitle}** from **${String(full_name)}**${freelanceLine ? `\n${freelanceLine}` : ""}${dupLine ? `\n${dupLine}` : ""}`,
           embeds: [
             {
               title: `Application — ${jobTitle}`,

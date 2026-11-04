@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { AUTO_ACK_HOURLY_CAP, AUTO_ACK_KEY, isAutoAckEnabled, isStrictAckEmail, sanitizeAckName, shouldSendAck } from "./hr-auto-ack.ts";
+import { AUTO_ACK_HOURLY_CAP, AUTO_ACK_KEY, freelanceIntake, jobAcceptsFreelance, isAutoAckEnabled, isStrictAckEmail, sanitizeAckName, shouldSendAck } from "./hr-auto-ack.ts";
 import { buildDraft, getHrEmailConfig, resolveRecipient, CANDIDATE_EMAIL_KINDS, KIND_LABEL } from "./hr-email.ts";
 import { isSystemOnlyKind } from "./hr-email-base.ts";
 import { KIND_VARS, validateTemplate, DEFAULT_TEMPLATES } from "./hr-email-templates.ts";
@@ -77,4 +77,20 @@ test("sanitizeAckName", () => {
   }
   assert.equal(sanitizeAckName("An\u0000\n  Bình"), "An Bình");
   assert.equal(sanitizeAckName("x".repeat(100)), "bạn");
+});
+
+test("freelanceIntake: freelancer + job nhận → cột Freelancer; job chưa nhận / không rõ → Lưu hồ sơ; fulltime → null", () => {
+  assert.deepEqual(freelanceIntake("freelancer", true), { status: "freelancer", ackKind: "freelance_received" });
+  assert.deepEqual(freelanceIntake("freelancer", false), { status: "talent_pool", ackKind: "freelance_not_open" });
+  assert.deepEqual(freelanceIntake("freelancer", null), { status: "talent_pool", ackKind: "freelance_not_open" });
+  assert.equal(freelanceIntake("fulltime", true), null);
+  assert.equal(freelanceIntake(undefined, true), null);
+});
+
+test("jobAcceptsFreelance: bật cờ hoặc job loại freelancer → nhận; còn lại / không đọc được job → không", () => {
+  assert.equal(jobAcceptsFreelance({ type: "fulltime", accepts_freelance: true }), true);
+  assert.equal(jobAcceptsFreelance({ type: "freelancer", accepts_freelance: false }), true);
+  assert.equal(jobAcceptsFreelance({ type: "fulltime", accepts_freelance: false }), false);
+  assert.equal(jobAcceptsFreelance({ type: "fulltime" }), false);
+  assert.equal(jobAcceptsFreelance(null), false);
 });

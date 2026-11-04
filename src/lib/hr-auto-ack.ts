@@ -68,3 +68,27 @@ export function shouldSendAck(input: {
   if ((input.hourlyCount ?? 0) >= AUTO_ACK_HOURLY_CAP) return { send: false, reason: "hourly_cap" };
   return { send: true };
 }
+
+/** Mail cảm ơn tự động khi nhận đơn — chung chống trùng 24 giờ / hộp thư (mỗi hộp thư 1 mail cảm ơn / ngày). */
+export const ACK_KINDS = ["application_received", "freelance_received", "freelance_not_open"] as const;
+export type AckKind = (typeof ACK_KINDS)[number];
+
+/**
+ * Ứng viên chọn hình thức Freelancer (sếp chốt 2026-11-04): job nhận freelancer → cột Freelancer + mail
+ * "sẽ xem xét, phù hợp sẽ liên hệ"; job chưa nhận → Lưu hồ sơ + mail "chưa mở freelance, lưu liên hệ".
+ * Không phải freelancer → null (đơn đi như cũ: status new + mail application_received).
+ */
+export function freelanceIntake(
+  workType: unknown,
+  acceptsFreelance: boolean | null | undefined,
+): { status: "freelancer" | "talent_pool"; ackKind: Exclude<AckKind, "application_received"> } | null {
+  if (workType !== "freelancer") return null;
+  return acceptsFreelance === true
+    ? { status: "freelancer", ackKind: "freelance_received" }
+    : { status: "talent_pool", ackKind: "freelance_not_open" };
+}
+
+/** Job nhận freelancer: bật "Nhận freelancer", hoặc bản thân job là loại freelancer. */
+export function jobAcceptsFreelance(job: { type?: string | null; accepts_freelance?: boolean | null } | null): boolean {
+  return !!job && (job.accepts_freelance === true || job.type === "freelancer");
+}

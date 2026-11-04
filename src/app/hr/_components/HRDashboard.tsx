@@ -1893,12 +1893,14 @@ type JobDraft = {
   salary: string; summary: string; description: string;
   categories: string; requirements: string; responsibilities: string;
   nice_to_have: string; skills: string; image_url: string; is_active: boolean;
+  accepts_freelance: boolean;
 };
 
 const EMPTY_DRAFT: JobDraft = {
   title: "", type: "fulltime", location: "", level: "", salary: "",
   summary: "", description: "", categories: "", requirements: "",
   responsibilities: "", nice_to_have: "", skills: "", image_url: "", is_active: true,
+  accepts_freelance: false,
 };
 
 function jobToDraft(j: Job): JobDraft {
@@ -1911,6 +1913,7 @@ function jobToDraft(j: Job): JobDraft {
     nice_to_have: j.nice_to_have.join("\n"),
     skills: j.skills.join(", "),
     image_url: j.image_url, is_active: j.is_active,
+    accepts_freelance: j.accepts_freelance === true,
   };
 }
 
@@ -1924,6 +1927,7 @@ function draftToPayload(d: JobDraft) {
     nice_to_have: d.nice_to_have.split("\n").map((s) => s.trim()).filter(Boolean),
     skills: d.skills.split(",").map((s) => s.trim()).filter(Boolean),
     image_url: d.image_url, is_active: d.is_active,
+    accepts_freelance: d.accepts_freelance,
   };
 }
 
@@ -2134,12 +2138,21 @@ function JobForm({
 
       {/* Active + Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-white/70">
-          <input type="checkbox" checked={d.is_active}
-            onChange={(e) => set("is_active", e.target.checked)}
-            className="h-4 w-4 accent-amber-500" />
-          Publish (visible on /careers)
-        </label>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-white/70">
+            <input type="checkbox" checked={d.is_active}
+              onChange={(e) => set("is_active", e.target.checked)}
+              className="h-4 w-4 accent-amber-500" />
+            Publish (visible on /careers)
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-white/70"
+            title="Ứng viên chọn Freelancer: bật → vào cột Freelancer + mail “sẽ xem xét”; tắt → Lưu hồ sơ + mail “chưa mở freelance”">
+            <input type="checkbox" checked={d.accepts_freelance}
+              onChange={(e) => set("accepts_freelance", e.target.checked)}
+              className="h-4 w-4 accent-amber-500" />
+            Nhận freelancer
+          </label>
+        </div>
         <div className="flex gap-2">
           <button onClick={onCancel}
             className="rounded-lg border border-white/15 px-4 py-2 text-xs text-white/60 hover:bg-white/5">
@@ -2368,6 +2381,9 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
                   {job.type} · {job.location || "—"} · {job.level || "—"}
                 </span>
                 {job.salary && <span className="ml-2 text-xs text-amber-400/70">{job.salary}</span>}
+                {job.accepts_freelance && (
+                  <span className="ml-2 rounded-full border border-amber-500/30 px-2 py-0.5 text-[10px] text-amber-400/80">Nhận freelancer</span>
+                )}
               </div>
 
               {/* Actions */}

@@ -18,6 +18,8 @@ export const CANDIDATE_EMAIL_KINDS = [
   "on_hold",
   "position_filled",
   "duplicate_rejection",
+  "freelance_received",
+  "freelance_not_open",
 ] as const;
 
 export type CandidateEmailKind = (typeof CANDIDATE_EMAIL_KINDS)[number];
@@ -33,10 +35,17 @@ export const KIND_LABEL: Record<CandidateEmailKind, string> = {
   on_hold: "Hồ sơ đang được xem xét",
   position_filled: "Vị trí đã tuyển đủ",
   duplicate_rejection: "Đã ứng tuyển trước đó (tự động)",
+  freelance_received: "Cảm ơn ứng tuyển — Freelancer (job có nhận)",
+  freelance_not_open: "Cảm ơn ứng tuyển — Freelancer (job chưa nhận)",
 };
 
 /** Loại mail chỉ hệ thống gửi (tự động khi ứng viên nộp đơn) — HR không gửi tay từ hồ sơ. */
-export const SYSTEM_ONLY_EMAIL_KINDS: readonly CandidateEmailKind[] = ["application_received", "duplicate_rejection"];
+export const SYSTEM_ONLY_EMAIL_KINDS: readonly CandidateEmailKind[] = [
+  "application_received",
+  "duplicate_rejection",
+  "freelance_received",
+  "freelance_not_open",
+];
 
 export function isSystemOnlyKind(kind: CandidateEmailKind): boolean {
   return SYSTEM_ONLY_EMAIL_KINDS.includes(kind);

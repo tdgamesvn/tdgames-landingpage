@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const EDITABLE_JOB_COLUMNS = [
   "title", "type", "location", "level", "salary", "rate_per_hour", "summary", "description",
   "categories", "requirements", "responsibilities", "nice_to_have", "skills", "image_url", "is_active",
-  "leader_user_id",
+  "accepts_freelance", "leader_user_id",
 ] as const;
 
 export async function PATCH(

@@ -166,7 +166,7 @@ for (const offer of [null, undefined, { startDate: "" }, { startDate: "01/12" },
   cases.push({ kind: "offer", candidateName: "A", jobTitle: "Dev", offer });
 }
 // Loại mới (2026-10-30) không có bản cũ để đối chiếu — test riêng ở cuối file.
-const NEW_KINDS: readonly string[] = ["on_hold", "position_filled", "duplicate_rejection"];
+const NEW_KINDS: readonly string[] = ["on_hold", "position_filled", "duplicate_rejection", "freelance_received", "freelance_not_open"];
 for (const kind of CANDIDATE_EMAIL_KINDS.filter((k) => !NEW_KINDS.includes(k))) {
   cases.push({ kind, candidateName: "  ", jobTitle: "" });
 }
@@ -431,4 +431,15 @@ test("duplicate_rejection: chỉ hệ thống gửi, mẫu mặc định hợp l
   }
   // Biến riêng của loại này không dùng được ở loại khác.
   assert.match(validateTemplate("rejection", "T", "{ngay_duoc_nop_lai}") ?? "", /ngay_duoc_nop_lai/);
+});
+
+test("mail freelancer: có tên + vị trí; job có nhận → hẹn liên hệ, chưa nhận → chưa mở freelance + lưu liên hệ", () => {
+  const ok = buildDraft({ kind: "freelance_received", candidateName: "Đỗ Lam", jobTitle: "Spine Animator" });
+  assert.match(ok.subject, /Spine Animator/);
+  assert.match(ok.text, /^Chào Đỗ Lam,/);
+  assert.match(ok.text, /chủ động liên hệ lại/);
+  const no = buildDraft({ kind: "freelance_not_open", candidateName: "", jobTitle: "Spine Animator" });
+  assert.match(no.text, /^Chào bạn,/);
+  assert.match(no.text, /chưa mở hình thức cộng tác freelance/);
+  assert.match(no.text, /lưu lại thông tin liên hệ/);
 });

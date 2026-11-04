@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   }
 
   const { title, type, location, level, salary, summary, description, categories,
-    requirements, responsibilities, nice_to_have, skills, image_url, is_active } = body;
+    requirements, responsibilities, nice_to_have, skills, image_url, is_active, accepts_freelance } = body;
 
   if (!title || !type) {
     return NextResponse.json({ error: "title and type are required" }, { status: 400 });
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
       responsibilities: responsibilities ?? [], nice_to_have: nice_to_have ?? [],
       skills: skills ?? [], image_url: image_url ?? "",
       is_active: is_active ?? false,
+      accepts_freelance: accepts_freelance === true,
       slug,
     }])
     .select()

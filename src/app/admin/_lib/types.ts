@@ -124,6 +124,8 @@ export type Job = {
   nice_to_have: string[];
   skills: string[];
   is_active: boolean;
+  /** Job có nhận hình thức freelancer (ứng viên freelancer → cột Freelancer thay vì Lưu hồ sơ). */
+  accepts_freelance?: boolean;
   created_at: string;
   /** Tài khoản Leader phụ trách job (hr_users.id). */
   leader_user_id?: string | null;
