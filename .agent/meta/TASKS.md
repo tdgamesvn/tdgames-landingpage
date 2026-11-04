@@ -2,6 +2,7 @@
 
 ## Doing
 
+- [ ] /hr ứng viên Freelancer: cờ "Nhận freelancer" trên job, auto status Freelancer / Lưu hồ sơ + 2 mail riêng (2026-11-04) — code xong trên branch feat/hr-freelance-apply, chờ sếp chạy SQL CHECK kind → E2E → deploy. LOG 2026-11-04
 - [ ] HR: thư mời nhận việc PDF + mail offer mới (2026-10-28) — ĐÃ DEPLOY. Chờ sếp/Kế toán thử: soạn thư 1 hồ sơ Offer thật → gửi (chế độ test về tony@). Tồn nhỏ: tải lại file từ lịch sử khi 429/503 hiện JSON thô; header /hr tràn ngang ở 390px (có từ trước). LOG 2026-10-28
 
 - [ ] HR: đăng nhập theo tài khoản + phân quyền theo vai (2026-10-27) — ĐÃ DEPLOY. + Discord ID + tag đúng người (2026-10-27) — chờ sếp điền Discord ID trong tab Tài khoản. Mật khẩu chung ĐÃ GỠ 2026-10-28. Minor tồn: clientIp nên ưu tiên x-real-ip (nginx ghi đè) trước cf-connecting-ip; nút ghi trong GET (remind, draft test token); file R2 cũ svg chưa chuyển; /api/hr/upload + upload-cv vẫn tin content-type trình duyệt. LOG 2026-10-27
@@ -60,6 +61,8 @@
 
 ## Doing
 
+- [x] /hr chống ứng viên trùng / nộp lại (auto reject 6 tháng, quyền giới thiệu 6 tháng) — ĐÃ DEPLOY d5724d4
+      (2026-11-03), E2E OK. Minor tồn: xem LOG 2026-11-03 (deploy) Next Step.
 
 ## To do
 
