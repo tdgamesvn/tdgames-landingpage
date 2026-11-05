@@ -46,6 +46,10 @@ export const HR_PERMISSIONS = [
   { key: "referrals.view", label: "Xem tab Hoa hồng & số tiền hoa hồng", group: "Hoa hồng giới thiệu", defaults: d(true, false, true) },
   { key: "referrals.manage", label: "Quản lý người giới thiệu, mức hoa hồng, xác nhận còn làm / huỷ khoản", group: "Hoa hồng giới thiệu", defaults: d(true, false, false) },
   { key: "referrals.pay", label: "Đánh dấu đã chuyển khoản, sửa số tiền / hạn từng khoản", group: "Hoa hồng giới thiệu", defaults: d(false, false, true) },
+  // Chat trên website (2026-11-05): khách → sếp, ứng viên → HR.
+  { key: "chat.candidates", label: "Xem & trả lời chat của ứng viên", group: "Chat website", defaults: d(true, false, false) },
+  { key: "chat.clients", label: "Xem & trả lời chat của khách hàng", group: "Chat website", defaults: d(false, false, false) },
+  { key: "chat.manage", label: "Sửa câu hỏi có sẵn & cài đặt chat", group: "Chat website", defaults: d(false, false, false) },
 ] as const satisfies readonly PermissionDef[];
 
 export type PermissionKey = (typeof HR_PERMISSIONS)[number]["key"];
