@@ -97,6 +97,12 @@
         "category": "Spine 2D Animation",
         "image": "https://cdn.tdgamestudio.com/landing/portfolio/chibi-heroes-pets/char_24_idle.jpg",
         "slug": "chibi-heroes-pets"
+      },
+      {
+        "title": "Stickman Legend - Monster Animation",
+        "category": "Spine 2D Animation",
+        "image": "https://cdn.tdgamestudio.com/projects/2026/10/24e20e4a-efd0-4a56-bb6b-3ba79d1dd322-portfolio-cover-stickman-legend.webp",
+        "slug": "stickman-legend"
       }
     ]
   },
