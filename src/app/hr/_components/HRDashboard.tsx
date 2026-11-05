@@ -2,6 +2,7 @@
 
 import { formatRateVnd, isFreelanceApp } from "@/lib/hr-freelance";
 import FreelancerView, { FreelanceControls } from "./FreelancerView";
+import ChatView from "./ChatView";
 import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Application, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
@@ -3245,7 +3246,7 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type View = "pipeline" | "freelancers" | "kpi" | "jobs" | "data" | "templates" | "referrals" | "accounts";
+type View = "pipeline" | "freelancers" | "chat" | "kpi" | "jobs" | "data" | "templates" | "referrals" | "accounts";
 
 type ThemeState = readonly [HrThemePref, (p: HrThemePref) => void];
 
@@ -3401,6 +3402,35 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
   const { me, can, refresh: refreshSession, signOut } = useHrSession();
   const [themePref, setThemePref] = theme;
   const [view, setView] = useState<View>("pipeline");
+  const [chatNeeds, setChatNeeds] = useState(0);
+  const [chatThread, setChatThread] = useState<string | null>(null);
+  const chatAllowed = can("chat.clients") || can("chat.candidates");
+  // Bấm thông báo đẩy chat → /hr?view=chat&thread=<id>.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get("view") !== "chat") return;
+      setView("chat");
+      setChatThread(q.get("thread"));
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
+  // Badge "Chat": số cuộc cần người trả lời (cập nhật 30s; trong tab Chat thì ChatView cập nhật).
+  useEffect(() => {
+    if (!chatAllowed) return;
+    const tick = async () => {
+      if (document.hidden) return;
+      try {
+        const r = await hrFetch("/api/hr/chat/threads?filter=needs&audience=all");
+        if (r.ok) setChatNeeds((await r.json()).counts?.needs ?? 0);
+      } catch {
+        /* im lặng */
+      }
+    };
+    void tick();
+    const i = setInterval(tick, 30_000);
+    return () => clearInterval(i);
+  }, [chatAllowed]);
   const [apps, setApps] = useState<Application[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -3506,6 +3536,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
   const views: View[] = [
     "pipeline",
     "freelancers",
+    ...(can("chat.clients") || can("chat.candidates") ? (["chat"] as View[]) : []),
     "data",
     ...(can("apps.view_notes") ? (["kpi"] as View[]) : []),
     ...(can("jobs.manage") ? (["jobs"] as View[]) : []),
@@ -3542,7 +3573,14 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <div className="hr-segmented order-last w-full md:order-none md:w-auto" role="group" aria-label="Chế độ xem">
             {views.map((v) => (
               <button key={v} type="button" aria-pressed={activeView === v} onClick={() => setView(v)}>
-                {v === "pipeline" ? "Pipeline" : v === "freelancers" ? "Freelancer" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "templates" ? "Mẫu mail" : v === "referrals" ? "Hoa hồng" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
+                {v === "chat" ? (
+                  <>
+                    Chat
+                    {chatNeeds > 0 && (
+                      <span className="ml-1 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{chatNeeds}</span>
+                    )}
+                  </>
+                ) : v === "pipeline" ? "Pipeline" : v === "freelancers" ? "Freelancer" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "templates" ? "Mẫu mail" : v === "referrals" ? "Hoa hồng" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
               </button>
             ))}
           </div>
@@ -3594,7 +3632,10 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           onOpen={setSearchOpenId}
         />
         {loadError && <p className="mb-3 text-[13px] text-red-400">{loadError}</p>}
-        {loading && apps.length === 0 ? (
+        {activeView === "chat" ? (
+          // Chat không cần danh sách ứng viên → không chờ tải hồ sơ.
+          <ChatView initialThreadId={chatThread} onCount={setChatNeeds} onOpenApp={setSearchOpenId} />
+        ) : loading && apps.length === 0 ? (
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
         ) : activeView === "pipeline" ? (
           <PipelineView apps={fulltimeApps} onUpdate={updateApp} onDelete={deleteApp} />
