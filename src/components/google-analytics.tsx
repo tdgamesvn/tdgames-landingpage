@@ -9,7 +9,8 @@ export default function GoogleAnalytics() {
   const ids = [GA_ID, ADS_ID].filter(Boolean) as string[];
   if (ids.length === 0) return null;
 
-  const config = ids.map((id) => `gtag('config', '${id}');`).join("\n");
+  // Bỏ ?chat=<mã> (link "Continue the conversation" trong mail chat) khỏi URL gửi GA — mã là bí mật 1 lần.
+  const config = ids.map((id) => `gtag('config', '${id}', { page_location: __tdgLoc });`).join("\n");
 
   return (
     <>
@@ -22,6 +23,7 @@ export default function GoogleAnalytics() {
 function gtag(){dataLayer.push(arguments);}
 window.gtag = gtag;
 gtag('js', new Date());
+var __tdgLoc = (function () { try { var u = new URL(location.href); u.searchParams.delete('chat'); return u.toString(); } catch (e) { return location.href; } })();
 ${config}`}
       </Script>
     </>

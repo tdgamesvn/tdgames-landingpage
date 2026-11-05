@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { classifyAudience, cleanText, MAX_MESSAGE } from "@/lib/chat";
 import { activeQuickReplies, addVisitorMessage, chatOnline, threadForToken } from "@/lib/chat-server";
-import { cleanPage, err, guardEnabled, ipOf, messageLimiter, readToken, toPublicMessage, toPublicThread } from "@/lib/chat-public";
+import { cleanPage, err, guardEnabled, ipOf, messageLimiter, messageTokenLimiter, readToken, toPublicMessage, toPublicThread } from "@/lib/chat-public";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,7 @@ export async function POST(req: Request) {
   if (!messageLimiter.tryHit(ipOf(req))) return err(429, "rate_limited");
   const thread = await threadForToken(readToken(req));
   if (!thread) return err(404, "not_found");
+  if (!messageTokenLimiter.tryHit(thread.id)) return err(429, "rate_limited");
 
   const b = (await req.json().catch(() => ({}))) as { kind?: unknown; body?: unknown; quickReplyId?: unknown; page?: unknown };
   const page = cleanPage(b.page);

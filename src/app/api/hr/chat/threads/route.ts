@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
   let q = db
     .from("chat_threads")
-    .select("id, audience, status, needs_human, name, email, country, last_page, last_message_at, lead_id")
+    .select("id, audience, status, needs_human, name, email, country, last_page, last_message_at, lead_id, last_preview, last_sender")
     .in("audience", audiences.length ? audiences : ["__none__"])
     .order("last_message_at", { ascending: false })
     .limit(100);
@@ -31,17 +31,6 @@ export async function GET(req: Request) {
   const [{ data: threads, error }, { count }] = await Promise.all([q, needsCount]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const rows = threads ?? [];
-  const ids = rows.map((t) => t.id);
-  const lastById = new Map<string, { body: string; sender: string; created_at: string }>();
-  if (ids.length) {
-    const { data: msgs } = await db
-      .from("chat_messages")
-      .select("thread_id, body, sender, created_at")
-      .in("thread_id", ids)
-      .order("created_at", { ascending: false })
-      .limit(3000);
-    for (const m of msgs ?? []) if (!lastById.has(m.thread_id)) lastById.set(m.thread_id, m);
-  }
   // Số cuộc chat khác cùng email (app hiện lịch sử cũ khi mở luồng).
   const emails = [...new Set(rows.map((t) => t.email).filter(Boolean) as string[])];
   const byEmail = new Map<string, string[]>();
@@ -65,7 +54,7 @@ export async function GET(req: Request) {
       lastPage: t.last_page,
       lastMessageAt: t.last_message_at,
       leadId: t.lead_id,
-      lastMessage: lastById.get(t.id) ?? null,
+      lastMessage: t.last_preview ? { body: t.last_preview, sender: t.last_sender ?? "visitor", created_at: t.last_message_at } : null,
       otherThreadCount: t.email ? (byEmail.get(t.email) ?? []).filter((id) => id !== t.id).length : 0,
     })),
     counts: { needs: count ?? 0 },

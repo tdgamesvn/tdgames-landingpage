@@ -9,6 +9,7 @@ import {
   guardEnabled,
   ipOf,
   pollLimiter,
+  pollTokenLimiter,
   readToken,
   toPublicMessage,
   toPublicThread,
@@ -43,6 +44,7 @@ export async function GET(req: Request) {
   if (!pollLimiter.tryHit(ipOf(req))) return err(429, "rate_limited");
   const thread = await threadForToken(readToken(req));
   if (!thread) return err(404, "not_found");
+  if (!pollTokenLimiter.tryHit(thread.id)) return err(429, "rate_limited");
   const sp = new URL(req.url).searchParams;
   const [messages, online] = await Promise.all([listMessages(thread.id, sp.get("after")), chatOnline()]);
   // Chỉ khi khung chat đang mở + tab đang xem mới tính "khách đã thấy" (nút nổi kiểm chấm đỏ thì không),

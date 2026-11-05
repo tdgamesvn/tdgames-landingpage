@@ -135,7 +135,10 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
         setContactMode("required");
         setOnline(false);
       } else {
-        setError(e instanceof ChatError && e.status === 429 ? "Too many messages — please wait a moment." : "Message not sent. Please try again.");
+        // Gửi lỗi → trả nguyên tin về ô gõ (kể cả tin đang chờ sau khi để email) để khách bấm gửi lại.
+        setPending(null);
+        if (p.kind === "text") setInput((cur) => cur || p.body);
+        setError(e instanceof ChatError && e.status === 429 ? "Too many messages — please wait a moment." : "Message not sent — tap send to try again.");
       }
     } finally {
       setBusy(false);

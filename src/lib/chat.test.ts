@@ -130,6 +130,7 @@ test("isSafeLink", () => {
   assert.equal(isSafeLink("/careers"), true);
   assert.equal(isSafeLink("https://tdgamestudio.com/contact"), true);
   assert.equal(isSafeLink("//evil.com"), false);
+  assert.equal(isSafeLink("/\\evil.com"), false); // trình duyệt hiểu "/\" = "//"
   assert.equal(isSafeLink("javascript:alert(1)"), false);
   assert.equal(isSafeLink("http://x.com"), false);
   assert.equal(isSafeLink(""), false);

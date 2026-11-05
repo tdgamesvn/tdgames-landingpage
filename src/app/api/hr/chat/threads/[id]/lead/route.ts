@@ -28,6 +28,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .select("id")
     .single();
   if (error || !lead) return NextResponse.json({ error: error?.message ?? "Không tạo được lead" }, { status: 500 });
-  await db.from("chat_threads").update({ lead_id: lead.id }).eq("id", thread.id);
+  // Bấm đúp / 2 người cùng bấm: chỉ request gắn được lead_id đầu tiên thắng; lead thừa xoá ngay.
+  const { data: won } = await db
+    .from("chat_threads")
+    .update({ lead_id: lead.id })
+    .eq("id", thread.id)
+    .is("lead_id", null)
+    .select("lead_id");
+  if (!won?.length) {
+    await db.from("leads").delete().eq("id", lead.id);
+    return NextResponse.json({ error: "Đã tạo lead" }, { status: 409 });
+  }
   return NextResponse.json({ leadId: lead.id });
 }

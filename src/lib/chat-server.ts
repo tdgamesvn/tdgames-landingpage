@@ -29,6 +29,8 @@ import { SITE_URL } from "./json-ld";
 
 export type ChatThreadRow = {
   id: string;
+  last_preview: string | null;
+  last_sender: string | null;
   audience: ChatAudience;
   status: ChatStatus;
   needs_human: boolean;
@@ -75,7 +77,7 @@ export type QuickReplyRow = {
 };
 
 const THREAD_COLS =
-  "id, audience, status, needs_human, name, email, country, user_agent, first_page, last_page, pages, merged_into, lead_id, email_pending, last_visitor_seen_at, last_message_at, last_push_at, last_email_at, created_at";
+  "id, last_preview, last_sender, audience, status, needs_human, name, email, country, user_agent, first_page, last_page, pages, merged_into, lead_id, email_pending, last_visitor_seen_at, last_message_at, last_push_at, last_email_at, created_at";
 const MSG_COLS =
   "id, thread_id, sender, staff_user_id, staff_name, kind, body, quick_reply_id, link_label, link_url, created_at";
 const EMAIL_LINK_DAYS = 30;
@@ -119,7 +121,9 @@ export async function activeQuickReplies(): Promise<QuickReplyRow[]> {
 
 export async function threadForToken(token: string | null | undefined): Promise<ChatThreadRow | null> {
   if (!token || token.length < 20 || token.length > 100) return null;
-  const { data } = await db().from("chat_threads").select(THREAD_COLS).eq("visitor_token_hash", hashToken(token)).maybeSingle();
+  const { data, error } = await db().from("chat_threads").select(THREAD_COLS).eq("visitor_token_hash", hashToken(token)).maybeSingle();
+  // Lỗi DB ≠ không có luồng: ném lỗi để route trả 5xx, tránh tạo luồng mới đè mất mã khách.
+  if (error) throw new Error(`threadForToken: ${error.message}`);
   return (data as ChatThreadRow | null) ?? null;
 }
 
@@ -155,11 +159,13 @@ export async function createThread(args: {
   return { thread: data as ChatThreadRow, token };
 }
 
+/** Tin của luồng theo thứ tự thời gian. Không có `after` → 500 tin MỚI nhất (luồng rất dài vẫn thấy tin cuối). */
 export async function listMessages(threadId: string, after?: string | null): Promise<ChatMessageRow[]> {
-  let q = db().from("chat_messages").select(MSG_COLS).eq("thread_id", threadId).order("created_at", { ascending: true }).limit(500);
+  let q = db().from("chat_messages").select(MSG_COLS).eq("thread_id", threadId).order("created_at", { ascending: false }).limit(500);
   if (after && !Number.isNaN(Date.parse(after))) q = q.gt("created_at", after);
-  const { data } = await q;
-  return (data ?? []) as ChatMessageRow[];
+  const { data, error } = await q;
+  if (error) throw new Error(`listMessages: ${error.message}`);
+  return ((data ?? []) as ChatMessageRow[]).reverse();
 }
 
 export async function touchVisitor(threadId: string, page?: string | null, pages?: string[]): Promise<void> {
@@ -174,7 +180,24 @@ export async function touchVisitor(threadId: string, page?: string | null, pages
 async function insertMessages(rows: Partial<ChatMessageRow>[]): Promise<ChatMessageRow[]> {
   const { data, error } = await db().from("chat_messages").insert(rows).select(MSG_COLS);
   if (error) throw new Error(error.message);
-  return ((data ?? []) as ChatMessageRow[]).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const out = ((data ?? []) as ChatMessageRow[]).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  // Preview cho danh sách chat: tin khách bấm nút → hiện nhãn nút, không phải câu trả lời có sẵn.
+  // (Chỉ tin nhắn / nút khách bấm — dòng hệ thống "để lại email" & câu trả lời có sẵn không đè preview.)
+  const shown = [...out].reverse().find((m) => m.kind === "text" || m.kind === "quick_reply");
+  if (shown) {
+    const { error: e2 } = await db()
+      .from("chat_threads")
+      .update({ last_preview: shown.body.slice(0, 200), last_sender: shown.sender })
+      .eq("id", shown.thread_id);
+    if (e2) console.error("[chat] cập nhật preview lỗi:", e2.message);
+  }
+  return out;
+}
+
+/** Cập nhật luồng; lỗi → ném (route trả 5xx thay vì để tin đã lưu mà trạng thái luồng sai). */
+async function updateThread(id: string, patch: Record<string, unknown>): Promise<void> {
+  const { error } = await db().from("chat_threads").update(patch).eq("id", id);
+  if (error) throw new Error(`updateThread: ${error.message}`);
 }
 
 /** Tin của khách: text / gọi người / bấm câu có sẵn (ghi kèm câu trả lời có sẵn). Cập nhật trạng thái + chuông. */
@@ -231,7 +254,7 @@ export async function addVisitorMessage(
     patch.last_page = args.page;
     patch.pages = [...(thread.pages ?? []).filter((p) => p !== args.page), args.page].slice(-5);
   }
-  await db().from("chat_threads").update(patch).eq("id", thread.id);
+  await updateThread(thread.id, patch);
 
   if (push && (await claimSlot(thread.id, "last_push_at", PUSH_GAP_MINUTES, now))) {
     const who = thread.name || thread.email || `Visitor #${thread.id.slice(-4)}`;
@@ -267,16 +290,13 @@ export async function addStaffReply(
     { thread_id: thread.id, sender: "staff", staff_user_id: staff.id, staff_name: staff.displayName || "TD Games", kind: "text", body },
   ]);
   const next = nextThreadState({ status: thread.status, needsHuman: thread.needs_human }, "staff_reply");
-  await db()
-    .from("chat_threads")
-    .update({
-      status: next.status,
-      needs_human: next.needsHuman,
-      last_message_at: now.toISOString(),
-      updated_at: now.toISOString(),
-      email_pending: !!thread.email,
-    })
-    .eq("id", thread.id);
+  await updateThread(thread.id, {
+    status: next.status,
+    needs_human: next.needsHuman,
+    last_message_at: now.toISOString(),
+    updated_at: now.toISOString(),
+    email_pending: !!thread.email,
+  });
   if (thread.email) await flushThreadEmail({ ...thread, email_pending: true }, now);
   return msg;
 }

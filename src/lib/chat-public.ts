@@ -5,9 +5,12 @@ import { NextResponse } from "next/server";
 import { createLimiter, clientIp } from "./hr-rate-limit";
 import { chatWidgetEnabled, type ChatMessageRow, type ChatThreadRow } from "./chat-server";
 
-export const createLimiterThread = createLimiter(10, 3600_000); // tạo luồng: 10/giờ/IP
-export const messageLimiter = createLimiter(30, 600_000); // tin: 30/10 phút/IP
-export const pollLimiter = createLimiter(400, 600_000); // đọc tin: ~1 lần/1.5s/IP
+// Văn phòng nhiều người chung 1 IP (NAT) → hạn mức theo IP rộng; hạn chặt đặt theo mã khách.
+export const createLimiterThread = createLimiter(40, 3600_000); // tạo luồng / dùng link: 40/giờ/IP
+export const messageLimiter = createLimiter(120, 600_000); // tin: 120/10 phút/IP
+export const messageTokenLimiter = createLimiter(30, 600_000); // tin: 30/10 phút/luồng
+export const pollLimiter = createLimiter(3000, 600_000); // đọc tin: 3000/10 phút/IP
+export const pollTokenLimiter = createLimiter(400, 600_000); // đọc tin: ~1 lần/1.5s/luồng
 
 export type PublicThread = {
   status: ChatThreadRow["status"];

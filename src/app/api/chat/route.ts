@@ -14,6 +14,6 @@ export async function GET() {
         ? qrs.map((q) => ({ id: q.id, label: q.label, audience: q.audience, answer: q.answer, linkLabel: q.link_label, linkUrl: q.link_url }))
         : [],
     },
-    { headers: { "Cache-Control": "public, max-age=60" } },
+    { headers: { "Cache-Control": "private, no-store" } },
   );
 }

@@ -126,7 +126,7 @@ export function cleanText(s: unknown, max: number): string | null {
 
 /** Link nút câu trả lời có sẵn: đường dẫn nội bộ "/…" (không "//") hoặc https. */
 export function isSafeLink(url: string): boolean {
-  if (/^\/(?!\/)/.test(url)) return true;
+  if (/^\/(?![/\\])/.test(url)) return true; // "/\x" trình duyệt hiểu như "//x"
   try {
     return new URL(url).protocol === "https:";
   } catch {
