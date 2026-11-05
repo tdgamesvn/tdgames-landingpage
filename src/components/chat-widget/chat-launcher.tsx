@@ -80,10 +80,15 @@ export default function ChatLauncher() {
   return (
     <div className="tdg-chat">
       <style>{`@media print{.tdg-chat{display:none!important}} body:has(main[data-view="deck"]) .tdg-chat{display:none!important}
-.tdg-chat-mascot{transform-origin:50% 92%;animation:tdg-wave 4.2s ease-in-out 1.2s infinite;transition:scale .25s ease}
-.tdg-chat-mascot:hover{scale:1.07;animation-duration:1.4s;animation-delay:0s}
+.tdg-chat-mascot{transition:scale .25s ease}
+.tdg-chat-mascot:hover{scale:1.07}
+.tdg-chat-mascot img{transform-origin:50% 92%;animation:tdg-wave 4.2s ease-in-out 1.2s infinite}
+.tdg-chat-mascot:hover img{animation-duration:1.4s;animation-delay:0s}
+.tdg-chat-glow{animation:tdg-glow 3.2s ease-in-out infinite}
+.tdg-chat-mascot:hover .tdg-chat-glow{opacity:1}
+@keyframes tdg-glow{0%,100%{opacity:.7;scale:.94}50%{opacity:1;scale:1.04}}
 @keyframes tdg-wave{0%,62%,100%{transform:rotate(0)}68%{transform:rotate(-7deg)}74%{transform:rotate(6deg)}80%{transform:rotate(-5deg)}86%{transform:rotate(3deg)}92%{transform:rotate(0)}}
-@media (prefers-reduced-motion:reduce){.tdg-chat-mascot{animation:none}}`}</style>
+@media (prefers-reduced-motion:reduce){.tdg-chat-mascot img,.tdg-chat-glow{animation:none}}`}</style>
       {open ? (
         <ChatWidget
           resumeToken={resumeToken}
@@ -94,7 +99,7 @@ export default function ChatLauncher() {
           }}
         />
       ) : (
-        <div className="fixed bottom-4 right-4 z-[90] flex items-end gap-3 sm:bottom-6 sm:right-6">
+        <div className="fixed bottom-6 right-4 z-[90] flex items-end gap-3 sm:bottom-6 sm:right-6">
           {resumeToken && (
             <button
               type="button"
@@ -134,9 +139,15 @@ export default function ChatLauncher() {
               setGreet(false);
               setOpen(true);
             }}
-            className="tdg-chat-mascot relative block rounded-2xl outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            className="tdg-chat-mascot relative isolate block rounded-2xl outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             {/* Mascot TD Games ngồi trên bong bóng chat (2026-11-05, sếp gửi) — vẫy tay theo nhịp. */}
+            {/* Glow cam nhẹ dưới chân (đứng yên, chỉ thở nhẹ) — nằm sau nhân vật, không xoay theo. */}
+            <span
+              aria-hidden
+              className="tdg-chat-glow pointer-events-none absolute bottom-[-20px] left-1/2 -z-10 h-[52px] w-[200%] -translate-x-1/2 rounded-[50%] blur-[12px] sm:w-[150%] sm:bottom-[-26px] sm:h-[56px]"
+              style={{ background: "radial-gradient(ellipse at center, rgba(255,150,40,0.95) 0%, rgba(255,120,20,0.55) 38%, rgba(255,110,0,0) 72%)" }}
+            />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={MASCOT_SRC}
@@ -144,7 +155,7 @@ export default function ChatLauncher() {
               width={154}
               height={240}
               decoding="async"
-              className="h-[96px] w-auto select-none drop-shadow-[0_8px_18px_rgba(0,0,0,0.45)] sm:h-[120px]"
+              className="relative h-[96px] w-auto select-none drop-shadow-[0_8px_18px_rgba(0,0,0,0.45)] sm:h-[120px]"
               draggable={false}
             />
             {unread && <span className="absolute right-0 top-1 h-3.5 w-3.5 rounded-full border-2 border-black bg-red-500" aria-label="New reply" />}
