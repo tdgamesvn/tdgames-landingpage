@@ -14,7 +14,7 @@ import CommissionPanel, { JobRulesFields, ReferralOfferBlock } from "./Commissio
 import CommentThread from "./CommentThread";
 import RankingPanel from "./RankingPanel";
 import CandidateSearch from "./CandidateSearch";
-import { CandidateMailProvider, CandidateMailSection, useCandidateMail } from "./CandidateMailDialog";
+import { CandidateMailProvider, CandidateMailSection, NoCandidateMail, useCandidateMail } from "./CandidateMailDialog";
 import CloseOutDialog, { countOpenCandidates } from "./CloseOutDialog";
 import ThemeToggle, { useHrTheme, type HrThemePref } from "./ThemeToggle";
 import { HrSessionProvider, hrFetch, useHrSession } from "./HrSession";
@@ -721,6 +721,8 @@ function CandidateModal({
   const [evaluating, setEvaluating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const freelance = isFreelanceApp(app);
+  // Freelancer: đặt / đổi / huỷ lịch không mời gửi mail (chỉ 2 mail tự động lúc nộp đơn).
+  const MailScope = freelance ? NoCandidateMail : Fragment;
   const [converting, setConverting] = useState(false);
   // Đổi hình thức fulltime ↔ freelancer (thay cho kéo vào cột Freelancer). Không gửi mail.
   async function convertWorkType() {
@@ -1026,17 +1028,19 @@ function CandidateModal({
               onReview={(test_review) => onPatch({ test_review })}
             />
 
-            <InterviewPanel
-              appId={app.id}
-              candidateName={app.full_name}
-              onSessionsChange={(list) =>
-                onPatch({
-                  interview_sessions: list.map(({ id, round, title, scheduled_at, mode, meet_url }) => ({
-                    id, round, title, scheduled_at, mode, meet_url,
-                  })),
-                })
-              }
-            />
+            <MailScope>
+              <InterviewPanel
+                appId={app.id}
+                candidateName={app.full_name}
+                onSessionsChange={(list) =>
+                  onPatch({
+                    interview_sessions: list.map(({ id, round, title, scheduled_at, mode, meet_url }) => ({
+                      id, round, title, scheduled_at, mode, meet_url,
+                    })),
+                  })
+                }
+              />
+            </MailScope>
 
             <OfferSection app={app} onPatch={onPatch} />
 

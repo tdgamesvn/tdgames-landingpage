@@ -168,3 +168,11 @@ export function freelanceStatusPatch(key: string, patch: Record<string, unknown>
   delete rest.remind_days;
   return rest;
 }
+
+/**
+ * Freelancer chỉ nhận 2 mail tự động khi nộp đơn (freelance_received / freelance_not_open) — sếp chốt 2026-11-05:
+ * sau đó làm việc trực tiếp, HR không gửi mail tay nào (bài test, lịch, từ chối…). Lỗi hoặc null.
+ */
+export function freelanceManualMailError(workType: unknown): string | null {
+  return workType === "freelancer" ? "Hồ sơ freelancer không gửi mail từ /hr — chỉ có mail tự động khi nộp đơn" : null;
+}

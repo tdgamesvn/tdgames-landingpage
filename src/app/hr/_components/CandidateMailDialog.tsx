@@ -59,8 +59,18 @@ type Ctx = {
 
 const CandidateMailContext = createContext<Ctx>({ prompt: () => {}, openOfferLetter: () => {}, lastSentAt: 0, dialogOpen: false });
 
+// Hồ sơ freelancer: không mời gửi mail tay (vd. sau khi đặt lịch) — chỉ có 2 mail tự động lúc nộp đơn.
+const MailSuppressedContext = createContext(false);
+const noopPrompt = () => {};
+
+export function NoCandidateMail({ children }: { children: React.ReactNode }) {
+  return <MailSuppressedContext.Provider value={true}>{children}</MailSuppressedContext.Provider>;
+}
+
 export function useCandidateMail() {
-  return useContext(CandidateMailContext);
+  const ctx = useContext(CandidateMailContext);
+  const suppressed = useContext(MailSuppressedContext);
+  return useMemo(() => (suppressed ? { ...ctx, prompt: noopPrompt } : ctx), [ctx, suppressed]);
 }
 
 /** Quyền cần để gửi từng loại mail (khớp POST /api/hr/applications/[id]/emails). */
@@ -424,7 +434,7 @@ export function CandidateMailSection({
   appId: string;
   candidateName: string;
   rounds: ScheduledRound[];
-  /** Hồ sơ freelancer: không có Reject / đang xem xét / đã tuyển đủ — chỉ bài test + lịch trao đổi. */
+  /** Hồ sơ freelancer: không gửi mail tay (chỉ 2 mail tự động lúc nộp đơn) — chỉ xem lịch sử. */
   freelance?: boolean;
 }) {
   const { prompt, lastSentAt } = useCandidateMail();
@@ -462,7 +472,7 @@ export function CandidateMailSection({
         <h4 className="hr-section-title">
           Mail ứng viên <span className="font-normal text-white/50">{emails?.length ?? ""}</span>
         </h4>
-        {canSend && (
+        {canSend && !freelance && (
         <div className="relative">
           <button type="button" onClick={() => setMenuOpen((v) => !v)} className="hr-secondary-btn" aria-haspopup="menu" aria-expanded={menuOpen}>
             <Mail className="hr-ico" />Gửi mail
@@ -485,13 +495,9 @@ export function CandidateMailSection({
               {can("apps.view_tests") && (
                 <button role="menuitem" onClick={() => pick("test_assignment")} className="hr-menu-item">{KIND_LABEL.test_assignment}</button>
               )}
-              {!freelance && (
-                <>
-                  <button role="menuitem" onClick={() => pick("on_hold")} className="hr-menu-item">{KIND_LABEL.on_hold}</button>
-                  <button role="menuitem" onClick={() => pick("position_filled")} className="hr-menu-item">{KIND_LABEL.position_filled}</button>
-                  <button role="menuitem" onClick={() => pick("rejection")} className="hr-menu-item">{KIND_LABEL.rejection}</button>
-                </>
-              )}
+              <button role="menuitem" onClick={() => pick("on_hold")} className="hr-menu-item">{KIND_LABEL.on_hold}</button>
+              <button role="menuitem" onClick={() => pick("position_filled")} className="hr-menu-item">{KIND_LABEL.position_filled}</button>
+              <button role="menuitem" onClick={() => pick("rejection")} className="hr-menu-item">{KIND_LABEL.rejection}</button>
             </div>
           )}
         </div>

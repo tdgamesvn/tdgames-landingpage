@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { freelanceManualMailError } from "@/lib/hr-freelance";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail } from "@/lib/hr-email";
@@ -66,9 +67,11 @@ export async function POST(request: Request, { params }: Ctx) {
   if (!subject || !text) return NextResponse.json({ error: "Thiếu tiêu đề hoặc nội dung" }, { status: 400 });
   const interviewId = typeof body.interview_id === "string" && body.interview_id ? body.interview_id : null;
 
-  const app = await loadScopedApplication(ctx, id, "id, email, job_id, assignee_user_id").catch(() => undefined);
+  const app = await loadScopedApplication(ctx, id, "id, email, job_id, assignee_user_id, work_type").catch(() => undefined);
   if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const flMail = freelanceManualMailError(app.work_type);
+  if (flMail) return NextResponse.json({ error: flMail }, { status: 400 });
   const appEmail = typeof app.email === "string" ? app.email : null;
   if (!isValidEmail(appEmail)) return NextResponse.json({ error: "Ứng viên chưa có email hợp lệ" }, { status: 400 });
 

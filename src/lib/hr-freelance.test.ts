@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 
 import {
   checkFreelancePatch,
+  freelanceManualMailError,
   freelanceStatusPatch,
   isBlockedMoveTarget,
   filterFreelancers,
@@ -103,4 +104,10 @@ test("Quản lý trạng thái: không chuyển hồ sơ vào 'freelancer', khô
   assert.equal(isBlockedMoveTarget("new"), false);
   assert.deepEqual(freelanceStatusPatch("freelancer", { label: "FL", remind_days: 7 }), { label: "FL" });
   assert.deepEqual(freelanceStatusPatch("new", { remind_days: 7 }), { remind_days: 7 });
+});
+
+test("freelancer: không gửi mail tay (chỉ 2 mail tự động khi nộp đơn)", () => {
+  assert.ok(freelanceManualMailError("freelancer"));
+  assert.equal(freelanceManualMailError("fulltime"), null);
+  assert.equal(freelanceManualMailError(null), null);
 });

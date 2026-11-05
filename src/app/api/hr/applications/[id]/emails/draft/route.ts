@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { freelanceManualMailError } from "@/lib/hr-freelance";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken } from "@/lib/hr-tests";
@@ -34,9 +35,11 @@ export async function GET(request: Request, { params }: Ctx) {
   if (!auth.ctx.perms.has(kind === "offer" ? "emails.send_offer" : "emails.send")) return forbidden();
   // Nháp bài test tạo token + lộ link test → cần thêm quyền xem test, kiểm TRƯỚC khi tạo token.
   if (kind === "test_assignment" && !auth.ctx.perms.has("apps.view_tests")) return forbidden();
-  const scoped = await loadScopedApplication(auth.ctx, id).catch(() => undefined);
+  const scoped = await loadScopedApplication(auth.ctx, id, "id, work_type").catch(() => undefined);
   if (scoped === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!scoped) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const flMail = freelanceManualMailError(scoped.work_type);
+  if (flMail) return NextResponse.json({ error: flMail }, { status: 400 });
   const interviewId = url.searchParams.get("interview_id");
   const prevScheduledAt = url.searchParams.get("prev_scheduled_at");
 
