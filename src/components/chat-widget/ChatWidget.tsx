@@ -207,7 +207,9 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
     >
       {/* Header */}
       <div className="flex items-center gap-3 bg-[#111116] px-4 py-3 text-white">
-        <div className="grid h-9 w-9 flex-none place-items-center rounded-full bg-[#f59e0b] text-[13px] font-black text-[#111]">TD</div>
+        {/* Avatar = mascot TD Games (2026-11-05). */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="https://cdn.tdgamestudio.com/landing/chat/avatar-v2.webp" alt="" width={36} height={36} className="h-9 w-9 flex-none rounded-full bg-[#f59e0b] object-cover ring-2 ring-[#f59e0b]/60" />
         <div className="min-w-0">
           <div className="text-[14px] font-bold">TD Games Support</div>
           <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
