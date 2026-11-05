@@ -69,6 +69,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
     }
     await db.from("chat_threads").update({ audience: b.audience, updated_at: now }).eq("id", thread.id);
   } else if (b.action === "delete") {
+    // Xoá vĩnh viễn (khách xin xoá dữ liệu) → chỉ người có chat.manage.
+    if (!auth.ctx.perms.has("chat.manage")) {
+      return NextResponse.json({ error: "Bạn không có quyền xoá chat" }, { status: 403 });
+    }
     const { error } = await db.from("chat_threads").delete().eq("id", thread.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true, deleted: true });

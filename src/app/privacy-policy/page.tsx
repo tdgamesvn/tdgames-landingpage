@@ -62,6 +62,13 @@ const SECTIONS: LegalSection[] = [
     ],
   },
   {
+    title: "Website Chat",
+    paragraphs: [
+      "When you use the chat on our website, we store the messages you send, the name and email address you choose to leave, the pages of our site you viewed during the conversation, an approximate country derived from your IP address and your browser type. Your browser keeps a random identifier (in local storage and a cookie) so that you can continue the same conversation when you come back.",
+      "We use this information only to answer your questions and, if you leave an email address, to send you our replies by email. Chat conversations are accessible only to the TD Games staff who handle them and are deleted automatically 24 months after the last message, or sooner if you ask us to delete them.",
+    ],
+  },
+  {
     title: "Use of Data",
     bullets: [
       "To provide and maintain our Service.",

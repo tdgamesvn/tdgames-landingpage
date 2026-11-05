@@ -353,7 +353,21 @@ export async function purgeOld(now = new Date()): Promise<number> {
   const cutoff = new Date(now);
   cutoff.setMonth(cutoff.getMonth() - RETENTION_MONTHS);
   const { data } = await db().from("chat_threads").delete().lt("last_message_at", cutoff.toISOString()).select("id");
-  return (data ?? []).length;
+  // Luồng rỗng (mở ô chat rồi đóng, không tin nào) quá 1 ngày → xoá.
+  const dayAgo = new Date(now.getTime() - 86_400_000).toISOString();
+  const { data: old } = await db().from("chat_threads").select("id").lt("created_at", dayAgo).lt("last_message_at", dayAgo).limit(500);
+  let empty = 0;
+  if (old?.length) {
+    const ids = old.map((t) => t.id);
+    const { data: used } = await db().from("chat_messages").select("thread_id").in("thread_id", ids);
+    const has = new Set((used ?? []).map((m) => m.thread_id));
+    const drop = ids.filter((id) => !has.has(id));
+    if (drop.length) {
+      const { data: gone } = await db().from("chat_threads").delete().in("id", drop).select("id");
+      empty = (gone ?? []).length;
+    }
+  }
+  return (data ?? []).length + empty;
 }
 
 /** Link "Continue the conversation": còn hạn → cấp mã khách mới cho trình duyệt này. */

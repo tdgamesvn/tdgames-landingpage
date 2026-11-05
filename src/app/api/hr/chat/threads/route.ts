@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     .order("last_message_at", { ascending: false })
     .limit(100);
   if (filter === "needs") q = q.eq("needs_human", true).neq("status", "closed");
-  else if (filter === "answered") q = q.eq("needs_human", false).neq("status", "closed");
+  else if (filter === "answered") q = q.eq("status", "answered");
   else if (filter === "closed") q = q.eq("status", "closed");
 
   const [{ data: threads, error }, { count }] = await Promise.all([q, needsCount]);

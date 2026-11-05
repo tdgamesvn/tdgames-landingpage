@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Orbitron, Rajdhani, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import ClickSpark from "@/components/ClickSpark";
+import ChatLauncher from "@/components/chat-widget/chat-launcher";
 import GoogleAnalytics from "@/components/google-analytics";
 import HashScrollOnNav from "@/components/hash-scroll-on-nav";
 import { HeroRootStyles } from "@/components/hero-layout-state";
@@ -186,6 +187,7 @@ export default function RootLayout({
         <HashScrollOnNav />
         <ClickSpark />
         {children}
+        <ChatLauncher />
       </body>
     </html>
   );
