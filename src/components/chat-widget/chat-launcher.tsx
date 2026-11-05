@@ -29,11 +29,9 @@ export default function ChatLauncher() {
     if (!t) return;
     url.searchParams.delete("chat");
     window.history.replaceState(null, "", url.toString());
-    // Mở sau khi hydrate xong (đọc URL chỉ có ở client).
-    const id = setTimeout(() => {
-      setResumeToken(t);
-      setOpen(true);
-    }, 0);
+    // Không tự dùng link: link chỉ dùng 1 lần, trình quét mail (Safe Links…) chạy JS sẽ đốt mất.
+    // Hiện nút "Continue your conversation", khách bấm mới gọi /resume.
+    const id = setTimeout(() => setResumeToken(t), 0);
     return () => clearTimeout(id);
   }, []);
 
@@ -87,11 +85,21 @@ export default function ChatLauncher() {
           onClose={() => {
             setOpen(false);
             setUnread(false);
+            setResumeToken(null);
           }}
         />
       ) : (
         <div className="fixed bottom-4 right-4 z-[90] flex items-end gap-3 sm:bottom-6 sm:right-6">
-          {greet && (
+          {resumeToken && (
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="max-w-[230px] rounded-2xl rounded-br-md bg-white px-4 py-3 text-left text-[13px] font-semibold leading-snug text-zinc-900 shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
+            >
+              💬 Continue your conversation with TD Games →
+            </button>
+          )}
+          {greet && !resumeToken && (
             <button
               type="button"
               onClick={() => {

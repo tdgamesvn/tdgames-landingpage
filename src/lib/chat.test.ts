@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 
 import {
   canSeeAudience,
+  emptyThreadIds,
   classifyAudience,
   cleanText,
   hashToken,
@@ -49,7 +50,7 @@ test("nextThreadState: nút có sẵn không gọi người", () => {
     needsHuman: false,
   });
   assert.deepEqual(nextThreadState({ status: "closed", needsHuman: false }, "quick_reply"), {
-    status: "open",
+    status: "closed",
     needsHuman: false,
   });
   assert.deepEqual(nextThreadState({ status: "closed", needsHuman: false }, "visitor_text"), {
@@ -72,7 +73,9 @@ test("nextThreadState: nút có sẵn không gọi người", () => {
 
 test("shouldPush: 1 lần / 5 phút / luồng", () => {
   const now = at("2026-11-05T05:00:00Z");
-  assert.equal(shouldPush({ wasNeedsHuman: false, isNeedsHuman: true, lastPushAt: ago(now, 1), now }), true);
+  assert.equal(shouldPush({ wasNeedsHuman: false, isNeedsHuman: true, lastPushAt: ago(now, 1), now }), false);
+  assert.equal(shouldPush({ wasNeedsHuman: false, isNeedsHuman: true, lastPushAt: ago(now, 6), now }), true);
+  assert.equal(shouldPush({ wasNeedsHuman: false, isNeedsHuman: true, lastPushAt: null, now }), true);
   assert.equal(shouldPush({ wasNeedsHuman: true, isNeedsHuman: true, lastPushAt: ago(now, 2), now }), false);
   assert.equal(shouldPush({ wasNeedsHuman: true, isNeedsHuman: true, lastPushAt: ago(now, 6), now }), true);
   assert.equal(shouldPush({ wasNeedsHuman: true, isNeedsHuman: true, lastPushAt: null, now }), true);
@@ -153,4 +156,17 @@ test("parseQuickReply: sửa — chỉ trường gửi lên", () => {
   assert.deepEqual(parseQuickReply({ sortOrder: 20 }, false), { row: { sort_order: 20 } });
   assert.deepEqual(parseQuickReply({ linkUrl: "", linkLabel: "" }, false), { row: { link_url: null, link_label: null } });
   assert.ok("error" in parseQuickReply({}, false));
+});
+
+test("emptyThreadIds: chỉ luồng có count 0; thiếu count / lỗi → không xoá gì (C1)", () => {
+  assert.deepEqual(
+    emptyThreadIds([
+      { id: "a", chat_messages: [{ count: 0 }] },
+      { id: "b", chat_messages: [{ count: 3 }] },
+    ]),
+    ["a"],
+  );
+  assert.deepEqual(emptyThreadIds([{ id: "a", chat_messages: [{ count: 0 }] }, { id: "b" }]), []);
+  assert.deepEqual(emptyThreadIds([{ id: "a", chat_messages: [] }]), []);
+  assert.deepEqual(emptyThreadIds(null), []);
 });

@@ -66,6 +66,7 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
           getConfig(),
           resumeToken ? resumeThread(resumeToken).catch(() => openThread()) : openThread(),
         ]);
+        // (resumeToken chỉ được truyền sau khi khách BẤM "Continue" ở nút nổi — trình quét mail tự mở link không làm mất link.)
         if (!alive) return;
         setConfig(cfg);
         setThread(r.thread);
@@ -84,20 +85,26 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
   const ready = thread !== null;
   useEffect(() => {
     if (!ready) return;
+    let alive = true;
     let timer: ReturnType<typeof setTimeout>;
     const tick = async () => {
       try {
-        const r = await pollThread(lastAtRef.current);
+        const r = await pollThread(lastAtRef.current, !document.hidden);
+        if (!alive) return;
         setThread(r.thread);
         setOnline(r.online);
         merge(r.messages);
       } catch {
         /* thử lại lần sau */
       }
-      timer = setTimeout(tick, document.hidden ? POLL_HIDDEN_MS : POLL_VISIBLE_MS);
+      // Đã đóng khung trong lúc chờ → không hẹn lượt sau (tránh vòng poll mồ côi).
+      if (alive) timer = setTimeout(tick, document.hidden ? POLL_HIDDEN_MS : POLL_VISIBLE_MS);
     };
     timer = setTimeout(tick, POLL_VISIBLE_MS);
-    return () => clearTimeout(timer);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
   }, [ready, merge]);
 
   useEffect(() => {

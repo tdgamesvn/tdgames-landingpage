@@ -43,8 +43,10 @@ export async function GET(req: Request) {
   if (!pollLimiter.tryHit(ipOf(req))) return err(429, "rate_limited");
   const thread = await threadForToken(readToken(req));
   if (!thread) return err(404, "not_found");
-  const after = new URL(req.url).searchParams.get("after");
-  const [messages, online] = await Promise.all([listMessages(thread.id, after), chatOnline()]);
-  await touchVisitor(thread.id);
+  const sp = new URL(req.url).searchParams;
+  const [messages, online] = await Promise.all([listMessages(thread.id, sp.get("after")), chatOnline()]);
+  // Chỉ khi khung chat đang mở + tab đang xem mới tính "khách đã thấy" (nút nổi kiểm chấm đỏ thì không),
+  // nếu không mail trả lời sẽ bị bỏ vì tưởng khách đã đọc.
+  if (sp.get("seen") === "1") await touchVisitor(thread.id);
   return NextResponse.json({ thread: toPublicThread(thread), messages: messages.map(toPublicMessage), online });
 }

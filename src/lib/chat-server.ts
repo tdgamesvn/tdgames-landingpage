@@ -4,6 +4,9 @@ import "server-only";
 import { getSupabaseAdmin } from "./supabase-admin";
 import {
   CHAT_HOURS_DEFAULT,
+  EMAIL_GAP_MINUTES,
+  emptyThreadIds,
+  PUSH_GAP_MINUTES,
   hashToken,
   isWithinHours,
   newToken,
@@ -228,10 +231,9 @@ export async function addVisitorMessage(
     patch.last_page = args.page;
     patch.pages = [...(thread.pages ?? []).filter((p) => p !== args.page), args.page].slice(-5);
   }
-  if (push) patch.last_push_at = now.toISOString();
   await db().from("chat_threads").update(patch).eq("id", thread.id);
 
-  if (push) {
+  if (push && (await claimSlot(thread.id, "last_push_at", PUSH_GAP_MINUTES, now))) {
     const who = thread.name || thread.email || `Visitor #${thread.id.slice(-4)}`;
     const flag = countryFlag(thread.country);
     await notifyStaff(audience, {
@@ -305,6 +307,8 @@ async function flushThreadEmail(thread: ChatThreadRow, now: Date): Promise<boole
     await db().from("chat_threads").update({ email_pending: false }).eq("id", thread.id);
     return false;
   }
+  // Giành suất gửi trước (2 trả lời liền nhau / cron chạy cùng lúc → chỉ 1 mail).
+  if (!(await claimSlot(thread.id, "last_email_at", EMAIL_GAP_MINUTES, now))) return false;
   const staffName = String(replies[replies.length - 1].staff_name ?? "TD Games");
   const linkToken = newToken();
   const mail = buildChatReplyEmail({
@@ -328,18 +332,31 @@ async function flushThreadEmail(thread: ChatThreadRow, now: Date): Promise<boole
   });
   if ("error" in res) {
     console.error("[chat] gửi mail lỗi:", res.error);
+    // Trả suất để cron thử lại lần sau.
+    await db().from("chat_threads").update({ last_email_at: thread.last_email_at }).eq("id", thread.id);
     return false;
   }
   await db()
     .from("chat_threads")
     .update({
       email_pending: false,
-      last_email_at: now.toISOString(),
       email_link_token_hash: hashToken(linkToken),
       email_link_expires_at: new Date(now.getTime() + EMAIL_LINK_DAYS * 86_400_000).toISOString(),
     })
     .eq("id", thread.id);
   return true;
+}
+
+/** Giành "suất" theo cột thời gian: cập nhật = now chỉ khi cột null hoặc cũ hơn `gapMin` phút. true = giành được. */
+async function claimSlot(threadId: string, col: "last_push_at" | "last_email_at", gapMin: number, now: Date): Promise<boolean> {
+  const cutoff = new Date(now.getTime() - gapMin * 60_000).toISOString();
+  const { data, error } = await db()
+    .from("chat_threads")
+    .update({ [col]: now.toISOString() })
+    .eq("id", threadId)
+    .or(`${col}.is.null,${col}.lt.${cutoff}`)
+    .select("id");
+  return !error && !!data?.length;
 }
 
 export async function flushPendingEmails(now = new Date()): Promise<number> {
@@ -353,19 +370,20 @@ export async function purgeOld(now = new Date()): Promise<number> {
   const cutoff = new Date(now);
   cutoff.setMonth(cutoff.getMonth() - RETENTION_MONTHS);
   const { data } = await db().from("chat_threads").delete().lt("last_message_at", cutoff.toISOString()).select("id");
-  // Luồng rỗng (mở ô chat rồi đóng, không tin nào) quá 1 ngày → xoá.
+  // Luồng rỗng (mở ô chat rồi đóng, không tin nào) quá 1 ngày → xoá. Đếm tin bằng embed count trong CÙNG
+  // truy vấn (không giới hạn 1000 dòng); lỗi / thiếu đếm → không xoá gì.
   const dayAgo = new Date(now.getTime() - 86_400_000).toISOString();
-  const { data: old } = await db().from("chat_threads").select("id").lt("created_at", dayAgo).lt("last_message_at", dayAgo).limit(500);
+  const { data: old, error: oldErr } = await db()
+    .from("chat_threads")
+    .select("id, chat_messages(count)")
+    .lt("created_at", dayAgo)
+    .lt("last_message_at", dayAgo)
+    .limit(200);
   let empty = 0;
-  if (old?.length) {
-    const ids = old.map((t) => t.id);
-    const { data: used } = await db().from("chat_messages").select("thread_id").in("thread_id", ids);
-    const has = new Set((used ?? []).map((m) => m.thread_id));
-    const drop = ids.filter((id) => !has.has(id));
-    if (drop.length) {
-      const { data: gone } = await db().from("chat_threads").delete().in("id", drop).select("id");
-      empty = (gone ?? []).length;
-    }
+  const drop = oldErr ? [] : emptyThreadIds(old as { id: string; chat_messages?: { count: number }[] }[] | null);
+  if (drop.length) {
+    const { data: gone } = await db().from("chat_threads").delete().in("id", drop).select("id");
+    empty = (gone ?? []).length;
   }
   return (data ?? []).length + empty;
 }

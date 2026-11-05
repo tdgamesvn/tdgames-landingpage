@@ -82,14 +82,28 @@ export async function openThread(): Promise<ThreadResponse> {
   return r;
 }
 
-export async function resumeThread(t: string): Promise<ThreadResponse> {
-  const r = await call<ThreadResponse>("/resume", { method: "POST", body: JSON.stringify({ t }) });
-  if (r.token) setToken(r.token);
-  return r;
+// Link email chỉ dùng 1 lần → mỗi mã chỉ gọi /resume 1 lần dù effect chạy lại (React dev StrictMode).
+const resumed = new Map<string, Promise<ThreadResponse>>();
+export function resumeThread(t: string): Promise<ThreadResponse> {
+  let p = resumed.get(t);
+  if (!p) {
+    p = call<ThreadResponse>("/resume", { method: "POST", body: JSON.stringify({ t }) }).then((r) => {
+      if (r.token) setToken(r.token);
+      return r;
+    });
+    resumed.set(t, p);
+  }
+  return p;
 }
 
-export const pollThread = (after: string | null) =>
-  call<ThreadResponse>(`/thread${after ? `?after=${encodeURIComponent(after)}` : ""}`);
+/** `seen` = khung chat đang mở và tab đang xem (server mới tính khách đã thấy tin). */
+export const pollThread = (after: string | null, seen = false) => {
+  const q = new URLSearchParams();
+  if (after) q.set("after", after);
+  if (seen) q.set("seen", "1");
+  const qs = q.toString();
+  return call<ThreadResponse>(`/thread${qs ? `?${qs}` : ""}`);
+};
 
 export const sendMessage = (kind: "text" | "talk_to_person", body: string) =>
   call<{ messages: ChatMessage[]; thread: ChatThread }>("/message", {

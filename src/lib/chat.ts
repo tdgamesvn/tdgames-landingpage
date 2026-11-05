@@ -62,7 +62,8 @@ export function nextThreadState(
     case "talk_to_person":
       return { status: "open", needsHuman: true };
     case "quick_reply":
-      return { status: prev.status === "closed" ? "open" : prev.status, needsHuman: prev.needsHuman };
+      // Chỉ xem câu trả lời có sẵn — không mở lại luồng đã đóng, không gọi người.
+      return { status: prev.status, needsHuman: prev.needsHuman };
     case "staff_reply":
       return { status: "answered", needsHuman: false };
     case "close":
@@ -70,11 +71,25 @@ export function nextThreadState(
   }
 }
 
-/** Gọi khi khách gửi tin cho người thật. Vừa chuyển sang cần người → báo; đang cần người → tối đa 1 lần / 5 phút. */
+/** Gọi khi khách gửi tin cho người thật. Luồng cần người → báo, tối đa 1 lần / 5 phút / luồng (spec §7). */
 export function shouldPush(args: { wasNeedsHuman: boolean; isNeedsHuman: boolean; lastPushAt: Date | null; now: Date }): boolean {
   if (!args.isNeedsHuman) return false;
-  if (!args.wasNeedsHuman) return true;
   return !args.lastPushAt || args.now.getTime() - args.lastPushAt.getTime() >= PUSH_GAP_MS;
+}
+
+export const PUSH_GAP_MINUTES = PUSH_GAP_MS / 60_000;
+export const EMAIL_GAP_MINUTES = EMAIL_GAP_MS / 60_000;
+
+/** Luồng rỗng để dọn: chỉ id có đếm tin = 0. Thiếu/lạ dữ liệu đếm ở BẤT KỲ dòng nào → [] (không xoá nhầm). */
+export function emptyThreadIds(rows: { id: string; chat_messages?: { count: number }[] | null }[] | null): string[] {
+  if (!rows) return [];
+  const out: string[] = [];
+  for (const r of rows) {
+    const c = r.chat_messages?.[0]?.count;
+    if (typeof c !== "number") return [];
+    if (c === 0) out.push(r.id);
+  }
+  return out;
 }
 
 /** Mail câu trả lời cho khách: có email, khách đã rời ≥ 2 phút, mail trước cách ≥ 10 phút. */

@@ -61,7 +61,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
     const s = nextThreadState({ status: thread.status, needsHuman: thread.needs_human }, "close");
     await db.from("chat_threads").update({ status: s.status, needs_human: s.needsHuman, updated_at: now }).eq("id", thread.id);
   } else if (b.action === "reopen") {
-    await db.from("chat_threads").update({ status: "open", updated_at: now }).eq("id", thread.id);
+    // Mở lại = đưa về hàng "Cần người" (nếu không sẽ không nằm trong bộ lọc nào).
+    await db.from("chat_threads").update({ status: "open", needs_human: true, updated_at: now }).eq("id", thread.id);
   } else if (b.action === "set_audience") {
     if (b.audience !== "client" && b.audience !== "candidate") return NextResponse.json({ error: "audience sai" }, { status: 400 });
     if (!canSeeAudience(auth.ctx.perms, b.audience)) {
