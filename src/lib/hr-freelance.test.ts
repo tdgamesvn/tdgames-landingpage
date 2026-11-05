@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 
 import {
   checkFreelancePatch,
+  freelanceStatusPatch,
+  isBlockedMoveTarget,
   filterFreelancers,
   formatRateVnd,
   freelancePatchFields,
@@ -94,4 +96,11 @@ test("freelancePatchFields: map giá trị + 2 chiều đổi hình thức", () 
   });
   assert.deepEqual(freelancePatchFields({ convert_work_type: "fulltime" }, { jobOpen: true }), { work_type: "fulltime", status: "new" });
   assert.deepEqual(freelancePatchFields({ admin_notes: "x" }, { jobOpen: true }), {});
+});
+
+test("Quản lý trạng thái: không chuyển hồ sơ vào 'freelancer', không đặt nhắc cho 'freelancer'", () => {
+  assert.equal(isBlockedMoveTarget("freelancer"), true);
+  assert.equal(isBlockedMoveTarget("new"), false);
+  assert.deepEqual(freelanceStatusPatch("freelancer", { label: "FL", remind_days: 7 }), { label: "FL" });
+  assert.deepEqual(freelanceStatusPatch("new", { remind_days: 7 }), { remind_days: 7 });
 });

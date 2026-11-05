@@ -195,3 +195,15 @@ test("ứng viên trùng: duplicate_* là BASE; referred_by_submitted / referrer
   assert.equal(notes.duplicate_of, "0");
   assert.equal(notes.referrer_notified_by, "Phương");
 });
+
+test("redactApplication: trường kho freelancer giữ cho mọi vai (trừ rate cần apps.view_salary)", () => {
+  const fl = { ...app, work_type: "freelancer", status: "freelancer", freelance_stage: "testing", freelance_level: "junior", freelance_job_open: false, freelance_issue: true, rate_vnd_per_hour: 150000 };
+  for (const role of ["leader", "accountant"] as const) {
+    const out = redactApplication(fl, effectivePermissions(role, []));
+    assert.equal(out.freelance_stage, "testing", role);
+    assert.equal(out.freelance_level, "junior", role);
+    assert.equal(out.freelance_job_open, false, role);
+    assert.equal(out.freelance_issue, true, role);
+  }
+  assert.ok(!("rate_vnd_per_hour" in redactApplication(fl, effectivePermissions("leader", []))));
+});

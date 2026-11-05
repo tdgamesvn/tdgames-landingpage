@@ -38,6 +38,8 @@ export const BASE_FIELDS: readonly string[] = Object.freeze([
   "available_from", "status", "offer_status", "offer_status_at", "created_at", "updated_at",
   "message", "available_hours_per_week", "assignee_user_id", "offer_approval_status",
   "duplicate_kind", "status_changed_at",
+  // Kho freelancer: tiến độ / hạng / nhãn — ai xem được hồ sơ thì xem được (rate nằm ở apps.view_salary).
+  "freelance_stage", "freelance_level", "freelance_job_open", "freelance_issue",
 ]);
 
 /** Nhóm field theo quyền; quyền không gắn field trên hồ sơ → []. Key không thuộc nhóm nào bị bỏ. */
@@ -51,7 +53,6 @@ const GROUPS_WITH_FIELDS = {
   "apps.view_notes": [
     "admin_notes", "rejection_reason", "referred_by", "source", "blocked", "block_reason", "label",
     "referred_by_submitted", "referrer_notified_at", "referrer_notified_by", "duplicate_of",
-    "freelance_issue",
   ],
   "apps.view_interviews": ["interview_sessions"],
   "apps.view_tests": ["test_submissions", "test_review", "test_token", "test_eta", "test_eta_set_at"],

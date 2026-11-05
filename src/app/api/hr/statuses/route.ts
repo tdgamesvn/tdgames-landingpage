@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { freelanceStatusPatch, isBlockedMoveTarget } from "@/lib/hr-freelance";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser } from "@/lib/hr-session";
 
@@ -108,7 +109,7 @@ export async function PATCH(request: Request) {
   const supabase = getSupabaseAdmin();
   for (const item of list) {
     if (typeof item.key !== "string") continue;
-    const patch = pickEditable(item);
+    const patch = freelanceStatusPatch(item.key, pickEditable(item));
     if (Object.keys(patch).length === 0) continue;
     const { error } = await supabase.from("application_statuses").update(patch).eq("key", item.key);
     if (error) return NextResponse.json({ error: `${item.key}: ${error.message}` }, { status: 500 });
@@ -149,6 +150,9 @@ export async function DELETE(request: Request) {
   if (countErr) return NextResponse.json({ error: countErr.message }, { status: 500 });
 
   if ((count ?? 0) > 0) {
+    if (isBlockedMoveTarget(moveTo)) {
+      return NextResponse.json({ error: "Không chuyển hồ sơ vào cột Freelancer — dùng “Chuyển sang freelancer” trong hồ sơ" }, { status: 400 });
+    }
     if (!moveTo || moveTo === key) {
       return NextResponse.json(
         { error: `Còn ${count} ứng viên trong cột này — chọn cột để chuyển sang`, count },

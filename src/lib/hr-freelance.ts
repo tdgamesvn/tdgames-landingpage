@@ -152,3 +152,19 @@ export function freelancePatchFields(body: Record<string, unknown>, ctx: { jobOp
   }
   return out;
 }
+
+/** Status cố định của hồ sơ freelancer. */
+export const FREELANCER_STATUS_KEY = "freelancer";
+
+/** Xoá status trong Quản lý trạng thái: không được dồn hồ sơ (fulltime) vào cột freelancer. */
+export function isBlockedMoveTarget(key: string | null | undefined): boolean {
+  return key === FREELANCER_STATUS_KEY;
+}
+
+/** Sửa status trong Quản lý trạng thái: cột freelancer không có nhắc hồ sơ tồn (remind_days). */
+export function freelanceStatusPatch(key: string, patch: Record<string, unknown>): Record<string, unknown> {
+  if (key !== FREELANCER_STATUS_KEY || !("remind_days" in patch)) return patch;
+  const rest = { ...patch };
+  delete rest.remind_days;
+  return rest;
+}

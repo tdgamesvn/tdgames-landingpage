@@ -1,5 +1,6 @@
 "use client";
 
+import { FREELANCER_STATUS_KEY, isBlockedMoveTarget } from "@/lib/hr-freelance";
 import { useState } from "react";
 import type { StatusDef, StatusKind } from "@/app/admin/_lib/types";
 import { STATUS_PALETTE } from "./status-palette";
@@ -125,7 +126,7 @@ export default function StatusManager({
       if (confirm(`Xoá status "${s.label}"?`)) void remove(s.key);
       return;
     }
-    const fallback = draft.find((d) => d.key !== s.key && d.kind === "open")?.key ?? "new";
+    const fallback = draft.find((d) => d.key !== s.key && d.kind === "open" && !isBlockedMoveTarget(d.key))?.key ?? "new";
     setDeleting({ key: s.key, moveTo: fallback });
   }
 
@@ -210,7 +211,7 @@ export default function StatusManager({
                   type="number"
                   min={1}
                   value={s.remind_days ?? ""}
-                  disabled={s.kind !== "open"}
+                  disabled={s.kind !== "open" || s.key === FREELANCER_STATUS_KEY}
                   placeholder="Nhắc"
                   title="Nhắc sau (ngày)"
                   onChange={(e) => patchRow(s.key, { remind_days: e.target.value ? Math.max(1, Number(e.target.value)) : null })}
@@ -235,7 +236,7 @@ export default function StatusManager({
                     onChange={(e) => setDeleting({ key: s.key, moveTo: e.target.value })}
                     className="rounded border border-white/10 bg-white/5 px-1.5 py-1 text-xs text-white"
                   >
-                    {draft.filter((d) => d.key !== s.key).map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
+                    {draft.filter((d) => d.key !== s.key && !isBlockedMoveTarget(d.key)).map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
                   </select>
                   <span>rồi xoá.</span>
                   <button
