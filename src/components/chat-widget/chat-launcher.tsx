@@ -13,6 +13,7 @@ const GREET_KEY = "tdg_chat_greet_at";
 const GREET_DELAY_MS = 8000;
 const GREET_EVERY_MS = 7 * 86_400_000;
 const SEEN_KEY = "tdg_chat_seen_at";
+const MASCOT_SRC = "https://cdn.tdgamestudio.com/landing/chat/mascot-v1.webp";
 
 export default function ChatLauncher() {
   const pathname = usePathname() ?? "/";
@@ -78,7 +79,11 @@ export default function ChatLauncher() {
 
   return (
     <div className="tdg-chat">
-      <style>{`@media print{.tdg-chat{display:none!important}} body:has(main[data-view="deck"]) .tdg-chat{display:none!important}`}</style>
+      <style>{`@media print{.tdg-chat{display:none!important}} body:has(main[data-view="deck"]) .tdg-chat{display:none!important}
+.tdg-chat-mascot{transform-origin:50% 92%;animation:tdg-wave 4.2s ease-in-out 1.2s infinite;transition:scale .25s ease}
+.tdg-chat-mascot:hover{scale:1.07;animation-duration:1.4s;animation-delay:0s}
+@keyframes tdg-wave{0%,62%,100%{transform:rotate(0)}68%{transform:rotate(-7deg)}74%{transform:rotate(6deg)}80%{transform:rotate(-5deg)}86%{transform:rotate(3deg)}92%{transform:rotate(0)}}
+@media (prefers-reduced-motion:reduce){.tdg-chat-mascot{animation:none}}`}</style>
       {open ? (
         <ChatWidget
           resumeToken={resumeToken}
@@ -129,12 +134,20 @@ export default function ChatLauncher() {
               setGreet(false);
               setOpen(true);
             }}
-            className="relative grid h-14 w-14 place-items-center rounded-full bg-[#f59e0b] text-[#1a1206] shadow-[0_10px_30px_rgba(245,158,11,0.45)] transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="tdg-chat-mascot relative block rounded-2xl outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
-            <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" />
-            </svg>
-            {unread && <span className="absolute right-0.5 top-0.5 h-3.5 w-3.5 rounded-full border-2 border-black bg-red-500" aria-label="New reply" />}
+            {/* Mascot TD Games ngồi trên bong bóng chat (2026-11-05, sếp gửi) — vẫy tay theo nhịp. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={MASCOT_SRC}
+              alt=""
+              width={154}
+              height={240}
+              decoding="async"
+              className="h-[96px] w-auto select-none drop-shadow-[0_8px_18px_rgba(0,0,0,0.45)] sm:h-[120px]"
+              draggable={false}
+            />
+            {unread && <span className="absolute right-0 top-1 h-3.5 w-3.5 rounded-full border-2 border-black bg-red-500" aria-label="New reply" />}
           </button>
         </div>
       )}
