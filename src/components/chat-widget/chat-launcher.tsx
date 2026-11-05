@@ -145,8 +145,8 @@ export default function ChatLauncher() {
             {/* Vầng sáng cam nhẹ sau lưng nhân vật (ở giữa icon, sếp chốt) — đứng yên, chỉ thở nhẹ, không xoay theo. */}
             <span
               aria-hidden
-              className="tdg-chat-glow pointer-events-none absolute left-1/2 top-[55%] -z-10 h-[170px] w-[170px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[10px] sm:h-[215px] sm:w-[215px]"
-              style={{ background: "radial-gradient(circle at center, rgba(255,150,40,0.75) 0%, rgba(255,130,25,0.45) 40%, rgba(255,115,10,0.18) 58%, rgba(255,110,0,0) 72%)" }}
+              className="tdg-chat-glow pointer-events-none absolute left-1/2 top-[55%] -z-10 h-[120px] w-[120px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[10px] sm:h-[150px] sm:w-[150px]"
+              style={{ background: "radial-gradient(circle at center, rgba(255,150,40,0.45) 0%, rgba(255,130,25,0.25) 45%, rgba(255,115,10,0.08) 62%, rgba(255,110,0,0) 74%)" }}
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -155,7 +155,7 @@ export default function ChatLauncher() {
               width={154}
               height={240}
               decoding="async"
-              className="relative h-[96px] w-auto select-none drop-shadow-[0_8px_18px_rgba(0,0,0,0.45)] sm:h-[120px]"
+              className="relative h-[96px] w-auto select-none [filter:drop-shadow(0_0_8px_rgba(255,140,30,0.55))_drop-shadow(0_6px_14px_rgba(0,0,0,0.4))] sm:h-[120px]"
               draggable={false}
             />
             {unread && <span className="absolute right-0 top-1 h-3.5 w-3.5 rounded-full border-2 border-black bg-red-500" aria-label="New reply" />}
