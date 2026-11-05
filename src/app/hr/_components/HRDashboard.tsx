@@ -1,6 +1,7 @@
 "use client";
 
-import { isFreelanceApp } from "@/lib/hr-freelance";
+import { formatRateVnd, isFreelanceApp } from "@/lib/hr-freelance";
+import FreelancerView, { FreelanceControls } from "./FreelancerView";
 import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Application, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
@@ -719,6 +720,28 @@ function CandidateModal({
   }, [note]);
   const [evaluating, setEvaluating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const freelance = isFreelanceApp(app);
+  const [converting, setConverting] = useState(false);
+  // Đổi hình thức fulltime ↔ freelancer (thay cho kéo vào cột Freelancer). Không gửi mail.
+  async function convertWorkType() {
+    const to = freelance ? "fulltime" : "freelancer";
+    if (!confirm(`Chuyển hồ sơ ${app.full_name} sang ${to}? Không gửi mail cho ứng viên.`)) return;
+    setConverting(true);
+    try {
+      const res = await hrFetch(`/api/hr/applications/${app.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ convert_work_type: to }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      onPatch(data.application);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Không đổi được hình thức");
+    } finally {
+      setConverting(false);
+    }
+  }
 
   async function evaluate() {
     setEvaluating(true);
@@ -764,7 +787,8 @@ function CandidateModal({
     ["Lương mong muốn", app.expected_salary],
     ["Hình thức", app.work_type],
     ["Có thể bắt đầu", app.available_from],
-    ["Rate / giờ", app.rate_per_hour],
+    ["Rate / giờ", app.rate_vnd_per_hour != null ? formatRateVnd(app.rate_vnd_per_hour) : app.rate_per_hour],
+    ["Ghi chú về giá", app.rate_vnd_per_hour != null ? app.rate_per_hour : null],
     ["Giờ / tuần", app.available_hours_per_week],
   ] as [string, string | null][]).filter((f): f is [string, string] => !!f[1]);
   const appliedAt = new Date(app.created_at).toLocaleString("vi-VN", {
@@ -798,7 +822,9 @@ function CandidateModal({
           </div>
 
           <div className="mt-3.5 flex flex-wrap items-center gap-2 md:pl-[52px]">
-            {canEdit ? (
+            {freelance ? (
+              <FreelanceControls app={app} onPatch={onPatch} />
+            ) : canEdit ? (
               <StatusMenu
                 status={app.status}
                 saving={saving}
@@ -811,12 +837,12 @@ function CandidateModal({
                 <span className={S.color(app.status)}>{S.label(app.status)}</span>
               </span>
             )}
-            {next && (
+            {!freelance && next && (
               <button onClick={() => onMove(next)} disabled={saving} className="hr-primary-btn hr-primary-btn--sm">
                 Chuyển sang {S.label(next)}
               </button>
             )}
-            {canEdit && (app.status !== "rejected" ? (
+            {canEdit && !freelance && (app.status !== "rejected" ? (
               <button onClick={() => setShowRejectModal(true)} disabled={saving} className="hr-secondary-btn text-red-400">
                 <X className="hr-ico" />Reject
               </button>
@@ -837,11 +863,18 @@ function CandidateModal({
                 <span className="hidden lg:inline">{showCv ? "Ẩn CV" : "Xem CV"}</span>
               </button>
             )}
-            {can("apps.delete") && (
+            {(can("apps.delete") || canEdit) && (
               <MoreMenu>
-                <button role="menuitem" onClick={onDeleteApp} disabled={saving} className="hr-menu-item text-red-400">
-                  <Trash2 className="hr-ico" />Xoá hồ sơ
-                </button>
+                {canEdit && (
+                  <button role="menuitem" onClick={() => void convertWorkType()} disabled={saving || converting} className="hr-menu-item">
+                    <RefreshCw className="hr-ico" />{freelance ? "Chuyển sang fulltime" : "Chuyển sang freelancer"}
+                  </button>
+                )}
+                {can("apps.delete") && (
+                  <button role="menuitem" onClick={onDeleteApp} disabled={saving} className="hr-menu-item text-red-400">
+                    <Trash2 className="hr-ico" />Xoá hồ sơ
+                  </button>
+                )}
               </MoreMenu>
             )}
           </div>
@@ -1011,6 +1044,7 @@ function CandidateModal({
               appId={app.id}
               candidateName={app.full_name}
               rounds={app.interview_sessions ?? []}
+              freelance={freelance}
             />
 
             {/* Liên hệ & hồ sơ */}
@@ -3207,7 +3241,7 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type View = "pipeline" | "kpi" | "jobs" | "data" | "templates" | "referrals" | "accounts";
+type View = "pipeline" | "freelancers" | "kpi" | "jobs" | "data" | "templates" | "referrals" | "accounts";
 
 type ThemeState = readonly [HrThemePref, (p: HrThemePref) => void];
 
@@ -3457,6 +3491,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
 
   // Bảng fulltime (Pipeline/Data/KPI/Jobs/số đang xử lý) bỏ hồ sơ freelancer — chúng ở tab Freelancer.
   const fulltimeApps = useMemo(() => apps.filter((a) => !isFreelanceApp(a)), [apps]);
+  const freelanceApps = useMemo(() => apps.filter(isFreelanceApp), [apps]);
 
   const moveApps = useCallback((ids: string[], status: ApplicationStatus) => {
     const set = new Set(ids);
@@ -3466,6 +3501,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
   // Tab theo quyền: Jobs = quản lý job; KPI dựa trên người giới thiệu + lý do loại (apps.view_notes).
   const views: View[] = [
     "pipeline",
+    "freelancers",
     "data",
     ...(can("apps.view_notes") ? (["kpi"] as View[]) : []),
     ...(can("jobs.manage") ? (["jobs"] as View[]) : []),
@@ -3502,7 +3538,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <div className="hr-segmented order-last w-full md:order-none md:w-auto" role="group" aria-label="Chế độ xem">
             {views.map((v) => (
               <button key={v} type="button" aria-pressed={activeView === v} onClick={() => setView(v)}>
-                {v === "pipeline" ? "Pipeline" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "templates" ? "Mẫu mail" : v === "referrals" ? "Hoa hồng" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
+                {v === "pipeline" ? "Pipeline" : v === "freelancers" ? "Freelancer" : v === "data" ? "Data" : v === "kpi" ? "KPI" : v === "templates" ? "Mẫu mail" : v === "referrals" ? "Hoa hồng" : v === "accounts" ? "Tài khoản & quyền" : "Jobs"}
               </button>
             ))}
           </div>
@@ -3558,6 +3594,8 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
         ) : activeView === "pipeline" ? (
           <PipelineView apps={fulltimeApps} onUpdate={updateApp} onDelete={deleteApp} />
+        ) : activeView === "freelancers" ? (
+          <FreelancerView apps={freelanceApps} jobs={jobs} staffNames={staffNames} onOpen={setSearchOpenId} />
         ) : activeView === "data" ? (
           <DataView apps={fulltimeApps} jobs={jobs} onUpdate={updateApp} onDelete={deleteApp} />
         ) : activeView === "kpi" ? (
