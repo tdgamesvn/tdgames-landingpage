@@ -1,5 +1,6 @@
 "use client";
 
+import { isFreelanceApp } from "@/lib/hr-freelance";
 import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Application, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
@@ -237,6 +238,8 @@ function AssigneeBadge({ id }: { id: string | null | undefined }) {
   );
 }
 
+/** Status cố định của mọi hồ sơ freelancer (kho freelancer) — không hiện ở bảng fulltime. */
+const FREELANCER_STATUS = "freelancer";
 const COLLAPSED_KEY = "hr.pipeline.collapsed";
 const CV_OPEN_KEY = "hr.modal.cvOpen";
 const WIDE_MQ = "(min-width: 1024px)";
@@ -1135,7 +1138,7 @@ function StatusMenu({
       </button>
       {open && (
         <div role="menu" className="hr-menu left-0">
-          {S.keys.filter((s) => s !== "rejected").map((s) => (
+          {S.keys.filter((s) => s !== "rejected" && s !== FREELANCER_STATUS).map((s) => (
             <button
               key={s}
               role="menuitemradio"
@@ -1580,10 +1583,12 @@ function PipelineView({
   const { me, can } = useHrSession();
   // Kế toán chỉ thấy cột từ Interview trở đi (trừ nhóm loại) + cột nào đang có thẻ của mình (vd. đã có offer_status).
   const columnKeys = useMemo(() => {
-    if (me?.role !== "accountant") return S.keys;
+    // Cột Freelancer không hiện — hồ sơ freelancer ở tab Freelancer (2026-11-05).
+    const keys = S.keys.filter((k) => k !== FREELANCER_STATUS);
+    if (me?.role !== "accountant") return keys;
     const allowed = new Set<string>(accountantStatusKeys(S.list));
     for (const a of apps) allowed.add(a.status);
-    return S.keys.filter((k) => allowed.has(k));
+    return keys.filter((k) => allowed.has(k));
   }, [me?.role, S, apps]);
   const [overCol, setOverCol] = useState<ApplicationStatus | null>(null);
   const [pendingReject, setPendingReject] = useState<Application | null>(null);
@@ -2651,7 +2656,7 @@ function DataView({
         />
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={selectCls}>
           <option value="all">All Status</option>
-          {S.keys.map((s) => <option key={s} value={s}>{S.label(s)}</option>)}
+          {S.keys.filter((s) => s !== FREELANCER_STATUS).map((s) => <option key={s} value={s}>{S.label(s)}</option>)}
         </select>
         <select value={filterJob} onChange={(e) => setFilterJob(e.target.value)} className={selectCls}>
           <option value="all">All Jobs</option>
@@ -3450,6 +3455,9 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     setApps((prev) => prev.filter((a) => a.id !== id));
   }
 
+  // Bảng fulltime (Pipeline/Data/KPI/Jobs/số đang xử lý) bỏ hồ sơ freelancer — chúng ở tab Freelancer.
+  const fulltimeApps = useMemo(() => apps.filter((a) => !isFreelanceApp(a)), [apps]);
+
   const moveApps = useCallback((ids: string[], status: ApplicationStatus) => {
     const set = new Set(ids);
     setApps((prev) => prev.map((a) => (set.has(a.id) ? { ...a, status } : a)));
@@ -3470,7 +3478,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
   const lostKeys = new Set(statuses.filter((st) => st.kind === "lost").map((st) => st.key));
-  const activeCount = apps.filter((a) => !lostKeys.has(a.status)).length;
+  const activeCount = fulltimeApps.filter((a) => !lostKeys.has(a.status)).length;
   // Mọi tab dùng hết chiều ngang (màn rộng không bị cắt cột Pipeline) — cùng một độ rộng để
   // header/nội dung không nhảy khi đổi tab. Lề ngang do px-* ở header/main lo.
   const pageWidth = "max-w-none";
@@ -3549,11 +3557,11 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
         {loading && apps.length === 0 ? (
           <p className="py-16 text-center text-sm text-white/30">Loading…</p>
         ) : activeView === "pipeline" ? (
-          <PipelineView apps={apps} onUpdate={updateApp} onDelete={deleteApp} />
+          <PipelineView apps={fulltimeApps} onUpdate={updateApp} onDelete={deleteApp} />
         ) : activeView === "data" ? (
-          <DataView apps={apps} jobs={jobs} onUpdate={updateApp} onDelete={deleteApp} />
+          <DataView apps={fulltimeApps} jobs={jobs} onUpdate={updateApp} onDelete={deleteApp} />
         ) : activeView === "kpi" ? (
-          <KPIView apps={apps} />
+          <KPIView apps={fulltimeApps} />
         ) : activeView === "templates" ? (
           <EmailTemplatesPanel />
         ) : activeView === "referrals" ? (
@@ -3566,7 +3574,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
             onUpdate={(j) => setJobs((prev) => prev.map((x) => x.id === j.id ? j : x))}
             onCreate={(j) => setJobs((prev) => [j, ...prev])}
             onDelete={(id) => setJobs((prev) => prev.filter((x) => x.id !== id))}
-            apps={apps}
+            apps={fulltimeApps}
             onUpdateApp={updateApp}
             onDeleteApp={deleteApp}
           />
