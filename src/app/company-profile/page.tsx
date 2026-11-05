@@ -46,7 +46,7 @@ export const metadata: Metadata = {
  *
  * 2026-08-05 (lần 2) — sếp trả lời hết phần còn treo, số liệu dưới đây là THẬT:
  *   MST 0111386856 · STATS 50+ project / 15+ studio / 1000+ asset
- *   CASE_STUDY = ORCA (50+ hero, art + animation, 4 tháng)
+ *   CASE_STUDY = ORCA (50+ hero, art + animation, 4 tháng) — NDA từ 2026-11-05: ẩn tên trên trang
  *   3 vòng revision · bảo hành trọn đời · báo giá 24–48h · full IP khi thanh toán
  *   ClickUp là board chính · thêm hình thức thuê nhân sự theo giờ
  *   CLIENTS lấy logo thật từ page_slots (home/client-logos) — cùng nguồn với
@@ -258,13 +258,12 @@ const KEY_PEOPLE = [
   },
 ];
 
-// Số liệu sếp xác nhận 2026-08-05. Chưa có trang case study riêng cho ORCA nên
-// nút dưới trỏ về /portfolio.
+// Số liệu sếp xác nhận 2026-08-05 (dự án ORCA). 2026-11-05: ORCA đang làm, NDA → KHÔNG nêu
+// tên, KHÔNG dùng ảnh/asset dự án (nền là gradient). Nút dưới trỏ về /portfolio.
 const CASE_STUDY = {
   href: "/portfolio",
-  client: "ORCA",
-  title: "ORCA — Hero roster, art and animation",
-  image: IMG.summoner,
+  client: "Unannounced mobile RPG (under NDA)",
+  title: "Hero roster, art and animation",
   body: "Over fifty high-quality heroes built end to end in four months: concept and final art, then Spine rigging and combat animation — one team handling both disciplines, so the art never had to be redrawn to animate.",
   metrics: [
     ["50+", "Heroes delivered"],
@@ -760,16 +759,8 @@ export default async function CompanyProfilePage() {
         </section>
 
         {/* Case study spotlight */}
-        <section data-deck-skip className="relative overflow-hidden py-14 md:py-24">
-          <Image
-            src={CASE_STUDY.image}
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover opacity-25"
-            aria-hidden
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/90 to-[#0a0a0a]/60" />
+        <section data-deck-skip className="relative overflow-hidden bg-[radial-gradient(900px_480px_at_88%_20%,rgba(255,140,58,0.16),transparent_62%),linear-gradient(160deg,#16131c_0%,#0e0d12_55%,#0a0a0a_100%)] py-14 md:py-24">
+          {/* Dự án NDA → không ảnh nền dự án, chỉ gradient. */}
           <Wrap className="relative">
             <Reveal className="max-w-2xl">
               <p className="mb-5 text-[11px] uppercase tracking-[0.35em] text-white/55">

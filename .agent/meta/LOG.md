@@ -6442,3 +6442,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - `.github/workflows/deploy.yml`: `npm run build` lỗi → chờ 15s build lại 1 lần (lỗi next/font Google trên VPS lặp 3 lần) — thay vì tự host font (đụng nhiều file).
 - Commit luôn 5 file meta tồn từ phiên trước (DECISIONS/SCHEMA mục ứng viên trùng 03/11 — SCHEMA sửa "CHƯA áp prod" → đã áp; AGENTS/CLAUDE số liệu GitNexus; RECENT).
 - Result: tsc TOÀN dự án 0 lỗi (hết phải --no-verify); dev: /company-profile 8 ảnh bìa DB, trang chủ 8 ảnh bìa như cũ.
+- 2026-11-05 (sếp chọn 1): ORCA đang làm, NDA → mục case study /company-profile ẩn tên: "Case study — Unannounced mobile RPG (under NDA)", tiêu đề "Hero roster, art and animation", giữ mô tả + 3 số liệu; bỏ ảnh nền summonerDetail.png → gradient. HTML không còn chữ ORCA. (Memory orca-nda.)
