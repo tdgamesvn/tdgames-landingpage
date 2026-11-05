@@ -2,7 +2,7 @@
 
 ## Doing
 
-- [ ] Chat trên website (khách → sếp, ứng viên → HR; tab Chat trong /hr; giai đoạn 1 KHÔNG AI) (2026-11-05) — ĐÃ DEPLOY. Chờ sếp: cài/bật chuông app /hr để nhận báo, sửa câu có sẵn trong tab Chat ⚙. Sau: AI trả lời 24/7 (chat_ai_enabled). 9 minor ĐÃ SỬA 2026-11-05. LOG 2026-11-05
+- [ ] Chat trên website (khách → sếp, ứng viên → HR; tab Chat trong /hr; giai đoạn 1 KHÔNG AI) (2026-11-05) — ĐÃ DEPLOY. Chờ sếp: cài/bật chuông app /hr để nhận báo, sửa câu có sẵn trong tab Chat ⚙. AI Phase A (nháp cho staff) ĐÃ LÀM 2026-11-05; sau: Phase B tự trả lời ngoài giờ → C 24/7 (spec 2026-11-05-chat-ai-design). 9 minor ĐÃ SỬA 2026-11-05. LOG 2026-11-05
 - [x] /hr tab Freelancer — kho freelancer (trạng thái/hạng/rate/có vấn đề/lọc, đổi hình thức) (2026-11-05) — ĐÃ DEPLOY. Minor tồn: LOG 2026-11-05.
 - [x] /hr ứng viên Freelancer: cờ "Nhận freelancer" trên job, auto status Freelancer / Lưu hồ sơ + 2 mail riêng (2026-11-04) — ĐÃ DEPLOY, E2E OK. Chờ sếp bật cờ cho job cần nhận freelancer. LOG 2026-11-04
 - [ ] HR: thư mời nhận việc PDF + mail offer mới (2026-10-28) — ĐÃ DEPLOY. Chờ sếp/Kế toán thử: soạn thư 1 hồ sơ Offer thật → gửi (chế độ test về tony@). Tồn nhỏ: tải lại file từ lịch sử khi 429/503 hiện JSON thô; header /hr tràn ngang ở 390px (có từ trước). LOG 2026-10-28

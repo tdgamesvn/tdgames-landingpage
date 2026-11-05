@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { canSeeAudience, nextThreadState } from "@/lib/chat";
 import { listMessages } from "@/lib/chat-server";
+import { latestDraft } from "@/lib/chat-ai";
 import { loadVisibleThread, notFound, requireChatUser, visibleAudiences } from "@/lib/chat-staff";
 import { loadScopedApplication } from "@/lib/hr-session";
 
@@ -44,7 +45,7 @@ export async function GET(req: Request, { params }: Ctx) {
       if (app && (await loadScopedApplication(auth.ctx, String(app.id)))) applicationId = String(app.id);
     }
   }
-  return NextResponse.json({ thread, messages, previous, applicationId });
+  return NextResponse.json({ thread, messages, previous, applicationId, aiDraft: await latestDraft(thread.id) });
 }
 
 /** close | reopen | set_audience | delete */

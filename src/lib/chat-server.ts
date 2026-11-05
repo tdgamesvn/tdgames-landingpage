@@ -21,7 +21,7 @@ import {
   type ChatStatus,
 } from "./chat";
 import { buildChatReplyEmail, CHAT_EMAIL_FOOTER, chatFrom } from "./chat-email";
-import { effectivePermissions, HR_ROLES, type HrRole } from "./hr-permissions";
+import { effectivePermissions, HR_ROLES, type HrRole, type PermissionKey } from "./hr-permissions";
 import { getHrEmailConfig, resolveRecipient, textToHtml } from "./hr-email";
 import { sendViaResend } from "./hr-email-send";
 import { sendHrPush } from "./hr-push";
@@ -284,6 +284,7 @@ export async function addStaffReply(
   thread: ChatThreadRow,
   staff: { id: string | null; displayName: string },
   body: string,
+  aiDraftId?: string | null,
 ): Promise<ChatMessageRow> {
   const now = new Date();
   const [msg] = await insertMessages([
@@ -297,6 +298,24 @@ export async function addStaffReply(
     updated_at: now.toISOString(),
     email_pending: !!thread.email,
   });
+  // Đánh dấu nháp AI: gửi từ nháp → sent (+ có sửa không); gửi tay → các nháp đang chờ hết hiệu lực.
+  const { data: pending } = await db()
+    .from("chat_ai_drafts")
+    .select("id, answer")
+    .eq("thread_id", thread.id)
+    .in("status", ["pending", "failed"]);
+  for (const d of pending ?? []) {
+    const used = d.id === aiDraftId;
+    await db()
+      .from("chat_ai_drafts")
+      .update({
+        status: used ? "sent" : "superseded",
+        edited: used ? body.trim() !== String(d.answer ?? "").trim() : null,
+        decided_by: staff.id,
+        decided_at: now.toISOString(),
+      })
+      .eq("id", d.id);
+  }
   if (thread.email) await flushThreadEmail({ ...thread, email_pending: true }, now);
   return msg;
 }
@@ -431,13 +450,17 @@ export async function resumeFromEmailToken(t: string): Promise<{ thread: ChatThr
 
 /** Người nhận chuông: có quyền chat theo loại luồng + push.receive, tài khoản không khoá. */
 export async function chatRecipients(audience: ChatAudience): Promise<string[]> {
+  return pushRecipientsWith(audience === "client" ? "chat.clients" : "chat.candidates");
+}
+
+/** Người nhận chuông có quyền `need` + push.receive, tài khoản không khoá. */
+export async function pushRecipientsWith(need: PermissionKey): Promise<string[]> {
   const [users, rp] = await Promise.all([
     db().from("hr_users").select("id, role, disabled"),
     db().from("hr_role_permissions").select("role, permission, allowed"),
   ]);
   if (users.error || rp.error) return [];
   const overrides = (rp.data ?? []).map((r) => ({ role: String(r.role), permission: String(r.permission), allowed: !!r.allowed }));
-  const need = audience === "client" ? "chat.clients" : "chat.candidates";
   return (users.data ?? [])
     .filter((u) => !u.disabled && (HR_ROLES as readonly string[]).includes(u.role))
     .filter((u) => {

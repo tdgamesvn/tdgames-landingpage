@@ -12,6 +12,7 @@ import {
   isWithinHours,
   newToken,
   nextThreadState,
+  parseKbCard,
   parseQuickReply,
   requiresEmail,
   shouldEmail,
@@ -170,4 +171,13 @@ test("emptyThreadIds: chỉ luồng có count 0; thiếu count / lỗi → khôn
   assert.deepEqual(emptyThreadIds([{ id: "a", chat_messages: [{ count: 0 }] }, { id: "b" }]), []);
   assert.deepEqual(emptyThreadIds([{ id: "a", chat_messages: [] }]), []);
   assert.deepEqual(emptyThreadIds(null), []);
+});
+
+test("parseKbCard", () => {
+  assert.deepEqual(parseKbCard({ title: " T ", content: "C" }, true), { row: { title: "T", content: "C", audience: "any" } });
+  assert.ok("error" in parseKbCard({ title: "T" }, true));
+  assert.ok("error" in parseKbCard({ title: "x".repeat(81), content: "C" }, true));
+  assert.ok("error" in parseKbCard({ title: "T", content: "C", audience: "boss" }, true));
+  assert.deepEqual(parseKbCard({ active: false }, false), { row: { active: false } });
+  assert.ok("error" in parseKbCard({}, false));
 });

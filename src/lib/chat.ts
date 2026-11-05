@@ -193,3 +193,39 @@ export function parseQuickReply(input: QuickReplyInput, creating: boolean): { ro
   if (!Object.keys(row).length) return { error: "Không có gì để lưu" };
   return { row };
 }
+
+export type KbPatch = Partial<{ title: string; content: string; audience: QuickReplyAudience; sort_order: number; active: boolean }>;
+
+/** Kiểm thẻ kiến thức AI. `creating` = tạo mới (bắt buộc tiêu đề + nội dung). */
+export function parseKbCard(
+  input: { title?: unknown; content?: unknown; audience?: unknown; sortOrder?: unknown; active?: unknown },
+  creating: boolean,
+): { row: KbPatch } | { error: string } {
+  const row: KbPatch = {};
+  if (creating || input.title !== undefined) {
+    const v = cleanText(input.title, 81);
+    if (!v || v.length > 80) return { error: "Tiêu đề 1–80 ký tự" };
+    row.title = v;
+  }
+  if (creating || input.content !== undefined) {
+    const v = cleanText(input.content, 3001);
+    if (!v || v.length > 3000) return { error: "Nội dung 1–3000 ký tự" };
+    row.content = v;
+  }
+  if (creating || input.audience !== undefined) {
+    const a = input.audience ?? "any";
+    if (a !== "client" && a !== "candidate" && a !== "any") return { error: "Nhóm không hợp lệ" };
+    row.audience = a;
+  }
+  if (input.sortOrder !== undefined) {
+    const n = Number(input.sortOrder);
+    if (!Number.isInteger(n) || n < 0 || n > 100000) return { error: "Thứ tự không hợp lệ" };
+    row.sort_order = n;
+  }
+  if (input.active !== undefined) {
+    if (typeof input.active !== "boolean") return { error: "active phải là true/false" };
+    row.active = input.active;
+  }
+  if (!Object.keys(row).length) return { error: "Không có gì để lưu" };
+  return { row };
+}

@@ -1,10 +1,11 @@
 "use client";
 
 // Tab "Chat" (spec docs/superpowers/specs/2026-11-05-website-chat-design.md §6): hộp thư chat từ website.
-// Khách → người có chat.clients (sếp), ứng viên → chat.candidates (HR). Giai đoạn 1 không có AI.
+// Khách → người có chat.clients (sếp), ứng viên → chat.candidates (HR). AI Phase A: chỉ soạn nháp cho staff duyệt.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hrFetch, useHrSession } from "./HrSession";
 import QuickRepliesPanel from "./QuickRepliesPanel";
+import AiKnowledgePanel from "./AiKnowledgePanel";
 
 type Audience = "client" | "candidate";
 type Filter = "needs" | "answered" | "closed";
@@ -48,6 +49,20 @@ type ThreadDetail = {
   messages: Msg[];
   previous: { id: string; createdAt: string; messages: Msg[] }[];
   applicationId: string | null;
+  aiDraft: AiDraft | null;
+};
+type AiDraft = {
+  id: string;
+  status: "pending" | "failed";
+  answer: string | null;
+  needs_human: boolean;
+  confidence: string | null;
+  sources: { ref: string; title: string }[];
+  warnings: string[];
+  model: string | null;
+  error: string | null;
+  rating: number | null;
+  created_at: string;
 };
 
 const FILTERS: { key: Filter; label: string }[] = [
@@ -93,6 +108,7 @@ export default function ChatView({
   const [threads, setThreads] = useState<ThreadListItem[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(initialThreadId ?? null);
   const [showQr, setShowQr] = useState(false);
+  const [showAi, setShowAi] = useState(false);
   const [err, setErr] = useState("");
   const both = can("chat.clients") && can("chat.candidates");
 
@@ -116,6 +132,7 @@ export default function ChatView({
   }, [loadList]);
 
   if (showQr) return <QuickRepliesPanel onBack={() => setShowQr(false)} />;
+  if (showAi) return <AiKnowledgePanel onBack={() => setShowAi(false)} />;
 
   const list = (
     <div className={`flex min-w-0 flex-col ${openId ? "hidden lg:flex" : "flex"} lg:w-[380px] lg:flex-none`}>
@@ -127,24 +144,30 @@ export default function ChatView({
             </button>
           ))}
         </div>
-        {can("chat.manage") && (
-          <button type="button" onClick={() => setShowQr(true)} className="hr-toolbar-btn whitespace-nowrap" title="Sửa các nút câu hỏi có sẵn">
-            ⚙ Câu có sẵn
-          </button>
-        )}
       </div>
-      {both && (
-        <div className="mb-2 flex gap-1.5">
-          {(["all", "client", "candidate"] as const).map((a) => (
-            <button
-              key={a}
-              type="button"
-              onClick={() => setAud(a)}
-              className={`rounded-full border px-3 py-1 text-[12px] font-medium ${aud === a ? "border-amber-500/60 bg-amber-500/10 text-amber-400" : "border-white/15 text-white/60"}`}
-            >
-              {a === "all" ? "Tất cả" : a === "client" ? "Khách" : "Ứng viên"}
-            </button>
-          ))}
+      {(both || can("chat.manage")) && (
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          {both &&
+            (["all", "client", "candidate"] as const).map((a) => (
+              <button
+                key={a}
+                type="button"
+                onClick={() => setAud(a)}
+                className={`rounded-full border px-3 py-1 text-[12px] font-medium ${aud === a ? "border-amber-500/60 bg-amber-500/10 text-amber-400" : "border-white/15 text-white/60"}`}
+              >
+                {a === "all" ? "Tất cả" : a === "client" ? "Khách" : "Ứng viên"}
+              </button>
+            ))}
+          {can("chat.manage") && (
+            <span className="ml-auto flex gap-1">
+              <button type="button" onClick={() => setShowQr(true)} className="hr-toolbar-btn whitespace-nowrap" title="Sửa các nút câu hỏi có sẵn">
+                ⚙ Câu có sẵn
+              </button>
+              <button type="button" onClick={() => setShowAi(true)} className="hr-toolbar-btn whitespace-nowrap" title="Kho kiến thức & cài đặt AI">
+                🤖 AI
+              </button>
+            </span>
+          )}
         </div>
       )}
       {err && <p className="mb-2 text-[13px] text-red-400">{err}</p>}
@@ -235,6 +258,8 @@ function ThreadPane({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
   const [showPrev, setShowPrev] = useState(false);
+  // Nháp AI đã chèn vào ô trả lời — gửi kèm để đánh dấu "đã dùng" (+ có sửa không).
+  const [usedDraftId, setUsedDraftId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -285,17 +310,35 @@ function ThreadPane({
       const r = await hrFetch(`/api/hr/chat/threads/${id}/messages`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({ body, aiDraftId: usedDraftId }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error ?? "Không gửi được");
       setText("");
+      setUsedDraftId(null);
       await load();
       onChanged();
     } catch (e) {
       setNote(e instanceof Error ? e.message : "Không gửi được");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function draftAction(body: Record<string, unknown>) {
+    if (!data?.aiDraft) return;
+    setNote("");
+    try {
+      const r = await hrFetch(`/api/hr/chat/threads/${id}/ai-draft`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ draftId: data.aiDraft.id, ...body }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error ?? "Lỗi");
+      await load();
+    } catch (e) {
+      setNote(e instanceof Error ? e.message : "Lỗi");
     }
   }
 
@@ -414,6 +457,17 @@ function ThreadPane({
         <div ref={endRef} />
       </div>
 
+      {data.aiDraft && t.status !== "closed" && (
+        <AiDraftCard
+          d={data.aiDraft}
+          onUse={() => {
+            setText(data.aiDraft?.answer ?? "");
+            setUsedDraftId(data.aiDraft?.id ?? null);
+          }}
+          onDiscard={() => draftAction({ action: "discard" })}
+          onRate={(rating) => draftAction({ action: "rate", rating })}
+        />
+      )}
       {note && <p className="px-3 pb-1 text-[12px] text-amber-400">{note}</p>}
       {!t.email && (
         <p className="px-3 pb-1 text-[11.5px] text-white/45">Khách chưa để email — họ chỉ thấy trả lời khi còn mở trang / quay lại website.</p>
@@ -438,6 +492,70 @@ function ThreadPane({
         </button>
       </div>
     </section>
+  );
+}
+
+const WARN_LABEL: Record<string, string> = {
+  no_source: "không dẫn nguồn",
+  unknown_source: "dẫn nguồn không có thật",
+  unverified_numbers: "có số không có trong dữ liệu",
+  unverified_email: "có email lạ",
+  unverified_link: "có link lạ",
+  nda_mention: "nhắc dự án NDA",
+};
+
+/** Nháp AI (Phase A): chỉ staff thấy. Dùng = chèn vào ô trả lời để sửa rồi gửi. */
+function AiDraftCard({
+  d,
+  onUse,
+  onDiscard,
+  onRate,
+}: {
+  d: AiDraft;
+  onUse: () => void;
+  onDiscard: () => void;
+  onRate: (r: 1 | -1 | null) => void;
+}) {
+  const [open, setOpen] = useState(true);
+  if (d.status === "failed") {
+    return (
+      <div className="mx-3 mb-2 rounded-xl border border-red-500/30 bg-red-500/[0.06] px-3 py-2 text-[12px] text-red-300">
+        🤖 AI không soạn được nháp (đã báo admin). <span className="text-red-300/60">{d.error?.slice(0, 160)}</span>
+      </div>
+    );
+  }
+  const warns = d.warnings.map((w) => WARN_LABEL[w.split(":")[0]] ?? w);
+  return (
+    <div className="mx-3 mb-2 rounded-xl border border-violet-400/30 bg-violet-500/[0.07] px-3 py-2">
+      <div className="flex flex-wrap items-center gap-1.5 text-[11.5px]">
+        <button type="button" onClick={() => setOpen((v) => !v)} className="font-semibold text-violet-300">
+          {open ? "▾" : "▸"} 🤖 Nháp AI
+        </button>
+        <span className="text-white/40">chỉ bạn thấy · độ chắc: {d.confidence ?? "?"}</span>
+        {d.needs_human && <span className="rounded bg-amber-500/15 px-1.5 py-px text-amber-400">cần người xem kỹ</span>}
+        {warns.map((w) => (
+          <span key={w} className="rounded bg-red-500/15 px-1.5 py-px text-red-300">⚠ {w}</span>
+        ))}
+      </div>
+      {open && (
+        <>
+          <p className="mt-1.5 max-h-40 overflow-y-auto whitespace-pre-wrap text-[13px] leading-snug text-white/85">{d.answer}</p>
+          {d.sources.length > 0 && (
+            <p className="mt-1 text-[11px] text-white/40">Nguồn: {d.sources.map((s) => s.title).join(" · ")}</p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <button type="button" onClick={onUse} className="rounded-lg bg-violet-500 px-3 py-1 text-[12px] font-semibold text-white">
+              Dùng nháp này
+            </button>
+            <button type="button" onClick={onDiscard} className="hr-toolbar-btn">Bỏ</button>
+            <span className="ml-auto flex gap-1">
+              <button type="button" aria-pressed={d.rating === 1} onClick={() => onRate(d.rating === 1 ? null : 1)} className={`hr-toolbar-btn ${d.rating === 1 ? "text-green-400" : ""}`} title="Nháp tốt">👍</button>
+              <button type="button" aria-pressed={d.rating === -1} onClick={() => onRate(d.rating === -1 ? null : -1)} className={`hr-toolbar-btn ${d.rating === -1 ? "text-red-400" : ""}`} title="Nháp sai / dở">👎</button>
+            </span>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

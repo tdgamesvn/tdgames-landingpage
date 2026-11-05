@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { draftReplyFor } from "@/lib/chat-ai";
 import { classifyAudience, cleanText, MAX_MESSAGE } from "@/lib/chat";
 import { activeQuickReplies, addVisitorMessage, chatOnline, threadForToken } from "@/lib/chat-server";
 import { cleanPage, err, guardEnabled, ipOf, messageLimiter, messageTokenLimiter, readToken, toPublicMessage, toPublicThread } from "@/lib/chat-public";
@@ -38,5 +39,8 @@ export async function POST(req: Request) {
     body: text,
     page,
   });
+  // Phase A: AI soạn nháp cho staff (khách không thấy) — chạy sau khi đã trả response.
+  const trigger = messages.find((m) => m.sender === "visitor" && m.kind === "text");
+  if (b.kind === "text" && trigger) after(() => draftReplyFor(thread.id, trigger.id));
   return NextResponse.json({ messages: messages.map(toPublicMessage), thread: toPublicThread({ ...thread, needs_human: true, status: "open" }) });
 }

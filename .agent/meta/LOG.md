@@ -6469,3 +6469,12 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - 2026-11-05 (sếp: không phóng to, giữ nguyên ảnh vừa khung tròn): avatar về lại `landing/chat/avatar-v1.webp` (nguyên ảnh 512×512 thu về 128px, không cắt sát mặt).
 - 2026-11-05 (sếp): ô chat — bấm câu có sẵn hiện ngay câu hỏi (bong bóng khách) + 3 chấm "đang trả lời" tối thiểu 1.2s (Promise.all) rồi mới ra câu trả lời; danh sách nút to ẩn ngay khi bấm. Hàng chip gợi ý dưới: mũi tên ‹ › khi còn chip bị che + viền mờ, lăn chuột dọc → cuộn ngang, câu chưa hỏi lên đầu (đã hỏi xám, xuống cuối), thêm chip "Talk to a person". Đã xoá các luồng test (không email, không cần người) tạo trong lúc thử.
 - 2026-11-05 (sếp: header khung chat hoà nền): header #111116 → #26262d (cùng họ khung testimonial #17171a, sáng hơn) + viền dưới white/10; cả khung chat thêm viền white/20 trên desktop.
+
+## 2026-11-05 — AI trả lời chat, Phase A (nháp chỉ staff thấy)
+- Sếp chốt: cổng AI chấm CV, Sonnet 5.5 → dự phòng GPT-6 (em chọn gpt-6.1-sol: ping OK, eval 24/25), báo lỗi admin, ngân sách ~$100/tháng, cả khách + ứng viên, làm pha A trước. Spec `docs/superpowers/specs/2026-11-05-chat-ai-design.md`.
+- Migration `20261105120000_chat_ai_drafts.sql` (chỉ thêm, đã áp prod): chat_kb (seed 19 thẻ), chat_ai_drafts, app_settings chat_ai_mode=draft, chat_ai_budget_usd=100.
+- Lib `chat-ai-core.ts` (prompt/parse/guardDraft/chi phí, +test 6) + `chat-ai.ts` (draftReplyFor trong after(), debounce 6s, trần, ngân sách, fallback, alertAdmin). `pushRecipientsWith(perm)` tách từ chatRecipients. addStaffReply nhận aiDraftId → sent/edited, nháp khác superseded. parseKbCard (+test).
+- /hr Chat: thẻ "🤖 Nháp AI" (Dùng nháp này / Bỏ / 👍👎, cảnh báo, nguồn); nút ⚙ Câu có sẵn + 🤖 AI dời xuống hàng lọc thứ 2 (nút AI từng tràn sang khung chat, không bấm được); panel `AiKnowledgePanel.tsx` (bật/tắt, ngân sách, thống kê tháng, sửa thẻ).
+- Eval `scripts/chat-ai-eval.ts` (25 câu, cả bẫy giá/NDA/jailbreak): Sonnet 5.5 21/25 kỳ vọng gốc (4 lệch là gạt đi lịch sự không bịa → đổi kỳ vọng), gpt-6.1-sol 24/25, ~$0.009/nháp.
+- E2E dev 3011 (DB prod, push/Discord tắt, tài khoản boss tạm đã xoá): 2 tin liền → 1 nháp gộp, 0 cảnh báo, $0.0096; GET thread có aiDraft; rate + gửi từ nháp → sent/edited/rating; PUT budget sai → 400; CHAT_AI_MODEL hỏng → dùng gpt-6.1-sol + ghi alert. Đã xoá luồng test + khoá alert.
+- Next: theo dõi tỉ lệ gửi nguyên / 👎 vài tuần → Phase B (tự trả lời ngoài giờ). Sếp bổ sung thẻ: giá khởi điểm, thanh toán/cọc, đơn tối thiểu… (hiện AI sẽ báo "team sẽ trả lời").

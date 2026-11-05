@@ -381,3 +381,9 @@ Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, khôn
 - Tự làm trong app (không Intercom/Crisp/Tawk); hộp thư là tab "Chat" trong /hr (PWA + chuông + tài khoản sẵn có). Khách → sếp (chat.clients), ứng viên → HR (chat.candidates).
 - Giai đoạn 1: chỉ câu có sẵn + người thật; AI trả lời để SAU CÙNG (khi bật sẽ 24/7). Giờ trực 8–22h VN mọi ngày; ngoài giờ bắt buộc email, trong giờ email tuỳ chọn; không bắt điền form trước khi chat.
 - Mỗi người 1 luồng (mã khách ở trình duyệt); không tự gộp theo email (chống đọc trộm) — chỉ hiện lịch sử cùng email cho staff. Link email dùng 1 lần, phải bấm. Mail khách từ info@, ứng viên từ hiring@.
+
+## 2026-11-05 — AI trả lời chat (Phase A: nháp)
+- Cổng AI chấm CV (cliproxyapi, OpenAI-compatible), model chính claude-sonnet-5-5, dự phòng gpt-6.1-sol; lỗi → chuông chat.manage + Discord sales, gộp 30'. Không dùng Anthropic SDK (sếp chọn cổng sẵn có).
+- AI chỉ dùng thẻ `chat_kb` + job đang mở; server kiểm bịa (nguồn, số, email, link, nhắc ORCA) → cảnh báo + ép cần người. Thêm thông tin cho AI = thêm thẻ trong /hr → Chat → 🤖 AI.
+- Ngân sách $100/tháng tính từ token ước tính; trần 15 nháp/luồng/ngày, 300/ngày toàn hệ thống; debounce 6s; bỏ tin rác.
+- Pha: A nháp staff (đang chạy) → B tự trả lời ngoài giờ → C 24/7 + luật người thật trả lời thì AI im 2h. Chỉ lên B khi số liệu "gửi nguyên"/👎 của A ổn.

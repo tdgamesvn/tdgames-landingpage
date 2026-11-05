@@ -178,3 +178,8 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 - `chat_quick_replies`: label, audience client|candidate|any, answer, link_label/link_url (/… hoặc https), sort_order, active.
 - app_settings: chat_widget_enabled (tắt widget toàn site), chat_ai_enabled (false, chưa dùng), chat_hours JSON.
 - RLS bật, không policy (service role qua API). Giữ 24 tháng từ tin cuối; luồng rỗng >1 ngày bị cron xoá.
+
+## AI chat — Phase A (migration 20261105120000_chat_ai_drafts, đã áp prod 2026-11-05)
+- `chat_kb`: title, content, audience client|candidate|any, active, sort_order — thẻ sự thật AI được dùng (seed: 11 câu có sẵn + 8 thẻ công ty từ /company-profile).
+- `chat_ai_drafts`: thread_id (cascade), trigger_message_id, status pending|sent|discarded|superseded|failed|skipped, answer, needs_human, confidence, sources jsonb [{ref,title}], warnings jsonb, model, input/output_tokens, cost_usd (ước tính $2/$10 per MTok), error, rating ±1, edited, decided_by/at. Tổng cost_usd tháng (giờ VN) = ngân sách đã dùng.
+- app_settings: chat_ai_mode off|draft (= draft), chat_ai_budget_usd (100), chat_ai_alert_<loại> (mốc ms lần báo admin cuối, gộp 30'). chat_ai_enabled cũ không dùng.
