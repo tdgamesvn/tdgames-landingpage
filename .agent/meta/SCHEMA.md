@@ -163,3 +163,10 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 - `referral_job_rules` (job_id, kind) → rule jsonb. Mặc định công ty: `app_settings.referral_default_rules` (JSON text).
 - `referral_placements` (application_id PK): start_date, start_confirmed, left_date, history, needs_manual, needs_manual_reason.
 - `referral_payouts`: application_id (ON DELETE RESTRICT), referrer_id, hr_user_id, beneficiary_name/kind, job_id, milestone_months 0–36, percent 1–100, amount ≥0 (null khi amount_issue no_rule/no_salary), amount_edited, rule_key/rule_snapshot/rule_source, due_date, status upcoming|due|approved|paid|cancelled, approved_*/paid_*/cancel_reason/note/edits, due_notified_at/approved_notified_at. Unique (application_id, milestone_months) where status<>'cancelled'. RLS bật, không policy.
+
+## applications — cột chống ứng viên trùng (migration 20261103000000, đã áp prod + deploy 2026-11-03)
+- `email_norm` (generated: lower(btrim(email))), `phone_norm` (generated: chỉ số, 84xxxxxxxxx → 0…, <9 số → null) — có index.
+- `status_changed_at` — trigger BEFORE UPDATE OF status; backfill rejected = ngày mail rejection gần nhất hoặc created_at.
+- `duplicate_of` (FK applications), `duplicate_kind` ('auto_rejected'|'open_duplicate'|'returning').
+- `referred_by_submitted`, `referrer_notified_at`, `referrer_notified_by`.
+- candidate_emails/hr_email_templates: thêm kind `duplicate_rejection`; unique index `candidate_emails_dup_reject_idx` (application_id) where kind='duplicate_rejection'.

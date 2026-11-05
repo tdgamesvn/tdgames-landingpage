@@ -370,3 +370,9 @@ Ai hưởng: referrer nội bộ/headhunter + tài khoản Kế toán (internal)
 
 ## 2026-10-31 — Blog: gộp 122 → 31 bài trụ cột
 Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, không link nội bộ). Bài gộp redirect 301 cố định qua `src/content/blog-redirects.json` + `next.config.ts` (validator chặn trùng/chuỗi). Bài cũ `published=false`, KHÔNG xoá (giữ slug không bị dùng lại). Auto-blog TẮT (`app_settings.blog_auto_enabled=0`) — bật lại sẽ làm blog phình như cũ. Tác giả hiển thị = founder Dang The Toan (map trong code khi author "TD Games"). Thêm bài mới: kiểm không trùng chủ đề pillar; nếu trùng thì sửa pillar.
+
+## 2026-11-03 — Ứng viên trùng / nộp lại (/hr)
+- Cùng người = trùng email (trim/lower) hoặc SĐT chuẩn hoá (cột sinh `email_norm`/`phone_norm`). Không so tên.
+- Nộp lại ĐÚNG vị trí (cùng job hoặc tiêu đề giống hệt) trong 6 tháng lịch (giờ VN) sau khi bị `rejected`, và trùng EMAIL → tự động rejected + mail `duplicate_rejection` (không gửi ack). Đơn auto_rejected không bao giờ là mốc 6 tháng. talent_pool không bao giờ bị auto-reject.
+- Quyền giới thiệu: người giới thiệu đầu tiên (khớp EMAIL) giữ 6 tháng tính từ hồ sơ đầu; tự nộp không mã trong hạn vẫn tính cho người đầu; mã người mới lưu `referred_by_submitted`. Không tính khớp chỉ SĐT (chống mạo danh).
+- Người giới thiệu mới được báo: có tài khoản /hr → tag Discord (+ push nếu xem được hồ sơ); không → HR được nhắc báo tay (nút "Đã báo").

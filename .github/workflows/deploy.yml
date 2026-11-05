@@ -73,7 +73,14 @@ jobs:
             # "'/portfolio/art-study' is not assignable to LayoutRoutes". Thư mục types
             # chỉ dùng lúc type-check, app đang chạy không đọc → xoá an toàn.
             rm -rf .next/types .next/dev/types
-            NEXT_DIST_DIR=.next-new npm run build
+            # Turbopack thỉnh thoảng không tải được Google Fonts (next/font/google: "Module
+            # not found …/font/google/font") — lỗi mạng, chạy lại là qua (23/10, 05/11 ×2).
+            # Thử lại 1 lần sau 15s thay vì fail cả deploy; lỗi code thật vẫn fail ở lần 2.
+            NEXT_DIST_DIR=.next-new npm run build || {
+              echo "⚠️ Build lỗi — thử lại 1 lần sau 15s (thường là lỗi tải Google Fonts)..."
+              sleep 15
+              NEXT_DIST_DIR=.next-new npm run build
+            }
 
             echo "🔀 Swap .next-new -> .next..."
             rm -rf .next-old

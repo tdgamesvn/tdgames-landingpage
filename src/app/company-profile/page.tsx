@@ -13,6 +13,7 @@ import {
 } from "@/components/studio-service-cards";
 import siteContent from "@/content/site.json";
 import { resolveSlots } from "@/lib/page-slots";
+import { projectCovers } from "@/lib/project-covers";
 import { Changa_One } from "next/font/google";
 
 // Cùng font title với hero trang chủ.
@@ -69,13 +70,6 @@ const BRAND_LOGO = "https://cdn.tdgamestudio.com/landing/logoCompany/logo_td2.pn
 const CDN = "https://cdn.tdgamestudio.com/landing";
 const IMG = {
   summoner: `${CDN}/images/summonerDetail.png`,
-  axie: `${CDN}/behance/b173c85213385cf6.png`,
-  mytheria: `${CDN}/behance/9bfe7e73a64fc7d4.png`,
-  skyMavis: `${CDN}/behance/e3eeb2716aa68b48.png`,
-  horse: `${CDN}/behance/50a462dee6f25801.jpg`,
-  boss: `${CDN}/behance/379f981b88c6a84f.png`,
-  reaper: `${CDN}/behance/87a63a36f47dc948.png`,
-  artStudy: `${CDN}/behance/2e9463653cd72994.jpg`,
   kayn: encodeURI(`${CDN}/images/Screenshot 2026-05-13 232709.png`),
 };
 
@@ -356,15 +350,18 @@ const STACK = [
   },
 ];
 
+// Dự án của studio (2026-11-05: bỏ Axie/Summoner Era/Reaper/Sky Mavis — việc founder làm ở
+// công ty cũ). Ảnh = ảnh bìa DB như lưới /portfolio (coverBySlug); `image` là dự phòng.
+// Chip `tag` là mảng công việc — phần lớn khách không cho nêu tên.
 const WORK = [
-  { slug: "axie-infinity-origins", title: "Axie Infinity — Origins", client: "Sky Mavis", image: IMG.axie },
-  { slug: "summoner-era", title: "Summoner Era — Heroes Light/Dark", client: "Zitga Studio", image: IMG.summoner },
-  { slug: "kayn-snow-moon", title: "Kayn Snow Moon — Login Screen", client: "Fanmade", image: IMG.kayn },
-  { slug: "horse-racing", title: "Horse Racing — Splash Art", client: "INVINCIBLE GG", image: IMG.horse },
-  { slug: "battle-of-the-gods-mytheria", title: "Battle of the Gods", client: "Mytheria", image: IMG.mytheria },
-  { slug: "boss-animation", title: "Boss Animation — The Twins", client: "AnimVFX Clan", image: IMG.boss },
-  { slug: "reaper-lady-project-overdrive", title: "Reaper & Lady — OverDrive", client: "OverDrive", image: IMG.reaper },
-  { slug: "animation-contest-sky-mavis", title: "Animation Contest", client: "Sky Mavis", image: IMG.skyMavis },
+  { slug: "monster-legends", title: "Monster Legends", tag: "Spine 2D · Social Point", image: "https://cdn.tdgamestudio.com/landing/portfolio/monster-legends-all/splash-ai-v4.jpg" },
+  { slug: "yomi-2", title: "Yomi 2 — Super-Move Cutscenes", tag: "Cinematic cut-ins", image: "https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/gwen-desperation.jpg" },
+  { slug: "epic-card", title: "Epic Card — Battle VFX", tag: "2D VFX", image: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.jpg" },
+  { slug: "horse-racing", title: "Horse Racing — Splash Art", tag: "Splash art animation", image: "https://cdn.tdgamestudio.com/landing/behance/50a462dee6f25801.jpg" },
+  { slug: "battle-of-the-gods-mytheria", title: "Battle of the Gods — Mytheria", tag: "Login screen", image: "https://cdn.tdgamestudio.com/landing/behance/9bfe7e73a64fc7d4.png" },
+  { slug: "boss-animation", title: "Boss Animation — The Twins", tag: "Character animation", image: "https://cdn.tdgamestudio.com/landing/behance/379f981b88c6a84f.png" },
+  { slug: "stickman-legend", title: "Stickman Legend — Monsters", tag: "Spine 2D", image: "https://cdn.tdgamestudio.com/projects/2026/10/24e20e4a-efd0-4a56-bb6b-3ba79d1dd322-portfolio-cover-stickman-legend.webp" },
+  { slug: "kayn-snow-moon", title: "Kayn Snow Moon — Login Screen", tag: "Login screen · Fan art", image: "https://cdn.tdgamestudio.com/landing/images/Screenshot 2026-05-13 232709.png" },
 ];
 
 // CLIENTS: logo thật đọc từ page_slots (home/client-logos) — cùng nguồn với marquee
@@ -537,6 +534,7 @@ export default async function CompanyProfilePage() {
   // Slot rỗng → mảng rỗng → section chỉ còn 2 card số liệu, KHÔNG rơi về ảnh
   // Unsplash như /careers (hồ sơ gửi khách không được dùng ảnh stock).
   const lifePhotos = await resolveSlots("careers", "gallery");
+  const coverBySlug = await projectCovers(WORK.map((w) => w.slug));
   return (
     <main className="bg-[#0a0a0a]">
       {/* Switch Scroll ↔ Deck + điều khiển slide. Đặt trong <main> vì nó bám
@@ -729,7 +727,7 @@ export default async function CompanyProfilePage() {
                 >
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/50">
                     <Image
-                      src={w.image}
+                      src={coverBySlug[w.slug] ?? w.image}
                       alt={w.title}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -742,7 +740,7 @@ export default async function CompanyProfilePage() {
                       className="mb-2 inline-block rounded-full px-3 py-1 text-[11px] font-semibold uppercase md:text-[10px] tracking-wider"
                       style={{ background: `${A}33`, color: A }}
                     >
-                      {w.client}
+                      {w.tag}
                     </span>
                     <h3 className="text-base font-bold leading-snug text-white">{w.title}</h3>
                   </div>
