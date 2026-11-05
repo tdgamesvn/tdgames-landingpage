@@ -22,6 +22,7 @@ export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ id: string }> };
 
+// Freelancer (kho freelancer) không bị "đã tuyển đủ" — mọi truy vấn lọc work_type.
 const APP_COLS = "id, job_id, status, full_name, email, created_at, offer_status, assignee_user_id";
 
 /** Job trong phạm vi + trạng thái "Lưu hồ sơ" còn tồn tại; lỗi → response. */
@@ -67,7 +68,7 @@ export async function GET(request: Request, { params }: Ctx) {
   const job = await loadJob(ctx, id);
   if (job instanceof NextResponse) return job;
 
-  const { data: apps, error } = await getSupabaseAdmin().from("applications").select(APP_COLS).eq("job_id", id);
+  const { data: apps, error } = await getSupabaseAdmin().from("applications").select(APP_COLS).eq("job_id", id).neq("work_type", "freelancer");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   let scope;
   try {
@@ -113,7 +114,7 @@ export async function POST(request: Request, { params }: Ctx) {
   if (sendMail && !cfg.apiKey) return NextResponse.json({ error: "RESEND_API_KEY chưa cấu hình" }, { status: 500 });
 
   const supabase = getSupabaseAdmin();
-  const { data: rows, error } = await supabase.from("applications").select(APP_COLS).in("id", ids);
+  const { data: rows, error } = await supabase.from("applications").select(APP_COLS).in("id", ids).neq("work_type", "freelancer");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   let scope;
   try {
@@ -192,6 +193,7 @@ export async function POST(request: Request, { params }: Ctx) {
       .from("applications")
       .update({ status: TALENT_POOL_STATUS })
       .eq("id", app.id)
+      .neq("work_type", "freelancer")
       .in("status", openKeys)
       .select("id");
     const ok = !moveErr && (moved?.length ?? 0) > 0;

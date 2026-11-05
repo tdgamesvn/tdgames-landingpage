@@ -185,6 +185,12 @@ export type Application = {
   expected_salary: string | null;
   available_from: string | null;
   rate_per_hour: string | null;
+  /** Kho freelancer (2026-11-05) — chỉ có nghĩa khi work_type = "freelancer". */
+  rate_vnd_per_hour?: number | null;
+  freelance_stage?: string | null;
+  freelance_level?: string | null;
+  freelance_issue?: boolean | null;
+  freelance_job_open?: boolean | null;
   source: string | null;
   message: string | null;
   available_hours_per_week: string | null;

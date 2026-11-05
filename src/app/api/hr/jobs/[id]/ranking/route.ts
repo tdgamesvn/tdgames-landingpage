@@ -45,7 +45,8 @@ async function loadPool(jobId: string) {
   const supabase = getSupabaseAdmin();
   const [{ data: job }, { data: apps, error }, { data: entries }, { data: meta }, rules] = await Promise.all([
     supabase.from("jobs").select(RANK_JOB_SELECT).eq("id", jobId).single(),
-    supabase.from("applications").select(`${APP_SELECT}, offer_status`),
+    // Xếp hạng chỉ cho tuyển fulltime — bỏ kho freelancer.
+    supabase.from("applications").select(`${APP_SELECT}, offer_status`).neq("work_type", "freelancer"),
     supabase.from("job_ranking_entries").select("*").eq("job_id", jobId),
     supabase.from("job_rankings").select("*").eq("job_id", jobId).maybeSingle(),
     loadRankingRules(supabase),

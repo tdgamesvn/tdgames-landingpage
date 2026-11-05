@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { checkAppPatch, OFFER_STATUSES } from "@/lib/hr-app-patch";
+import { checkFreelancePatch, freelancePatchFields } from "@/lib/hr-freelance";
+import { jobAcceptsFreelance } from "@/lib/hr-auto-ack";
 import { notifyApplicationUpdate } from "@/lib/hr-notify";
 import { redactApplication } from "@/lib/hr-scope";
 import { loadAssignableMembers } from "@/lib/hr-comment-members";
@@ -41,11 +43,12 @@ export async function PATCH(
   const oldApp = (await loadScopedApplication(
     ctx,
     id,
-    `full_name, status, admin_notes, rejection_reason, job_id, offer_status${wantsAssignee ? ", assignee_user_id" : ""}`,
+    `full_name, status, work_type, admin_notes, rejection_reason, job_id, offer_status${wantsAssignee ? ", assignee_user_id" : ""}`,
   ).catch(() => undefined)) as
     | {
         full_name: string | null;
         status: string;
+        work_type: string;
         admin_notes: string | null;
         rejection_reason: string | null;
         job_id: string;
@@ -60,9 +63,22 @@ export async function PATCH(
   // Quyền theo từng key (không có apps.edit chỉ được chấm test / offer).
   const denied = checkAppPatch(ctx, oldApp.status, body);
   if (denied) return NextResponse.json({ error: denied }, { status: 403 });
+  // Kho freelancer: freelancer không đổi pipeline status; trường freelancer chỉ cho đơn freelancer; rate cần quyền xem lương.
+  const flDenied = checkFreelancePatch(oldApp, body);
+  if (flDenied) return NextResponse.json({ error: flDenied }, { status: 400 });
+  if ("rate_vnd_per_hour" in body && !ctx.perms.has("apps.view_salary")) {
+    return NextResponse.json({ error: "Bạn không có quyền sửa rate" }, { status: 403 });
+  }
 
   const allowed: Record<string, unknown> = {};
   if ("status" in body) allowed.status = body.status;
+  let jobOpen = false;
+  if (body.convert_work_type === "freelancer") {
+    const { data: job, error: jobErr } = await supabase.from("jobs").select("type, accepts_freelance").eq("id", oldApp.job_id).maybeSingle();
+    if (jobErr) return NextResponse.json({ error: jobErr.message }, { status: 500 });
+    jobOpen = jobAcceptsFreelance(job);
+  }
+  Object.assign(allowed, freelancePatchFields(body, { jobOpen }));
   if ("admin_notes" in body) allowed.admin_notes = body.admin_notes;
   if ("rejection_reason" in body) allowed.rejection_reason = body.rejection_reason;
 

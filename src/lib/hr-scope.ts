@@ -43,7 +43,7 @@ export const BASE_FIELDS: readonly string[] = Object.freeze([
 /** Nhóm field theo quyền; quyền không gắn field trên hồ sơ → []. Key không thuộc nhóm nào bị bỏ. */
 const GROUPS_WITH_FIELDS = {
   "apps.view_contact": ["email", "phone", "contact_channel", "contact_handle", "linkedin_url", "website_url"],
-  "apps.view_salary": ["expected_salary", "rate_per_hour"],
+  "apps.view_salary": ["expected_salary", "rate_per_hour", "rate_vnd_per_hour"],
   "apps.view_ai": [
     "ai_score", "ai_evaluation", "ai_profile", "ai_profile_hash", "ai_digest", "ai_digest_hash",
     "mbti_type", "mbti_url",
@@ -51,6 +51,7 @@ const GROUPS_WITH_FIELDS = {
   "apps.view_notes": [
     "admin_notes", "rejection_reason", "referred_by", "source", "blocked", "block_reason", "label",
     "referred_by_submitted", "referrer_notified_at", "referrer_notified_by", "duplicate_of",
+    "freelance_issue",
   ],
   "apps.view_interviews": ["interview_sessions"],
   "apps.view_tests": ["test_submissions", "test_review", "test_token", "test_eta", "test_eta_set_at"],

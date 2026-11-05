@@ -102,3 +102,53 @@ export function filterFreelancers<T extends FreelanceRow>(rows: T[], f: Freelanc
     return true;
   });
 }
+
+/** Trường freelancer HR sửa được qua PATCH /api/hr/applications/[id]. */
+export const FREELANCE_PATCH_KEYS = ["freelance_stage", "freelance_level", "rate_vnd_per_hour", "freelance_issue"] as const;
+
+/**
+ * Kiểm body PATCH theo hình thức hồ sơ. Lỗi (tiếng Việt) hoặc null.
+ * Freelancer: không đổi `status` (status cố định 'freelancer'). Fulltime: không đặt status 'freelancer',
+ * không có trường freelancer. `convert_work_type` đổi hình thức, không đi kèm `status`.
+ */
+export function checkFreelancePatch(old: { work_type: string; status: string }, body: Record<string, unknown>): string | null {
+  const fl = isFreelanceApp(old);
+  if ("convert_work_type" in body) {
+    const to = body.convert_work_type;
+    if (to !== "freelancer" && to !== "fulltime") return "Hình thức không hợp lệ";
+    if ((to === "freelancer") === fl) return "Hồ sơ đã là hình thức này";
+    if ("status" in body) return "Không đổi trạng thái cùng lúc với đổi hình thức";
+  }
+  if ("status" in body) {
+    if (fl) return "Hồ sơ freelancer không đổi trạng thái pipeline — dùng trạng thái freelancer";
+    if (body.status === "freelancer") return "Dùng “Chuyển sang freelancer” thay vì kéo vào cột Freelancer";
+  }
+  const fKeys = FREELANCE_PATCH_KEYS.filter((k) => k in body);
+  if (fKeys.length && !fl) return "Trường này chỉ dành cho hồ sơ freelancer";
+  if ("freelance_stage" in body && !isFreelanceStage(body.freelance_stage)) return "Trạng thái freelancer không hợp lệ";
+  if ("freelance_level" in body) {
+    const v = body.freelance_level;
+    if (v !== null && v !== "" && !isFreelanceLevel(v)) return "Hạng không hợp lệ";
+  }
+  if ("rate_vnd_per_hour" in body) {
+    const v = body.rate_vnd_per_hour;
+    if (v !== null && v !== "" && parseRateVnd(v) == null) return "Rate phải là số VNĐ/giờ từ 10.000";
+  }
+  if ("freelance_issue" in body && typeof body.freelance_issue !== "boolean") return "Giá trị không hợp lệ";
+  return null;
+}
+
+/** Cột cần ghi cho body đã qua `checkFreelancePatch`. `jobOpen` = job hiện có nhận freelancer (khi đổi sang freelancer). */
+export function freelancePatchFields(body: Record<string, unknown>, ctx: { jobOpen: boolean }): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if ("freelance_stage" in body) out.freelance_stage = body.freelance_stage;
+  if ("freelance_level" in body) out.freelance_level = body.freelance_level || null;
+  if ("rate_vnd_per_hour" in body) out.rate_vnd_per_hour = body.rate_vnd_per_hour === "" ? null : parseRateVnd(body.rate_vnd_per_hour);
+  if ("freelance_issue" in body) out.freelance_issue = body.freelance_issue;
+  if (body.convert_work_type === "freelancer") {
+    Object.assign(out, { work_type: "freelancer", status: "freelancer", freelance_stage: "new", freelance_job_open: ctx.jobOpen });
+  } else if (body.convert_work_type === "fulltime") {
+    Object.assign(out, { work_type: "fulltime", status: "new" });
+  }
+  return out;
+}

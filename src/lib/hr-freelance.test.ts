@@ -2,7 +2,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { filterFreelancers, formatRateVnd, isFreelanceApp, parseRateVnd, type FreelanceFilter } from "./hr-freelance.ts";
+import {
+  checkFreelancePatch,
+  filterFreelancers,
+  formatRateVnd,
+  freelancePatchFields,
+  isFreelanceApp,
+  parseRateVnd,
+  type FreelanceFilter,
+} from "./hr-freelance.ts";
 
 test("parseRateVnd: số / có dấu chấm phẩy / đ VNĐ → số; chữ khác, rỗng, quá nhỏ → null", () => {
   assert.equal(parseRateVnd("150000"), 150000);
@@ -50,4 +58,40 @@ test("filterFreelancers: từng bộ lọc", () => {
   assert.deepEqual(ids({ q: "ngoc anh" }), ["a"]);
   assert.deepEqual(ids({ q: "DO THANH" }), ["d"]);
   assert.deepEqual(ids({ q: "lam@x" }), ["b"]);
+});
+
+const FL = { work_type: "freelancer", status: "freelancer" };
+const FT = { work_type: "fulltime", status: "new" };
+
+test("checkFreelancePatch: khoá status, chặn trường freelancer trên đơn fulltime, kiểm giá trị", () => {
+  assert.ok(checkFreelancePatch(FL, { status: "rejected" }));
+  assert.ok(checkFreelancePatch(FT, { status: "freelancer" }));
+  assert.equal(checkFreelancePatch(FT, { status: "reviewing" }), null);
+  assert.equal(checkFreelancePatch(FL, { freelance_stage: "talking" }), null);
+  assert.ok(checkFreelancePatch(FL, { freelance_stage: "x" }));
+  assert.equal(checkFreelancePatch(FL, { freelance_level: "junior" }), null);
+  assert.equal(checkFreelancePatch(FL, { freelance_level: null }), null);
+  assert.ok(checkFreelancePatch(FL, { freelance_level: "lead" }));
+  assert.equal(checkFreelancePatch(FL, { rate_vnd_per_hour: "150.000" }), null);
+  assert.equal(checkFreelancePatch(FL, { rate_vnd_per_hour: "" }), null);
+  assert.ok(checkFreelancePatch(FL, { rate_vnd_per_hour: "40 hours" }));
+  assert.ok(checkFreelancePatch(FL, { freelance_issue: "yes" }));
+  assert.ok(checkFreelancePatch(FT, { freelance_level: "junior" }));
+  assert.equal(checkFreelancePatch(FL, { convert_work_type: "fulltime" }), null);
+  assert.ok(checkFreelancePatch(FL, { convert_work_type: "freelancer" }));
+  assert.equal(checkFreelancePatch(FT, { convert_work_type: "freelancer" }), null);
+  assert.ok(checkFreelancePatch(FT, { convert_work_type: "x" }));
+  assert.ok(checkFreelancePatch(FT, { convert_work_type: "freelancer", status: "new" }));
+});
+
+test("freelancePatchFields: map giá trị + 2 chiều đổi hình thức", () => {
+  assert.deepEqual(freelancePatchFields({ freelance_stage: "testing", freelance_level: "", rate_vnd_per_hour: "150.000", freelance_issue: true }, { jobOpen: true }), {
+    freelance_stage: "testing", freelance_level: null, rate_vnd_per_hour: 150000, freelance_issue: true,
+  });
+  assert.deepEqual(freelancePatchFields({ rate_vnd_per_hour: "" }, { jobOpen: true }), { rate_vnd_per_hour: null });
+  assert.deepEqual(freelancePatchFields({ convert_work_type: "freelancer" }, { jobOpen: false }), {
+    work_type: "freelancer", status: "freelancer", freelance_stage: "new", freelance_job_open: false,
+  });
+  assert.deepEqual(freelancePatchFields({ convert_work_type: "fulltime" }, { jobOpen: true }), { work_type: "fulltime", status: "new" });
+  assert.deepEqual(freelancePatchFields({ admin_notes: "x" }, { jobOpen: true }), {});
 });
