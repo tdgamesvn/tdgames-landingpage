@@ -499,6 +499,12 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
     }
   }, [currentIdx, activeMedia]);
 
+  // Hết video → tự sang thẻ kế (vòng lại thẻ đầu). Chỉ 1 thẻ thì giữ loop.
+  const autoAdvance = mediaList.length > 1;
+  const handleBgEnded = useCallback(() => {
+    switchVideo((currentIdx + 1) % mediaList.length);
+  }, [switchVideo, currentIdx, mediaList.length]);
+
   if (!activeMedia) return null;
 
   return (
@@ -523,7 +529,8 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
             poster={posterFor(activeMedia.path)}
             autoPlay
             muted
-            loop
+            loop={!autoAdvance}
+            onEnded={autoAdvance ? handleBgEnded : undefined}
             playsInline
             preload="auto"
           />
@@ -655,7 +662,7 @@ export default function HomeHero({ initialMedia }: { initialMedia?: MediaItem[] 
         }}
       >
         {/* ponytail: 1024–1279px chỗ hẹp → thu nhỏ stack thay vì ẩn; ẩn thì mất luôn
-            cách chuyển media (switchVideo chỉ nằm ở đây, không có auto-advance). */}
+            cách chọn media bằng tay (ngoài auto-advance khi hết video). */}
         <div className="origin-bottom-right scale-[0.65] xl:scale-100">
           <div style={{ transform: "translate(var(--hero-cards-x, 0px), var(--hero-cards-y, 0px))" }}>
           <DraggableStack
