@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Job } from "@/app/admin/_lib/types";
+import { parseRateVnd } from "@/lib/hr-freelance";
 
 type Props = { job: Job };
 
@@ -18,6 +19,7 @@ type FormState = {
   linkedin_url: string;
   expected_salary: string;
   rate_per_hour: string;
+  rate_vnd_per_hour: string;
   source: string;
   available_from: string;
   available_hours_per_week: string;
@@ -49,6 +51,7 @@ export default function ApplyPageClient({ job }: Props) {
     linkedin_url: "",
     expected_salary: "",
     rate_per_hour: "",
+    rate_vnd_per_hour: "",
     source: "",
     available_from: "",
     available_hours_per_week: "",
@@ -99,6 +102,12 @@ export default function ApplyPageClient({ job }: Props) {
 
     const cvUrl = upload.status === "done" ? upload.url : null;
 
+    if (isFreelancer && parseRateVnd(form.rate_vnd_per_hour) == null) {
+      setError("Please enter your hourly rate in VND as a number (e.g. 150000).");
+      setSubmitting(false);
+      return;
+    }
+
     // CV required for non-freelancer only
     if (!isFreelancer && !cvUrl) {
       setError("Please upload your CV before submitting.");
@@ -121,6 +130,7 @@ export default function ApplyPageClient({ job }: Props) {
         linkedin_url: !isFreelancer ? form.linkedin_url || null : null,
         expected_salary: !isFreelancer ? form.expected_salary || null : null,
         rate_per_hour: isFreelancer ? form.rate_per_hour || null : null,
+        rate_vnd_per_hour: isFreelancer ? form.rate_vnd_per_hour || null : null,
         available_hours_per_week: isFreelancer ? form.available_hours_per_week || null : null,
         source: !isFreelancer ? form.source || null : null,
         available_from: !isFreelancer ? form.available_from || null : null,
@@ -671,9 +681,10 @@ export default function ApplyPageClient({ job }: Props) {
                     <Field label="Hourly Rate (VND/hour) *">
                       <input
                         required
-                        value={form.rate_per_hour}
-                        onChange={(e) => set("rate_per_hour", e.target.value)}
-                        placeholder="Enter your hourly rate"
+                        inputMode="numeric"
+                        value={form.rate_vnd_per_hour}
+                        onChange={(e) => set("rate_vnd_per_hour", e.target.value)}
+                        placeholder="e.g. 150000"
                         className={inputCls}
                       />
                     </Field>
@@ -693,6 +704,15 @@ export default function ApplyPageClient({ job }: Props) {
                       </select>
                     </Field>
                   </div>
+
+                  <Field label="Price Notes (optional)">
+                    <input
+                      value={form.rate_per_hour}
+                      onChange={(e) => set("rate_per_hour", e.target.value)}
+                      placeholder="e.g. per asset / per project pricing"
+                      className={inputCls}
+                    />
+                  </Field>
 
                   <Field label="Additional Message">
                     <textarea

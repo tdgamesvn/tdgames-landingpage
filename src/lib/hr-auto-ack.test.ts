@@ -79,10 +79,10 @@ test("sanitizeAckName", () => {
   assert.equal(sanitizeAckName("x".repeat(100)), "bạn");
 });
 
-test("freelanceIntake: freelancer + job nhận → cột Freelancer; job chưa nhận / không rõ → Lưu hồ sơ; fulltime → null", () => {
-  assert.deepEqual(freelanceIntake("freelancer", true), { status: "freelancer", ackKind: "freelance_received" });
-  assert.deepEqual(freelanceIntake("freelancer", false), { status: "talent_pool", ackKind: "freelance_not_open" });
-  assert.deepEqual(freelanceIntake("freelancer", null), { status: "talent_pool", ackKind: "freelance_not_open" });
+test("freelanceIntake: freelancer luôn vào kho freelancer; jobOpen theo job; fulltime → null", () => {
+  assert.deepEqual(freelanceIntake("freelancer", true), { status: "freelancer", jobOpen: true, ackKind: "freelance_received" });
+  assert.deepEqual(freelanceIntake("freelancer", false), { status: "freelancer", jobOpen: false, ackKind: "freelance_not_open" });
+  assert.deepEqual(freelanceIntake("freelancer", null), { status: "freelancer", jobOpen: false, ackKind: "freelance_not_open" });
   assert.equal(freelanceIntake("fulltime", true), null);
   assert.equal(freelanceIntake(undefined, true), null);
 });

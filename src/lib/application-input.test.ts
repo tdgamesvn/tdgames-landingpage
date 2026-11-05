@@ -74,3 +74,18 @@ test("chuỗi rỗng → null, chuỗi quá dài bị cắt, số kinh nghiệm 
 test("escapeTelegramHtml", () => {
   assert.equal(escapeTelegramHtml(`<b>x</b> & "y"`), "&lt;b&gt;x&lt;/b&gt; &amp; \"y\"");
 });
+
+test("freelancer: rate_vnd_per_hour đọc số; thiếu thì lấy từ rate_per_hour; không có → lỗi; fulltime bỏ qua", () => {
+  const fl = { ...valid, work_type: "freelancer" };
+  const a = sanitizeApplicationInput({ ...fl, rate_vnd_per_hour: "150.000" }, CDN);
+  assert.ok("data" in a);
+  assert.equal(a.data.rate_vnd_per_hour, 150000);
+  const b = sanitizeApplicationInput({ ...fl, rate_per_hour: "200000" }, CDN);
+  assert.ok("data" in b);
+  assert.equal(b.data.rate_vnd_per_hour, 200000);
+  assert.deepEqual(sanitizeApplicationInput({ ...fl, rate_vnd_per_hour: "40 hours" }, CDN), { error: "Invalid rate_vnd_per_hour" });
+  assert.deepEqual(sanitizeApplicationInput(fl, CDN), { error: "Invalid rate_vnd_per_hour" });
+  const c = sanitizeApplicationInput({ ...valid, rate_vnd_per_hour: "150000" }, CDN);
+  assert.ok("data" in c);
+  assert.equal("rate_vnd_per_hour" in c.data, false);
+});

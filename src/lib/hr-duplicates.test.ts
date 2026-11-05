@@ -292,3 +292,10 @@ test("teamAutoRejectText: ghi mã người giới thiệu lần này (để lạ
   assert.ok(teamAutoRejectText({ ...base, submittedCode: "zz-b" }).includes("zz-b"));
   assert.ok(!teamAutoRejectText({ ...base, submittedCode: null }).includes("giới thiệu"));
 });
+
+test("classifyDuplicate: freelancer không bao giờ bị auto_rejected (vẫn nhận là hồ sơ cũ)", () => {
+  assert.equal(classifyDuplicate(input, [prior({})])?.kind, "auto_rejected");
+  const r = classifyDuplicate({ ...input, work_type: "freelancer" }, [prior({})]);
+  assert.equal(r?.kind, "returning");
+  assert.equal(r?.prior.id, "p1");
+});

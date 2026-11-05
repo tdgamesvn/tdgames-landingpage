@@ -74,18 +74,18 @@ export const ACK_KINDS = ["application_received", "freelance_received", "freelan
 export type AckKind = (typeof ACK_KINDS)[number];
 
 /**
- * Ứng viên chọn hình thức Freelancer (sếp chốt 2026-11-04): job nhận freelancer → cột Freelancer + mail
- * "sẽ xem xét, phù hợp sẽ liên hệ"; job chưa nhận → Lưu hồ sơ + mail "chưa mở freelance, lưu liên hệ".
+ * Ứng viên chọn hình thức Freelancer: luôn vào kho freelancer (status 'freelancer', tab Freelancer — 2026-11-05).
+ * Job nhận freelancer → mail "sẽ xem xét, phù hợp sẽ liên hệ"; chưa nhận → nhãn "Job chưa mở freelance" +
+ * mail "chưa mở freelance, lưu liên hệ" (sếp chốt 2026-11-04).
  * Không phải freelancer → null (đơn đi như cũ: status new + mail application_received).
  */
 export function freelanceIntake(
   workType: unknown,
   acceptsFreelance: boolean | null | undefined,
-): { status: "freelancer" | "talent_pool"; ackKind: Exclude<AckKind, "application_received"> } | null {
+): { status: "freelancer"; jobOpen: boolean; ackKind: Exclude<AckKind, "application_received"> } | null {
   if (workType !== "freelancer") return null;
-  return acceptsFreelance === true
-    ? { status: "freelancer", ackKind: "freelance_received" }
-    : { status: "talent_pool", ackKind: "freelance_not_open" };
+  const jobOpen = acceptsFreelance === true;
+  return { status: "freelancer", jobOpen, ackKind: jobOpen ? "freelance_received" : "freelance_not_open" };
 }
 
 /** Job nhận freelancer: bật "Nhận freelancer", hoặc bản thân job là loại freelancer. */

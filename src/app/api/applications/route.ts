@@ -8,6 +8,7 @@ import { clientIp, createLimiter } from "@/lib/hr-rate-limit";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
 import { sendApplicationAck, sendDuplicateRejection } from "@/lib/hr-auto-ack-send";
 import { freelanceIntake, jobAcceptsFreelance } from "@/lib/hr-auto-ack";
+import { formatRateVnd } from "@/lib/hr-freelance";
 import {
   classifyDuplicate,
   duplicateNoticeLine,
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
   const now = new Date().toISOString();
   const jobTitleNow = (job.data as { title?: string | null } | null)?.title ?? null;
   const who = { email: String(email), phone: input.phone ? String(input.phone) : null, now };
-  const dup = priors ? classifyDuplicate({ ...who, job_id: String(job_id), job_title: jobTitleNow }, priors) : null;
+  const dup = priors ? classifyDuplicate({ ...who, job_id: String(job_id), job_title: jobTitleNow, work_type: String(work_type) }, priors) : null;
   const first = priors ? firstReferral(who, priors) : null;
   const submittedCode = normalizeRefCode(input.referred_by);
   const submittedOwnerKey = ownerKeyFor(submittedCode, activeStaff, referrers);
@@ -101,8 +102,8 @@ export async function POST(request: Request) {
   }));
   const leaderId = (job.data as { leader_user_id: string | null } | null)?.leader_user_id ?? null;
   const autoRejected = dup?.kind === "auto_rejected";
-  // Ứng viên freelancer: job nhận → cột Freelancer, chưa nhận → Lưu hồ sơ; kèm mail cảm ơn riêng.
-  // Đơn tự động từ chối (trùng) vẫn đi luồng từ chối.
+  // Ứng viên freelancer → kho freelancer (tab Freelancer); job chưa nhận → nhãn "Job chưa mở freelance". Kèm mail cảm ơn riêng.
+  // Freelancer không bao giờ bị auto-reject (classifyDuplicate) — `autoRejected` chỉ còn là đơn fulltime.
   const freelance = autoRejected
     ? null
     : freelanceIntake(work_type, jobAcceptsFreelance(job.data as { type?: string | null; accepts_freelance?: boolean | null } | null));
@@ -148,6 +149,8 @@ export async function POST(request: Request) {
   if (freelance) {
     extra.status = freelance.status;
     extra.status_changed_at = now;
+    extra.freelance_stage = "new";
+    extra.freelance_job_open = freelance.jobOpen;
   }
 
   const { data, error } = await supabase
@@ -223,9 +226,7 @@ export async function POST(request: Request) {
     ? duplicateNoticeLine({ kind: dup.kind })
     : null;
   const freelanceLine = freelance
-    ? freelance.status === "freelancer"
-      ? "🧩 Freelancer — job có nhận freelancer → cột Freelancer"
-      : "🧩 Freelancer — job chưa nhận freelancer → Lưu hồ sơ"
+    ? `🧩 Freelancer → tab Freelancer${freelance.jobOpen ? "" : " (job chưa mở freelance)"}`
     : null;
 
   // Mail cảm ơn tự động (nền, sau khi trả lời) — mọi lỗi chỉ log, không ảnh hưởng việc nộp đơn.
@@ -265,7 +266,9 @@ export async function POST(request: Request) {
       const phone = input.phone ? String(input.phone) : null;
       const yearsExp = input.years_experience != null ? String(input.years_experience) : null;
       const salary = input.expected_salary ? String(input.expected_salary) : null;
-      const rate = input.rate_per_hour ? String(input.rate_per_hour) : null;
+      const rate = typeof input.rate_vnd_per_hour === "number"
+        ? `${formatRateVnd(input.rate_vnd_per_hour)}${input.rate_per_hour ? ` (${String(input.rate_per_hour)})` : ""}`
+        : input.rate_per_hour ? String(input.rate_per_hour) : null;
       const referredBy = input.referred_by ? String(input.referred_by) : null;
       const h = (v: unknown) => escapeTelegramHtml(String(v));
 

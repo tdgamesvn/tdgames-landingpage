@@ -93,7 +93,7 @@ const rejectedAtOf = (p: PriorApp) => p.status_changed_at ?? p.created_at;
  * Ưu tiên: auto_rejected → open_duplicate → returning. Hồ sơ `auto_rejected` không bao giờ là mốc trượt.
  */
 export function classifyDuplicate(
-  input: Who & { job_id: string; job_title: string | null; now: string },
+  input: Who & { job_id: string; job_title: string | null; now: string; work_type?: string | null },
   priors: PriorApp[],
 ): { kind: DuplicateKind; prior: PriorApp; rejectedAt: string | null; reapplyFrom: string | null } | null {
   const matched = priors
@@ -107,7 +107,8 @@ export function classifyDuplicate(
     .map(({ p }) => p)
     .sort((a, b) => (rejectedAtOf(a) < rejectedAtOf(b) ? 1 : -1));
   const lastRejection = rejections[0];
-  if (lastRejection && withinWindow(rejectedAtOf(lastRejection), input.now)) {
+  // Freelancer không có Reject (kho freelancer 2026-11-05) → không tự từ chối, rơi xuống open/returning.
+  if (lastRejection && input.work_type !== "freelancer" && withinWindow(rejectedAtOf(lastRejection), input.now)) {
     const rejectedAt = rejectedAtOf(lastRejection);
     return {
       kind: "auto_rejected",

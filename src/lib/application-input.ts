@@ -1,3 +1,5 @@
+import { parseRateVnd } from "./hr-freelance.ts";
+
 /**
  * Lọc dữ liệu form ứng tuyển công khai (POST /api/applications) trước khi ghi DB.
  * Chỉ nhận đúng các trường form /apply gửi — người ngoài không tự đặt được status,
@@ -79,6 +81,14 @@ export function sanitizeApplicationInput(
   const years = typeof body.years_experience === "number" ? body.years_experience : Number(body.years_experience);
   data.years_experience =
     body.years_experience != null && Number.isInteger(years) && years >= 0 && years <= 60 ? years : null;
+
+  // Freelancer: rate số VNĐ/giờ bắt buộc (lọc trong kho freelancer). Form cũ chỉ gửi rate_per_hour → đọc từ đó.
+  // rate_per_hour (chữ) giữ làm "Ghi chú về giá".
+  if (work_type === "freelancer") {
+    const rate = parseRateVnd(body.rate_vnd_per_hour ?? body.rate_per_hour);
+    if (rate == null) return { error: "Invalid rate_vnd_per_hour" };
+    data.rate_vnd_per_hour = rate;
+  }
 
   return { data };
 }
