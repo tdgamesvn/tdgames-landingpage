@@ -147,7 +147,8 @@ function ProjectsStudioIntro() {
   );
 }
 
-export default function HomeProjectsSection() {
+// coverBySlug: ảnh bìa từ bảng projects (giống lưới /portfolio); thiếu slug → giữ ảnh site.json.
+export default function HomeProjectsSection({ coverBySlug = {} }: { coverBySlug?: Record<string, string> }) {
   const [activeProject, setActiveProject] = useState(0);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hoverLockUntilRef = useRef(0);
@@ -312,7 +313,7 @@ export default function HomeProjectsSection() {
                 )}
                 <div className="relative h-full min-h-[156px] lg:min-h-full">
                   <Image
-                    src={project.image}
+                    src={coverBySlug[project.slug] ?? project.image}
                     alt={project.title}
                     fill
                     className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
