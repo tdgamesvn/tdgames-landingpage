@@ -105,7 +105,6 @@ export function canSeeAudience(perms: ReadonlySet<string>, audience: ChatAudienc
 /** Trim, bỏ ký tự điều khiển (giữ xuống dòng), rỗng → null, cắt `max`. */
 export function cleanText(s: unknown, max: number): string | null {
   if (typeof s !== "string") return null;
-  // eslint-disable-next-line no-control-regex
   const out = s.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, "").trim();
   return out ? out.slice(0, max) : null;
 }
