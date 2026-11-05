@@ -27,6 +27,8 @@ const DEBOUNCE_MS = 6_000;
 const THREAD_DAILY_CAP = 15;
 const GLOBAL_DAILY_CAP = 300;
 const ALERT_GAP_MS = 30 * 60_000;
+/** Chi phí dự kiến 1 nháp (~$0.009 thực tế) — giữ chỗ trong ngân sách khi đang gọi model. */
+const RESERVE_USD = 0.02;
 
 const db = () => getSupabaseAdmin();
 
@@ -133,16 +135,27 @@ export async function draftReplyFor(threadId: string, triggerId: string): Promis
     for (let i = history.length - 1; i >= 0 && history[i].sender === "visitor"; i--) tail.unshift(history[i].body);
     if (!worthDrafting(tail.join(" "))) return;
 
+    // Giữ chỗ TRƯỚC rồi mới đếm (dòng giữ chỗ tính luôn chi phí dự kiến) → nhiều request cùng lúc không vượt trần
+    // / ngân sách quá vài nháp. Vượt → dòng giữ chỗ thành "skipped" (cost 0).
     const now = new Date();
     const dayAgo = new Date(now.getTime() - 86_400_000);
-    if ((await countSince(dayAgo, threadId)) >= THREAD_DAILY_CAP) return;
-    if ((await countSince(dayAgo)) >= GLOBAL_DAILY_CAP) {
+    const { data: slot, error: slotErr } = await db()
+      .from("chat_ai_drafts")
+      .insert({ thread_id: threadId, trigger_message_id: triggerId, status: "skipped", cost_usd: RESERVE_USD })
+      .select("id")
+      .single();
+    if (slotErr || !slot) throw new Error(`giữ chỗ nháp lỗi: ${slotErr?.message}`);
+    const release = () => db().from("chat_ai_drafts").update({ cost_usd: 0 }).eq("id", slot.id);
+    if ((await countSince(dayAgo, threadId)) > THREAD_DAILY_CAP) return void (await release());
+    if ((await countSince(dayAgo)) > GLOBAL_DAILY_CAP) {
+      await release();
       await alertAdmin("daily_cap", `Đã chạm trần ${GLOBAL_DAILY_CAP} nháp AI / 24h — tạm dừng soạn nháp (nghi spam).`);
       return;
     }
     const spent = await monthSpendUsd(now);
-    if (spent >= budgetUsd) {
-      await alertAdmin("budget", `Hết ngân sách AI chat tháng này ($${spent.toFixed(2)} / $${budgetUsd}). Tạm dừng soạn nháp.`);
+    if (spent > budgetUsd) {
+      await release();
+      await alertAdmin("budget", `Hết ngân sách AI chat tháng này ($${(spent - RESERVE_USD).toFixed(2)} / $${budgetUsd}). Tạm dừng soạn nháp.`);
       return;
     }
 
@@ -167,17 +180,15 @@ export async function draftReplyFor(threadId: string, triggerId: string): Promis
     }
 
     // Nháp cũ đang chờ của luồng → hết hiệu lực (chỉ giữ nháp cho tin mới nhất).
-    await db().from("chat_ai_drafts").update({ status: "superseded" }).eq("thread_id", threadId).eq("status", "pending");
+    await db().from("chat_ai_drafts").update({ status: "superseded" }).eq("thread_id", threadId).in("status", ["pending", "failed"]);
     if (!result) {
-      await db().from("chat_ai_drafts").insert({ thread_id: threadId, trigger_message_id: triggerId, status: "failed", error: errors.join(" | ").slice(0, 1000) });
+      await db().from("chat_ai_drafts").update({ status: "failed", cost_usd: 0, error: errors.join(" | ").slice(0, 1000) }).eq("id", slot.id);
       return;
     }
     const { draft } = result;
     const warnings = guardDraft(draft, refs, tail.join("\n"));
     const sources = draft.sources.filter((s) => refs.has(s)).map((ref) => ({ ref, title: refs.get(ref)!.split("\n")[0].slice(0, 80) }));
-    await db().from("chat_ai_drafts").insert({
-      thread_id: threadId,
-      trigger_message_id: triggerId,
+    await db().from("chat_ai_drafts").update({
       status: "pending",
       answer: draft.answer,
       needs_human: draft.needsHuman || warnings.length > 0,
@@ -188,7 +199,7 @@ export async function draftReplyFor(threadId: string, triggerId: string): Promis
       input_tokens: result.inputTokens,
       output_tokens: result.outputTokens,
       cost_usd: estimateCostUsd(result.inputTokens, result.outputTokens),
-    });
+    }).eq("id", slot.id);
   } catch (e) {
     console.error("[chat-ai] draftReplyFor lỗi:", e);
     await alertAdmin("internal", `Lỗi nội bộ khi soạn nháp: ${e instanceof Error ? e.message : String(e)}`);
