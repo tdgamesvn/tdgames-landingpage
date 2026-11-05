@@ -20,6 +20,7 @@ import {
 const SEEN_KEY = "tdg_chat_seen_at";
 const POLL_VISIBLE_MS = 4000;
 const POLL_HIDDEN_MS = 20000;
+const TYPING_MIN_MS = 1200;
 const OFFLINE_NOTE = "We're offline right now (8:00–22:00 Vietnam time). Leave your email and we'll reply by email.";
 
 type Pending = { kind: "text" | "talk_to_person"; body: string };
@@ -38,6 +39,9 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [askedOptional, setAskedOptional] = useState(false);
+  // Bấm câu có sẵn: hiện ngay câu hỏi + 3 chấm "đang trả lời" rồi mới ra câu trả lời.
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
+  const [typing, setTyping] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const lastAtRef = useRef<string | null>(null);
 
@@ -109,7 +113,7 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, contactMode]);
+  }, [messages.length, contactMode, typing]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -160,15 +164,21 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
 
   async function onQuickReply(id: string) {
     if (busy) return;
+    const label = config?.quickReplies.find((q) => q.id === id)?.label ?? "";
     setBusy(true);
     setError(null);
+    setPendingQuestion(label);
+    setTyping(true);
     try {
-      const r = await sendQuickReply(id);
+      // Giữ 3 chấm tối thiểu ~1.2s cho cảm giác đang trả lời (song song với gọi API).
+      const [r] = await Promise.all([sendQuickReply(id), new Promise((res) => setTimeout(res, TYPING_MIN_MS))]);
       merge(r.messages);
       setThread(r.thread);
     } catch {
       setError("Couldn't load that answer. Please try again.");
     } finally {
+      setPendingQuestion(null);
+      setTyping(false);
       setBusy(false);
     }
   }
@@ -196,7 +206,8 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
   }
 
   const quickReplies = config?.quickReplies ?? [];
-  const showTopics = messages.length === 0;
+  const asked = new Set(messages.filter((m) => m.kind === "quick_reply").map((m) => m.body));
+  const showTopics = messages.length === 0 && !pendingQuestion;
 
   return (
     <div
@@ -242,6 +253,12 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
         {messages.map((m) => (
           <MessageView key={m.id} m={m} />
         ))}
+        {pendingQuestion && (
+          <Bubble side="right" tone="accent">
+            {pendingQuestion}
+          </Bubble>
+        )}
+        {typing && <TypingDots />}
         {contactMode && (
           <form onSubmit={onContact} className="mt-1 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 text-[12.5px]">
             <p className="text-zinc-700">
@@ -264,15 +281,33 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
         {error && <p className="text-center text-[12px] text-red-600">{error}</p>}
       </div>
 
-      {/* Chủ đề nhanh khi đã có tin */}
+      {/* Chủ đề nhanh khi đã có tin: câu chưa hỏi lên đầu; mũi tên ‹ › + lăn chuột để xem tiếp */}
       {!showTopics && quickReplies.length > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto border-t border-zinc-100 bg-white px-3 pt-2 [scrollbar-width:none]">
-          {quickReplies.map((q) => (
-            <button key={q.id} type="button" disabled={busy} onClick={() => onQuickReply(q.id)} className="shrink-0 rounded-full border border-orange-200 px-3 py-1 text-[12px] font-semibold text-[#b45309] hover:bg-orange-50 disabled:opacity-50">
-              {q.label}
-            </button>
-          ))}
-        </div>
+        <ChipRow>
+          {[...quickReplies]
+            .sort((a, b) => Number(asked.has(a.label)) - Number(asked.has(b.label)))
+            .map((q) => (
+              <button
+                key={q.id}
+                type="button"
+                disabled={busy}
+                onClick={() => onQuickReply(q.id)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition hover:bg-orange-50 disabled:opacity-50 ${
+                  asked.has(q.label) ? "border-zinc-200 text-zinc-500" : "border-orange-300 text-[#b45309]"
+                }`}
+              >
+                {q.label}
+              </button>
+            ))}
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onSend("talk_to_person")}
+            className="shrink-0 rounded-full border border-zinc-300 px-3 py-1.5 text-[12.5px] font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50"
+          >
+            🙋 Talk to a person
+          </button>
+        </ChipRow>
       )}
 
       {/* Ô gõ */}
@@ -378,5 +413,72 @@ function LinkButton({ href, label }: { href: string; label: string }) {
     <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
       {label} ↗
     </a>
+  );
+}
+
+/** 3 chấm "đang trả lời". */
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1 self-start rounded-2xl rounded-bl-md border border-zinc-200 bg-white px-3.5 py-3" aria-label="Typing">
+      <style>{`@keyframes tdg-dot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}`}</style>
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="h-[7px] w-[7px] rounded-full bg-zinc-400"
+          style={{ animation: `tdg-dot 1.1s ${i * 0.16}s infinite ease-in-out` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Hàng chip cuộn ngang: mũi tên ‹ › khi còn chip bị che, lăn chuột dọc → cuộn ngang, viền mờ hai bên. */
+function ChipRow({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ left: false, right: false });
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setEdge({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+  }, []);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const t = setTimeout(update, 0);
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        el.scrollLeft += e.deltaY;
+        e.preventDefault();
+      }
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      clearTimeout(t);
+      el.removeEventListener("wheel", onWheel);
+      ro.disconnect();
+    };
+  }, [update]);
+  const nudge = (dir: 1 | -1) => ref.current?.scrollBy({ left: dir * 180, behavior: "smooth" });
+  const arrow = "absolute top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-white text-[15px] font-bold text-zinc-700 shadow-[0_2px_8px_rgba(0,0,0,0.18)] hover:bg-zinc-50";
+  return (
+    <div className="relative border-t border-zinc-100 bg-white pt-2">
+      <div ref={ref} onScroll={update} className="flex gap-1.5 overflow-x-auto scroll-smooth px-3 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {children}
+      </div>
+      {edge.left && (
+        <>
+          <span aria-hidden className="pointer-events-none absolute bottom-0 left-0 top-2 w-10 bg-gradient-to-r from-white to-transparent" />
+          <button type="button" aria-label="Previous topics" onClick={() => nudge(-1)} className={`${arrow} left-1.5 mt-1`}>‹</button>
+        </>
+      )}
+      {edge.right && (
+        <>
+          <span aria-hidden className="pointer-events-none absolute bottom-0 right-0 top-2 w-12 bg-gradient-to-l from-white to-transparent" />
+          <button type="button" aria-label="More topics" onClick={() => nudge(1)} className={`${arrow} right-1.5 mt-1`}>›</button>
+        </>
+      )}
+    </div>
   );
 }
