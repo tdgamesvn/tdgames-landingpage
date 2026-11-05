@@ -28,35 +28,39 @@ const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
 });
 
-/* ── Hero video carousel data (fallback khi DB trống) — chỉ tư liệu dự án của studio ── */
+/* ── Hero video carousel data (fallback khi DB trống, cùng bộ với page_slots portfolio/hero-carousel) — chỉ dự án của studio, mỗi thẻ một màu ── */
 const HERO_VIDEOS = [
   {
     id: "v1",
-    thumbnail: "https://cdn.tdgamestudio.com/landing/video/posters/yomi-2-supermove.jpg",
-    video: "https://cdn.tdgamestudio.com/landing/video/hero-v2/yomi-2-supermove.mp4",
+    thumbnail: "https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/gwen-desperation.jpg",
+    video: "https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/gwen-desperation.mp4",
   },
   {
     id: "v2",
+    thumbnail: "https://cdn.tdgamestudio.com/landing/video/posters/mytheria.jpg",
+    video: "https://cdn.tdgamestudio.com/landing/video/hero-v2/mytheria.mp4",
+  },
+  {
+    id: "v3",
+    thumbnail: "https://cdn.tdgamestudio.com/projects/2026/10/8404da1e-2245-487c-9aeb-b5ffd51d1b1e-portfolio-cover-kayn-snow-moon.webp",
+    video: "https://cdn.tdgamestudio.com/projects/2026/05/eb574720-923c-4ad0-abe3-c45320b9359a-final_loop_7s.mp4",
+  },
+  {
+    id: "v4",
+    thumbnail: "https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/onimaru-clockwork-soldiers.jpg",
+    video: "https://cdn.tdgamestudio.com/landing/portfolio/yomi-2/onimaru-clockwork-soldiers.mp4",
+  },
+  {
+    id: "v5",
     thumbnail: "https://cdn.tdgamestudio.com/landing/video/posters/horse-race.jpg",
     video: "https://cdn.tdgamestudio.com/landing/video/hero-v2/horse-race.mp4",
   },
   {
-    id: "v3",
-    thumbnail: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.jpg",
-    video: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/magic-orb.mp4",
-  },
-  {
-    id: "v4",
-    thumbnail: "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/4.png",
-    video: "https://cdn.tdgamestudio.com/landing/video/Super_Move/BIGBY-Long Arm of the Law_Closed.mp4",
-  },
-  {
-    id: "v5",
-    thumbnail: "https://cdn.tdgamestudio.com/landing/video/CutScene_SE/5.png",
-    video: "https://cdn.tdgamestudio.com/landing/video/Super_Move/On_Your_Knees.mp4",
+    id: "v6",
+    thumbnail: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/rocket-launcher.jpg",
+    video: "https://cdn.tdgamestudio.com/landing/portfolio/epic-card/rocket-launcher.mp4",
   },
 ];
-const HERO_AUTO_ROTATE_MS = 6000;
 
 const isVideoSrc = (url: string) => /\.(mp4|webm|mov)(\?|$)/i.test(url);
 
@@ -70,7 +74,7 @@ export default function PortfolioPage() {
   const [heroVideoIdx, setHeroVideoIdx] = useState(0);
   const [heroVideoSlot, setHeroVideoSlot] = useState<0 | 1>(0);
   const heroVideoRefs = useRef<(HTMLVideoElement | null)[]>([null, null]);
-  const heroTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [heroProgress, setHeroProgress] = useState(0); // 0–1, thanh vàng dưới thumbnail
   const heroHovered = useRef(false);
 
   const switchHeroVideo = useCallback(
@@ -85,25 +89,24 @@ export default function PortfolioPage() {
       }
       setHeroVideoSlot(nextSlot as 0 | 1);
       setHeroVideoIdx(nextIdx);
+      setHeroProgress(0);
     },
     [heroVideoIdx, heroVideoSlot, heroVideos],
   );
 
-  // Auto-rotate
-  useEffect(() => {
-    if (heroTimerRef.current) clearInterval(heroTimerRef.current);
-    heroTimerRef.current = setInterval(() => {
-      if (heroHovered.current) return;
-      setHeroVideoIdx((prev) => {
-        const next = (prev + 1) % heroVideos.length;
-        queueMicrotask(() => switchHeroVideo(next));
-        return prev;
-      });
-    }, HERO_AUTO_ROTATE_MS);
-    return () => {
-      if (heroTimerRef.current) clearInterval(heroTimerRef.current);
-    };
-  }, [switchHeroVideo]);
+  // Auto-advance: chạy HẾT video mới sang thẻ kế (video dài 12–20s không bị cắt giữa
+  // chừng như timer 6s cũ). Đang hover dải thumbnail → phát lại video hiện tại.
+  const handleHeroEnded = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      if (heroHovered.current || heroVideos.length < 2) {
+        e.currentTarget.currentTime = 0;
+        e.currentTarget.play().catch(() => {});
+        return;
+      }
+      switchHeroVideo((heroVideoIdx + 1) % heroVideos.length);
+    },
+    [heroVideoIdx, heroVideos.length, switchHeroVideo],
+  );
 
   // Fetch hero videos from page_slots DB (fallback to HERO_VIDEOS)
   useEffect(() => {
@@ -181,7 +184,15 @@ export default function PortfolioPage() {
                 src={slot === 0 ? heroVideos[heroVideoIdx]?.video : undefined}
                 autoPlay
                 muted
-                loop
+                onEnded={heroVideoSlot === slot ? handleHeroEnded : undefined}
+                onTimeUpdate={
+                  heroVideoSlot === slot
+                    ? (e) => {
+                        const { currentTime, duration } = e.currentTarget;
+                        if (duration > 0) setHeroProgress(currentTime / duration);
+                      }
+                    : undefined
+                }
                 playsInline
                 preload={heroVideoSlot === slot ? "auto" : "metadata"}
               />
@@ -327,23 +338,14 @@ export default function PortfolioPage() {
                   {isActive && (
                     <div
                       key={`prog-${heroVideoIdx}`}
-                      className="absolute inset-x-0 bottom-0 h-[3px] origin-left bg-amber-400"
-                      style={{
-                        animation: `heroProgress ${HERO_AUTO_ROTATE_MS}ms linear forwards`,
-                      }}
+                      className="absolute inset-x-0 bottom-0 h-[3px] origin-left bg-amber-400 transition-transform duration-300 ease-linear"
+                      style={{ transform: `scaleX(${heroProgress})` }}
                     />
                   )}
                 </button>
               );
             })}
           </div>
-
-          <style>{`
-            @keyframes heroProgress {
-              from { transform: scaleX(0); }
-              to   { transform: scaleX(1); }
-            }
-          `}</style>
         </div>
 
         {/* ═══════ Selected Works Grid ═══════ */}
