@@ -1,6 +1,6 @@
 # /hr — Màn hình Freelancer (kho freelancer) — thiết kế
 
-Ngày: 2026-11-05 · Người quyết: sếp (Tony) · Trạng thái: chờ duyệt
+Ngày: 2026-11-05 · Người quyết: sếp (Tony) · Trạng thái: **sếp duyệt 2026-11-05** ("Triển khai đi")
 
 ## 1. Vì sao
 
@@ -83,7 +83,8 @@ Key `freelancer` mới được thêm tay trên DB prod, chưa có migration nà
 để môi trường mới cũng có key này.
 **Khoá trạng thái:** API đổi status (`PATCH /api/hr/applications/[id]` và các thao tác hàng loạt) **chặn** việc đổi `status`
 của đơn freelancer, và chặn đưa đơn fulltime vào `status='freelancer'`. Freelancer chỉ có trạng thái freelancer (6.3).
-Muốn đổi hình thức thì dùng thao tác riêng (xem câu hỏi mở ở mục 9).
+Muốn đổi hình thức thì dùng thao tác riêng **Chuyển sang freelancer / Chuyển sang fulltime** (mục 9).
+Cột `freelancer` không còn hiện trên bảng Pipeline fulltime (bảng đã lọc bỏ freelancer; ẩn luôn cột để HR không kéo nhầm vào).
 
 Migration **chỉ thêm** (ADD COLUMN, CHECK mới qua ADD CONSTRAINT), không có DROP.
 
@@ -145,7 +146,11 @@ Bố cục cụ thể của bảng/bộ lọc (theo styleguide /hr hiện tại)
 7. "Nộp trùng" vẫn gắn chéo freelancer ↔ fulltime, nhưng không auto-reject freelancer.
 8. Rate/giờ là ô số bắt buộc, kèm ô "Ghi chú về giá" tuỳ chọn. Ai không có quyền xem lương thì không thấy rate.
 
-## 9. Câu hỏi mở (chờ sếp)
+## 9. Đổi hình thức (sếp duyệt đề xuất)
 
-- Có 1 hồ sơ **fulltime** đã bị HR kéo tay vào cột "Freelancer" (Lê Thị Kim Chi, Graphic Designer, 29/09).
-  Cách xử lý hồ sơ này, và việc HR muốn chuyển một ứng viên fulltime thành freelancer (hoặc ngược lại), chờ sếp quyết.
+- Modal hồ sơ có nút **"Chuyển sang freelancer"** (đơn fulltime) / **"Chuyển sang fulltime"** (đơn freelancer),
+  dành cho người có quyền đổi status hồ sơ. Không gửi mail.
+  - fulltime → freelancer: `work_type='freelancer'`, `status='freelancer'`, `freelance_stage='new'`,
+    `freelance_job_open` = cờ hiện tại của job.
+  - freelancer → fulltime: `work_type='fulltime'`, `status='new'`.
+- Dữ liệu: Lê Thị Kim Chi (fulltime nhưng đang `status='freelancer'`) → chuyển sang freelancer trong migration dữ liệu.
