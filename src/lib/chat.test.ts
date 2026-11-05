@@ -11,6 +11,7 @@ import {
   isWithinHours,
   newToken,
   nextThreadState,
+  parseQuickReply,
   requiresEmail,
   shouldEmail,
   shouldPush,
@@ -129,4 +130,27 @@ test("isSafeLink", () => {
   assert.equal(isSafeLink("javascript:alert(1)"), false);
   assert.equal(isSafeLink("http://x.com"), false);
   assert.equal(isSafeLink(""), false);
+});
+
+test("parseQuickReply: tạo mới cần đủ nhãn + câu trả lời; link phải an toàn", () => {
+  assert.deepEqual(parseQuickReply({ label: "Q", answer: "A" }, true), {
+    row: { label: "Q", answer: "A", audience: "any", link_label: null, link_url: null },
+  });
+  assert.ok("error" in parseQuickReply({ label: "", answer: "A" }, true));
+  assert.ok("error" in parseQuickReply({ label: "Q" }, true));
+  assert.ok("error" in parseQuickReply({ label: "x".repeat(61), answer: "A" }, true));
+  assert.ok("error" in parseQuickReply({ label: "Q", answer: "A", linkUrl: "javascript:alert(1)", linkLabel: "x" }, true));
+  assert.ok("error" in parseQuickReply({ label: "Q", answer: "A", linkUrl: "/careers" }, true)); // thiếu nhãn link
+  assert.ok("error" in parseQuickReply({ label: "Q", answer: "A", audience: "boss" }, true));
+  const r = parseQuickReply({ label: "Q", answer: "A", audience: "candidate", linkUrl: "/careers", linkLabel: "Jobs", sortOrder: 5, active: false }, true);
+  assert.deepEqual(r, {
+    row: { label: "Q", answer: "A", audience: "candidate", link_label: "Jobs", link_url: "/careers", sort_order: 5, active: false },
+  });
+});
+
+test("parseQuickReply: sửa — chỉ trường gửi lên", () => {
+  assert.deepEqual(parseQuickReply({ active: false }, false), { row: { active: false } });
+  assert.deepEqual(parseQuickReply({ sortOrder: 20 }, false), { row: { sort_order: 20 } });
+  assert.deepEqual(parseQuickReply({ linkUrl: "", linkLabel: "" }, false), { row: { link_url: null, link_label: null } });
+  assert.ok("error" in parseQuickReply({}, false));
 });

@@ -1,0 +1,26 @@
+name: 💬 Website chat cron
+
+on:
+  schedule:
+    # Mỗi 10 phút: mail câu trả lời cho khách đã rời trang (gộp, tối đa 1 mail/10 phút/luồng)
+    # + xoá chat quá 24 tháng. GitHub có thể trễ vài phút — chấp nhận.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  chat:
+    name: Flush chat emails
+    runs-on: ubuntu-latest
+    steps:
+      - name: 💬 Trigger chat cron endpoint
+        run: |
+          STATUS=$(curl -s -o /tmp/chat_body.txt -w "%{http_code}" \
+            -X GET \
+            -H "x-hr-cron-key: ${{ secrets.HR_CRON_SECRET }}" \
+            "https://tdgamestudio.com/api/hr/chat/cron")
+          echo "HTTP $STATUS"
+          cat /tmp/chat_body.txt
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Chat cron endpoint returned $STATUS"
+            exit 1
+          fi

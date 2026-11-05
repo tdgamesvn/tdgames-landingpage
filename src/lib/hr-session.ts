@@ -95,7 +95,7 @@ export async function requireHrUser(req: Request, perm?: PermissionKey): Promise
 }
 
 /** So khớp bí mật cron: băm sha256 rồi timingSafeEqual; HR_CRON_SECRET rỗng/chưa đặt thì không bao giờ khớp. */
-function cronKeyMatches(provided: string | null): boolean {
+export function cronKeyMatches(provided: string | null): boolean {
   const secret = process.env.HR_CRON_SECRET ?? "";
   if (!secret || !provided) return false;
   const a = createHash("sha256").update(provided).digest();
