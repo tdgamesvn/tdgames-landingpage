@@ -653,20 +653,24 @@ function MonsterStage({
                 </span>
               </button>
             ) : (
-              <div role="status" className="flex flex-col items-center gap-4 rounded-2xl bg-black/45 px-7 py-6 text-center backdrop-blur-md">
+              <div role="status" className="flex flex-col items-center gap-2.5 rounded-2xl bg-black/45 px-5 py-4 text-center backdrop-blur-md sm:gap-4 sm:px-7 sm:py-6">
                 <span
                   aria-hidden
-                  className="h-12 w-12 animate-spin rounded-full border-[3px] md:h-14 md:w-14"
+                  className="h-9 w-9 animate-spin rounded-full border-[3px] sm:h-12 sm:w-12 md:h-14 md:w-14"
                   style={{
                     borderColor: hexToRgba(glow, 0.2),
                     borderTopColor: glow,
                     boxShadow: `0 0 24px ${hexToRgba(glow, 0.35)}`,
                   }}
                 />
-                <span className="text-[16px] font-bold text-white md:text-[19px]">
+                <span className="text-[14px] font-bold text-white sm:text-[16px] md:text-[19px]">
                   Loading live animation…
                 </span>
-                <span className="max-w-[260px] text-[12px] leading-snug text-white/65 md:text-[13px]">
+                {/* Sân khấu mobile vuông ~300px → dòng phụ rút gọn. */}
+                <span className="text-[11px] leading-snug text-white/65 sm:hidden">
+                  Spine 2D · real time
+                </span>
+                <span className="hidden max-w-[260px] text-[12px] leading-snug text-white/65 sm:block md:text-[13px]">
                   {monster.name} · Spine 2D, rendered in real time in your browser
                 </span>
               </div>
