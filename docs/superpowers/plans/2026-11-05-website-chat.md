@@ -133,7 +133,7 @@
 
 ### Task 5: Widget trên website
 
-**Files:** Create `src/components/chat-widget/ChatWidget.tsx` (client), `src/components/chat-widget/chat-launcher.tsx` (nút nhỏ, tải lười panel), `src/components/chat-widget/chat-api.ts` (fetch + localStorage `tdg_chat_token`, cookie dự phòng), Modify `src/app/layout.tsx` (render `<ChatLauncher />` cuối body), `src/app/privacy/page.tsx` (đoạn "Website chat").
+**Files:** Create `src/components/chat-widget/ChatWidget.tsx` (client), `src/components/chat-widget/chat-launcher.tsx` (nút nhỏ, tải lười panel), `src/components/chat-widget/chat-api.ts` (fetch + localStorage `tdg_chat_token`, cookie dự phòng), Modify `src/app/layout.tsx` (render `<ChatLauncher />` cuối body), `src/app/privacy-policy/page.tsx` (đoạn "Website chat").
 
 - Theo mockup A1–A3 (bỏ chữ AI): header "TD Games Support", trạng thái online "Usually replies in minutes" / offline "We're offline (8:00–22:00 Vietnam time) — leave your email and we'll reply by email".
 - Launcher chỉ JS nhỏ; panel `dynamic(() => import("./ChatWidget"))` khi bấm hoặc khi có token sẵn (để hiện chấm đỏ tin mới: poll nhẹ 60s chỉ khi đã có token).

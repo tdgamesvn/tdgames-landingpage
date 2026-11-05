@@ -79,7 +79,7 @@ Ngôn ngữ ô chat: **tiếng Anh**, khớp website (em tự quyết). Giao di�
   chỉ thấy khi mở link trong email đã gửi tới chính địa chỉ đó. Như vậy người gõ email của người khác không đọc trộm được.
 - **Link trong email** "Continue the conversation" chứa một mã riêng của luồng. Bấm vào sẽ mở website kèm ô chat, gắn đúng luồng đó vào trình duyệt đang dùng (kể cả máy khác).
   Mã có hạn 30 ngày và được thay mới mỗi lần gửi email. Mở link thì trình duyệt đó nhận một mã khách mới cho luồng.
-- **Quyền riêng tư:** dưới ô gõ có dòng nhỏ "By chatting you agree to our Privacy Policy" (link /privacy). Trang /privacy thêm một đoạn về chat.
+- **Quyền riêng tư:** dưới ô gõ có dòng nhỏ "By chatting you agree to our Privacy Policy" (link /privacy-policy). Trang /privacy-policy thêm một đoạn về chat.
   Dữ liệu chat (tin nhắn, email, trang đã xem, quốc gia, thiết bị) giữ **24 tháng** kể từ tin cuối rồi tự xoá.
   Khách xin xoá thì người trong app xoá được cả luồng (em tự quyết).
 
