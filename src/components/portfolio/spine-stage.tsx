@@ -29,6 +29,8 @@ const FILL = 0.57;
 const MAX_W = 0.6;
 /** Hạ chân quái thấp hơn tâm sàn ảnh một chút (tỉ lệ chiều cao sân khấu). */
 const DROP = 0.03;
+/** Quá thời gian này chưa dựng xong player → hiện lỗi + nút tải lại. */
+const LOAD_TIMEOUT_MS = 15000;
 
 type Box = { x: number; y: number; width: number; height: number };
 /** Thân + "cỡ" dùng để chuẩn hoá (có thể nhỏ hơn height khi có cánh/vũ khí giơ cao). */
@@ -284,6 +286,9 @@ function MonsterStage({
   const [anim, setAnim] = useState<string>(SHOWREEL);
   const [ready, setReady] = useState(false);
   const [near, setNear] = useState(false);
+  // Tải lỗi / quá LOAD_TIMEOUT_MS → báo "Tap to retry"; attempt đổi key để dựng lại player.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [lift, setLift] = useState(0);
   // Vị trí ảnh nền (px) để tâm sàn trùng chân quái; null = object-cover mặc định.
   const [bg, setBg] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
@@ -331,6 +336,7 @@ function MonsterStage({
         setNear(e.isIntersecting);
         if (!e.isIntersecting) {
           setReady(false);
+          setFailed(false);
           playerRef.current = null;
         }
       },
@@ -339,6 +345,21 @@ function MonsterStage({
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  // Mạng chậm/treo: quá hạn mà chưa dựng xong thì đổi sang trạng thái lỗi (vẫn nhận
+  // onSuccess muộn — xong thì ẩn lỗi).
+  useEffect(() => {
+    if (!near || ready || failed) return;
+    const t = setTimeout(() => setFailed(true), LOAD_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [near, ready, failed, attempt, tier.base]);
+
+  function retry() {
+    setFailed(false);
+    setReady(false);
+    playerRef.current = null;
+    setAttempt((n) => n + 1);
+  }
 
   const layout = useCallback(() => {
     const box = boxRef.current;
@@ -432,6 +453,7 @@ function MonsterStage({
     const next = monster.tiers.find((t) => t.key === key);
     if (anim !== SHOWREEL && !next?.animations.includes(anim)) setAnim(SHOWREEL);
     setReady(false);
+    setFailed(false);
   }
 
   const glow = tier.highlight ? theme.accentSoft : theme.accent;
@@ -503,11 +525,14 @@ function MonsterStage({
             onLoad={layout}
             className={bg ? "absolute max-w-none" : "absolute inset-0 h-full w-full object-cover"}
             // Chưa đo: neo mép trên. Đã đo: đặt theo khung tính trong layout().
-            style={
-              bg
-                ? { filter: "brightness(0.82)", left: bg.left, top: bg.top, width: bg.width, height: bg.height }
-                : { filter: "brightness(0.82)", objectPosition: "50% 0%" }
-            }
+            // Chưa có nhân vật: nền tối + mờ để khung báo tải nổi lên; xong thì sáng lại.
+            style={{
+              filter: ready ? "brightness(0.82)" : "brightness(0.42) blur(3px)",
+              transition: "filter 600ms ease",
+              ...(bg
+                ? { left: bg.left, top: bg.top, width: bg.width, height: bg.height }
+                : { objectPosition: "50% 0%" }),
+            }}
           />
         </div>
         <div
@@ -537,7 +562,8 @@ function MonsterStage({
           />
           {near && (
             <SpineCharacter
-              key={tier.base}
+              key={`${tier.base}#${attempt}`}
+              onError={() => setFailed(true)}
               jsonUrl={`${tier.base}.json`}
               atlasUrl={`${tier.base}.atlas`}
               animations={playing}
@@ -601,17 +627,60 @@ function MonsterStage({
                 });
                 layout();
                 setReady(true);
+                setFailed(false);
               }}
             />
           )}
         </div>
 
-        {near && !ready && (
-          <div className="absolute inset-0 grid place-items-center" aria-live="polite">
-            <span className="rounded-full bg-black/45 px-4 py-2 text-[13px] text-white/80 backdrop-blur-sm">
-              Summoning {monster.name}…
-            </span>
+        {/* Trạng thái tải: rõ ràng là "đang tải animation thật", không phải khung trống. */}
+        {!ready && (
+          <div className="absolute inset-0 grid place-items-center p-6" aria-live="polite">
+            {failed ? (
+              <button
+                type="button"
+                onClick={retry}
+                className="flex flex-col items-center gap-3 rounded-2xl bg-black/55 px-7 py-5 text-center outline-none backdrop-blur-md transition hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <span className="text-[15px] font-bold text-white md:text-[17px]">
+                  Animation didn&apos;t load
+                </span>
+                <span
+                  className="rounded-full px-4 py-1.5 text-[13px] font-bold"
+                  style={{ backgroundColor: glow, color: "#1a0f12" }}
+                >
+                  Tap to retry
+                </span>
+              </button>
+            ) : (
+              <div role="status" className="flex flex-col items-center gap-4 rounded-2xl bg-black/45 px-7 py-6 text-center backdrop-blur-md">
+                <span
+                  aria-hidden
+                  className="h-12 w-12 animate-spin rounded-full border-[3px] md:h-14 md:w-14"
+                  style={{
+                    borderColor: hexToRgba(glow, 0.2),
+                    borderTopColor: glow,
+                    boxShadow: `0 0 24px ${hexToRgba(glow, 0.35)}`,
+                  }}
+                />
+                <span className="text-[16px] font-bold text-white md:text-[19px]">
+                  Loading live animation…
+                </span>
+                <span className="max-w-[260px] text-[12px] leading-snug text-white/65 md:text-[13px]">
+                  {monster.name} · Spine 2D, rendered in real time in your browser
+                </span>
+              </div>
+            )}
           </div>
+        )}
+
+        {ready && (
+          <span
+            className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/90 backdrop-blur-sm md:left-4 md:top-4 md:text-[11px]"
+          >
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: glow }} aria-hidden />
+            Live Spine
+          </span>
         )}
       </div>
 
@@ -623,8 +692,9 @@ function MonsterStage({
               key={a}
               type="button"
               aria-pressed={on}
+              disabled={!ready}
               onClick={() => setAnim(a)}
-              className="shrink-0 rounded-full border px-4 py-2 text-[13px] font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-white"
+              className="shrink-0 rounded-full border px-4 py-2 text-[13px] font-semibold outline-none transition-[color,background-color,border-color,opacity] focus-visible:ring-2 focus-visible:ring-white disabled:cursor-wait disabled:opacity-40"
               style={
                 on
                   ? { borderColor: glow, backgroundColor: hexToRgba(glow, 0.18), color: "#fff" }

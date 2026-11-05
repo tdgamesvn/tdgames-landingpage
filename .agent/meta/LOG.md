@@ -6427,3 +6427,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Sếp chốt bộ 6 (đa dự án, mỗi thẻ một màu): Yomi 2 Gwen Desperation → Mytheria Zeus → Kayn Snow Moon (1080p loop 7s) → Yomi 2 Onimaru Clockwork Soldiers → Horse Racing → Epic Card Rocket Launcher. DB page_slots id 117–122 (sort 0–5) + fallback HERO_VIDEOS trong code cùng bộ.
 - Code `src/app/portfolio/page.tsx`: bỏ setInterval 6s → onEnded của video đang hiện sang thẻ kế (quay vòng; đang hover dải thumbnail thì phát lại); thanh vàng dưới thumbnail chạy theo currentTime/duration thật (bỏ keyframes heroProgress).
 - Result: dev local theo dõi 45s: Horse → Rocket → Gwen → Mytheria (đủ 16s) → Kayn, 6 thumbnail đúng ảnh. tsc sạch (trừ company-profile WIP); lint 1 lỗi "// 02" có sẵn.
+
+## 2026-11-05 — Monster Legends: trạng thái tải Spine rõ ràng + báo lỗi/tải lại
+- Task: sếp thấy lúc Spine đang tải khách dễ tưởng khung trống/lỗi (trước chỉ có nhãn nhỏ mờ "Summoning X…"; tải hỏng thì treo mãi).
+- Work Done (`src/components/portfolio/spine-stage.tsx`, MonsterStage — áp mọi quái trên 10 trang hệ): nền tối + mờ (brightness .42 blur 3px) tới khi dựng xong; khung giữa có vòng xoay màu hệ + "Loading live animation…" + "<tên> · Spine 2D, rendered in real time in your browser"; nút animation disabled khi chưa sẵn sàng; quá 15s (LOAD_TIMEOUT_MS) hoặc onError → "Animation didn't load · Tap to retry" (đổi key `${base}#attempt` dựng lại player; quá hạn vẫn để player tải tiếp, xong muộn thì tự ẩn lỗi); tải xong hiện nhãn "● LIVE SPINE" góc trái.
+- Lưu ý: spine-core AssetManager khi file tải hỏng (abort) ném "Unexpected end of JSON input" thay vì gọi callback error → trường hợp đó chỉ bắt được bằng mốc 15s.
+- Result: dev local (Playwright route giả lập): chậm 8s/file → khung tải hiện rõ, nút mờ; chặn hẳn (context mới, không cache) → 15s ra Tap to retry; bỏ chặn + bấm retry → LIVE SPINE. tsc/eslint sạch file này.
