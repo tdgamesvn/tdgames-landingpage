@@ -28,7 +28,7 @@ test("buildChatReplyEmail: không có tên → Hi there", () => {
 });
 
 test("buildChatReplyEmail: tên khách có link/email → bỏ (chống chèn link lừa đảo)", () => {
-  for (const bad of ["Visit evil.com now", "http://x.y", "a@b.co", "www.scam.io"]) {
+  for (const bad of ["Visit evil.com now", "http://x.y", "a@b.co", "www.scam.io", "evil.<b>com", "evil.\u200bcom", "scam。com"]) {
     const m = buildChatReplyEmail({ visitorName: bad, staffName: "Tony", replies: ["x"], resumeUrl: "u" });
     assert.ok(m.text.startsWith("Hi there,"), bad);
   }

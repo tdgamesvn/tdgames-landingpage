@@ -29,8 +29,9 @@ export function buildChatReplyEmail(args: {
  *  (mail đi từ tên miền mình, textToHtml tự linkify → không để khách mượn mail mình gửi link lừa đảo). */
 function safeGreetingName(raw: string | null): string | null {
   if (!raw) return null;
-  if (/https?:|www\.|@|\.[a-z]{2,}\b/i.test(raw)) return null;
-  const s = raw.replace(/[^\p{L}\p{M} .'-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 40).trim();
+  // Có bất kỳ dấu chấm (kể cả chấm full-width/CJK), @, :, / hay "www" → bỏ hẳn tên ("J. Smith" cũng mất — chấp nhận).
+  if (/[.@:/。．｡]|www/i.test(raw)) return null;
+  const s = raw.replace(/[^\p{L}\p{M} '-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 40).trim();
   return s || null;
 }
 
