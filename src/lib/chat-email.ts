@@ -12,7 +12,8 @@ export function buildChatReplyEmail(args: {
   replies: string[];
   resumeUrl: string;
 }): { subject: string; text: string } {
-  const hi = args.visitorName?.trim() ? `Hi ${args.visitorName.trim()},` : "Hi there,";
+  const name = safeGreetingName(args.visitorName);
+  const hi = name ? `Hi ${name},` : "Hi there,";
   const sign = `${args.staffName.trim() || "TD Games"} · TD Games`;
   const text = [
     hi,
@@ -22,6 +23,15 @@ export function buildChatReplyEmail(args: {
     `Best regards,\n${sign}`,
   ].join("\n\n");
   return { subject: "Re: your message to TD Games", text };
+}
+
+/** Tên khách tự gõ (chưa xác minh) → chỉ chữ cái/dấu cách/.'-, tối đa 40; trông như link/email thì bỏ hẳn
+ *  (mail đi từ tên miền mình, textToHtml tự linkify → không để khách mượn mail mình gửi link lừa đảo). */
+function safeGreetingName(raw: string | null): string | null {
+  if (!raw) return null;
+  if (/https?:|www\.|@|\.[a-z]{2,}\b/i.test(raw)) return null;
+  const s = raw.replace(/[^\p{L}\p{M} .'-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 40).trim();
+  return s || null;
 }
 
 /** Khách → info@ tên người trả lời; ứng viên → như mail tuyển dụng (hiring@, sếp chốt 2026-10-28). */

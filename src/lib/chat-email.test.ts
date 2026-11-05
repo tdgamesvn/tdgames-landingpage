@@ -27,6 +27,17 @@ test("buildChatReplyEmail: không có tên → Hi there", () => {
   assert.ok(m.text.startsWith("Hi there,"));
 });
 
+test("buildChatReplyEmail: tên khách có link/email → bỏ (chống chèn link lừa đảo)", () => {
+  for (const bad of ["Visit evil.com now", "http://x.y", "a@b.co", "www.scam.io"]) {
+    const m = buildChatReplyEmail({ visitorName: bad, staffName: "Tony", replies: ["x"], resumeUrl: "u" });
+    assert.ok(m.text.startsWith("Hi there,"), bad);
+  }
+  const ok = buildChatReplyEmail({ visitorName: "Nguyễn Văn A <b>", staffName: "T", replies: ["x"], resumeUrl: "u" });
+  assert.ok(ok.text.startsWith("Hi Nguyễn Văn A b,"));
+  const long = buildChatReplyEmail({ visitorName: "A".repeat(80), staffName: "T", replies: ["x"], resumeUrl: "u" });
+  assert.ok(long.text.startsWith(`Hi ${"A".repeat(40)},`));
+});
+
 test("chatFrom: khách từ info@, ứng viên như mail tuyển dụng (hiring@)", () => {
   assert.equal(chatFrom(cfg, "client", "Tony"), '"Tony · TD Games" <info@tdgamestudio.com>');
   assert.equal(chatFrom(cfg, "candidate", "Phương"), fromFor(cfg, "Phương"));

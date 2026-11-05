@@ -366,7 +366,14 @@ export async function resumeFromEmailToken(t: string): Promise<{ thread: ChatThr
     .maybeSingle();
   if (!data || !data.email_link_expires_at || Date.parse(data.email_link_expires_at) < Date.now()) return null;
   const token = newToken();
-  await db().from("chat_threads").update({ visitor_token_hash: hashToken(token) }).eq("id", data.id);
+  // Link dùng 1 lần: điều kiện theo đúng hash cũ → 2 request đồng thời chỉ 1 cái thắng.
+  const { data: won } = await db()
+    .from("chat_threads")
+    .update({ visitor_token_hash: hashToken(token), email_link_token_hash: null, email_link_expires_at: null })
+    .eq("id", data.id)
+    .eq("email_link_token_hash", hashToken(t))
+    .select("id");
+  if (!won?.length) return null;
   return { thread: data as unknown as ChatThreadRow, token };
 }
 
