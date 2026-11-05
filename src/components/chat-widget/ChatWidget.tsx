@@ -213,11 +213,11 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
     <div
       role="dialog"
       aria-label="TD Games chat"
-      className="fixed inset-0 z-[95] flex flex-col overflow-hidden bg-white text-zinc-900 shadow-[0_24px_70px_rgba(0,0,0,0.55)] sm:inset-auto sm:bottom-6 sm:right-6 sm:h-[min(620px,calc(100vh-48px))] sm:w-[380px] sm:rounded-2xl"
+      className="fixed inset-0 z-[95] flex flex-col overflow-hidden bg-white text-zinc-900 shadow-[0_24px_70px_rgba(0,0,0,0.55)] sm:border sm:border-white/20 sm:inset-auto sm:bottom-6 sm:right-6 sm:h-[min(620px,calc(100vh-48px))] sm:w-[380px] sm:rounded-2xl"
       style={{ fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 bg-[#111116] px-4 py-3 text-white">
+      <div className="flex items-center gap-3 border-b border-white/10 bg-[#26262d] px-4 py-3 text-white">
         {/* Avatar = mascot TD Games (2026-11-05). */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="https://cdn.tdgamestudio.com/landing/chat/avatar-v1.webp" alt="" width={36} height={36} className="h-9 w-9 flex-none rounded-full bg-[#f59e0b] object-cover ring-2 ring-[#f59e0b]/60" />
