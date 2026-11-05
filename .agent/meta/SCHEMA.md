@@ -170,3 +170,10 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 - `duplicate_of` (FK applications), `duplicate_kind` ('auto_rejected'|'open_duplicate'|'returning').
 - `referred_by_submitted`, `referrer_notified_at`, `referrer_notified_by`.
 - candidate_emails/hr_email_templates: thêm kind `duplicate_rejection`; unique index `candidate_emails_dup_reject_idx` (application_id) where kind='duplicate_rejection'.
+
+## Chat trên website (migration 20261105100000_website_chat, đã áp prod 2026-11-05)
+- `chat_threads`: visitor_token_hash (sha256 mã khách, unique), audience client|candidate, status open|answered|closed, needs_human, name, email (lower), country (cf-ipcountry, chỉ hiển thị), user_agent, first_page/last_page/pages (5 trang gần nhất), lead_id → leads, email_link_token_hash/expires_at (link 1 lần, 30 ngày), email_pending, last_visitor_seen_at (chỉ cập nhật khi khung mở + tab xem), last_message_at, last_push_at, last_email_at. `merged_into` có cột nhưng KHÔNG dùng (bỏ Gộp).
+- `chat_messages`: thread_id (cascade), sender visitor|staff|system|ai, staff_user_id, staff_name, kind text|quick_reply|canned_answer|contact_form, body, quick_reply_id, link_label/link_url.
+- `chat_quick_replies`: label, audience client|candidate|any, answer, link_label/link_url (/… hoặc https), sort_order, active.
+- app_settings: chat_widget_enabled (tắt widget toàn site), chat_ai_enabled (false, chưa dùng), chat_hours JSON.
+- RLS bật, không policy (service role qua API). Giữ 24 tháng từ tin cuối; luồng rỗng >1 ngày bị cron xoá.

@@ -376,3 +376,8 @@ Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, khôn
 - Nộp lại ĐÚNG vị trí (cùng job hoặc tiêu đề giống hệt) trong 6 tháng lịch (giờ VN) sau khi bị `rejected`, và trùng EMAIL → tự động rejected + mail `duplicate_rejection` (không gửi ack). Đơn auto_rejected không bao giờ là mốc 6 tháng. talent_pool không bao giờ bị auto-reject.
 - Quyền giới thiệu: người giới thiệu đầu tiên (khớp EMAIL) giữ 6 tháng tính từ hồ sơ đầu; tự nộp không mã trong hạn vẫn tính cho người đầu; mã người mới lưu `referred_by_submitted`. Không tính khớp chỉ SĐT (chống mạo danh).
 - Người giới thiệu mới được báo: có tài khoản /hr → tag Discord (+ push nếu xem được hồ sơ); không → HR được nhắc báo tay (nút "Đã báo").
+
+## 2026-11-05 — Chat trên website
+- Tự làm trong app (không Intercom/Crisp/Tawk); hộp thư là tab "Chat" trong /hr (PWA + chuông + tài khoản sẵn có). Khách → sếp (chat.clients), ứng viên → HR (chat.candidates).
+- Giai đoạn 1: chỉ câu có sẵn + người thật; AI trả lời để SAU CÙNG (khi bật sẽ 24/7). Giờ trực 8–22h VN mọi ngày; ngoài giờ bắt buộc email, trong giờ email tuỳ chọn; không bắt điền form trước khi chat.
+- Mỗi người 1 luồng (mã khách ở trình duyệt); không tự gộp theo email (chống đọc trộm) — chỉ hiện lịch sử cùng email cho staff. Link email dùng 1 lần, phải bấm. Mail khách từ info@, ứng viên từ hiring@.

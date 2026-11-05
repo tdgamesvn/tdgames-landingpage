@@ -187,3 +187,8 @@ Quyền: `referrals.view` (Sếp, HR, Kế toán), `referrals.manage` (Sếp, HR
 - `GET|PATCH /api/hr/referrals/applications/[id]` — ngày đi làm/nghỉ, đổi người giới thiệu (409 nếu đã có khoản duyệt/trả), Tính lại (trả needsManual)
 - `GET /api/hr/referrals/cron` — `x-hr-cron-key`; upcoming→due + nhắc HR, approved → báo Kế toán (chạy trong hr-remind.yml)
 - PATCH hồ sơ: offer → accepted sinh khoản; rời accepted huỷ khoản upcoming/due. DELETE hồ sơ có khoản duyệt/trả → 409.
+
+## Chat trên website (2026-11-05)
+- Công khai (header `x-chat-token`, không có/sai → 404): `GET /api/chat` (enabled, online, quickReplies), `POST /api/chat/thread {page}` (mở/tạo; trả token khi tạo), `GET /api/chat/thread?after=<iso>&seen=1`, `POST /api/chat/message {kind:text|talk_to_person|quick_reply, body?, quickReplyId?, page?}` (ngoài giờ + chưa email → 400 email_required), `POST /api/chat/contact {name?, email}`, `POST /api/chat/resume {t}` (link email, 1 lần). 503 chat_disabled khi tắt; 429 rate limit.
+- App (cookie /hr + chat.clients/chat.candidates; loại luồng không có quyền → 404): `GET /api/hr/chat/threads?filter=needs|answered|closed&audience=all|client|candidate` (+counts.needs), `GET|PATCH /api/hr/chat/threads/[id]` (close|reopen|set_audience|delete — delete cần chat.manage), `POST .../[id]/messages {body}`, `POST .../[id]/lead` (khách có email → leads source=chat). `GET|POST /api/hr/chat/quick-replies`, `PATCH|DELETE /api/hr/chat/quick-replies/[id]` (chat.manage).
+- Cron: `GET /api/hr/chat/cron` header `x-hr-cron-key` — mail trả lời gộp (khách rời ≥2', 1 mail/10'/luồng, theo HR_EMAIL_MODE) + xoá >24 tháng + luồng rỗng. Workflow `.github/workflows/chat-cron.yml` */10.
