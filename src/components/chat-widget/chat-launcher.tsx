@@ -99,7 +99,7 @@ export default function ChatLauncher() {
           }}
         />
       ) : (
-        <div className="fixed bottom-6 right-4 z-[90] flex items-end gap-3 sm:bottom-6 sm:right-6">
+        <div className="fixed bottom-4 right-4 z-[90] flex items-end gap-3 sm:bottom-6 sm:right-6">
           {resumeToken && (
             <button
               type="button"
@@ -142,11 +142,11 @@ export default function ChatLauncher() {
             className="tdg-chat-mascot relative isolate block rounded-2xl outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             {/* Mascot TD Games ngồi trên bong bóng chat (2026-11-05, sếp gửi) — vẫy tay theo nhịp. */}
-            {/* Glow cam nhẹ dưới chân (đứng yên, chỉ thở nhẹ) — nằm sau nhân vật, không xoay theo. */}
+            {/* Vầng sáng cam nhẹ sau lưng nhân vật (ở giữa icon, sếp chốt) — đứng yên, chỉ thở nhẹ, không xoay theo. */}
             <span
               aria-hidden
-              className="tdg-chat-glow pointer-events-none absolute bottom-[-20px] left-1/2 -z-10 h-[52px] w-[200%] -translate-x-1/2 rounded-[50%] blur-[12px] sm:w-[150%] sm:bottom-[-26px] sm:h-[56px]"
-              style={{ background: "radial-gradient(ellipse at center, rgba(255,150,40,0.95) 0%, rgba(255,120,20,0.55) 38%, rgba(255,110,0,0) 72%)" }}
+              className="tdg-chat-glow pointer-events-none absolute left-1/2 top-[55%] -z-10 h-[170px] w-[170px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[10px] sm:h-[215px] sm:w-[215px]"
+              style={{ background: "radial-gradient(circle at center, rgba(255,150,40,0.75) 0%, rgba(255,130,25,0.45) 40%, rgba(255,115,10,0.18) 58%, rgba(255,110,0,0) 72%)" }}
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
