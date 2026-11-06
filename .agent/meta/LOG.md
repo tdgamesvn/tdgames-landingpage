@@ -6494,3 +6494,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - `guardDraft`: số kiểu Việt "1.000" khớp "1,000" (lỗi thật gặp khi E2E: AI viết 1.000 USD → bị nghi bịa) + test.
 - E2E dev 3011 (DB prod, push/Discord/Resend tắt): PayPal/deposit → AI gửi, luồng answered; câu test $100 tiếng Việt → trả lời tiếng Việt, luồng vẫn cần người. Test 25+1 pass, tsc/eslint 0. Đã xoá 3 luồng ZZTEST. Dev trang chủ lỗi tải Google font (môi trường) → kiểm UI trên prod sau deploy.
 - app_settings chat_ai_mode = auto (đặt 2026-11-06 ~14:40 VN).
+- Kiểm prod sau deploy cfe1b32: /api/chat aiAuto=true; widget hiện 3 chấm → ~20s ra bong bóng "AI assistant · TD Games" trả lời đúng thẻ Tools & engines. Luồng thử ZZTEST đã xoá.
