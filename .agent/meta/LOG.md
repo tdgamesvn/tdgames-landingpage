@@ -6487,3 +6487,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Eval Sonnet 5.5: 24/25 → câu PayPal/deposit giờ AI trả lời được nên đổi kỳ vọng expectHuman=false. ORCA vẫn không nằm trong thẻ Portfolio (NDA).
 - Chưa đổi: câu có sẵn "💰 How much does it cost?" (bảng chat_quick_replies, khách thấy ngay) vẫn chưa ghi giá từ $1,000 — chờ sếp quyết.
 - 2026-11-06 (sếp OK: $1,000 là mức thường gặp, không chặn paid test): thẻ How much / Services / Small orders → "Typical projects start from around USD 1,000"; thẻ Can we start with a test? thêm: paid test trước dự án lớn luôn được nhận, phí test tính riêng, không áp mức tối thiểu, team chốt phí sau khi xem brief (không ghi số $ cho test). Small orders ghi rõ chỉ áp đơn nhỏ lẻ, KHÔNG áp test task. Câu có sẵn "💰 How much does it cost?" (chat_quick_replies) thêm dòng ~USD 1,000 + paid test. Eval thêm câu "$200 test task" → 26/26.
+
+## 2026-11-06 — AI chat tự trả lời 24/7 (Phase C)
+- Sếp thử chat, điền email xong không thấy ai trả lời (Phase A chỉ nháp) → chọn bật AI tự trả lời 24/7.
+- `chat-ai.ts`: mode `auto` + `autoSend` (đọc lại luồng sau gọi model; staff trả lời trong 2h → AI im; nháp sạch → gửi tin sender `ai`, giành nháp pending→sent; nháp có cảnh báo → câu chờ cố định EN/VI, không lặp). `chat-server.ts` thêm `addAiReply` (resolved → answered; không thì giữ needs_human). PUT /api/hr/chat/kb nhận `auto`; AiKnowledgePanel thêm nút "Tự trả lời 24/7". /api/chat trả `aiAuto`; widget: bong bóng "AI assistant" + 3 chấm ≤60s (trừ "Talk to a person"); /hr: tin AI nền xanh "🤖 AI tự trả lời", preview "🤖 AI:".
+- `guardDraft`: số kiểu Việt "1.000" khớp "1,000" (lỗi thật gặp khi E2E: AI viết 1.000 USD → bị nghi bịa) + test.
+- E2E dev 3011 (DB prod, push/Discord/Resend tắt): PayPal/deposit → AI gửi, luồng answered; câu test $100 tiếng Việt → trả lời tiếng Việt, luồng vẫn cần người. Test 25+1 pass, tsc/eslint 0. Đã xoá 3 luồng ZZTEST. Dev trang chủ lỗi tải Google font (môi trường) → kiểm UI trên prod sau deploy.
+- app_settings chat_ai_mode = auto (đặt 2026-11-06 ~14:40 VN).

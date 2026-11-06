@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   return NextResponse.json({ card: data });
 }
 
-/** Cài đặt AI: { mode: "off"|"draft", budgetUsd } */
+/** Cài đặt AI: { mode: "off"|"draft"|"auto", budgetUsd } */
 export async function PUT(req: Request) {
   const auth = await requireHrUser(req, "chat.manage");
   if ("response" in auth) return auth.response;
@@ -51,7 +51,7 @@ export async function PUT(req: Request) {
   const rows: { key: string; value: string; updated_at: string }[] = [];
   const now = new Date().toISOString();
   if (b.mode !== undefined) {
-    if (b.mode !== "off" && b.mode !== "draft") return NextResponse.json({ error: "Chế độ không hợp lệ" }, { status: 400 });
+    if (b.mode !== "off" && b.mode !== "draft" && b.mode !== "auto") return NextResponse.json({ error: "Chế độ không hợp lệ" }, { status: 400 });
     rows.push({ key: "chat_ai_mode", value: b.mode, updated_at: now });
   }
   if (b.budgetUsd !== undefined) {

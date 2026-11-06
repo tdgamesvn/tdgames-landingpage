@@ -320,6 +320,19 @@ export async function addStaffReply(
   return msg;
 }
 
+/**
+ * AI tự trả lời khách (chế độ auto). `resolved` = AI trả lời đủ, không cần người → luồng "answered";
+ * ngược lại giữ needs_human để staff vào tiếp. Không gửi mail (staff trả lời sau sẽ lo mail).
+ */
+export async function addAiReply(thread: ChatThreadRow, body: string, resolved: boolean): Promise<ChatMessageRow> {
+  const now = new Date().toISOString();
+  const [msg] = await insertMessages([{ thread_id: thread.id, sender: "ai", kind: "text", body }]);
+  const patch: Record<string, unknown> = { last_message_at: now, updated_at: now };
+  if (resolved) Object.assign(patch, { status: "answered", needs_human: false });
+  await updateThread(thread.id, patch);
+  return msg;
+}
+
 /** Gửi gộp các câu trả lời của staff sau lần mail trước, nếu đủ điều kiện. Trả true nếu đã gửi. */
 async function flushThreadEmail(thread: ChatThreadRow, now: Date): Promise<boolean> {
   if (!thread.email || !thread.email_pending) return false;

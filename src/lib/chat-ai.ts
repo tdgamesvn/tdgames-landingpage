@@ -1,6 +1,7 @@
 import "server-only";
 
-// AI trả lời chat — Phase A: soạn NHÁP cho staff duyệt (khách không thấy). Luật thuần ở chat-ai-core.ts.
+// AI trả lời chat — "draft": soạn NHÁP cho staff duyệt (khách không thấy); "auto" (24/7, sếp chốt 2026-11-06):
+// nháp sạch thì gửi thẳng cho khách. Luật thuần ở chat-ai-core.ts.
 // Spec: docs/superpowers/specs/2026-11-05-chat-ai-design.md
 import { getSupabaseAdmin } from "./supabase-admin";
 import {
@@ -16,11 +17,11 @@ import {
   type JobCard,
   type KbCard,
 } from "./chat-ai-core";
-import { listMessages, pushRecipientsWith, threadById } from "./chat-server";
+import { addAiReply, listMessages, pushRecipientsWith, threadById } from "./chat-server";
 import { discordNotify } from "./discord-notify";
 import { sendHrPush } from "./hr-push";
 
-export type ChatAiMode = "off" | "draft";
+export type ChatAiMode = "off" | "draft" | "auto";
 
 /** Chờ khách gõ xong (gửi 2–3 tin liền) rồi mới soạn 1 nháp cho tin cuối. */
 const DEBOUNCE_MS = 6_000;
@@ -29,6 +30,16 @@ const GLOBAL_DAILY_CAP = 300;
 const ALERT_GAP_MS = 30 * 60_000;
 /** Chi phí dự kiến 1 nháp (~$0.009 thực tế) — giữ chỗ trong ngân sách khi đang gọi model. */
 const RESERVE_USD = 0.02;
+/** Staff vừa trả lời trong luồng → AI im (chỉ soạn nháp) trong 2h để không chen ngang người thật. */
+const STAFF_QUIET_MS = 2 * 3_600_000;
+/** Nháp có cảnh báo (nghi bịa) → không gửi nháp, chỉ báo khách là người thật sẽ trả lời. */
+const HOLDING_REPLY = "Thanks for your message! A team member will get back to you here shortly.";
+const HOLDING_REPLY_EMAIL = "Thanks for your message! A team member will get back to you here shortly — and by email if you've left the page.";
+const HOLDING_REPLY_VI = "Cảm ơn bạn đã nhắn! Một thành viên của team sẽ trả lời bạn tại đây sớm nhất.";
+const HOLDING_REPLY_VI_EMAIL = "Cảm ơn bạn đã nhắn! Một thành viên của team sẽ trả lời bạn tại đây sớm nhất — và qua email nếu bạn đã rời trang.";
+const HOLDING_PREFIXES = [HOLDING_REPLY, HOLDING_REPLY_VI].map((s) => s.slice(0, 30));
+/** Có dấu tiếng Việt → khách gõ tiếng Việt. */
+const looksVietnamese = (s: string) => /[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/i.test(s);
 
 const db = () => getSupabaseAdmin();
 
@@ -40,7 +51,7 @@ async function setting(key: string): Promise<string | null> {
 export async function chatAiSettings(): Promise<{ mode: ChatAiMode; budgetUsd: number }> {
   const [mode, budget] = await Promise.all([setting("chat_ai_mode"), setting("chat_ai_budget_usd")]);
   const b = Number(budget);
-  return { mode: mode === "draft" ? "draft" : "off", budgetUsd: Number.isFinite(b) && b >= 0 ? b : 100 };
+  return { mode: mode === "draft" || mode === "auto" ? mode : "off", budgetUsd: Number.isFinite(b) && b >= 0 ? b : 100 };
 }
 
 /** Đầu tháng theo giờ VN (UTC+7, không đổi giờ mùa hè). */
@@ -200,10 +211,48 @@ export async function draftReplyFor(threadId: string, triggerId: string): Promis
       output_tokens: result.outputTokens,
       cost_usd: estimateCostUsd(result.inputTokens, result.outputTokens),
     }).eq("id", slot.id);
+    if (mode === "auto") await autoSend(threadId, triggerId, slot.id, draft, warnings);
   } catch (e) {
     console.error("[chat-ai] draftReplyFor lỗi:", e);
     await alertAdmin("internal", `Lỗi nội bộ khi soạn nháp: ${e instanceof Error ? e.message : String(e)}`);
   }
+}
+
+/**
+ * Chế độ auto: gửi nháp cho khách nếu (1) vẫn là tin mới nhất, (2) staff không trả lời luồng trong 2h qua.
+ * Nháp sạch → gửi nguyên (needs_human=false thì luồng "answered"; true thì vẫn chờ người, câu trả lời đã nói
+ * "team sẽ liên hệ"). Nháp có cảnh báo → giữ nháp cho staff, khách nhận câu chờ cố định.
+ */
+async function autoSend(threadId: string, triggerId: string, draftId: string, draft: AiDraft, warnings: string[]): Promise<void> {
+  // Đọc lại sau khi gọi model (~10s): khách gửi thêm / staff đã trả lời → thôi.
+  const thread = await threadById(threadId);
+  if (!thread || thread.status === "closed") return;
+  const history = await listMessages(threadId);
+  const lastVisitor = [...history].reverse().find((m) => m.sender === "visitor" && m.kind === "text");
+  if (lastVisitor?.id !== triggerId) return;
+  const idx = history.findIndex((m) => m.id === triggerId);
+  if (history.slice(idx + 1).some((m) => m.sender === "staff" || m.sender === "ai")) return;
+  const quietSince = Date.now() - STAFF_QUIET_MS;
+  if (history.some((m) => m.sender === "staff" && Date.parse(m.created_at) > quietSince)) return;
+
+  const now = new Date().toISOString();
+  if (warnings.length) {
+    // Đã báo "người thật sẽ trả lời" mà staff chưa vào → không lặp lại.
+    const lastStaff = [...history].reverse().find((m) => m.sender === "staff")?.created_at ?? "";
+    if (history.some((m) => m.sender === "ai" && HOLDING_PREFIXES.some((p) => m.body.startsWith(p)) && m.created_at > lastStaff)) return;
+    const vi = looksVietnamese(lastVisitor.body);
+    await addAiReply(thread, vi ? (thread.email ? HOLDING_REPLY_VI_EMAIL : HOLDING_REPLY_VI) : thread.email ? HOLDING_REPLY_EMAIL : HOLDING_REPLY, false);
+    return; // nháp giữ "pending" cho staff xem / sửa
+  }
+  // Giành nháp (pending → sent) trước khi gửi: 2 lần gọi trùng chỉ gửi 1 tin.
+  const { data: won } = await db()
+    .from("chat_ai_drafts")
+    .update({ status: "sent", edited: false, decided_at: now })
+    .eq("id", draftId)
+    .eq("status", "pending")
+    .select("id");
+  if (!won?.length) return;
+  await addAiReply(thread, draft.answer, !draft.needsHuman);
 }
 
 export type DraftRow = {

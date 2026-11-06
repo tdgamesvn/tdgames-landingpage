@@ -196,7 +196,7 @@ export default function ChatView({
                   <span className="ml-auto flex-none text-[11px] text-white/40">{timeVN(t.lastMessageAt)}</span>
                 </span>
                 <span className="mt-0.5 block truncate text-[12.5px] text-white/60">
-                  {t.lastMessage ? `${t.lastMessage.sender === "staff" ? "Bạn: " : ""}${t.lastMessage.body}` : "—"}
+                  {t.lastMessage ? `${t.lastMessage.sender === "staff" ? "Bạn: " : t.lastMessage.sender === "ai" ? "🤖 AI: " : ""}${t.lastMessage.body}` : "—"}
                 </span>
                 <span className="mt-1 flex items-center gap-1.5 text-[11px] text-white/45">
                   <span className={`h-[7px] w-[7px] rounded-full ${t.needsHuman ? "bg-red-500" : t.status === "closed" ? "bg-white/30" : "bg-green-500"}`} />
@@ -579,15 +579,20 @@ function MsgRow({ m, compact }: { m: Msg; compact?: boolean }) {
       </details>
     );
   }
-  const mine = m.sender === "staff";
+  const ai = m.sender === "ai";
+  const mine = m.sender === "staff" || ai;
   return (
     <div className={`flex max-w-[85%] flex-col gap-0.5 ${mine ? "self-end items-end" : "self-start"}`}>
       <span className="text-[10.5px] text-white/40">
-        {mine ? `${m.staff_name ?? "TD Games"}` : "Khách"} · {clockVN(m.created_at)}
+        {ai ? "🤖 AI tự trả lời" : mine ? `${m.staff_name ?? "TD Games"}` : "Khách"} · {clockVN(m.created_at)}
       </span>
       <div
         className={`whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-[13.5px] leading-snug ${
-          mine ? "rounded-br-md bg-amber-500 text-black" : "rounded-bl-md border border-white/10 bg-white/5 text-white"
+          ai
+            ? "rounded-br-md border border-sky-400/30 bg-sky-500/15 text-white"
+            : mine
+              ? "rounded-br-md bg-amber-500 text-black"
+              : "rounded-bl-md border border-white/10 bg-white/5 text-white"
         }`}
       >
         {m.body}

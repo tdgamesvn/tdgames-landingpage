@@ -7,7 +7,7 @@ import { hrFetch } from "./HrSession";
 
 type Card = { id: string; title: string; content: string; audience: "client" | "candidate" | "any"; sort_order: number; active: boolean };
 type Usage = { costUsd: number; drafts: number; failed: number; sentAsIs: number; sentEdited: number; discarded: number; up: number; down: number };
-type Settings = { mode: "off" | "draft"; budgetUsd: number };
+type Settings = { mode: "off" | "draft" | "auto"; budgetUsd: number };
 type Draft = { title: string; content: string; audience: Card["audience"] };
 
 const EMPTY: Draft = { title: "", content: "", audience: "client" };
@@ -103,6 +103,7 @@ export default function AiKnowledgePanel({ onBack }: { onBack: () => void }) {
             <div className="hr-segmented" role="group" aria-label="Chế độ AI">
               <button type="button" aria-pressed={settings.mode === "off"} disabled={busy} onClick={() => call("/api/hr/chat/kb", "PUT", { mode: "off" })}>Tắt</button>
               <button type="button" aria-pressed={settings.mode === "draft"} disabled={busy} onClick={() => call("/api/hr/chat/kb", "PUT", { mode: "draft" })}>Soạn nháp</button>
+              <button type="button" aria-pressed={settings.mode === "auto"} disabled={busy} onClick={() => call("/api/hr/chat/kb", "PUT", { mode: "auto" })}>Tự trả lời 24/7</button>
             </div>
             <span className="ml-auto flex items-center gap-1.5">
               <span className="whitespace-nowrap text-white/50">Ngân sách/tháng $</span>
@@ -114,6 +115,8 @@ export default function AiKnowledgePanel({ onBack }: { onBack: () => void }) {
           </div>
           <p className="mt-2 text-[12px] text-white/50">
             Soạn nháp = AI viết sẵn câu trả lời trong từng cuộc chat, <b>chỉ staff thấy</b>, khách không thấy. Bấm “Dùng nháp này” để sửa rồi gửi.
+            <br />Tự trả lời 24/7 = AI gửi thẳng cho khách (ghi “AI assistant”). Nháp nghi bịa → khách chỉ nhận câu “team sẽ trả lời”, nháp giữ lại cho staff.
+            Staff vừa trả lời luồng nào thì AI im luồng đó 2 giờ.
           </p>
           <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[12px] sm:grid-cols-4">
             <span>Tháng này: <b className="text-white">${usage.costUsd.toFixed(2)}</b> / ${settings.budgetUsd}</span>

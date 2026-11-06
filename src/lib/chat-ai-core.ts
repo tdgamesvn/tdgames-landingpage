@@ -100,6 +100,11 @@ const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ");
  * Kiểm bịa phía server: nguồn phải có thật; số / email / link / @handle trong câu trả lời phải nằm trong
  * thẻ nguồn hoặc lời khách. Trả danh sách cảnh báo (rỗng = qua).
  */
+/** Bỏ dấu phân cách nghìn: 1.000 / 1,000 / 1 000 → 1000 (số thập phân giữ nguyên). */
+function plainNumber(n: string): string {
+  return /^\d{1,3}(?:[.,]\d{3})+$/.test(n) ? n.replace(/[.,]/g, "") : n;
+}
+
 export function guardDraft(draft: AiDraft, refs: Map<string, string>, visitorText: string): string[] {
   const warnings: string[] = [];
   const valid = draft.sources.filter((s) => refs.has(s));
@@ -108,7 +113,9 @@ export function guardDraft(draft: AiDraft, refs: Map<string, string>, visitorTex
   // So với TOÀN BỘ kho (không chỉ thẻ model khai) — model hay khai thiếu nguồn, nhưng số phải có ở đâu đó trong dữ liệu công ty.
   const corpus = norm([...refs.values(), visitorText].join("\n"));
   const numbers = draft.answer.match(/\d+(?:[.,]\d+)*/g) ?? [];
-  const badNums = [...new Set(numbers)].filter((n) => !corpus.includes(n.toLowerCase()));
+  // "1.000" (kiểu Việt) = "1,000" = "1000": so cả dạng bỏ dấu phân cách nghìn.
+  const corpusNums = new Set((corpus.match(/\d+(?:[.,]\d+)*/g) ?? []).map(plainNumber));
+  const badNums = [...new Set(numbers)].filter((n) => !corpus.includes(n.toLowerCase()) && !corpusNums.has(plainNumber(n)));
   if (badNums.length) warnings.push(`unverified_numbers:${badNums.slice(0, 5).join(",")}`);
   const emails = draft.answer.match(/[\w.+-]+@[\w-]+\.[\w.]+/g) ?? [];
   if (emails.some((e) => !corpus.includes(e.replace(/\.+$/, "").toLowerCase()))) warnings.push("unverified_email");

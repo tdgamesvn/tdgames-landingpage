@@ -8,7 +8,7 @@ export type ChatQuickReply = {
   linkLabel: string | null;
   linkUrl: string | null;
 };
-export type ChatConfig = { enabled: boolean; online: boolean; quickReplies: ChatQuickReply[] };
+export type ChatConfig = { enabled: boolean; online: boolean; aiAuto?: boolean; quickReplies: ChatQuickReply[] };
 export type ChatThread = {
   status: "open" | "answered" | "closed";
   audience: "client" | "candidate";

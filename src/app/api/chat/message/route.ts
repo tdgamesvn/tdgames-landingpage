@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     body: text,
     page,
   });
-  // Phase A: AI soạn nháp cho staff (khách không thấy) — chạy sau khi đã trả response.
+  // AI soạn nháp (draft) / tự trả lời (auto) — chạy sau khi đã trả response.
   const trigger = messages.find((m) => m.sender === "visitor" && m.kind === "text");
   if (b.kind === "text" && trigger) after(() => draftReplyFor(thread.id, trigger.id));
   return NextResponse.json({ messages: messages.map(toPublicMessage), thread: toPublicThread({ ...thread, needs_human: true, status: "open" }) });

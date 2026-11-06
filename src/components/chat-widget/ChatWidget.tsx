@@ -21,6 +21,9 @@ const SEEN_KEY = "tdg_chat_seen_at";
 const POLL_VISIBLE_MS = 4000;
 const POLL_HIDDEN_MS = 20000;
 const TYPING_MIN_MS = 1200;
+const TALK_TO_PERSON = "I'd like to talk to a person.";
+/** Chế độ AI tự trả lời: hiện 3 chấm tối đa chừng này sau tin khách (AI chờ 6s + gọi model). */
+const AI_TYPING_MAX_MS = 60_000;
 const OFFLINE_NOTE = "We're offline right now (8:00–22:00 Vietnam time). Leave your email and we'll reply by email.";
 
 type Pending = { kind: "text" | "talk_to_person"; body: string };
@@ -150,7 +153,7 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
   }
 
   async function onSend(kind: "text" | "talk_to_person") {
-    const body = kind === "text" ? input.trim() : input.trim() || "I'd like to talk to a person.";
+    const body = kind === "text" ? input.trim() : input.trim() || TALK_TO_PERSON;
     if (!body || busy) return;
     if (!online && !thread?.hasEmail) {
       setPending({ kind, body });
@@ -205,6 +208,18 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
     }
   }
 
+  // AI tự trả lời: tin cuối là của khách → 3 chấm tới khi có trả lời (hoặc quá AI_TYPING_MAX_MS).
+  const last = messages[messages.length - 1];
+  const aiWaitingFor = config?.aiAuto && last?.sender === "visitor" && last.kind === "text" && last.body !== TALK_TO_PERSON ? last : null;
+  const [aiExpiredId, setAiExpiredId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!aiWaitingFor) return;
+    const left = AI_TYPING_MAX_MS - (Date.now() - Date.parse(aiWaitingFor.createdAt));
+    const t = setTimeout(() => setAiExpiredId(aiWaitingFor.id), Math.max(0, left));
+    return () => clearTimeout(t);
+  }, [aiWaitingFor]);
+  const aiTyping = !!aiWaitingFor && aiExpiredId !== aiWaitingFor.id;
+
   const quickReplies = config?.quickReplies ?? [];
   const asked = new Set(messages.filter((m) => m.kind === "quick_reply").map((m) => m.body));
   const showTopics = messages.length === 0 && !pendingQuestion;
@@ -258,7 +273,7 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
             {pendingQuestion}
           </Bubble>
         )}
-        {typing && <TypingDots />}
+        {(typing || aiTyping) && <TypingDots />}
         {contactMode && (
           <form onSubmit={onContact} className="mt-1 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 text-[12.5px]">
             <p className="text-zinc-700">
@@ -382,6 +397,19 @@ function MessageView({ m }: { m: ChatMessage }) {
           {m.staffName} · TD Games
         </span>
         <Bubble side="left" tone="dark">
+          {m.body}
+        </Bubble>
+      </div>
+    );
+  }
+  if (m.sender === "ai") {
+    return (
+      <div className="flex flex-col gap-1 self-start">
+        <span className="ml-1 text-[10.5px] text-zinc-500">
+          <span className="mr-1 rounded bg-orange-100 px-1 py-px text-[9.5px] font-bold text-orange-800">AI</span>
+          AI assistant · TD Games
+        </span>
+        <Bubble side="left" tone="light">
           {m.body}
         </Bubble>
       </div>

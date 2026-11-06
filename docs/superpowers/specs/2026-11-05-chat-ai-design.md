@@ -33,7 +33,12 @@ Sếp chốt 2026-11-05 (thảo luận trong phiên chat):
 2026-11-05: Sonnet 5.5 21/25 kỳ vọng ban đầu (4 lệch = gạt đi lịch sự, không bịa → đổi kỳ vọng "không bịa");
 gpt-6.1-sol 24/25. ~$0.009/nháp → $100 ≈ 11k nháp.
 
-## Phase B/C (chưa làm)
-Thêm `chat_ai_mode` = `offhours` | `auto`: nháp không cảnh báo + `needs_human=false` thì gửi thẳng cho khách
-(sender `ai`, ghi "AI assistant"), còn lại giữ nháp + gọi người. Luật 2h: staff trả lời → AI im 2h trên luồng đó.
-Cần xem tỉ lệ "gửi nguyên" / 👎 của Phase A trước khi bật.
+## Phase C — tự trả lời 24/7 (ĐÃ LÀM 2026-11-06, sếp bỏ qua B, bật thẳng 24/7)
+`chat_ai_mode` = `auto` (nút "Tự trả lời 24/7" trong /hr → Chat → 🤖 AI). Sau khi soạn nháp (`autoSend` trong chat-ai.ts):
+- Đọc lại luồng: có tin khách mới hơn / staff hoặc AI đã trả lời sau tin đó → thôi. Staff trả lời luồng trong 2h qua → AI im (chỉ nháp).
+- Nháp **không cảnh báo** → giành nháp (pending→sent, decided_by null = AI gửi) rồi gửi tin `sender='ai'`.
+  `needs_human=false` → luồng "answered"; `true` → vẫn chờ người (câu trả lời đã nói "team sẽ liên hệ").
+- Nháp **có cảnh báo** → khách nhận câu chờ cố định (EN / VI theo dấu tiếng Việt, 1 lần đến khi staff vào); nháp giữ cho staff.
+- Widget: bong bóng "AI assistant", 3 chấm tối đa 60s sau tin khách (config `aiAuto`). /hr: tin AI nền xanh "🤖 AI tự trả lời".
+- Chuông báo staff khi khách nhắn vẫn giữ như cũ. Tin AI không gửi mail.
+- guardDraft: "1.000" (kiểu Việt) = "1,000" khi so số.

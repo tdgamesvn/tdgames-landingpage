@@ -52,6 +52,10 @@ test("guardDraft: bắt số / email / link / nguồn bịa", () => {
   assert.deepEqual(guardDraft(d({ answer: "For your 40 characters, send a brief." }), refs, "I need 40 characters"), []);
   // "24/7", "and/or" không bị coi là link.
   assert.deepEqual(guardDraft(d({ answer: "Unity/Cocos and/or Spine" }), refs, ""), []);
+  // Dấu phân cách nghìn kiểu Việt: "1.000 USD" khớp "USD 1,000" trong kho; số khác vẫn bị bắt.
+  const priced = new Map([["K1", "Typical projects start from around USD 1,000."]]);
+  assert.deepEqual(guardDraft(d({ answer: "Dự án thường từ khoảng 1.000 USD." }), priced, ""), []);
+  assert.deepEqual(guardDraft(d({ answer: "Dự án từ 2.000 USD." }), priced, ""), ["unverified_numbers:2.000"]);
 });
 
 test("worthDrafting bỏ tin rác", () => {
