@@ -6479,3 +6479,10 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - E2E dev 3011 (DB prod, push/Discord tắt, tài khoản boss tạm đã xoá): 2 tin liền → 1 nháp gộp, 0 cảnh báo, $0.0096; GET thread có aiDraft; rate + gửi từ nháp → sent/edited/rating; PUT budget sai → 400; CHAT_AI_MODEL hỏng → dùng gpt-6.1-sol + ghi alert. Đã xoá luồng test + khoá alert.
 - Security review tự động (MEDIUM, TOCTOU trần/ngân sách): sửa — giữ chỗ dòng nháp (status skipped, cost dự kiến $0.02) TRƯỚC khi đếm trần/ngân sách, vượt → cost 0; gọi xong cập nhật chính dòng đó. Test lại dev OK (1 dòng, $0.0061).
 - Next: theo dõi tỉ lệ gửi nguyên / 👎 vài tuần → Phase B (tự trả lời ngoài giờ). Sếp bổ sung thẻ: giá khởi điểm, thanh toán/cọc, đơn tối thiểu… (hiện AI sẽ báo "team sẽ trả lời").
+
+## 2026-11-06 — Bổ sung kho kiến thức AI chat (chat_kb, sửa thẳng DB prod)
+- Sếp trả lời bộ câu hỏi bổ sung → thêm 8 thẻ: Payment terms (cọc 50/50, theo tháng khi đã tin cậy, Wise/Payoneer/PayPal/CK, công ty↔công ty CK tài khoản công ty, USD nước ngoài / VND trong nước, crypto tuỳ dự án), Contracts & invoices (pháp nhân TD Games, có VAT), Small orders & availability (từ USD 1,000; đơn rất nhỏ chỉ nhận khi có người rảnh), Strengths & genres, Outside our core 2D scope (tuỳ deal, mạng freelancer/tuyển thêm), Full-time hiring process, Working at TD Games (onsite HN, 8:30–17:30, nhận intern/fresher, remote 1 ngày/tuần + thưởng quý khi chính thức), Freelancer collaboration (test có trả phí dù đạt hay không, trả theo task).
+- Sửa thẻ: How much does it cost? + Services (thêm "Projects start from USD 1,000"), Tools & engines (+Figma, Godot), How do we work together? (gộp nội dung Communication).
+- Tắt (active=false, không xoá) 3 thẻ trùng: Our services, Jobs & how to apply, Communication. Tổng 24 thẻ bật.
+- Eval Sonnet 5.5: 24/25 → câu PayPal/deposit giờ AI trả lời được nên đổi kỳ vọng expectHuman=false. ORCA vẫn không nằm trong thẻ Portfolio (NDA).
+- Chưa đổi: câu có sẵn "💰 How much does it cost?" (bảng chat_quick_replies, khách thấy ngay) vẫn chưa ghi giá từ $1,000 — chờ sếp quyết.
