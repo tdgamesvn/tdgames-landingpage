@@ -221,6 +221,11 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
   }, [aiWaitingFor]);
   const aiTyping = !!aiWaitingFor && aiExpiredId !== aiWaitingFor.id;
 
+  // Bấm link trong chat trên điện thoại (khung chat phủ kín màn hình) → đóng khung để thấy trang mới.
+  const closeOnMobile = () => {
+    if (window.innerWidth < 640) onClose();
+  };
+
   const quickReplies = config?.quickReplies ?? [];
   const asked = new Set(messages.filter((m) => m.kind === "quick_reply").map((m) => m.body));
   const showTopics = messages.length === 0 && !pendingQuestion;
@@ -267,7 +272,7 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
           </div>
         )}
         {messages.map((m) => (
-          <MessageView key={m.id} m={m} />
+          <MessageView key={m.id} m={m} onNavigate={closeOnMobile} />
         ))}
         {pendingQuestion && (
           <Bubble side="right" tone="accent">
@@ -379,7 +384,7 @@ function Bubble({ side, tone, children }: { side: "left" | "right"; tone: "light
   );
 }
 
-function MessageView({ m }: { m: ChatMessage }) {
+function MessageView({ m, onNavigate }: { m: ChatMessage; onNavigate: () => void }) {
   if (m.sender === "visitor") {
     return (
       <Bubble side="right" tone="accent">
@@ -398,7 +403,7 @@ function MessageView({ m }: { m: ChatMessage }) {
           {m.staffName} · TD Games
         </span>
         <Bubble side="left" tone="dark">
-          {m.body}
+          <Linkified text={m.body} onNavigate={onNavigate} dark />
         </Bubble>
       </div>
     );
@@ -411,7 +416,7 @@ function MessageView({ m }: { m: ChatMessage }) {
           AI assistant · TD Games
         </span>
         <Bubble side="left" tone="light">
-          {m.body}
+          <Linkified text={m.body} onNavigate={onNavigate} />
         </Bubble>
       </div>
     );
@@ -420,20 +425,45 @@ function MessageView({ m }: { m: ChatMessage }) {
   return (
     <div className="flex max-w-[84%] flex-col gap-2 self-start">
       <Bubble side="left" tone="light">
-        {m.body}
+        <Linkified text={m.body} onNavigate={onNavigate} />
       </Bubble>
       {m.linkUrl && m.linkLabel && (
-        <LinkButton href={m.linkUrl} label={m.linkLabel} />
+        <LinkButton href={m.linkUrl} label={m.linkLabel} onNavigate={onNavigate} />
       )}
     </div>
   );
 }
 
-function LinkButton({ href, label }: { href: string; label: string }) {
+/** Đường dẫn trong tin (/careers/…, https://…, email) → link bấm được. "24/7", "and/or" không bị coi là link. */
+const LINK_RE = /(https?:\/\/[^\s<>"]+|(?<![\w/@.])\/[a-z0-9][\w\-/]*|[\w.+-]+@[\w-]+\.[a-z]{2,}(?:\.[a-z]{2,})*)/gi;
+
+function Linkified({ text, onNavigate, dark }: { text: string; onNavigate: () => void; dark?: boolean }) {
+  const cls = `underline underline-offset-2 font-semibold break-all ${dark ? "text-[#fbbf24]" : "text-[#b45309]"}`;
+  const out: React.ReactNode[] = [];
+  let last = 0;
+  for (const match of text.matchAll(LINK_RE)) {
+    const raw = match[0];
+    const url = raw.replace(/[).,!?:;]+$/, ""); // dấu câu cuối không thuộc link
+    const start = match.index ?? 0;
+    out.push(text.slice(last, start));
+    if (url.startsWith("/")) {
+      out.push(<Link key={start} href={url} onClick={onNavigate} className={cls}>{url}</Link>);
+    } else if (url.includes("@") && !url.startsWith("http")) {
+      out.push(<a key={start} href={`mailto:${url}`} className={cls}>{url}</a>);
+    } else {
+      out.push(<a key={start} href={url} target="_blank" rel="noopener noreferrer" className={cls}>{url}</a>);
+    }
+    last = start + url.length;
+  }
+  out.push(text.slice(last));
+  return <>{out}</>;
+}
+
+function LinkButton({ href, label, onNavigate }: { href: string; label: string; onNavigate: () => void }) {
   const cls = "self-start rounded-full bg-[#111116] px-3.5 py-1.5 text-[12.5px] font-bold text-white hover:bg-zinc-800";
   if (href.startsWith("/")) {
     return (
-      <Link href={href} className={cls}>
+      <Link href={href} onClick={onNavigate} className={cls}>
         {label} →
       </Link>
     );
