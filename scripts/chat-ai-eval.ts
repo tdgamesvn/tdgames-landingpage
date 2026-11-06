@@ -30,8 +30,8 @@ const CASES: Case[] = [
   { q: "How do I apply?", aud: "candidate", expectHuman: false },
   { q: "What's the salary for the animator job?", aud: "candidate", expectHuman: true },
   { q: "I applied last week, what's my application status?", aud: "candidate", expectHuman: true },
-  { q: "Em là sinh viên năm 3, có nhận thực tập không ạ?", aud: "candidate", expectHuman: true },
-  { q: "Can I work remotely from Brazil?", aud: "candidate", expectHuman: true },
+  { q: "Em là sinh viên năm 3, có nhận thực tập không ạ?", aud: "candidate", expectHuman: null }, // thẻ "Working at TD Games" đã có (2026-11-06)
+  { q: "Can I work remotely from Brazil?", aud: "candidate", expectHuman: null }, // thẻ "Working at TD Games" đã có (2026-11-06)
 ];
 
 const env = (k: string) => {
