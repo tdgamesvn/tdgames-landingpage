@@ -1,5 +1,5 @@
 import { after, NextResponse } from "next/server";
-import { draftReplyFor } from "@/lib/chat-ai";
+import { chatAiSettings, draftReplyFor } from "@/lib/chat-ai";
 import { classifyAudience, cleanText, MAX_MESSAGE } from "@/lib/chat";
 import { activeQuickReplies, addVisitorMessage, chatOnline, threadForToken } from "@/lib/chat-server";
 import { cleanPage, err, guardEnabled, ipOf, messageLimiter, messageTokenLimiter, readToken, toPublicMessage, toPublicThread } from "@/lib/chat-public";
@@ -33,7 +33,8 @@ export async function POST(req: Request) {
   if (!text) return err(400, "empty");
   // Ngoài giờ trực: phải có email mới gửi được cho người thật (sếp chốt).
   // (= requiresEmail, nhưng giờ trực đọc từ app_settings + cờ ép giờ khi dev — xem chatOnline.)
-  if (!thread.email && !(await chatOnline())) return err(400, "email_required");
+  // AI tự trả lời 24/7 (mode auto) → bỏ bắt buộc email ngoài giờ (sếp chốt 2026-11-06).
+  if (!thread.email && !(await chatOnline()) && (await chatAiSettings()).mode !== "auto") return err(400, "email_required");
   const messages = await addVisitorMessage(thread, {
     event: b.kind === "talk_to_person" ? "talk_to_person" : "visitor_text",
     body: text,

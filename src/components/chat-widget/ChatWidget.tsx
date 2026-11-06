@@ -155,7 +155,8 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
   async function onSend(kind: "text" | "talk_to_person") {
     const body = kind === "text" ? input.trim() : input.trim() || TALK_TO_PERSON;
     if (!body || busy) return;
-    if (!online && !thread?.hasEmail) {
+    // AI tự trả lời 24/7 → ngoài giờ cũng gửi ngay, không bắt để email (sếp chốt 2026-11-06).
+    if (!online && !thread?.hasEmail && !config?.aiAuto) {
       setPending({ kind, body });
       setContactMode("required");
       setInput("");
@@ -239,8 +240,8 @@ export default function ChatWidget({ resumeToken, onClose }: { resumeToken: stri
         <div className="min-w-0">
           <div className="text-[14px] font-bold">TD Games Support</div>
           <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-            <span className={`h-[7px] w-[7px] rounded-full ${online ? "bg-green-500" : "bg-zinc-500"}`} />
-            {online ? "Usually replies in minutes" : "Offline · we reply by email"}
+            <span className={`h-[7px] w-[7px] rounded-full ${online || config?.aiAuto ? "bg-green-500" : "bg-zinc-500"}`} />
+            {online ? "Usually replies in minutes" : config?.aiAuto ? "AI assistant 24/7 · team replies by email" : "Offline · we reply by email"}
           </div>
         </div>
         <button type="button" onClick={onClose} aria-label="Close chat" className="ml-auto grid h-9 w-9 place-items-center rounded-full text-xl text-zinc-400 hover:bg-white/10 hover:text-white">
