@@ -438,7 +438,7 @@ function MessageView({ m, onNavigate }: { m: ChatMessage; onNavigate: () => void
 const LINK_RE = /(https?:\/\/[^\s<>"]+|(?<![\w/@.])\/[a-z0-9][\w\-/]*|[\w.+-]+@[\w-]+\.[a-z]{2,}(?:\.[a-z]{2,})*)/gi;
 
 function Linkified({ text, onNavigate, dark }: { text: string; onNavigate: () => void; dark?: boolean }) {
-  const cls = `underline underline-offset-2 font-semibold break-all ${dark ? "text-[#fbbf24]" : "text-[#b45309]"}`;
+  const cls = `underline underline-offset-2 font-semibold break-words ${dark ? "text-[#fbbf24]" : "text-[#b45309]"}`;
   const out: React.ReactNode[] = [];
   let last = 0;
   for (const match of text.matchAll(LINK_RE)) {
