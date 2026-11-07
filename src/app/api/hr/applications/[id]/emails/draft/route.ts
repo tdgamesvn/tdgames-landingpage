@@ -122,6 +122,16 @@ export async function GET(request: Request, { params }: Ctx) {
     attachment = { filename: offerFileName(letter.data.candidateName) };
   }
 
+  // Mail từ chối: đã nộp bài test chưa (→ đoạn cảm ơn làm bài test).
+  let testSubmitted = false;
+  if (kind === "rejection") {
+    const { count } = await supabase
+      .from("test_submissions")
+      .select("id", { count: "exact", head: true })
+      .eq("application_id", id);
+    testSubmitted = (count ?? 0) > 0;
+  }
+
   const job = (Array.isArray(app.jobs) ? app.jobs[0] : app.jobs) as { title?: string } | null;
   // Mẫu HR đã sửa (nếu có). Lỗi đọc → dùng mẫu mặc định, không chặn việc soạn mail.
   let template: { subject: string; body: string } | null = null;
@@ -159,6 +169,7 @@ export async function GET(request: Request, { params }: Ctx) {
     interview,
     prevScheduledAt,
     testUrl,
+    testSubmitted,
     hasMbti: Boolean(app.mbti_type || app.mbti_url),
     offer,
     // Mail "Hồ sơ đang được xem xét": hẹn phản hồi = hôm nay (giờ VN) + 14 ngày.

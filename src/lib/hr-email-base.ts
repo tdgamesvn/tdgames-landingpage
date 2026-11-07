@@ -87,6 +87,8 @@ export type DraftInput = {
   } | null;
   prevScheduledAt?: string | null;
   testUrl?: string | null;
+  /** Mail từ chối: ứng viên đã nộp bài test → thêm đoạn `{doan_bai_test}`. */
+  testSubmitted?: boolean;
   /** Mail on_hold: hạn phản hồi đã định dạng (`holdReplyBy`); trống → tự tính từ hôm nay. */
   replyBy?: string | null;
   /** Hồ sơ đã có kết quả MBTI → mail mời PV không nhắc làm trắc nghiệm nữa. */

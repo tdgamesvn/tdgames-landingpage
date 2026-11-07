@@ -27,7 +27,7 @@ export const KIND_VARS: Record<CandidateEmailKind, string[]> = {
   interview_reschedule: [...COMMON_VARS, "vong", "thoi_gian_pv", "hinh_thuc_pv"],
   interview_cancel: [...COMMON_VARS, "cau_huy", "thoi_gian_cu"],
   test_assignment: [...COMMON_VARS, "link_bai_test"],
-  rejection: [...COMMON_VARS],
+  rejection: [...COMMON_VARS, "doan_bai_test"],
   offer: [
     ...COMMON_VARS,
     "chuc_danh", "ngay_bat_dau", "thoi_gian_lam_viec", "dia_diem", "han_xac_nhan", "nguoi_lien_he", "ten_file",
@@ -55,6 +55,7 @@ export const VAR_HELP: Record<string, string> = {
   cau_huy: "Câu báo huỷ (có giờ cũ nếu biết)",
   thoi_gian_cu: "Giờ phỏng vấn cũ (trống nếu không biết)",
   link_bai_test: "Link đề bài & nộp bài",
+  doan_bai_test: "Đoạn cảm ơn đã làm bài test + kết quả bài test (trống nếu ứng viên chưa nộp bài test)",
   muc_luong: "Không còn dùng — luôn “…” (lương nằm trong file PDF)",
   ngay_bat_dau: "Giờ + ngày bắt đầu từ thư mời, vd “8:45, Thứ Hai 12/10/2026”",
   chuc_danh: "Chức danh trong thư mời (trống → tên vị trí)",
@@ -115,6 +116,7 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
     body: [
       "Chào {ten_ung_vien},",
       "Cảm ơn bạn đã dành thời gian ứng tuyển vị trí {vi_tri} tại TD Games.",
+      "{doan_bai_test}",
       "Sau khi cân nhắc, chúng mình rất tiếc chưa thể tiếp tục cùng bạn ở thời điểm này. Hồ sơ của bạn sẽ được lưu lại và chúng mình sẽ liên hệ khi có vị trí phù hợp hơn.",
       "Chúc bạn nhiều thành công trên con đường sắp tới.",
       "{chu_ky}",
@@ -207,6 +209,9 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
   },
 };
 
+export const TEST_REJECTION_PARAGRAPH =
+  "Chúng mình cũng cảm ơn bạn đã đầu tư thời gian và công sức cho bài test. Team đã xem kỹ bài làm của bạn, tuy nhiên kết quả lần này chưa đáp ứng được yêu cầu của vị trí.";
+
 /** Giá trị biến cho một bản nháp. Có đủ mọi biến; biến không thuộc loại thì validate đã chặn khi lưu. */
 export function templateVars(input: DraftInput): Record<string, string> {
   const i = input.interview ?? null;
@@ -225,6 +230,8 @@ export function templateVars(input: DraftInput): Record<string, string> {
       ? `Buổi phỏng vấn vị trí ${input.jobTitle.trim() || "vị trí bạn ứng tuyển"} vào lúc ${formatInterviewLong(input.prevScheduledAt)} đã được huỷ.`
       : `Buổi phỏng vấn vị trí ${input.jobTitle.trim() || "vị trí bạn ứng tuyển"} đã được huỷ.`,
     link_bai_test: input.testUrl ?? "(HR bổ sung link)",
+    // Từ chối sau khi đã nộp bài test (sếp chốt 2026-11-07): cảm ơn riêng công làm bài.
+    doan_bai_test: input.testSubmitted ? TEST_REJECTION_PARAGRAPH : "",
     han_phan_hoi: input.replyBy?.trim() || holdReplyBy(new Date()),
     ngay_ung_tuyen_truoc: input.duplicate?.prevAppliedAt ?? "…",
     ngay_duoc_nop_lai: input.duplicate?.reapplyFrom ?? "…",
@@ -350,6 +357,9 @@ export function SAMPLE_DRAFT_INPUT(kind: CandidateEmailKind): DraftInput {
       return { ...base, prevScheduledAt: "2026-11-02T08:30:00.000Z" };
     case "test_assignment":
       return { ...base, testUrl: "https://tdgamestudio.com/test/mau-xem-truoc" };
+    case "rejection":
+      // Xem trước có đoạn bài test để HR thấy (ứng viên chưa nộp bài test thì đoạn này tự ẩn).
+      return { ...base, testSubmitted: true };
     case "on_hold":
       return { ...base, replyBy: "Thứ Sáu 13/11/2026" };
     case "duplicate_rejection":

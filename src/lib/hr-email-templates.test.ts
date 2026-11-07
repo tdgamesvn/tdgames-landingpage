@@ -14,6 +14,7 @@ import {
   DEFAULT_TEMPLATES,
   KIND_VARS,
   SAMPLE_DRAFT_INPUT,
+  TEST_REJECTION_PARAGRAPH,
   VAR_HELP,
   renderTemplate,
   templateVars,
@@ -250,7 +251,7 @@ test("SAMPLE_DRAFT_INPUT: render sạch, không còn biến chưa thay", () => {
     assert.doesNotMatch(d.subject + d.text, /\{[a-z_]+\}/, k);
     assert.match(d.text, /Nguyễn Văn A/);
   }
-  assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 22);
+  assert.equal(Object.keys(templateVars(SAMPLE_DRAFT_INPUT("offer"))).length, 23); // +doan_bai_test (2026-11-07)
 });
 
 test("validate: biến viết gần đúng bị từ chối, ngoặc lẻ vẫn được", () => {
@@ -442,4 +443,16 @@ test("mail freelancer: có tên + vị trí; job có nhận → hẹn liên hệ
   assert.match(no.text, /^Chào bạn,/);
   assert.match(no.text, /chưa mở hình thức cộng tác freelance/);
   assert.match(no.text, /lưu lại thông tin liên hệ/);
+});
+
+test("rejection: đã nộp bài test → thêm đoạn cảm ơn bài test; chưa nộp → như cũ", () => {
+  const tpl = DEFAULT_TEMPLATES.rejection;
+  const plain = renderTemplate(tpl, templateVars({ kind: "rejection", candidateName: "A", jobTitle: "Dev" })).text;
+  const tested = renderTemplate(tpl, templateVars({ kind: "rejection", candidateName: "A", jobTitle: "Dev", testSubmitted: true })).text;
+  assert.ok(!plain.includes("bài test"));
+  assert.ok(!/\n{3,}/.test(plain));
+  assert.ok(tested.includes(TEST_REJECTION_PARAGRAPH));
+  // Đoạn bài test nằm giữa câu cảm ơn ứng tuyển và câu báo kết quả.
+  assert.ok(tested.indexOf("ứng tuyển vị trí Dev") < tested.indexOf(TEST_REJECTION_PARAGRAPH));
+  assert.ok(tested.indexOf(TEST_REJECTION_PARAGRAPH) < tested.indexOf("Sau khi cân nhắc"));
 });
