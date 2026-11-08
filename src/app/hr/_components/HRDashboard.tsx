@@ -2292,10 +2292,10 @@ function JobsView({ jobs, onUpdate, onCreate, onDelete, apps, onUpdateApp, onDel
   }
 
   function copyLink(job: Job) {
-    // Link mở trang Careers với panel job bật sẵn; ?ref= đi tiếp sang /apply.
-    const path = `/careers?job=${encodeURIComponent(job.slug)}`;
+    // Link thẳng trang nộp đơn (mô tả + form); preview link vẫn theo job (generateMetadata của /apply).
+    const path = `/apply/${encodeURIComponent(job.slug)}`;
     const url = refCode
-      ? `${BASE_URL}${path}&ref=${encodeURIComponent(refCode)}`
+      ? `${BASE_URL}${path}?ref=${encodeURIComponent(refCode)}`
       : `${BASE_URL}${path}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedId(job.id);
