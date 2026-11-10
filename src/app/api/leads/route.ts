@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { discordNotify } from "@/lib/discord-notify";
-import { LEAD_BUDGETS, LEAD_CONTACT_CHANNELS, LEAD_SERVICES } from "@/lib/leads";
+import { LEAD_BUDGETS, LEAD_CONTACT_CHANNELS, LEAD_SERVICES, WAITLIST_SOURCE } from "@/lib/leads";
 import { leadAckLabel, sendLeadAck } from "@/lib/lead-ack-send";
+import { clientIp } from "@/lib/hr-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,9 @@ export async function POST(request: Request) {
   const service = clean(body.service, 40);
   const budget = clean(body.budget, 40);
   const message = clean(body.message, 4000);
-  const source = clean(body.source, 60) || "contact-form";
+  // Nguồn nội bộ (chat, waitlist) không cho form công khai tự đặt.
+  const rawSource = clean(body.source, 60);
+  const source = !rawSource || rawSource === "chat" || rawSource === WAITLIST_SOURCE ? "contact-form" : rawSource;
   const contactChannel = clean(body.contactChannel, 40);
   const contactHandle = clean(body.contactHandle, 200);
 
@@ -49,6 +52,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
 
+  const ip = clientIp(request.headers);
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("leads")
@@ -74,7 +78,7 @@ export async function POST(request: Request) {
   (async () => {
     let ack = "—";
     try {
-      ack = leadAckLabel(await sendLeadAck({ id: data.id, name, email, service, message }));
+      ack = leadAckLabel(await sendLeadAck({ id: data.id, name, email, service, message }, ip));
     } catch (e) {
       ack = `❌ lỗi: ${e instanceof Error ? e.message : "?"}`;
     }

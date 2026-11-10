@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import {
   LEAD_ACK_FOOTER_EN,
   buildLeadAckEmail,
+  canonicalEmail,
   getLeadAckConfig,
   ilikeExact,
   isVietnamese,
@@ -72,6 +73,20 @@ test("trích tin: bỏ link/tên miền, mỗi dòng '> ', cắt dài", () => {
   const long = quoteMessage("a".repeat(5000));
   assert.ok(long.length < 1600);
   assert.ok(long.endsWith("…"));
+});
+
+test("trích tin: bắt chấm Unicode, full-width, IP; giữ chấm cuối câu", () => {
+  assert.equal(quoteMessage("go evil。com now"), "> go [link] now");
+  assert.equal(quoteMessage("ｅｖｉｌ．ｃｏｍ"), "> [link]");
+  assert.equal(quoteMessage("visit 10.0.0.1 or evil．com/x"), "> visit [link] or [link]");
+  assert.equal(quoteMessage("Deadline end of Q1. Thanks!"), "> Deadline end of Q1. Thanks!");
+});
+
+test("canonicalEmail: chữ thường, bỏ +tag, Gmail bỏ chấm + gộp googlemail", () => {
+  assert.equal(canonicalEmail(" A.B+promo@GoogleMail.com "), "ab@gmail.com");
+  assert.equal(canonicalEmail("a.b@gmail.com"), "ab@gmail.com");
+  assert.equal(canonicalEmail("John.Doe+x@Studio.io"), "john.doe@studio.io");
+  assert.equal(canonicalEmail("bad"), "bad");
 });
 
 test("ilikeExact escape wildcard", () => {

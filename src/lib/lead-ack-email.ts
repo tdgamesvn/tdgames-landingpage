@@ -33,15 +33,25 @@ export function isVietnamese(...texts: string[]): boolean {
   return texts.some((t) => VI_CHARS.test(t));
 }
 
-const LINKISH = /\b(?:https?:\/\/|www\.)\S+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b(?:\/\S*)?/gi;
+/** Dấu chấm mọi biến thể (ASCII, full-width, CJK, halfwidth, dấu chấm giữa…). */
+const DOTS = ".。．｡․‥…·‧・܁܂۔";
+/** Token có "dấu chấm + ký tự" (tên miền, IP, x.y), "://" hoặc "@" → coi là link. Chấm cuối câu vẫn giữ. */
+const LINKISH_TOKEN = new RegExp(`[${DOTS}][^\\s${DOTS}]|:\\/\\/|@|^www`, "i");
 const QUOTE_MAX = 1500;
 
 /**
- * Tin khách tự gõ được trích lại trong mail đi từ tên miền mình → bỏ mọi link/tên miền để form công khai
- * không bị mượn gửi link lừa đảo tới email người khác. Cắt độ dài, mỗi dòng thêm "> ".
+ * Tin khách tự gõ được trích lại trong mail đi từ tên miền mình → bỏ mọi token trông như link/tên miền/IP
+ * (chuẩn hoá NFKC trước, bắt cả dấu chấm Unicode) để form công khai không bị mượn gửi link lừa đảo tới
+ * email người khác. Cắt độ dài, mỗi dòng thêm "> ".
  */
 export function quoteMessage(message: string): string {
-  let s = message.replace(/\r\n/g, "\n").replace(LINKISH, "[link]").trim();
+  let s = message
+    .normalize("NFKC")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/\S+/g, (tok) => (LINKISH_TOKEN.test(tok) ? "[link]" : tok)))
+    .join("\n")
+    .trim();
   if (s.length > QUOTE_MAX) s = `${s.slice(0, QUOTE_MAX).trimEnd()}…`;
   return s
     .split("\n")
@@ -90,6 +100,21 @@ export function buildLeadAckEmail(lead: {
     LEAD_ACK_FOOTER_EN,
   ];
   return { subject: "We've received your request — TD Games Studio", text: parts.join("\n\n"), lang: "en" };
+}
+
+/**
+ * Email chuẩn hoá để chống gửi trùng: chữ thường, bỏ "+tag"; Gmail bỏ dấu chấm và gộp googlemail.com
+ * (a.b+x@GoogleMail.com ≡ ab@gmail.com — cùng một hộp thư).
+ */
+export function canonicalEmail(email: string): string {
+  const e = email.trim().toLowerCase();
+  const at = e.lastIndexOf("@");
+  if (at < 1) return e;
+  let local = e.slice(0, at).split("+")[0];
+  let domain = e.slice(at + 1);
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") local = local.replace(/\./g, "");
+  return `${local}@${domain}`;
 }
 
 /** Escape ký tự đặc biệt của ILIKE (% _ \) → so khớp email không phân biệt hoa thường mà không thành wildcard. */

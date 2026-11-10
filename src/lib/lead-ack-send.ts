@@ -1,31 +1,30 @@
 import "server-only";
 
-import { buildLeadAckEmail, getLeadAckConfig, ilikeExact, leadAckEnvelope } from "./lead-ack-email";
+import { buildLeadAckEmail, canonicalEmail, getLeadAckConfig, ilikeExact, leadAckEnvelope } from "./lead-ack-email";
 import { createLimiter } from "./hr-rate-limit";
-import { WAITLIST_SOURCE } from "./leads";
 import { getSupabaseAdmin } from "./supabase-admin";
 
 export type LeadAckResult =
   | { status: "sent"; testMode: boolean; id: string }
-  | { status: "skipped"; reason: "duplicate" | "rate_limited" }
+  | { status: "skipped"; reason: "duplicate" | "ip_limited" | "rate_limited" }
   | { status: "error"; error: string };
 
-/** Chặn form công khai bị dùng làm máy gửi spam (đổi email liên tục): tối đa 30 mail xác nhận/giờ toàn site. */
-const globalLimiter = createLimiter(30, 60 * 60 * 1000);
-const DEDUPE_MS = 24 * 60 * 60 * 1000;
+const HOUR = 60 * 60 * 1000;
+const DEDUPE_MS = 24 * HOUR;
+/** Chặn form công khai bị dùng làm máy gửi spam (PM2 1 process → giới hạn trong RAM là đủ). */
+const globalLimiter = createLimiter(30, HOUR); // toàn site
+const ipLimiter = createLimiter(3, HOUR); // mỗi IP
+const emailLimiter = createLimiter(1, DEDUPE_MS); // mỗi hộp thư (email chuẩn hoá: +tag, chấm Gmail)
 
 /**
  * Gửi mail xác nhận cho 1 lead vừa lưu. Không throw. Mỗi email nhận tối đa 1 mail / 24 giờ
- * (lead cũ cùng email trong 24h → bỏ qua; lead vẫn lưu bình thường).
+ * (có lead khác cùng email trong 24h — mọi nguồn — hoặc cùng hộp thư chuẩn hoá → bỏ qua; lead vẫn lưu).
  * Gửi thẳng Resend REST, không qua `sendViaResend` (hàm dùng chung mail HR, cần BCC + chỉ text).
  */
-export async function sendLeadAck(lead: {
-  id: string;
-  name: string;
-  email: string;
-  service: string;
-  message: string;
-}): Promise<LeadAckResult> {
+export async function sendLeadAck(
+  lead: { id: string; name: string; email: string; service: string; message: string },
+  ip: string,
+): Promise<LeadAckResult> {
   const cfg = getLeadAckConfig(process.env);
   if (!cfg.apiKey) return { status: "error", error: "RESEND_API_KEY chưa cấu hình" };
 
@@ -35,12 +34,19 @@ export async function sendLeadAck(lead: {
     .select("id", { count: "exact", head: true })
     .ilike("email", ilikeExact(lead.email.trim()))
     .gt("created_at", since)
-    .neq("id", lead.id)
-    // Lead từ chat / waitlist không được gửi xác nhận → không tính.
-    .not("source", "in", `("chat","${WAITLIST_SOURCE}")`);
+    .neq("id", lead.id);
   if (qErr) return { status: "error", error: `dedupe: ${qErr.message}` };
-  if ((count ?? 0) > 0) return { status: "skipped", reason: "duplicate" };
+  const box = canonicalEmail(lead.email);
+  if ((count ?? 0) > 0 || emailLimiter.count(box) > 0) return { status: "skipped", reason: "duplicate" };
+  if (ipLimiter.count(ip) >= 3) return { status: "skipped", reason: "ip_limited" };
   if (!globalLimiter.tryHit("all")) return { status: "skipped", reason: "rate_limited" };
+  emailLimiter.tryHit(box);
+  ipLimiter.tryHit(ip);
+  const undo = () => {
+    globalLimiter.undo("all");
+    emailLimiter.undo(box);
+    ipLimiter.undo(ip);
+  };
 
   const mail = buildLeadAckEmail(lead);
   const env = leadAckEnvelope(cfg, lead.email.trim(), mail.subject);
@@ -61,12 +67,12 @@ export async function sendLeadAck(lead: {
     });
     const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
     if (!res.ok || !data.id) {
-      globalLimiter.undo("all");
+      undo();
       return { status: "error", error: data.message ?? `Resend HTTP ${res.status}` };
     }
     return { status: "sent", testMode: env.testMode, id: data.id };
   } catch (e) {
-    globalLimiter.undo("all");
+    undo();
     return { status: "error", error: e instanceof Error ? e.message : "Không gọi được Resend" };
   }
 }
@@ -74,6 +80,6 @@ export async function sendLeadAck(lead: {
 /** Dòng hiển thị trong thông báo Discord. */
 export function leadAckLabel(r: LeadAckResult): string {
   if (r.status === "sent") return r.testMode ? "🧪 test → hộp sếp" : "✅ đã gửi khách";
-  if (r.status === "skipped") return r.reason === "duplicate" ? "⏭ bỏ qua (đã gửi trong 24h)" : "⏭ bỏ qua (quá 30 mail/giờ)";
+  if (r.status === "skipped") return r.reason === "duplicate" ? "⏭ bỏ qua (đã gửi trong 24h)" : r.reason === "ip_limited" ? "⏭ bỏ qua (IP quá 3 mail/giờ)" : "⏭ bỏ qua (quá 30 mail/giờ)";
   return `❌ lỗi: ${r.error.slice(0, 200)}`;
 }
