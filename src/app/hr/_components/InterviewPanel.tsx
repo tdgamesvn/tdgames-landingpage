@@ -360,6 +360,12 @@ function SessionCard({
   const [showQuestions, setShowQuestions] = useState(false);
   const [showAfter, setShowAfter] = useState(Boolean(hasAudio || session.transcript || session.evaluation));
   const fileRef = useRef<HTMLInputElement>(null);
+  // Vừa có ghi âm (ghi từ nút ở đầu mục Phỏng vấn / upload nền xong) → mở "Sau buổi PV" để thấy ngay.
+  const [sawAudio, setSawAudio] = useState(hasAudio);
+  if (hasAudio !== sawAudio) {
+    setSawAudio(hasAudio);
+    if (hasAudio) setShowAfter(true);
+  }
 
   // Phân tích xong server trả transcript đã gỡ băng — đồng bộ lại ô soạn thảo.
   // Set state trong lúc render (pattern "adjusting state on prop change" của React),
