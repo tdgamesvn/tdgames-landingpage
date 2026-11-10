@@ -2,6 +2,7 @@
 
 ## Doing
 
+- [ ] HR: ghi âm PV ngay trong app /hr (nút ⏺ Ghi âm trên hồ sơ, iPhone PWA) (2026-11-10) — ĐÃ DEPLOY. Chờ sếp thử trên iPhone thật: ghi → dừng → nghe; khoá máy giữa chừng → Ghi tiếp; tắt hẳn app → mở lại ~30s thấy Khôi phục; Phân tích ra 1 transcript. Spec 2026-11-10-interview-recorder-design. Minor tồn: LOG 2026-11-10
 - [ ] Chat trên website (khách → sếp, ứng viên → HR; tab Chat trong /hr; giai đoạn 1 KHÔNG AI) (2026-11-05) — ĐÃ DEPLOY. Chờ sếp: cài/bật chuông app /hr để nhận báo, sửa câu có sẵn trong tab Chat ⚙. AI Phase A (nháp) 2026-11-05 → AI TỰ TRẢ LỜI 24/7 BẬT 2026-11-06 (spec 2026-11-05-chat-ai-design). Theo dõi 👎 / câu chờ. 9 minor ĐÃ SỬA 2026-11-05. LOG 2026-11-05
 - [x] /hr tab Freelancer — kho freelancer (trạng thái/hạng/rate/có vấn đề/lọc, đổi hình thức) (2026-11-05) — ĐÃ DEPLOY. Minor tồn: LOG 2026-11-05.
 - [x] /hr ứng viên Freelancer: cờ "Nhận freelancer" trên job, auto status Freelancer / Lưu hồ sơ + 2 mail riêng (2026-11-04) — ĐÃ DEPLOY, E2E OK. Chờ sếp bật cờ cho job cần nhận freelancer. LOG 2026-11-04

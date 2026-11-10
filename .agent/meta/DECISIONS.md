@@ -387,3 +387,10 @@ Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, khôn
 - AI chỉ dùng thẻ `chat_kb` + job đang mở; server kiểm bịa (nguồn, số, email, link, nhắc ORCA) → cảnh báo + ép cần người. Thêm thông tin cho AI = thêm thẻ trong /hr → Chat → 🤖 AI.
 - Ngân sách $100/tháng tính từ token ước tính; trần 15 nháp/luồng/ngày, 300/ngày toàn hệ thống; debounce 6s; bỏ tin rác.
 - Pha: A nháp staff (đang chạy) → B tự trả lời ngoài giờ → C 24/7 + luật người thật trả lời thì AI im 2h. Chỉ lên B khi số liệu "gửi nguyên"/👎 của A ổn.
+
+## 2026-11-10 — Ghi âm PV trong app /hr
+- Ghi bằng MediaRecorder trên /hr; KHÔNG ghi cuộc gọi (web không lấy được audio cuộc gọi) — Zalo: bật loa, ghi bằng máy thứ hai.
+- Recorder tự chốt file mỗi 5 phút (mảnh) + upload nền; chunk 5s lưu IndexedDB (+RAM). Không phụ thuộc "phần đầu MP4 Safari phát được" — crash chỉ mất tối đa phần dở của mảnh cuối (thực tế cứu được, Chromium decode OK).
+- Một vòng PV = danh sách phẳng mảnh trong `audio_pieces jsonb`, mang số đoạn; HR chỉ thấy đoạn. File tay vẫn THAY toàn bộ.
+- Mic chỉ mở cho /hr (Permissions-Policy theo path).
+- Máy dùng chung: bản ghi trong máy gắn id tài khoản; đăng xuất KHÔNG xoá (mất bản ghi tệ hơn), chỉ cảnh báo; hàng đợi quên người cũ ngay khi đăng xuất.
