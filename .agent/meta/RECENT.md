@@ -5,11 +5,6 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
 
 ---
 
-## 2026-11-08 — /hr Copy Link job → /apply/<slug>
-- Sếp hỏi sao Copy Link ở tab Jobs ra /careers?job= thay vì /apply/ → đổi có chủ đích từ 66ece81 (2026-10-22, link chia sẻ có preview riêng). Sếp chọn quay lại /apply/<slug>: ứng viên vào thẳng form, ít một bước.
-- `JobsView.copyLink` → `/apply/<slug>[?ref=]`. /apply đọc ?ref= (referred_by), preview (og:title/description/image theo job) đã có từ trước — kiểm prod OK. Link chung người giới thiệu (CommissionReferrers, /careers?ref=) giữ nguyên.
-- Impact copyLink LOW; tsc/eslint 0.
-
 ## 2026-11-10 — Ghi âm PV ngay trong app /hr
 - Sếp muốn bấm ghi âm trực tiếp trên hồ sơ ứng viên (PWA iPhone) và lưu luôn. Chốt: PV tại văn phòng ghi bằng mic; PV qua Zalo → gọi trên iPhone, bật loa, ghi bằng /hr trên MÁY THỨ HAI (web app không ghi được cuộc gọi; ghi âm cuộc gọi của iOS không ghi Zalo). Bị ngắt → "Ghi tiếp" nối đoạn, gỡ băng thành 1 transcript.
 - Spec `docs/superpowers/specs/2026-11-10-interview-recorder-design.md`, plan `docs/superpowers/plans/2026-11-10-interview-recorder.md`.
@@ -21,3 +16,13 @@ Bản trích 2 entry cuối của LOG.md, ghi lại mỗi lần mở phiên bở
 - Review cuối (opus): 0 Critical, 7 Important — đã sửa hết (nhiều tab, IndexedDB hỏng, iOS nền, chunk cuối, race Ghi lại, transcript cũ, đoạn kế tiếp). Tests 446/446, tsc/eslint 0.
 - CHƯA thử iPhone thật (iOS nền / mute / Safari MP4 khôi phục) — chờ sếp.
 - Minor tồn: timeout init/complete multipart; file R2 mồ côi ở vài ca lỗi; mảnh "mất vòng" của hồ sơ đã xoá chỉ xử lý trong panel; Ghi tiếp trên vòng file tay cũ đồng hồ từ 0:00; Phân tích đang chạy mà gắn thêm mảnh → transcript thiếu đoạn mới; navigator.storage.persist().
+
+## 2026-11-10 (tiếp) — Ghi âm PV: dọn việc tồn
+- Sếp: "tiếp tục thế nào tốt thì làm" → làm 4 việc tồn có ảnh hưởng dữ liệu/riêng tư:
+  - Xoá hồ sơ ứng viên → xoá luôn ghi âm PV mọi vòng trên R2 (trước đây cascade xoá vòng nhưng file nằm lại CDN công khai — lỗi có từ trước). `allSessionsAudioKeys` + test. E2E dev (boss tạm + ZZTEST, đã xoá): CDN 200 trước → DELETE hồ sơ → 404.
+  - Phân tích: gỡ băng xong mà ghi âm của vòng đã đổi (có đoạn mới gắn trong lúc chạy) → không lưu transcript thiếu, báo "bấm Phân tích lại". `sameAudio` + test.
+  - upload-audio postJson (init/complete multipart) timeout 120s — mạng treo không làm hàng đợi đứng mãi.
+  - Bắt đầu ghi → `navigator.storage.persist()` (Safari không tự xoá bản ghi chờ).
+- Quét R2 (chỉ đọc): `interviews/` có 9 file, 3 đang dùng, **6 file mồ côi 194MB, đều 2026-10-26** (ngày làm upload ghi âm, nhiều lần thử lại) — CHƯA xoá, chờ sếp quyết.
+- Tests 448/448, tsc/eslint 0.
+- Sếp OK xoá → đối chiếu LOG 2026-10-26: 6 file mồ côi đều là file THỬ của em hôm đó (t.wav, t.mp3, big.mp3 x2, pv-test.m4a 42MB, pv-test-linh.m4a 12MB) — đã xoá khỏi R2 (404). 3 bản ghi thật của sếp (ba-n-ghi-mo--i-22/24/32) vẫn 200. `interviews/` trên R2 giờ chỉ còn file đang dùng.

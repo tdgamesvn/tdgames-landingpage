@@ -394,3 +394,8 @@ Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, khôn
 - Một vòng PV = danh sách phẳng mảnh trong `audio_pieces jsonb`, mang số đoạn; HR chỉ thấy đoạn. File tay vẫn THAY toàn bộ.
 - Mic chỉ mở cho /hr (Permissions-Policy theo path).
 - Máy dùng chung: bản ghi trong máy gắn id tài khoản; đăng xuất KHÔNG xoá (mất bản ghi tệ hơn), chỉ cảnh báo; hàng đợi quên người cũ ngay khi đăng xuất.
+
+## 2026-11-10 — Mail xác nhận khách báo giá
+- Form báo giá → mail xác nhận tự động từ toan.dang@ (From + Reply-To), BCC toan.dang@; mọi trao đổi tiếp theo nằm trong Gmail toan.dang@, /crm chỉ giữ lead/trạng thái (không đồng bộ thư ngược về).
+- Bật/tắt bằng `LEAD_ACK_MODE` riêng (KHÔNG dùng HR_EMAIL_MODE); mặc định test.
+- Mail chỉ text (trông như thư tay), tin khách trích lại phải bỏ link/tên miền; 1 mail/email/24h + 30/giờ toàn site.
