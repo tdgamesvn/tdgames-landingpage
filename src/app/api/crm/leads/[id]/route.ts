@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireCRM } from "@/lib/crm-auth";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/leads";
+import { cancelLeadAck } from "@/lib/lead-ack-send";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  // Bấm "Huỷ mail" trong /crm: chỉ huỷ mail xác nhận đang hẹn giờ, không sửa gì khác.
+  if (body.cancel_ack === true) {
+    const result = await cancelLeadAck(id);
+    const { data } = await getSupabaseAdmin().from("leads").select().eq("id", id).maybeSingle();
+    return NextResponse.json({ lead: data, cancel: result });
+  }
+
   const patch: Record<string, unknown> = {};
   if ("status" in body) {
     if (!LEAD_STATUSES.includes(body.status as LeadStatus))
@@ -33,6 +41,9 @@ export async function PATCH(
 
   if (Object.keys(patch).length === 0)
     return NextResponse.json({ error: "No updatable fields" }, { status: 400 });
+
+  // Sếp đã xử lý lead (chuyển khỏi "Mới") → không gửi mail xác nhận tự động nữa.
+  if (patch.status && patch.status !== "new") await cancelLeadAck(id);
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -56,6 +67,7 @@ export async function DELETE(
   if (authError) return authError;
 
   const { id } = await params;
+  await cancelLeadAck(id);
   const supabase = getSupabaseAdmin();
   const { error } = await supabase.from("leads").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

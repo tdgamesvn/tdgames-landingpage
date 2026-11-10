@@ -73,6 +73,49 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts.at(-1)?.[0] ?? "")).toUpperCase();
 }
 
+/** Trạng thái mail xác nhận tự động (AI viết, hẹn giờ 4–7 phút) + nút huỷ khi còn chờ gửi. */
+function AckLine({ lead, onCancel }: { lead: Lead; onCancel: () => void }) {
+  const [now, setNow] = useState(() => Date.now());
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 15_000);
+    return () => clearInterval(t);
+  }, []);
+  if (!lead.ack_status) return null;
+  const at = lead.ack_send_at ? new Date(lead.ack_send_at) : null;
+  const hhmm = at?.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) ?? "";
+  const writer = lead.ack_writer === "ai" ? "AI viết" : "mail mẫu";
+  const pending = lead.ack_status === "scheduled" && at !== null && at.getTime() > now;
+  const text =
+    lead.ack_status === "scheduled"
+      ? pending
+        ? `Mail xác nhận (${writer}) sẽ gửi lúc ${hhmm}`
+        : `Đã gửi mail xác nhận lúc ${hhmm} (${writer})`
+      : lead.ack_status === "cancelled"
+        ? "Mail xác nhận đã huỷ"
+        : lead.ack_status === "skipped"
+          ? "Không gửi mail xác nhận (email này vừa nhận trong 24h / chạm giới hạn chống spam)"
+          : "Gửi mail xác nhận bị lỗi — xem Discord";
+  return (
+    <div className="flex items-center gap-2 border-b border-white/10 px-6 py-2.5 text-xs text-white/55">
+      <span>✉️ {text}</span>
+      {pending ? (
+        <button
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            await onCancel();
+            setBusy(false);
+          }}
+          className="ml-auto rounded-md border border-white/15 px-2.5 py-1 text-[11px] text-white/60 hover:border-red-400/50 hover:text-red-300 disabled:opacity-40"
+        >
+          {busy ? "Đang huỷ…" : "Huỷ mail"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * Gợi ý email trả lời bằng AI (cùng backend cliproxyapi với AI eval bên /hr).
  * ponytail: draft KHÔNG lưu DB — sinh xong copy là xong, không cần cột mới.
@@ -233,7 +276,9 @@ export default function CRMBoard() {
     });
     const json = await res.json();
     if (!res.ok) return setError(json.error ?? "Update failed");
-    setLeads((prev) => prev.map((l) => (l.id === id ? json.lead : l)));
+    if (json.cancel === "too_late") setError("Mail xác nhận đã gửi rồi, không huỷ được.");
+    if (json.cancel === "error") setError("Không huỷ được mail xác nhận — thử lại.");
+    if (json.lead) setLeads((prev) => prev.map((l) => (l.id === id ? json.lead : l)));
   }
 
   async function remove(id: string) {
@@ -625,6 +670,7 @@ export default function CRMBoard() {
                 {new Date(selected.created_at).toLocaleString("vi-VN")}
               </span>
             </div>
+            <AckLine key={selected.id} lead={selected} onCancel={() => patch(selected.id, { cancel_ack: true })} />
 
             <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/75">

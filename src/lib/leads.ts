@@ -72,6 +72,11 @@ export interface Lead {
   source: string;
   status: LeadStatus;
   admin_notes: string | null;
+  /** Mail xác nhận tự động (hẹn giờ qua Resend). null ở lead cũ. */
+  ack_email_id?: string | null;
+  ack_send_at?: string | null;
+  ack_status?: "scheduled" | "cancelled" | "skipped" | "error" | null;
+  ack_writer?: "ai" | "template" | null;
   created_at: string;
   updated_at: string;
 }
