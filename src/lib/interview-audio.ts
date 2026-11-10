@@ -137,3 +137,30 @@ export function appendPiece(
   }
   return { duplicate: false, update };
 }
+
+/**
+ * Kiểm body POST /api/hr/interviews/[id]/audio-pieces. Cùng luật an toàn với PATCH gắn file tay:
+ * key do server sinh, url đúng URL công khai của key (chặn SSRF / gắn file lạ).
+ */
+export function parsePieceInput(
+  body: unknown,
+  publicUrl: (key: string) => string,
+  now: string,
+): { piece: AudioPiece } | { error: string } {
+  if (!body || typeof body !== "object") return { error: "Body không hợp lệ" };
+  const b = body as Record<string, unknown>;
+  const key = b.key;
+  if (typeof key !== "string" || !isInterviewAudioKey(key)) return { error: "key không hợp lệ" };
+  if (b.url !== publicUrl(key)) return { error: "url không khớp key" };
+  const segment = b.segment;
+  if (typeof segment !== "number" || !Number.isInteger(segment) || segment < 1) return { error: "segment không hợp lệ" };
+  const bytes = b.bytes;
+  if (typeof bytes !== "number" || !(bytes > 0) || bytes > AUDIO_MAX_BYTES) return { error: "Dung lượng không hợp lệ" };
+  const mime = typeof b.mime === "string" ? b.mime.split(";")[0].trim().toLowerCase() : "";
+  if (!AUDIO_TYPE_RE.test(mime)) return { error: "Định dạng không hợp lệ" };
+  const d = b.duration_ms;
+  if (d !== null && d !== undefined && (typeof d !== "number" || !(d >= 0))) return { error: "Thời lượng không hợp lệ" };
+  return {
+    piece: { segment, key, url: b.url as string, bytes, mime, duration_ms: typeof d === "number" ? Math.round(d) : null, created_at: now },
+  };
+}

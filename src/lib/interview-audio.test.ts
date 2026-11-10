@@ -11,6 +11,7 @@ import {
   formatProgress,
   isInterviewAudioKey,
   nextSegment,
+  parsePieceInput,
   planParts,
   segmentsOf,
   type AudioPiece,
@@ -130,4 +131,34 @@ test("segmentsOf: gom theo đoạn, cộng thời lượng (null = 0), giữ th�
 test("nextSegment: rỗng → 1, không thì max + 1", () => {
   assert.equal(nextSegment([]), 1);
   assert.equal(nextSegment([piece(1, 1), piece(2, 3)]), 4);
+});
+
+test("parsePieceInput: hợp lệ → mảnh (bỏ ;codecs ở mime)", () => {
+  const pub = (k: string) => `https://cdn.tdgamestudio.com/${k}`;
+  const r = parsePieceInput(
+    { key: K(1), url: U(1), bytes: 2048, mime: "audio/webm;codecs=opus", duration_ms: 300000, segment: 2 },
+    pub,
+    "2026-11-10T10:00:00.000Z",
+  );
+  assert.deepEqual(r, {
+    piece: { segment: 2, key: K(1), url: U(1), bytes: 2048, mime: "audio/webm", duration_ms: 300000, created_at: "2026-11-10T10:00:00.000Z" },
+  });
+});
+
+test("parsePieceInput: từ chối key lạ / url không khớp / segment, bytes, mime, duration sai", () => {
+  const pub = (k: string) => `https://cdn.tdgamestudio.com/${k}`;
+  const ok = { key: K(1), url: U(1), bytes: 2048, mime: "audio/mp4", duration_ms: null, segment: 1 };
+  const bad = [
+    { ...ok, key: "cv/a.pdf", url: pub("cv/a.pdf") },
+    { ...ok, url: "https://evil.example/x.m4a" },
+    { ...ok, segment: 0 },
+    { ...ok, segment: 1.5 },
+    { ...ok, bytes: 0 },
+    { ...ok, bytes: AUDIO_MAX_BYTES + 1 },
+    { ...ok, mime: "application/pdf" },
+    { ...ok, duration_ms: -1 },
+    null,
+  ];
+  for (const b of bad) assert.ok("error" in parsePieceInput(b, pub, "x"), JSON.stringify(b));
+  assert.ok("piece" in parsePieceInput(ok, pub, "x"));
 });

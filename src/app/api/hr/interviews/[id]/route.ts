@@ -3,7 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication, loadScopedInterview } from "@/lib/hr-session";
 import { redactInterview } from "@/lib/hr-scope";
 import { deleteFromR2, r2PublicUrl } from "@/lib/r2";
-import { isInterviewAudioKey } from "@/lib/interview-audio";
+import { allAudioKeys, isInterviewAudioKey } from "@/lib/interview-audio";
+import { audioKeyUsedElsewhere } from "@/lib/interview-audio-server";
 import { notifyCandidate } from "@/lib/hr-notify";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
 import { formatInterviewTime, isMeetUrl, modeLabel } from "@/lib/interview-schedule";
@@ -99,14 +100,9 @@ export async function PATCH(
       if (body.audio_url !== r2PublicUrl(key)) {
         return NextResponse.json({ error: "audio_url không khớp audio_key" }, { status: 400 });
       }
-      const { data: dup, error: dupErr } = await supabase
-        .from("interview_sessions")
-        .select("id")
-        .eq("audio_key", key)
-        .neq("id", id)
-        .limit(1);
-      if (dupErr) return NextResponse.json({ error: dupErr.message }, { status: 500 });
-      if (dup && dup.length > 0) {
+      const used = await audioKeyUsedElsewhere(supabase, key, id).catch((e: Error) => e);
+      if (used instanceof Error) return NextResponse.json({ error: used.message }, { status: 500 });
+      if (used) {
         return NextResponse.json({ error: "Ghi âm này đã gắn cho phiên khác" }, { status: 400 });
       }
     }
@@ -172,18 +168,18 @@ export async function PATCH(
     return NextResponse.json({ error: "No updatable fields" }, { status: 400 });
   }
 
-  // Thay file ghi âm thì phải nhớ key cũ để dọn — nếu không, bản ghi bị thay
-  // nằm lại vĩnh viễn trên CDN công khai dù không còn ai trỏ tới.
-  let oldAudioKey: string | null = null;
+  // Thay file ghi âm / Ghi lại thì phải nhớ key cũ (file tay + mọi mảnh ghi trong app) để dọn —
+  // nếu không, bản ghi bị thay nằm lại vĩnh viễn trên CDN công khai dù không còn ai trỏ tới.
+  // File tay thay thế toàn bộ: các mảnh ghi trong app cũng bị bỏ.
+  let oldAudioKeys: string[] = [];
   if ("audio_key" in allowed) {
+    allowed.audio_pieces = null;
     const { data: prev } = await supabase
       .from("interview_sessions")
-      .select("audio_key")
+      .select("audio_key, audio_pieces")
       .eq("id", id)
       .single();
-    if (prev?.audio_key && prev.audio_key !== allowed.audio_key) {
-      oldAudioKey = prev.audio_key;
-    }
+    if (prev) oldAudioKeys = allAudioKeys(prev).filter((k) => k !== allowed.audio_key);
   }
 
   const { data, error } = await supabase
@@ -197,7 +193,7 @@ export async function PATCH(
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Dọn sau khi DB đã đổi xong — hỏng bước này chỉ để lại rác, không mất dữ liệu.
-  if (oldAudioKey) await deleteFromR2(oldAudioKey);
+  for (const k of oldAudioKeys) await deleteFromR2(k);
 
   // Báo Discord + push khi đặt/đổi lịch — fire-and-forget, lỗi không được làm hỏng việc lưu.
   if (scheduleChanged) {
@@ -243,7 +239,7 @@ export async function DELETE(
   // Lấy key TRƯỚC khi xoá dòng — xoá xong là mất đường tìm lại file trên R2.
   const { data: prev } = await supabase
     .from("interview_sessions")
-    .select("audio_key")
+    .select("audio_key, audio_pieces")
     .eq("id", id)
     .single();
 
@@ -253,7 +249,7 @@ export async function DELETE(
 
   // Ghi âm phỏng vấn là dữ liệu riêng tư — HR bấm xoá thì phải biến mất khỏi CDN
   // luôn, không chỉ khuất khỏi giao diện.
-  if (prev?.audio_key && isInterviewAudioKey(prev.audio_key)) await deleteFromR2(prev.audio_key);
+  for (const k of prev ? allAudioKeys(prev) : []) await deleteFromR2(k);
 
   return NextResponse.json({ ok: true });
 }
