@@ -8,14 +8,17 @@ import {
   appendPiece,
   audioFileError,
   audioPiecesOf,
+  formatClock,
   formatProgress,
   geminiAudioMime,
   isInterviewAudioKey,
   nextSegment,
   parsePieceInput,
+  pickRecorderMime,
   planParts,
   recordingFileName,
   segmentsOf,
+  shouldTreatAsInterrupted,
   type AudioPiece,
 } from "./interview-audio.ts";
 
@@ -178,4 +181,24 @@ test("recordingFileName: rec-<yyyymmdd-hhmm giờ VN>-s<đoạn>.<đuôi theo mi
   assert.equal(recordingFileName("audio/webm;codecs=opus", at, 1), "rec-20261110-1005-s1.webm");
   assert.equal(recordingFileName("audio/ogg", at, 1), "rec-20261110-1005-s1.ogg");
   assert.equal(recordingFileName("", at, 1), "rec-20261110-1005-s1.audio");
+});
+
+test("pickRecorderMime: ưu tiên mp4 (Safari/iPhone), rồi webm opus (Chrome); không hỗ trợ gì → null", () => {
+  assert.equal(pickRecorderMime((m) => m === "audio/mp4"), "audio/mp4");
+  assert.equal(pickRecorderMime((m) => m.startsWith("audio/webm")), "audio/webm;codecs=opus");
+  assert.equal(pickRecorderMime((m) => m === "audio/webm"), "audio/webm");
+  assert.equal(pickRecorderMime(() => false), null);
+});
+
+test("shouldTreatAsInterrupted: track ended / recorder lỗi / mic bị câm ≥3s", () => {
+  assert.equal(shouldTreatAsInterrupted({ trackEnded: false, mutedForMs: 2999, recorderError: false }), false);
+  assert.equal(shouldTreatAsInterrupted({ trackEnded: false, mutedForMs: 3000, recorderError: false }), true);
+  assert.equal(shouldTreatAsInterrupted({ trackEnded: true, mutedForMs: 0, recorderError: false }), true);
+  assert.equal(shouldTreatAsInterrupted({ trackEnded: false, mutedForMs: 0, recorderError: true }), true);
+});
+
+test("formatClock: m:ss dưới 1 tiếng, h:mm:ss từ 1 tiếng", () => {
+  assert.equal(formatClock(0), "0:00");
+  assert.equal(formatClock(65_400), "1:05");
+  assert.equal(formatClock(3_725_000), "1:02:05");
 });

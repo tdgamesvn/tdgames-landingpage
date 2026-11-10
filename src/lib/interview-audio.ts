@@ -178,3 +178,21 @@ export function recordingFileName(mime: string, startedAt: number, segment: numb
   const stamp = `${vn.slice(0, 10).replaceAll("-", "")}-${vn.slice(11, 13)}${vn.slice(14, 16)}`;
   return `rec-${stamp}-s${segment}.${REC_EXT[mime.split(";")[0].trim().toLowerCase()] ?? "audio"}`;
 }
+
+/** Safari/iPhone chỉ ghi được mp4 (AAC); Chrome/Android ghi webm opus. */
+export function pickRecorderMime(isSupported: (mime: string) => boolean): string | null {
+  return ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"].find((m) => isSupported(m)) ?? null;
+}
+
+/** Mic bị hệ thống lấy (khoá máy, cuộc gọi đến, chuyển app iOS) → coi như bị ngắt, đừng ghi im lặng. */
+export function shouldTreatAsInterrupted(ev: { trackEnded: boolean; mutedForMs: number; recorderError: boolean }): boolean {
+  return ev.trackEnded || ev.recorderError || ev.mutedForMs >= 3000;
+}
+
+export function formatClock(ms: number): string {
+  const t = Math.floor(ms / 1000);
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = String(t % 60).padStart(2, "0");
+  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
