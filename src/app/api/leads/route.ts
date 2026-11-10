@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { discordNotify } from "@/lib/discord-notify";
 import { LEAD_BUDGETS, LEAD_CONTACT_CHANNELS, LEAD_SERVICES } from "@/lib/leads";
+import { leadAckLabel, sendLeadAck } from "@/lib/lead-ack-send";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,8 +69,15 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Fire-and-forget: lead đã lưu rồi, notify lỗi cũng không được fail request.
+  // Fire-and-forget: lead đã lưu rồi, mail/notify lỗi cũng không được fail request.
+  // Mail xác nhận gửi trước để Discord báo luôn kết quả.
   (async () => {
+    let ack = "—";
+    try {
+      ack = leadAckLabel(await sendLeadAck({ id: data.id, name, email, service, message }));
+    } catch (e) {
+      ack = `❌ lỗi: ${e instanceof Error ? e.message : "?"}`;
+    }
     try {
       await discordNotify("sales", {
         content: "💰 **New quote request**",
@@ -87,6 +95,7 @@ export async function POST(request: Request) {
               },
               { name: "Budget", value: budget || "—", inline: true },
               { name: "Source", value: source, inline: true },
+              { name: "Mail xác nhận", value: ack, inline: true },
             ],
             footer: { text: `Lead ${data.id} · /crm` },
           },

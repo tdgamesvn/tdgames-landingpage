@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   LEAD_STATUSES,
   WAITLIST_SOURCE,
+  gmailComposeUrl,
+  gmailThreadUrl,
   type Lead,
   type LeadStatus,
 } from "@/lib/leads";
@@ -146,7 +148,9 @@ function ReplyDraft({ lead, crmKey }: { lead: Lead; crmKey: string }) {
               {copied ? "Đã copy ✓" : "Copy nội dung"}
             </button>
             <a
-              href={`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
+              href={gmailComposeUrl(lead.email, subject, body)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-md border border-white/15 px-3 py-1.5 text-xs text-white/70 hover:border-amber-500/40 hover:text-white"
             >
               Mở mail đã điền sẵn
@@ -580,7 +584,10 @@ export default function CRMBoard() {
               <div className="min-w-0 flex-1">
                 <h2 className="truncate text-lg font-bold">{selected.name}</h2>
                 <a
-                  href={`mailto:${selected.email}`}
+                  href={gmailThreadUrl(selected.email)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Mở thư đã trao đổi với khách trong Gmail"
                   className="text-sm text-amber-300/90 hover:underline"
                 >
                   {selected.email}
@@ -660,10 +667,20 @@ export default function CRMBoard() {
 
               <div className="flex items-center gap-3">
                 <a
-                  href={`mailto:${selected.email}`}
+                  href={gmailComposeUrl(selected.email)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="rounded-md bg-amber-500 px-4 py-2 text-xs font-bold uppercase text-black hover:bg-amber-400"
                 >
                   Trả lời
+                </a>
+                <a
+                  href={gmailThreadUrl(selected.email)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-white/45 hover:text-white"
+                >
+                  Xem thư trong Gmail
                 </a>
                 <button
                   onClick={() => remove(selected.id)}

@@ -1,0 +1,98 @@
+// Mail xác nhận tự động cho khách gửi form báo giá (/api/leads) — phần thuần (test được).
+// Sếp chốt 2026-11-10: gửi từ LEAD_OWNER_EMAIL, khách Reply về đó, BCC bản sao cho chủ hộp;
+// mặc định chế độ test (chỉ LEAD_ACK_MODE=live mới gửi khách); trông như thư tay, không banner.
+import { safeGreetingName } from "./chat-email.ts";
+import { LEAD_OWNER_EMAIL } from "./leads.ts";
+
+export type LeadAckConfig = {
+  mode: "test" | "live";
+  from: string;
+  owner: string;
+  apiKey: string | null;
+};
+
+export function getLeadAckConfig(env: Record<string, string | undefined>): LeadAckConfig {
+  return {
+    mode: env.LEAD_ACK_MODE === "live" ? "live" : "test",
+    from: `"Toan Dang · TD Games Studio" <${LEAD_OWNER_EMAIL}>`,
+    owner: LEAD_OWNER_EMAIL,
+    apiKey: env.RESEND_API_KEY?.trim() || null,
+  };
+}
+
+/** Test → gửi về hộp chủ (tiêu đề ghi rõ khách thật), không BCC. Live → gửi khách + BCC chủ hộp. */
+export function leadAckEnvelope(cfg: LeadAckConfig, customerEmail: string, subject: string) {
+  if (cfg.mode === "live") return { to: customerEmail, bcc: [cfg.owner], subject, testMode: false };
+  return { to: cfg.owner, bcc: [] as string[], subject: `[TEST → ${customerEmail}] ${subject}`, testMode: true };
+}
+
+const VI_CHARS = /[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]/i;
+
+/** Khách viết tiếng Việt (có dấu) → mail tiếng Việt; còn lại tiếng Anh. */
+export function isVietnamese(...texts: string[]): boolean {
+  return texts.some((t) => VI_CHARS.test(t));
+}
+
+const LINKISH = /\b(?:https?:\/\/|www\.)\S+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b(?:\/\S*)?/gi;
+const QUOTE_MAX = 1500;
+
+/**
+ * Tin khách tự gõ được trích lại trong mail đi từ tên miền mình → bỏ mọi link/tên miền để form công khai
+ * không bị mượn gửi link lừa đảo tới email người khác. Cắt độ dài, mỗi dòng thêm "> ".
+ */
+export function quoteMessage(message: string): string {
+  let s = message.replace(/\r\n/g, "\n").replace(LINKISH, "[link]").trim();
+  if (s.length > QUOTE_MAX) s = `${s.slice(0, QUOTE_MAX).trimEnd()}…`;
+  return s
+    .split("\n")
+    .map((l) => `> ${l}`.trimEnd())
+    .join("\n");
+}
+
+const SIGNATURE = "Toan Dang\nTD Games Studio — 2D Art, Animation & VFX for Games";
+const PORTFOLIO = "https://tdgamestudio.com/portfolio";
+
+export const LEAD_ACK_FOOTER_EN =
+  "You received this because this email address was entered in the contact form on tdgamestudio.com.";
+export const LEAD_ACK_FOOTER_VI =
+  "Bạn nhận email này vì địa chỉ này được nhập vào form liên hệ trên tdgamestudio.com.";
+
+export function buildLeadAckEmail(lead: {
+  name: string;
+  service: string;
+  message: string;
+}): { subject: string; text: string; lang: "en" | "vi" } {
+  const name = safeGreetingName(lead.name);
+  const vi = isVietnamese(lead.name, lead.message);
+  const other = lead.service === "Other";
+  const quote = lead.message.trim() ? quoteMessage(lead.message) : "";
+
+  if (vi) {
+    const parts = [
+      name ? `Chào ${name},` : "Chào anh/chị,",
+      `Cảm ơn anh/chị đã liên hệ TD Games Studio. Tôi đã nhận được yêu cầu ${other ? "của anh/chị" : `về ${lead.service}`} và sẽ trực tiếp phản hồi trong vòng 1 ngày làm việc (giờ Việt Nam, GMT+7).`,
+      "Để báo giá sát hơn, anh/chị có thể trả lời email này kèm những thông tin chưa gửi:\n- Ảnh hoặc link tham khảo phong cách art\n- Khối lượng dự kiến (số nhân vật, asset hoặc animation)\n- Deadline mong muốn",
+      `Trong lúc chờ, anh/chị có thể xem các dự án gần đây của chúng tôi: ${PORTFOLIO}`,
+      `Hẹn sớm trao đổi,\n${SIGNATURE}`,
+      ...(quote ? [`---\nNội dung anh/chị đã gửi:\n${quote}`] : []),
+      LEAD_ACK_FOOTER_VI,
+    ];
+    return { subject: "Đã nhận yêu cầu của anh/chị — TD Games Studio", text: parts.join("\n\n"), lang: "vi" };
+  }
+
+  const parts = [
+    name ? `Hi ${name},` : "Hi there,",
+    `Thanks for reaching out to TD Games Studio. I've received your request${other ? "" : ` for ${lead.service}`} and will get back to you personally within 1 business day (Vietnam time, GMT+7).`,
+    "To help us prepare an accurate quote, feel free to reply to this email with anything you haven't shared yet:\n- Art style references (links or images)\n- Rough volume (number of characters, assets or animations)\n- Target deadline",
+    `In the meantime, you can browse our recent work: ${PORTFOLIO}`,
+    `Talk soon,\n${SIGNATURE}`,
+    ...(quote ? [`---\nYour message:\n${quote}`] : []),
+    LEAD_ACK_FOOTER_EN,
+  ];
+  return { subject: "We've received your request — TD Games Studio", text: parts.join("\n\n"), lang: "en" };
+}
+
+/** Escape ký tự đặc biệt của ILIKE (% _ \) → so khớp email không phân biệt hoa thường mà không thành wildcard. */
+export function ilikeExact(s: string): string {
+  return s.replace(/[\\%_]/g, (c) => `\\${c}`);
+}

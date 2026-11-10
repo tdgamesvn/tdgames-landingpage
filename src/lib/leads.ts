@@ -7,6 +7,22 @@
  */
 export const WAITLIST_SOURCE = "tool-waitlist";
 
+/** Hộp thư nhận/ trả lời khách báo giá (sếp chốt 2026-11-10): mail xác nhận gửi từ đây, khách Reply về đây. */
+export const LEAD_OWNER_EMAIL = "toan.dang@tdgamestudio.com";
+
+/** Soạn mail trong Gmail đúng tài khoản LEAD_OWNER_EMAIL (không phụ thuộc app mail mặc định của máy). */
+export function gmailComposeUrl(to: string, subject = "", body = ""): string {
+  const q = new URLSearchParams({ authuser: LEAD_OWNER_EMAIL, view: "cm", fs: "1", to });
+  if (subject) q.set("su", subject);
+  if (body) q.set("body", body);
+  return `https://mail.google.com/mail/?${q.toString()}`;
+}
+
+/** Mở các thư đã trao đổi với khách (mail xác nhận BCC + khách trả lời) trong Gmail. */
+export function gmailThreadUrl(email: string): string {
+  return `https://mail.google.com/mail/?authuser=${encodeURIComponent(LEAD_OWNER_EMAIL)}#search/${encodeURIComponent(email)}`;
+}
+
 export const LEAD_SERVICES = [
   "2D Art",
   "2D Animation",

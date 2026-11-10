@@ -27,7 +27,7 @@ export function buildChatReplyEmail(args: {
 
 /** Tên khách tự gõ (chưa xác minh) → chỉ chữ cái/dấu cách/.'-, tối đa 40; trông như link/email thì bỏ hẳn
  *  (mail đi từ tên miền mình, textToHtml tự linkify → không để khách mượn mail mình gửi link lừa đảo). */
-function safeGreetingName(raw: string | null): string | null {
+export function safeGreetingName(raw: string | null): string | null {
   if (!raw) return null;
   // Có bất kỳ dấu chấm (kể cả chấm full-width/CJK), @, :, / hay "www" → bỏ hẳn tên ("J. Smith" cũng mất — chấp nhận).
   if (/[.@:/。．｡]|www/i.test(raw)) return null;
