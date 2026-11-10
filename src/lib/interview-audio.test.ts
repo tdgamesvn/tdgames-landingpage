@@ -2,7 +2,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { AUDIO_MAX_BYTES, audioFileError, formatProgress, isInterviewAudioKey, planParts } from "./interview-audio.ts";
+import {
+  AUDIO_MAX_BYTES,
+  allAudioKeys,
+  appendPiece,
+  audioFileError,
+  audioPiecesOf,
+  formatProgress,
+  isInterviewAudioKey,
+  nextSegment,
+  planParts,
+  segmentsOf,
+  type AudioPiece,
+} from "./interview-audio.ts";
 
 const MB = 1024 * 1024;
 
@@ -45,4 +57,77 @@ test("isInterviewAudioKey chỉ nhận key do server tạo trong interviews/", (
   for (const bad of ["cv/a.pdf", "interviews/../cv/a.pdf", "interviews/2026/10/x.m4a", "/interviews/2026/10/a", "", "interviews/2026/10/0ed0b1c2-1111-4222-8333-444455556666-a/../b"]) {
     assert.equal(isInterviewAudioKey(bad), false, bad);
   }
+});
+
+// ── Ghi âm trong app: nhiều mảnh / nhiều đoạn ───────────────────────────────
+
+const K = (n: number) => `interviews/2026/11/0ed0b1c2-1111-4222-8333-44445555666${n}-rec.m4a`;
+const U = (n: number) => `https://cdn.tdgamestudio.com/${K(n)}`;
+const piece = (n: number, segment: number, duration_ms: number | null = 1000, at = `2026-11-10T10:0${n}:00Z`): AudioPiece => ({
+  segment, key: K(n), url: U(n), bytes: 100 * n, mime: "audio/mp4", duration_ms, created_at: at,
+});
+
+test("audioPiecesOf: vòng cũ chỉ có audio_url → 1 mảnh đoạn 1", () => {
+  const out = audioPiecesOf({ audio_url: U(0), audio_key: K(0), audio_bytes: 500 });
+  assert.equal(out.length, 1);
+  assert.deepEqual(
+    { segment: out[0].segment, key: out[0].key, url: out[0].url, bytes: out[0].bytes, duration_ms: out[0].duration_ms },
+    { segment: 1, key: K(0), url: U(0), bytes: 500, duration_ms: null },
+  );
+});
+
+test("audioPiecesOf: có audio_pieces → dùng pieces, bỏ qua legacy", () => {
+  const pieces = [piece(1, 1), piece(2, 2)];
+  assert.deepEqual(audioPiecesOf({ audio_url: U(0), audio_key: K(0), audio_pieces: pieces }), pieces);
+});
+
+test("audioPiecesOf: không có gì → []", () => {
+  assert.deepEqual(audioPiecesOf({}), []);
+  assert.deepEqual(audioPiecesOf({ audio_url: null, audio_key: null, audio_pieces: [] }), []);
+});
+
+test("appendPiece: vòng cũ (legacy) → legacy thành đoạn 1, mảnh mới nối sau, cột cũ về null", () => {
+  const r = appendPiece({ audio_url: U(0), audio_key: K(0), audio_bytes: 500 }, piece(1, 2));
+  assert.equal(r.duplicate, false);
+  if (r.duplicate) return;
+  assert.deepEqual(r.update.audio_pieces.map((p) => [p.segment, p.key]), [[1, K(0)], [2, K(1)]]);
+  assert.equal(r.update.audio_url, null);
+  assert.equal(r.update.audio_key, null);
+  assert.equal(r.update.audio_bytes, null);
+});
+
+test("appendPiece: key đã có trong vòng → duplicate (upload thử lại không gắn 2 lần)", () => {
+  assert.deepEqual(appendPiece({ audio_pieces: [piece(1, 1)] }, piece(1, 1)), { duplicate: true });
+  assert.deepEqual(appendPiece({ audio_url: U(0), audio_key: K(0) }, { ...piece(1, 1), key: K(0), url: U(0) }), { duplicate: true });
+});
+
+test("appendPiece: transcript máy gỡ bị xoá, transcript dán tay giữ nguyên", () => {
+  for (const src of ["gemini", "whisper"]) {
+    const r = appendPiece({ audio_pieces: [piece(1, 1)], transcript_source: src }, piece(2, 2));
+    assert.ok(!r.duplicate && r.update.transcript === null && r.update.transcript_source === null, src);
+  }
+  const manual = appendPiece({ audio_pieces: [piece(1, 1)], transcript_source: "manual" }, piece(2, 2));
+  assert.ok(!manual.duplicate && !("transcript" in manual.update) && !("transcript_source" in manual.update));
+});
+
+test("allAudioKeys: gộp legacy + mảnh, bỏ key sai định dạng, không trùng", () => {
+  const keys = allAudioKeys({
+    audio_key: K(0),
+    audio_pieces: [piece(1, 1), piece(1, 1), { ...piece(2, 1), key: "cv/evil.pdf" }],
+  });
+  assert.deepEqual(keys.sort(), [K(0), K(1)].sort());
+  assert.deepEqual(allAudioKeys({}), []);
+});
+
+test("segmentsOf: gom theo đoạn, cộng thời lượng (null = 0), giữ thứ tự", () => {
+  const segs = segmentsOf([piece(3, 2, 500), piece(1, 1, 1000), piece(2, 1, null)]);
+  assert.deepEqual(segs.map((s) => [s.segment, s.pieces.map((p) => p.key), s.duration_ms]), [
+    [1, [K(1), K(2)], 1000],
+    [2, [K(3)], 500],
+  ]);
+});
+
+test("nextSegment: rỗng → 1, không thì max + 1", () => {
+  assert.equal(nextSegment([]), 1);
+  assert.equal(nextSegment([piece(1, 1), piece(2, 3)]), 4);
 });

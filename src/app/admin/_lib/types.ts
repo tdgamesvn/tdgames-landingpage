@@ -1,3 +1,5 @@
+import type { AudioPiece } from "@/lib/interview-audio";
+
 export type Project = {
   id: string;
   title: string;
@@ -293,6 +295,8 @@ export type InterviewSession = {
   audio_url: string | null;
   audio_key: string | null;
   audio_bytes: number | null;
+  /** Ghi âm trong app — nhiều mảnh/đoạn; null = vòng cũ dùng audio_url. Đọc qua audioPiecesOf(). */
+  audio_pieces?: AudioPiece[] | null;
   transcript: string | null;
   transcript_source: string | null;
   evaluation: InterviewEvaluation | null;
