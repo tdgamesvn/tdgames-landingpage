@@ -6,6 +6,7 @@ import {
   AUDIO_MAX_BYTES,
   activeDuration,
   allAudioKeys,
+  allSessionsAudioKeys,
   appendPiece,
   audioFileError,
   audioPiecesOf,
@@ -18,6 +19,7 @@ import {
   nextSegment,
   orderedPieces,
   parsePieceInput,
+  sameAudio,
   pickRecorderMime,
   planParts,
   recordingFileName,
@@ -245,4 +247,23 @@ test("segmentPlan: Ghi tiếp tính cả mảnh còn trong máy chưa lên serve
   assert.deepEqual(segmentPlan([piece(1, 1, 60_000)], [{ segment: 2, duration_ms: 30_000 }]), { next: 3, baseMs: 90_000 });
   assert.deepEqual(segmentPlan([], [{ segment: 1, duration_ms: null }]), { next: 2, baseMs: 0 });
   assert.deepEqual(segmentPlan([], []), { next: 1, baseMs: 0 });
+});
+
+test("allSessionsAudioKeys: xoá hồ sơ → mọi key R2 của mọi vòng PV (legacy + mảnh), không trùng", () => {
+  const keys = allSessionsAudioKeys([
+    { audio_key: K(0), audio_pieces: null },
+    { audio_key: null, audio_pieces: [piece(1, 1), piece(2, 2)] },
+    { audio_key: null, audio_pieces: [piece(2, 1)] },
+    { audio_key: "cv/x.pdf", audio_pieces: null },
+  ]);
+  assert.deepEqual(keys.sort(), [K(0), K(1), K(2)].sort());
+  assert.deepEqual(allSessionsAudioKeys([]), []);
+});
+
+test("sameAudio: gỡ băng xong mà vòng đã đổi ghi âm (gắn thêm / thay) → khác", () => {
+  const before = { audio_pieces: [piece(1, 1)] };
+  assert.equal(sameAudio(before, { audio_pieces: [piece(1, 1)] }), true);
+  assert.equal(sameAudio(before, { audio_pieces: [piece(1, 1), piece(2, 2)] }), false);
+  assert.equal(sameAudio({ audio_url: U(0), audio_key: K(0) }, { audio_url: U(0), audio_key: K(0) }), true);
+  assert.equal(sameAudio({ audio_url: U(0), audio_key: K(0) }, { audio_pieces: [piece(1, 1)] }), false);
 });

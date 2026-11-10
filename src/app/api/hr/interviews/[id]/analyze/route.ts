@@ -15,7 +15,7 @@ import {
   extractCvText,
 } from "@/lib/interview-ai";
 import { TranscribeError, transcribeFromUrls } from "@/lib/transcribe";
-import { audioPiecesOf, orderedPieces } from "@/lib/interview-audio";
+import { audioPiecesOf, orderedPieces, sameAudio } from "@/lib/interview-audio";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,6 +72,15 @@ async function runAnalysis(id: string): Promise<RunResult> {
       if (!(e instanceof TranscribeError)) console.error("[analyze] transcribe failed:", e);
       const err = e instanceof TranscribeError ? e : new TranscribeError(`Gỡ băng thất bại: ${cause}`);
       return { error: err.message };
+    }
+    // Trong lúc gỡ băng (vài phút) mà có đoạn ghi mới gắn vào / ghi âm bị thay → transcript này thiếu/sai.
+    const { data: now } = await supabase
+      .from("interview_sessions")
+      .select("audio_url, audio_key, audio_pieces")
+      .eq("id", id)
+      .single();
+    if (now && !sameAudio(session, now)) {
+      return { error: "Ghi âm của vòng vừa thay đổi trong lúc gỡ băng (có đoạn mới) — bấm Phân tích lại để gỡ đủ." };
     }
     // Lưu transcript ngay — gỡ băng đắt, đừng để mất nếu bước chấm điểm lỗi.
     await supabase

@@ -235,3 +235,15 @@ export function segmentPlan(
     baseMs: all.reduce((n, p) => n + (p.duration_ms ?? 0), 0),
   };
 }
+
+/** Xoá hồ sơ ứng viên (cascade xoá vòng PV) → mọi key R2 ghi âm của các vòng, để dọn khỏi CDN công khai. */
+export function allSessionsAudioKeys(rows: AudioRow[]): string[] {
+  return [...new Set(rows.flatMap(allAudioKeys))];
+}
+
+/** Ghi âm của vòng còn y như lúc bắt đầu gỡ băng? Khác → transcript vừa gỡ đã thiếu / sai đoạn. */
+export function sameAudio(a: AudioRow, b: AudioRow): boolean {
+  const ka = orderedPieces(audioPiecesOf(a)).map((p) => p.key || p.url);
+  const kb = orderedPieces(audioPiecesOf(b)).map((p) => p.key || p.url);
+  return ka.length === kb.length && ka.every((k, i) => k === kb[i]);
+}

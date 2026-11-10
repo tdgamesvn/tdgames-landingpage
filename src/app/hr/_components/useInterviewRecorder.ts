@@ -333,6 +333,9 @@ export async function startRecording(opts: {
     audioCtx = null;
   }
 
+  // Xin trình duyệt giữ bộ nhớ lâu dài — Safari có thể tự xoá dữ liệu trang lâu không mở (bản ghi chờ tải).
+  void navigator.storage?.persist?.().catch(() => false);
+
   emit({ ...base, status: "requesting" });
   let stream: MediaStream;
   try {

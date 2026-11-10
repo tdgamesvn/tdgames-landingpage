@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
+import { allSessionsAudioKeys } from "@/lib/interview-audio";
+import { deleteFromR2 } from "@/lib/r2";
 import { checkAppPatch, OFFER_STATUSES } from "@/lib/hr-app-patch";
 import { checkFreelancePatch, freelancePatchFields } from "@/lib/hr-freelance";
 import { jobAcceptsFreelance } from "@/lib/hr-auto-ack";
@@ -237,8 +239,16 @@ export async function DELETE(
   } catch {
     return NextResponse.json({ error: "Không kiểm tra được khoản hoa hồng của hồ sơ" }, { status: 500 });
   }
+  // Ghi âm PV (CDN công khai) của các vòng — lấy key TRƯỚC khi xoá (cascade xoá vòng là mất đường tìm lại).
+  const { data: rounds } = await supabase
+    .from("interview_sessions")
+    .select("audio_key, audio_pieces")
+    .eq("application_id", id);
   const { error } = await supabase.from("applications").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Dọn sau khi DB đã xoá — hỏng bước này chỉ để lại rác, không mất dữ liệu.
+  for (const k of allSessionsAudioKeys(rounds ?? [])) await deleteFromR2(k);
 
   return NextResponse.json({ ok: true });
 }

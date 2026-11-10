@@ -6522,3 +6522,12 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Review cuối (opus): 0 Critical, 7 Important — đã sửa hết (nhiều tab, IndexedDB hỏng, iOS nền, chunk cuối, race Ghi lại, transcript cũ, đoạn kế tiếp). Tests 446/446, tsc/eslint 0.
 - CHƯA thử iPhone thật (iOS nền / mute / Safari MP4 khôi phục) — chờ sếp.
 - Minor tồn: timeout init/complete multipart; file R2 mồ côi ở vài ca lỗi; mảnh "mất vòng" của hồ sơ đã xoá chỉ xử lý trong panel; Ghi tiếp trên vòng file tay cũ đồng hồ từ 0:00; Phân tích đang chạy mà gắn thêm mảnh → transcript thiếu đoạn mới; navigator.storage.persist().
+
+## 2026-11-10 (tiếp) — Ghi âm PV: dọn việc tồn
+- Sếp: "tiếp tục thế nào tốt thì làm" → làm 4 việc tồn có ảnh hưởng dữ liệu/riêng tư:
+  - Xoá hồ sơ ứng viên → xoá luôn ghi âm PV mọi vòng trên R2 (trước đây cascade xoá vòng nhưng file nằm lại CDN công khai — lỗi có từ trước). `allSessionsAudioKeys` + test. E2E dev (boss tạm + ZZTEST, đã xoá): CDN 200 trước → DELETE hồ sơ → 404.
+  - Phân tích: gỡ băng xong mà ghi âm của vòng đã đổi (có đoạn mới gắn trong lúc chạy) → không lưu transcript thiếu, báo "bấm Phân tích lại". `sameAudio` + test.
+  - upload-audio postJson (init/complete multipart) timeout 120s — mạng treo không làm hàng đợi đứng mãi.
+  - Bắt đầu ghi → `navigator.storage.persist()` (Safari không tự xoá bản ghi chờ).
+- Quét R2 (chỉ đọc): `interviews/` có 9 file, 3 đang dùng, **6 file mồ côi 194MB, đều 2026-10-26** (ngày làm upload ghi âm, nhiều lần thử lại) — CHƯA xoá, chờ sếp quyết.
+- Tests 448/448, tsc/eslint 0.

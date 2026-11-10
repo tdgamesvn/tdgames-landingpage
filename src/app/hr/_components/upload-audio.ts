@@ -19,6 +19,8 @@ async function postJson(body: unknown) {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
+    // init/complete thường <2s — treo lâu (mạng chập chờn) thì báo lỗi để thử lại, đừng đứng mãi.
+    signal: AbortSignal.timeout(120_000),
   });
   const j = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
