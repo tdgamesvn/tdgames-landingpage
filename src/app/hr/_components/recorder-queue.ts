@@ -105,12 +105,22 @@ export function flushPending(userId: string): Promise<void> {
       } while (again);
     } catch (e) {
       emit({ uploading: null, error: e instanceof Error ? e.message : "Tải lên thất bại" });
-      retryTimer = setTimeout(() => void flushPending(userId), RETRY_MS);
+      retryTimer = setTimeout(() => {
+        if (lastUser === userId) void flushPending(userId);
+      }, RETRY_MS);
     } finally {
       running = null;
     }
   })();
   return running;
+}
+
+/** Đăng xuất: quên người dùng — không để lần thử lại / sự kiện "online" tải bản của người cũ dưới phiên người sau. */
+export function resetQueueUser() {
+  if (retryTimer) clearTimeout(retryTimer);
+  retryTimer = null;
+  lastUser = null;
+  emit({ pending: 0, uploading: null, error: null });
 }
 
 /** Số bản trong máy chưa lưu của người này (mảnh chờ + mồ côi + mất vòng), trừ mảnh đang ghi. */

@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import type { Application, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
 import InterviewPanel from "./InterviewPanel";
 import { UnsavedRecordingsBadge } from "./InterviewRecorder";
-import { unsavedCount } from "./recorder-queue";
+import { resetQueueUser, unsavedCount } from "./recorder-queue";
 import { isRecordingActive, stopActiveRecording } from "./useInterviewRecorder";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
@@ -3420,6 +3420,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     }
     const n = recorderUserKey ? await unsavedCount(recorderUserKey).catch(() => 0) : 0;
     if (n > 0 && !confirm(`Còn ${n} bản ghi âm chưa lưu trên máy này — vẫn đăng xuất? (Bản ghi vẫn giữ trong máy, đăng nhập lại sẽ tải lên.)`)) return;
+    resetQueueUser();
     await signOut();
   }
   const [themePref, setThemePref] = theme;
