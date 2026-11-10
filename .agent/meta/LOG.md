@@ -6565,3 +6565,8 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Sếp: gửi sau 3 phút (bỏ ngẫu nhiên 4–7) → `ACK_DELAY_MS = 3 phút`, `ackSendAt(submittedAt)`. Mail VI xưng "anh/chị", bên mình "chúng tôi" (thêm luật trong prompt); footer VI "Anh/chị nhận email này…".
 - AI thật 2 khách VI (có dấu / không dấu): đều "anh/chị" + "chúng tôi", không còn bạn/mình. 1 mẫu (khách "Trần Thị Lan") gửi test về toan.dang@. Tests 471/471, tsc 0.
 - Ghi chú: AI viết "anh/chị Lan" kể cả khi tên rõ giới tính (Thị) — đúng luật sếp chốt.
+
+## 2026-11-10 (tiếp) — Mail xác nhận lead: BẬT THẬT
+- Sếp "bật thật" → VPS `.env.local` thêm `LEAD_ACK_MODE=live` (backup `.env.local.bak-20261110-lead-ack-live`), pm2 restart. @next/env: LEAD_ACK_MODE="live", AI_MODEL="gpt-6.1-sol", RESEND key có. Site 200.
+- Từ giờ: khách gửi form → AI viết → gửi khách sau 3 phút, BCC toan.dang@. Chuỗi dự phòng: AI_MODEL → gpt-6.1-sol → mail mẫu (cả khi nháp AI không qua kiểm). Chỉ khi Resend lỗi mới không có mail (Discord + /crm báo ❌).
+- Tắt lại: xoá dòng LEAD_ACK_MODE (hoặc ≠ live) + pm2 restart → về chế độ test.
