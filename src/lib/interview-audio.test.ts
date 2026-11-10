@@ -14,6 +14,7 @@ import {
   nextSegment,
   parsePieceInput,
   planParts,
+  recordingFileName,
   segmentsOf,
   type AudioPiece,
 } from "./interview-audio.ts";
@@ -169,4 +170,12 @@ test("geminiAudioMime: bỏ ;codecs, chữ thường; rỗng → audio/mpeg (spi
   assert.equal(geminiAudioMime("Audio/MP4"), "audio/mp4");
   assert.equal(geminiAudioMime(""), "audio/mpeg");
   assert.equal(geminiAudioMime("audio/mpeg"), "audio/mpeg");
+});
+
+test("recordingFileName: rec-<yyyymmdd-hhmm giờ VN>-s<đoạn>.<đuôi theo mime>", () => {
+  const at = Date.parse("2026-11-10T03:05:00Z"); // 10:05 giờ VN
+  assert.equal(recordingFileName("audio/mp4", at, 2), "rec-20261110-1005-s2.m4a");
+  assert.equal(recordingFileName("audio/webm;codecs=opus", at, 1), "rec-20261110-1005-s1.webm");
+  assert.equal(recordingFileName("audio/ogg", at, 1), "rec-20261110-1005-s1.ogg");
+  assert.equal(recordingFileName("", at, 1), "rec-20261110-1005-s1.audio");
 });

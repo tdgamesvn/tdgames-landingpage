@@ -169,3 +169,12 @@ export function parsePieceInput(
 export function geminiAudioMime(mime: string): string {
   return mime.split(";")[0].trim().toLowerCase() || "audio/mpeg";
 }
+
+const REC_EXT: Record<string, string> = { "audio/mp4": "m4a", "audio/webm": "webm", "audio/ogg": "ogg" };
+
+/** Tên file mảnh ghi trong app (giờ VN) — server còn gắn uuid phía trước khi sinh key. */
+export function recordingFileName(mime: string, startedAt: number, segment: number): string {
+  const vn = new Date(startedAt + 7 * 3600_000).toISOString(); // yyyy-mm-ddThh:mm (UTC+7)
+  const stamp = `${vn.slice(0, 10).replaceAll("-", "")}-${vn.slice(11, 13)}${vn.slice(14, 16)}`;
+  return `rec-${stamp}-s${segment}.${REC_EXT[mime.split(";")[0].trim().toLowerCase()] ?? "audio"}`;
+}
