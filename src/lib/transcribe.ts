@@ -1,6 +1,7 @@
 import "server-only";
 
 import { geminiRetryDelayMs, textFromGeminiSse } from "./gemini-sse";
+import { geminiAudioMime } from "./interview-audio";
 
 /**
  * mp3 ghi âm PV → text.
@@ -115,23 +116,33 @@ async function geminiUpload(
   return fileUri;
 }
 
-async function transcribeGemini(
-  bytes: Buffer,
-  mimeType: string,
-  fileName: string,
-): Promise<string> {
+type AudioFile = { bytes: Buffer; mimeType: string; fileName: string };
+
+/** Ghi âm trong app có nhiều mảnh/đoạn — báo Gemini nối liền, mốc thời gian liên tục. */
+function multiPartNote(n: number) {
+  return `\nCó ${n} đoạn audio liên tiếp của CÙNG một buổi PV, gửi đúng thứ tự. Gỡ băng nối liền thành một transcript duy nhất; mốc [mm:ss] tính liên tục từ đầu đoạn 1.`;
+}
+
+async function transcribeGemini(files: AudioFile[]): Promise<string> {
   const key = process.env.GEMINI_API_KEY!;
 
-  const audioPart =
-    bytes.length > GEMINI_INLINE_MAX
-      ? { file_data: { mime_type: mimeType, file_uri: await geminiUpload(key, bytes, mimeType, fileName) } }
-      : { inline_data: { mime_type: mimeType, data: bytes.toString("base64") } };
+  // Tổng quá ngưỡng inline → mọi mảnh đi Files API (request inline phình quá giới hạn).
+  const total = files.reduce((n, f) => n + f.bytes.length, 0);
+  const audioParts = [];
+  for (const f of files) {
+    audioParts.push(
+      total > GEMINI_INLINE_MAX
+        ? { file_data: { mime_type: f.mimeType, file_uri: await geminiUpload(key, f.bytes, f.mimeType, f.fileName) } }
+        : { inline_data: { mime_type: f.mimeType, data: f.bytes.toString("base64") } },
+    );
+  }
+  const prompt = files.length > 1 ? TRANSCRIBE_PROMPT + multiPartNote(files.length) : TRANSCRIBE_PROMPT;
 
   // Stream (SSE): header về ngay, text về dần. generateContent thường với file 40–50 phút
   // mất >300s mới trả header → fetch của Node cắt ở headersTimeout 300s.
   // Gemini hay báo 503 "high demand" lúc cao điểm → thử lại 20s/40s/60s (file đã upload, dùng lại uri).
   const body = JSON.stringify({
-    contents: [{ parts: [{ text: TRANSCRIBE_PROMPT }, audioPart] }],
+    contents: [{ parts: [{ text: prompt }, ...audioParts] }],
     generationConfig: { temperature: 0 },
   });
   let res: Response;
@@ -202,8 +213,16 @@ async function transcribeWhisper(
  * Tải audio từ R2 rồi gỡ băng. Ném TranscribeError nếu chưa cấu hình provider
  * — caller nên bắt và bảo HR dán transcript tay.
  */
-export async function transcribeFromUrl(
-  url: string,
+export async function transcribeFromUrl(url: string): Promise<{ text: string; source: TranscriptSource }> {
+  return transcribeFromUrls([url]);
+}
+
+/**
+ * Nhiều mảnh ghi âm (ghi trong app, theo thứ tự) → 1 transcript liền.
+ * Gemini: 1 request chứa mọi mảnh. Whisper: gỡ từng mảnh rồi nối.
+ */
+export async function transcribeFromUrls(
+  urls: string[],
 ): Promise<{ text: string; source: TranscriptSource }> {
   const provider = transcriptionProvider();
   if (!provider) {
@@ -213,6 +232,19 @@ export async function transcribeFromUrl(
     );
   }
 
+  if (urls.length === 0) throw new TranscribeError("Chưa có file ghi âm", 400);
+
+  const files: AudioFile[] = [];
+  for (const url of urls) files.push(await downloadAudio(url));
+
+  if (provider === "gemini") return { text: await transcribeGemini(files), source: provider };
+
+  const texts: string[] = [];
+  for (const f of files) texts.push(await transcribeWhisper(f.bytes, f.mimeType, f.fileName));
+  return { text: texts.join("\n"), source: provider };
+}
+
+async function downloadAudio(url: string): Promise<AudioFile> {
   let res: Response;
   try {
     res = await fetch(url, { signal: AbortSignal.timeout(300_000) });
@@ -224,13 +256,9 @@ export async function transcribeFromUrl(
   const bytes = Buffer.from(await res.arrayBuffer());
   if (!bytes.length) throw new TranscribeError("File ghi âm rỗng");
 
-  const mimeType = res.headers.get("content-type")?.split(";")[0] || "audio/mpeg";
-  const fileName = url.split("/").pop() || "interview.mp3";
-
-  const text =
-    provider === "gemini"
-      ? await transcribeGemini(bytes, mimeType, fileName)
-      : await transcribeWhisper(bytes, mimeType, fileName);
-
-  return { text, source: provider };
+  return {
+    bytes,
+    mimeType: geminiAudioMime(res.headers.get("content-type") ?? ""),
+    fileName: url.split("/").pop() || "interview.mp3",
+  };
 }

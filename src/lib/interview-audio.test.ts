@@ -9,6 +9,7 @@ import {
   audioFileError,
   audioPiecesOf,
   formatProgress,
+  geminiAudioMime,
   isInterviewAudioKey,
   nextSegment,
   parsePieceInput,
@@ -161,4 +162,11 @@ test("parsePieceInput: từ chối key lạ / url không khớp / segment, bytes
   ];
   for (const b of bad) assert.ok("error" in parsePieceInput(b, pub, "x"), JSON.stringify(b));
   assert.ok("piece" in parsePieceInput(ok, pub, "x"));
+});
+
+test("geminiAudioMime: bỏ ;codecs, chữ thường; rỗng → audio/mpeg (spike 2026-11-10: Gemini nhận audio/mp4 cả MP4 phân mảnh, audio/webm)", () => {
+  assert.equal(geminiAudioMime("audio/webm;codecs=opus"), "audio/webm");
+  assert.equal(geminiAudioMime("Audio/MP4"), "audio/mp4");
+  assert.equal(geminiAudioMime(""), "audio/mpeg");
+  assert.equal(geminiAudioMime("audio/mpeg"), "audio/mpeg");
 });

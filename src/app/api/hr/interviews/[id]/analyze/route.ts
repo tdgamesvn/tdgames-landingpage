@@ -14,7 +14,8 @@ import {
   clampScore,
   extractCvText,
 } from "@/lib/interview-ai";
-import { TranscribeError, transcribeFromUrl } from "@/lib/transcribe";
+import { TranscribeError, transcribeFromUrls } from "@/lib/transcribe";
+import { audioPiecesOf } from "@/lib/interview-audio";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,11 +58,12 @@ async function runAnalysis(id: string): Promise<RunResult> {
   let transcriptSource: string = session.transcript_source ?? "manual";
 
   if (!transcript) {
-    if (!session.audio_url) {
+    const pieces = audioPiecesOf(session);
+    if (pieces.length === 0) {
       return { error: "Chưa có ghi âm và cũng chưa có transcript — upload mp3 hoặc dán transcript trước." };
     }
     try {
-      const out = await transcribeFromUrl(session.audio_url);
+      const out = await transcribeFromUrls(pieces.map((p) => p.url));
       transcript = out.text;
       transcriptSource = out.source;
     } catch (e) {
@@ -181,7 +183,7 @@ export async function POST(
     .eq("id", id)
     .single();
   if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (!session.audio_url && !session.transcript?.trim()) {
+  if (audioPiecesOf(session).length === 0 && !session.transcript?.trim()) {
     return NextResponse.json(
       { error: "Chưa có ghi âm và cũng chưa có transcript — upload mp3 hoặc dán transcript trước." },
       { status: 400 },

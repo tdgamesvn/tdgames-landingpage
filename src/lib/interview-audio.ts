@@ -164,3 +164,8 @@ export function parsePieceInput(
     piece: { segment, key, url: b.url as string, bytes, mime, duration_ms: typeof d === "number" ? Math.round(d) : null, created_at: now },
   };
 }
+
+/** Mime gửi Gemini. Spike 2026-11-10: Gemini nhận thẳng audio/mp4 (cả MP4 phân mảnh của Safari) và audio/webm. */
+export function geminiAudioMime(mime: string): string {
+  return mime.split(";")[0].trim().toLowerCase() || "audio/mpeg";
+}
