@@ -6531,3 +6531,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - Bắt đầu ghi → `navigator.storage.persist()` (Safari không tự xoá bản ghi chờ).
 - Quét R2 (chỉ đọc): `interviews/` có 9 file, 3 đang dùng, **6 file mồ côi 194MB, đều 2026-10-26** (ngày làm upload ghi âm, nhiều lần thử lại) — CHƯA xoá, chờ sếp quyết.
 - Tests 448/448, tsc/eslint 0.
+- Sếp OK xoá → đối chiếu LOG 2026-10-26: 6 file mồ côi đều là file THỬ của em hôm đó (t.wav, t.mp3, big.mp3 x2, pv-test.m4a 42MB, pv-test-linh.m4a 12MB) — đã xoá khỏi R2 (404). 3 bản ghi thật của sếp (ba-n-ghi-mo--i-22/24/32) vẫn 200. `interviews/` trên R2 giờ chỉ còn file đang dùng.
