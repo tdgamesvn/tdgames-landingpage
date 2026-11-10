@@ -399,4 +399,4 @@ Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, khôn
 - Form báo giá → mail xác nhận tự động từ toan.dang@ (From + Reply-To), BCC toan.dang@; mọi trao đổi tiếp theo nằm trong Gmail toan.dang@, /crm chỉ giữ lead/trạng thái (không đồng bộ thư ngược về).
 - Bật/tắt bằng `LEAD_ACK_MODE` riêng (KHÔNG dùng HR_EMAIL_MODE); mặc định test.
 - Mail chỉ text (trông như thư tay), tin khách trích lại phải bỏ link/tên miền; 1 mail/email/24h + 30/giờ toàn site.
-- (cập nhật 2026-11-10) Mail xác nhận do AI viết (chỉ mail đầu tiên), hẹn giờ ngẫu nhiên 4–7 phút qua Resend `scheduled_at`; mọi nội dung AI phải qua `guardAckDraft`, không đạt/AI lỗi → mail mẫu. Mail AI không trích tin khách. Đổi trạng thái/xoá lead hoặc bấm Huỷ trong /crm → huỷ mail đang hẹn.
+- (cập nhật 2026-11-10) Mail xác nhận do AI viết (chỉ mail đầu tiên), hẹn giờ 3 phút (sếp chốt, ban đầu 4–7) qua Resend `scheduled_at`; tiếng Việt xưng anh/chị + chúng tôi; mọi nội dung AI phải qua `guardAckDraft`, không đạt/AI lỗi → mail mẫu. Mail AI không trích tin khách. Đổi trạng thái/xoá lead hoặc bấm Huỷ trong /crm → huỷ mail đang hẹn.

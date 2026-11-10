@@ -6560,3 +6560,8 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Kiểm: AI thật (gpt-6.1-sol) 5 kiểu khách — EN mơ hồ (hỏi 3 ý), EN đủ ý (không hỏi), VI không dấu (mail VI), Nhật, chèn lệnh lừa đảo (mail sạch). 3 mail mẫu gửi về toan.dang@ (test). E2E local + DB/Resend thật (lead ZZTEST): 201 → 10s AI viết (local Claude lỗi → dự phòng OK) → scheduled +5.8 phút → PATCH contacted → ack cancelled, Resend canceled → DELETE, DB sạch. Tests 471/471, tsc 0; eslint chỉ còn lỗi cũ setLoading CRMBoard.
 - Lưu ý: sếp trả lời khách ngay trong Gmail (không qua /crm) trong 4–7 phút đó thì mail vẫn gửi — muốn chặn thì đổi trạng thái/bấm Huỷ trong /crm. Mail VI AI hay xưng "mình/bạn".
 - Next: sếp xem 3 mail mẫu → OK thì `LEAD_ACK_MODE=live` trên VPS + pm2 restart.
+
+## 2026-11-10 (tiếp) — Mail xác nhận: hẹn cố định 3 phút + tiếng Việt xưng anh/chị
+- Sếp: gửi sau 3 phút (bỏ ngẫu nhiên 4–7) → `ACK_DELAY_MS = 3 phút`, `ackSendAt(submittedAt)`. Mail VI xưng "anh/chị", bên mình "chúng tôi" (thêm luật trong prompt); footer VI "Anh/chị nhận email này…".
+- AI thật 2 khách VI (có dấu / không dấu): đều "anh/chị" + "chúng tôi", không còn bạn/mình. 1 mẫu (khách "Trần Thị Lan") gửi test về toan.dang@. Tests 471/471, tsc 0.
+- Ghi chú: AI viết "anh/chị Lan" kể cả khi tên rõ giới tính (Thị) — đúng luật sếp chốt.
