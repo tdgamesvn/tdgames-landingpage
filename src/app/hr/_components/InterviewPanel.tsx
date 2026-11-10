@@ -4,8 +4,19 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import type { InterviewSession } from "@/app/admin/_lib/types";
 import { formatInterviewTime, isMeetUrl } from "@/lib/interview-schedule";
 import { useCandidateMail } from "./CandidateMailDialog";
-import { audioFileError, formatProgress } from "@/lib/interview-audio";
+import { audioFileError, audioPiecesOf, formatProgress } from "@/lib/interview-audio";
 import { uploadAudioChunked } from "./upload-audio";
+import {
+  QueueStatus,
+  RecordButton,
+  RecorderBar,
+  RecoveryBanner,
+  SegmentList,
+  nextSegmentOf,
+  totalDurationMs,
+} from "./InterviewRecorder";
+import { subscribeSessions } from "./recorder-queue";
+import { startRecording, useInterviewRecorder, type RecorderStatus } from "./useInterviewRecorder";
 import { CalendarDays, Check, ChevronRight, RefreshCw, Sparkles } from "lucide-react";
 import { hrFetch, useHrSession } from "./HrSession";
 
@@ -20,6 +31,14 @@ const BTN_RED =
 const TEXTAREA =
   "w-full rounded border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none";
 const ERR = "text-[11px] text-red-400";
+
+const REC_ACTIVE: RecorderStatus[] = ["requesting", "recording", "paused", "stopping"];
+
+/** Khoá phân biệt người ghi trong bộ nhớ máy (máy dùng chung: chỉ hiện bản ghi của chính mình). */
+function useRecorderUserKey() {
+  const { me } = useHrSession();
+  return me ? (me.user.id ?? me.user.email) : "";
+}
 
 function scoreColor(s: number) {
   if (s >= 75) return "hr-tag hr-tag--status [--tag:var(--color-green-500)]";
@@ -321,6 +340,15 @@ function SessionCard({
   const canManage = can("interviews.manage");
   // Gỡ băng / phân tích / câu hỏi chỉ có trong JSON khi có quyền xem phân tích.
   const canAnalysis = can("apps.view_interview_analysis");
+  // Ghi âm trong app: thiếu quyền xem phân tích thì server giấu audio → không thấy đoạn đã ghi / Ghi tiếp.
+  const canRecord = canManage && canAnalysis;
+  const userKey = useRecorderUserKey();
+  const rec = useInterviewRecorder();
+  const recActive = REC_ACTIVE.includes(rec.status);
+  const recordingHere = recActive && rec.sessionId === session.id;
+  const pieces = audioPiecesOf(session);
+  const hasAudio = pieces.length > 0;
+  const recordedInApp = Boolean(session.audio_pieces?.length);
   const [busy, setBusy] = useState<null | "questions" | "upload" | "analyze" | "save">(null);
   const [uploadProgress, setUploadProgress] = useState<{ loaded: number; total: number } | null>(null);
   const [uploadRetry, setUploadRetry] = useState<string | null>(null);
@@ -330,7 +358,7 @@ function SessionCard({
   const [copied, setCopied] = useState(false);
   // Câu hỏi PV là tuỳ chọn (Lead cần mới soạn) → mặc định gập. "Sau buổi PV" tự mở khi đã có dữ liệu.
   const [showQuestions, setShowQuestions] = useState(false);
-  const [showAfter, setShowAfter] = useState(Boolean(session.audio_url || session.transcript || session.evaluation));
+  const [showAfter, setShowAfter] = useState(Boolean(hasAudio || session.transcript || session.evaluation));
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Phân tích xong server trả transcript đã gỡ băng — đồng bộ lại ô soạn thảo.
@@ -398,6 +426,29 @@ function SessionCard({
       }),
     );
 
+  function record(segment: number, baseMs: number) {
+    setShowAfter(true);
+    void startRecording({ userId: userKey, appId: session.application_id, sessionId: session.id, segment, baseMs });
+  }
+
+  // Ghi lại: xoá toàn bộ ghi âm cũ của vòng (server dọn R2) rồi ghi đoạn 1.
+  async function recordAgain() {
+    if (!confirm("Xoá toàn bộ ghi âm của vòng này và ghi mới?")) return;
+    const data = await call("upload", () =>
+      hrFetch(`/api/hr/interviews/${session.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ audio_key: null, audio_url: null }),
+      }),
+    );
+    if (data) record(1, 0);
+  }
+
+  function replaceWithFile() {
+    if (!confirm("Tải file lên sẽ THAY toàn bộ ghi âm hiện có của vòng này. Tiếp tục?")) return;
+    fileRef.current?.click();
+  }
+
   async function uploadAudio(file: File) {
     // Sai dung lượng/định dạng → báo ngay, khỏi tải cả trăm MB lên rồi mới bị từ chối.
     const invalid = audioFileError(file);
@@ -447,7 +498,7 @@ function SessionCard({
   }
 
   const ev = session.evaluation;
-  const canAnalyze = Boolean(session.audio_url || transcript.trim());
+  const canAnalyze = Boolean(hasAudio || transcript.trim());
   const questionCount = session.questions?.groups.reduce((n, g) => n + g.questions.length, 0) ?? 0;
 
   return (
@@ -467,7 +518,7 @@ function SessionCard({
           )}
         </div>
         {canManage && (
-          <button onClick={onDelete} className={BTN_RED} disabled={busy !== null}>
+          <button onClick={onDelete} className={BTN_RED} disabled={busy !== null || recordingHere}>
             Xoá vòng
           </button>
         )}
@@ -540,11 +591,32 @@ function SessionCard({
       <div className="space-y-1.5">
         <span className={LABEL}>Ghi âm buổi PV</span>
 
-        {session.audio_url ? (
-          <audio controls src={session.audio_url} className="w-full" preload="none" />
+        {hasAudio ? (
+          <>
+            <SegmentList session={session} />
+            {canRecord && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <RecordButton
+                  label="Ghi tiếp"
+                  disabled={recActive || busy !== null}
+                  onClick={() => record(nextSegmentOf(session), totalDurationMs(session))}
+                />
+                <button onClick={recordAgain} className={BTN_PLAIN} disabled={recActive || busy !== null}>
+                  Ghi lại
+                </button>
+                <button onClick={replaceWithFile} className={BTN_PLAIN} disabled={recActive || busy !== null}>
+                  {busy === "upload" ? "Đang tải lên…" : "Thay bằng file…"}
+                </button>
+              </div>
+            )}
+          </>
         ) : !canManage ? (
           <p className="text-[11px] text-white/35">Chưa có ghi âm.</p>
         ) : (
+          <>
+          {canRecord && (
+            <RecordButton disabled={recActive || busy !== null} onClick={() => record(1, 0)} />
+          )}
           <div
             onClick={() => fileRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
@@ -563,6 +635,7 @@ function SessionCard({
                 : "Kéo thả hoặc bấm chọn mp3 / m4a / wav (≤100MB)"}
             </span>
           </div>
+          </>
         )}
         <input
           ref={fileRef}
@@ -583,6 +656,11 @@ function SessionCard({
           {showTranscript ? "Ẩn transcript" : "Transcript"}
           {session.transcript ? ` (${session.transcript_source ?? "?"})` : " — chưa có, có thể dán tay"}
         </button>
+        {recordedInApp && session.transcript_source === "manual" && session.transcript && (
+          <p className="text-[10px] text-amber-300/70">
+            Transcript này dán tay — nếu vừa ghi thêm đoạn mới thì chưa gồm đoạn đó. Xoá transcript rồi Phân tích để gỡ băng lại đủ.
+          </p>
+        )}
 
         {showTranscript && (
           <div className="space-y-1.5">
@@ -711,6 +789,10 @@ export default function InterviewPanel({
   const { can } = useHrSession();
   const canView = can("apps.view_interviews");
   const canManage = can("interviews.manage");
+  const canRecord = canManage && can("apps.view_interview_analysis");
+  const userKey = useRecorderUserKey();
+  const rec = useInterviewRecorder();
+  const recActive = REC_ACTIVE.includes(rec.status);
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -745,7 +827,7 @@ export default function InterviewPanel({
     if (!loading) notifyRef.current?.(sessions);
   }, [sessions, loading]);
 
-  async function addRound() {
+  async function addRound(): Promise<InterviewSession | null> {
     setCreating(true);
     setError(null);
     try {
@@ -757,11 +839,30 @@ export default function InterviewPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
       setSessions((prev) => [...prev, data.session]);
+      return data.session as InterviewSession;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Không tạo được vòng PV");
+      return null;
     } finally {
       setCreating(false);
     }
+  }
+
+  // Mảnh ghi âm vừa được gắn ở nền (hàng đợi) → cập nhật thẻ vòng PV.
+  useEffect(
+    () => subscribeSessions((next) => setSessions((prev) => prev.map((x) => (x.id === next.id ? next : x)))),
+    [],
+  );
+
+  const latest = sessions.reduce<InterviewSession | null>((m, s) => (!m || s.round > m.round ? s : m), null);
+  const latestEmpty = latest && audioPiecesOf(latest).length === 0 && !latest.transcript?.trim() ? latest : null;
+
+  // Nút Ghi âm ở header: vòng mới nhất còn trống (đã đặt lịch trước) → ghi vào đó; không thì tạo vòng mới.
+  // Không bao giờ nối vào buổi PV cũ — nối tiếp là nút "Ghi tiếp" trong thẻ vòng.
+  async function quickRecord() {
+    const target = latestEmpty ?? (await addRound());
+    if (!target) return;
+    void startRecording({ userId: userKey, appId, sessionId: target.id, segment: 1, baseMs: 0 });
   }
 
   async function removeRound(id: string) {
@@ -785,14 +886,33 @@ export default function InterviewPanel({
     <section className="space-y-2">
       <div className="flex items-center justify-between gap-2 px-1">
         <h4 className="hr-section-title">Phỏng vấn</h4>
-        {canManage && (
-          <button onClick={addRound} className={BTN_PLAIN} disabled={creating}>
-            {creating ? "Đang tạo…" : sessions.length === 0 ? "+ Đặt lịch PV" : "+ Thêm vòng PV"}
-          </button>
-        )}
+        <div className="flex gap-1.5">
+          {canRecord && !loading && (
+            <RecordButton disabled={recActive || creating} onClick={() => void quickRecord()} />
+          )}
+          {canManage && (
+            <button onClick={() => void addRound()} className={BTN_PLAIN} disabled={creating}>
+              {creating ? "Đang tạo…" : sessions.length === 0 ? "+ Đặt lịch PV" : "+ Thêm vòng PV"}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <p className={ERR}>{error}</p>}
+      {canRecord && (
+        <>
+          <RecorderBar appId={appId} sessions={sessions} />
+          {userKey && <QueueStatus userKey={userKey} />}
+          {userKey && !loading && (
+            <RecoveryBanner
+              userKey={userKey}
+              appId={appId}
+              sessions={sessions}
+              ensureTarget={async () => latest ?? (await addRound())}
+            />
+          )}
+        </>
+      )}
       {loading && <p className="text-[11px] text-white/35">Đang tải…</p>}
 
       {!loading && sessions.length === 0 && (

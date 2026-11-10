@@ -7,6 +7,9 @@ import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, u
 import { createPortal } from "react-dom";
 import type { Application, ApplicationStatus, Job, JobType, StatusDef } from "@/app/admin/_lib/types";
 import InterviewPanel from "./InterviewPanel";
+import { UnsavedRecordingsBadge } from "./InterviewRecorder";
+import { unsavedCount } from "./recorder-queue";
+import { isRecordingActive, stopActiveRecording } from "./useInterviewRecorder";
 import { JobTestsPanel, SubmissionsPanel } from "./TestsPanel";
 import StatusManager from "./StatusManager";
 import AccountsPanel from "./AccountsPanel";
@@ -673,7 +676,7 @@ function CandidateModal({
   onDeleteApp,
   onSaveNote,
   onPatch,
-  onClose,
+  onClose: onCloseProp,
 }: {
   app: Application;
   saving: boolean;
@@ -683,6 +686,14 @@ function CandidateModal({
   onPatch: (patch: Partial<Application>) => void;
   onClose: () => void;
 }) {
+  // Đang ghi âm PV → hỏi trước khi đóng hồ sơ (mọi đường đóng: ×, Esc, bấm nền).
+  const onClose = useCallback(async () => {
+    if (isRecordingActive()) {
+      if (!confirm("Đang ghi âm — dừng và lưu?")) return;
+      await stopActiveRecording();
+    }
+    onCloseProp();
+  }, [onCloseProp]);
   const S = useStatuses();
   const { can } = useHrSession();
   const canEdit = can("apps.edit");
@@ -771,7 +782,7 @@ function CandidateModal({
     // Hộp thoại mail đang mở thì Esc chỉ đóng hộp thoại đó, không đóng luôn hồ sơ.
     if (mailDialogOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") void onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -3400,6 +3411,17 @@ function HrLogin({ theme }: { theme: ThemeState }) {
 
 function HrWorkspace({ theme }: { theme: ThemeState }) {
   const { me, can, refresh: refreshSession, signOut } = useHrSession();
+  const recorderUserKey = me ? (me.user.id ?? me.user.email) : "";
+  // Ghi âm PV: đang ghi → dừng & lưu trước; còn bản trong máy chưa lên server → cảnh báo (không xoá).
+  async function guardedSignOut() {
+    if (isRecordingActive()) {
+      if (!confirm("Đang ghi âm — dừng, lưu rồi đăng xuất?")) return;
+      await stopActiveRecording();
+    }
+    const n = recorderUserKey ? await unsavedCount(recorderUserKey).catch(() => 0) : 0;
+    if (n > 0 && !confirm(`Còn ${n} bản ghi âm chưa lưu trên máy này — vẫn đăng xuất? (Bản ghi vẫn giữ trong máy, đăng nhập lại sẽ tải lên.)`)) return;
+    await signOut();
+  }
   const [themePref, setThemePref] = theme;
   const [view, setView] = useState<View>("pipeline");
   const [chatNeeds, setChatNeeds] = useState(0);
@@ -3611,7 +3633,8 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
                 {me.user.displayName} <span className="text-white/50">· {me.roleLabel}</span>
               </span>
             )}
-            <button onClick={() => void signOut()} title={me ? `Đăng xuất (${me.user.displayName})` : "Đăng xuất"} className="hr-toolbar-btn hr-toolbar-btn--danger">
+            {me && <UnsavedRecordingsBadge userKey={recorderUserKey} />}
+            <button onClick={() => void guardedSignOut()} title={me ? `Đăng xuất (${me.user.displayName})` : "Đăng xuất"} className="hr-toolbar-btn hr-toolbar-btn--danger">
               Đăng xuất
             </button>
           </div>
