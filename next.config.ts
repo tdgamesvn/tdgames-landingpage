@@ -30,7 +30,8 @@ const nextConfig: NextConfig = {
   },
   // Security headers cho mọi route. HSTS cố ý KHÔNG includeSubDomains/preload
   // (subdomain khác chưa chắc toàn HTTPS). Không có CSP (chưa audit nguồn script).
-  // microphone=(): grep src không có getUserMedia/MediaRecorder (kể cả /hr) → khoá hết.
+  // microphone=(): khoá mic toàn site, TRỪ /hr (ghi âm PV ngay trong app — entry sau ghi đè
+  // entry trước khi trùng key, theo docs Next).
   async headers() {
     return [
       {
@@ -43,6 +44,10 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      ...["/hr", "/hr/:path*"].map((source) => ({
+        source,
+        headers: [{ key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" }],
+      })),
     ];
   },
   images: {
