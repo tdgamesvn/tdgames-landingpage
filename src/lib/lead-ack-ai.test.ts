@@ -77,10 +77,8 @@ test("user message: chỉ báo có chọn budget, không gửi số tiền", () 
   assert.doesNotMatch(JSON.stringify(u), /\$/);
 });
 
-test("giờ gửi 4–7 phút; còn < 60s thì gửi ngay", () => {
-  assert.equal(ackSendAt(0, 0), 4 * 60_000);
-  assert.equal(ackSendAt(0, 1), 7 * 60_000);
-  assert.equal(ackSendAt(0, 5), 7 * 60_000);
+test("giờ gửi 3 phút; còn < 60s thì gửi ngay", () => {
+  assert.equal(ackSendAt(1_000), 1_000 + 3 * 60_000);
   assert.equal(scheduledAtParam(300_000, 0), new Date(300_000).toISOString());
   assert.equal(scheduledAtParam(300_000, 250_000), null);
 });

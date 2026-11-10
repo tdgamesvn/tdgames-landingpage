@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Fire-and-forget: lead đã lưu rồi, mail/notify lỗi cũng không được fail request.
-  // Mail xác nhận (AI viết, hẹn giờ 4–7 phút) xử lý trước để Discord báo luôn kết quả.
+  // Mail xác nhận (AI viết, hẹn giờ 3 phút) xử lý trước để Discord báo luôn kết quả.
   (async () => {
     let ack = "—";
     try {

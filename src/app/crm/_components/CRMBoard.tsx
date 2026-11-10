@@ -73,7 +73,7 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts.at(-1)?.[0] ?? "")).toUpperCase();
 }
 
-/** Trạng thái mail xác nhận tự động (AI viết, hẹn giờ 4–7 phút) + nút huỷ khi còn chờ gửi. */
+/** Trạng thái mail xác nhận tự động (AI viết, hẹn giờ 3 phút) + nút huỷ khi còn chờ gửi. */
 function AckLine({ lead, onCancel }: { lead: Lead; onCancel: () => void }) {
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);

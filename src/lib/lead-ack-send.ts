@@ -67,7 +67,7 @@ async function writeAck(lead: AckLead): Promise<{ subject: string; text: string;
 }
 
 /**
- * Soạn (AI) + hẹn giờ gửi mail xác nhận cho 1 lead vừa lưu (4–7 phút sau lúc gửi form). Không throw.
+ * Soạn (AI) + hẹn giờ gửi mail xác nhận cho 1 lead vừa lưu (3 phút sau lúc gửi form). Không throw.
  * Mỗi email tối đa 1 mail / 24 giờ (lead khác cùng email trong 24h — mọi nguồn — hoặc cùng hộp thư chuẩn hoá).
  * Lưu id Resend vào lead để /crm huỷ được trước giờ gửi. Gửi thẳng Resend REST, không qua `sendViaResend`.
  */

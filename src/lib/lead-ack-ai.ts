@@ -29,6 +29,7 @@ Write a short, warm, personal acknowledgement:
 
 Rules:
 - Write in the language of their message (if the message is empty, the language of their name; default English).
+- In Vietnamese: always address the client as "anh/chị" (never "bạn", "mình" or "em"), and refer to our side as "chúng tôi".
 - 50 to 150 words for the body.
 - NEVER mention prices, rates, costs, discounts, currencies, team size, or any commitment other than replying within 1 business day. Do not repeat their budget.
 - NO links, URLs, website names, email addresses or phone numbers.
@@ -90,9 +91,10 @@ export function composeAiAck(draft: AckDraft): { subject: string; text: string }
   return { subject: draft.subject, text };
 }
 
-/** Giờ gửi: ngẫu nhiên 4–7 phút sau lúc khách gửi form (trông như người đọc rồi trả lời). */
-export function ackSendAt(submittedAt: number, rand: number = Math.random()): number {
-  return submittedAt + (4 + 3 * Math.min(Math.max(rand, 0), 1)) * 60_000;
+/** Giờ gửi: 3 phút sau lúc khách gửi form (sếp chốt 2026-11-10 — trông như người đọc rồi trả lời). */
+export const ACK_DELAY_MS = 3 * 60_000;
+export function ackSendAt(submittedAt: number): number {
+  return submittedAt + ACK_DELAY_MS;
 }
 
 /** Resend cần giờ hẹn ở tương lai; còn < 60s (AI chậm) thì gửi ngay. */

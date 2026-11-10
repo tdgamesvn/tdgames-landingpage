@@ -73,7 +73,7 @@ export const LEAD_ACK_PORTFOLIO = "https://tdgamestudio.com/portfolio";
 export const LEAD_ACK_FOOTER_EN =
   "You received this because this email address was entered in the contact form on tdgamestudio.com.";
 export const LEAD_ACK_FOOTER_VI =
-  "Bạn nhận email này vì địa chỉ này được nhập vào form liên hệ trên tdgamestudio.com.";
+  "Anh/chị nhận email này vì địa chỉ này được nhập vào form liên hệ trên tdgamestudio.com.";
 
 export function buildLeadAckEmail(lead: {
   name: string;
