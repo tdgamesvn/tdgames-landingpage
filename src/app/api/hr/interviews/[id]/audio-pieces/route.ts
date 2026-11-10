@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 /**
  * Gắn 1 mảnh ghi âm (ghi trong app /hr) vào vòng PV.
  * Body `{ key, url, bytes, mime, duration_ms, segment }` — file đã upload R2 qua /api/hr/upload/audio/multipart.
- * Client gửi mảnh tuần tự (recorder-queue) nên đọc–ghi jsonb không đua nhau; gửi lại cùng key → 200, không gắn 2 lần.
+ * Gửi lại cùng key → 200, không gắn 2 lần. Ghi có kiểm updated_at (trigger) để không ghi đè lần sửa chen giữa.
  */
 export async function POST(
   request: Request,
@@ -34,24 +34,30 @@ export async function POST(
   if (used instanceof Error) return NextResponse.json({ error: used.message }, { status: 500 });
   if (used) return NextResponse.json({ error: "Ghi âm này đã gắn cho phiên khác" }, { status: 400 });
 
-  const { data: row, error: readErr } = await supabase
-    .from("interview_sessions")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (readErr || !row) return NextResponse.json({ error: readErr?.message ?? "Not found" }, { status: readErr ? 500 : 404 });
+  // Đọc–ghi có kiểm phiên bản (updated_at): 2 máy ghi cùng vòng / Ghi lại chen giữa → không ghi đè mất mảnh.
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const { data: row, error: readErr } = await supabase
+      .from("interview_sessions")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (readErr || !row) return NextResponse.json({ error: readErr?.message ?? "Not found" }, { status: readErr ? 500 : 404 });
 
-  const next = appendPiece(row, parsed.piece);
-  if (next.duplicate) {
-    return NextResponse.json({ session: redactInterview(row as Record<string, unknown>, auth.ctx.perms) });
+    const next = appendPiece(row, parsed.piece);
+    if (next.duplicate) {
+      return NextResponse.json({ session: redactInterview(row as Record<string, unknown>, auth.ctx.perms) });
+    }
+
+    const { data, error } = await supabase
+      .from("interview_sessions")
+      .update(next.update)
+      .eq("id", id)
+      .eq("updated_at", row.updated_at)
+      .select();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (data && data.length > 0) {
+      return NextResponse.json({ session: redactInterview(data[0] as Record<string, unknown>, auth.ctx.perms) });
+    }
   }
-
-  const { data, error } = await supabase
-    .from("interview_sessions")
-    .update(next.update)
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ session: redactInterview(data as Record<string, unknown>, auth.ctx.perms) });
+  return NextResponse.json({ error: "Vòng PV đang được sửa cùng lúc — thử lại" }, { status: 409 });
 }

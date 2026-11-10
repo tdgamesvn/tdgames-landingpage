@@ -16,11 +16,12 @@ import {
   RECORD_BITRATE,
   RECORD_PIECE_MS,
   RECORD_TIMESLICE_MS,
+  activeDuration,
   pickRecorderMime,
   shouldTreatAsInterrupted,
 } from "@/lib/interview-audio";
-import { flushPending, markLive } from "./recorder-queue";
-import { appendChunk, finishPiece, startPiece } from "./recorder-store";
+import { enqueueMemoryPiece, flushPending, markLive } from "./recorder-queue";
+import { appendChunk, finishPiece, removePiece, rewriteChunks, startPiece } from "./recorder-store";
 
 export type RecorderStatus =
   | "idle"
@@ -59,8 +60,15 @@ const IDLE: RecorderState = {
 let snap: RecorderState = IDLE;
 const listeners = new Set<() => void>();
 
+/** Bản rút gọn chỉ đổi khi trạng thái đổi — panel/thẻ vòng PV không vẽ lại 4 lần/giây theo đồng hồ. */
+export type RecorderStatusSnap = Pick<RecorderState, "status" | "appId" | "sessionId">;
+let statusSnap: RecorderStatusSnap = { status: "idle", appId: null, sessionId: null };
+
 function emit(patch: Partial<RecorderState>) {
   snap = { ...snap, ...patch };
+  if (snap.status !== statusSnap.status || snap.appId !== statusSnap.appId || snap.sessionId !== statusSnap.sessionId) {
+    statusSnap = { status: snap.status, appId: snap.appId, sessionId: snap.sessionId };
+  }
   for (const fn of listeners) fn();
 }
 
@@ -79,14 +87,24 @@ type Run = {
   analyser: AnalyserNode | null;
   wakeLock: WakeLockSentinel | null;
   recorder: MediaRecorder | null;
+  /** Resolve khi recorder hiện tại bắn "stop" (sau dataavailable cuối) — kể cả khi nó tự dừng. */
+  stopped: Promise<void>;
   pieceId: string;
+  pieceStartedAt: number;
   chunkIdx: number;
   writes: Promise<void>;
+  /** Bản sao chunk của mảnh hiện tại trong RAM — IndexedDB hỏng giữa chừng thì tải lên từ đây. */
+  memChunks: Blob[];
+  writeFailed: boolean;
   pieceActiveStart: number;
   /** Thời gian ghi thật đã cộng dồn (không tính lúc tạm dừng) + mốc bắt đầu chặng đang chạy. */
   activeAccum: number;
   runningSince: number | null;
   mutedSince: number | null;
+  /** Lúc app bị ẩn (iOS treo JS nhưng performance.now() vẫn chạy). */
+  hiddenAt: number | null;
+  /** Mốc dừng tính giờ khi bị ngắt — không cộng khoảng im lặng / bị treo nền. */
+  cutoff: number | null;
   recorderError: boolean;
   rotating: boolean;
   timer: ReturnType<typeof setInterval> | null;
@@ -94,59 +112,109 @@ type Run = {
 
 let run: Run | null = null;
 
-const activeMs = (r: Run) => r.activeAccum + (r.runningSince === null ? 0 : performance.now() - r.runningSince);
+const activeMs = (r: Run) =>
+  activeDuration({ accum: r.activeAccum, runningSince: r.runningSince, now: performance.now(), cutoff: r.cutoff });
+
+const sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 
 async function openPiece(r: Run) {
   r.pieceId = crypto.randomUUID();
+  r.pieceStartedAt = Date.now();
   r.chunkIdx = 0;
+  r.memChunks = [];
+  r.writeFailed = false;
   r.recorderError = false;
-  await startPiece({
-    id: r.pieceId,
-    userId: r.userId,
-    appId: r.appId,
-    sessionId: r.sessionId,
-    segment: r.segment,
-    mime: r.mime,
-    startedAt: Date.now(),
-  });
   markLive(r.pieceId);
+  try {
+    await startPiece({
+      id: r.pieceId,
+      userId: r.userId,
+      appId: r.appId,
+      sessionId: r.sessionId,
+      segment: r.segment,
+      mime: r.mime,
+      startedAt: r.pieceStartedAt,
+    });
+  } catch (err) {
+    // Không có / hỏng IndexedDB — vẫn ghi, mảnh giữ trong RAM rồi tải thẳng khi chốt.
+    console.error("[recorder] không lưu được vào máy", err);
+    r.writeFailed = true;
+  }
   const rec = new MediaRecorder(r.stream, { mimeType: r.mime, audioBitsPerSecond: RECORD_BITRATE });
   const pieceId = r.pieceId;
+  const mem = r.memChunks;
   rec.ondataavailable = (e) => {
     if (!e.data.size) return;
+    mem.push(e.data);
     const idx = r.chunkIdx++;
     // Nối chuỗi để chunk xuống IndexedDB đúng thứ tự.
     r.writes = r.writes.then(() => appendChunk(pieceId, idx, e.data)).catch((err) => {
       console.error("[recorder] lưu chunk thất bại", err);
-      emit({ error: "Bộ nhớ máy không lưu được phần ghi âm (có thể đầy) — đừng tắt app trước khi tải lên xong." });
+      r.writeFailed = true;
+      emit({ error: "Bộ nhớ máy không lưu được phần ghi âm — đừng tắt app trước khi tải lên xong." });
     });
   };
   rec.onerror = () => {
     r.recorderError = true;
   };
+  r.stopped = new Promise<void>((resolve) => {
+    rec.onstop = () => resolve();
+  });
   r.recorder = rec;
   r.pieceActiveStart = activeMs(r);
   rec.start(RECORD_TIMESLICE_MS);
 }
 
-/** Chốt mảnh hiện tại: lấy nốt dữ liệu, đánh dấu chờ upload, đẩy hàng đợi. */
+/**
+ * Chốt mảnh hiện tại: đợi recorder bắn "stop" (dataavailable cuối đến trước) — kể cả khi nó đã tự
+ * dừng vì mất mic —, đánh dấu chờ upload, đẩy hàng đợi. IndexedDB hỏng → tải lên từ bản trong RAM.
+ */
 async function closePiece(r: Run) {
   const rec = r.recorder;
   r.recorder = null;
-  if (rec && rec.state !== "inactive") {
-    await new Promise<void>((resolve) => {
-      rec.onstop = () => resolve();
+  if (rec) {
+    if (rec.state !== "inactive") {
       try {
         rec.stop();
       } catch {
-        resolve();
+        // đã dừng
       }
-    });
+    }
+    await Promise.race([r.stopped, sleep(4000)]);
   }
   await r.writes;
-  await finishPiece(r.pieceId, Math.round(activeMs(r) - r.pieceActiveStart));
-  markLive(null);
-  void flushPending(r.userId);
+  const duration = Math.round(activeMs(r) - r.pieceActiveStart);
+  const mem = r.memChunks;
+  let toMemory = false;
+  try {
+    if (r.writeFailed) await rewriteChunks(r.pieceId, mem);
+    await finishPiece(r.pieceId, duration);
+  } catch (err) {
+    console.error("[recorder] không chốt được mảnh trong máy — tải từ RAM", err);
+    toMemory = true;
+  }
+  try {
+    if (toMemory && mem.length > 0) {
+      enqueueMemoryPiece(
+        {
+          id: r.pieceId,
+          userId: r.userId,
+          appId: r.appId,
+          sessionId: r.sessionId,
+          segment: r.segment,
+          mime: r.mime,
+          startedAt: r.pieceStartedAt,
+          duration_ms: duration,
+          state: "pending",
+        },
+        new Blob(mem, { type: r.mime }),
+      );
+      void removePiece(r.pieceId).catch(() => {}); // bản dở trong máy (nếu có) — tránh tải 2 lần
+    }
+  } finally {
+    markLive(null);
+    void flushPending(r.userId);
+  }
 }
 
 async function acquireWakeLock(r: Run) {
@@ -175,12 +243,22 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
 
 function onVisibility() {
   const r = run;
-  if (!r || document.visibilityState !== "visible") return;
-  // iOS: chuyển app / khoá máy → recorder chết hoặc mic câm; quay lại thì chốt đoạn.
-  if (r.track.readyState === "ended" || (r.recorder && r.recorder.state === "inactive" && !r.rotating)) {
-    void interrupt();
+  if (!r) return;
+  if (document.visibilityState === "hidden") {
+    r.hiddenAt ??= performance.now();
     return;
   }
+  // iOS: chuyển app / khoá máy → recorder chết, mic câm hoặc track kết thúc; quay lại thì chốt đoạn,
+  // giờ ghi tính tới lúc bị ẩn (JS bị treo nhưng đồng hồ vẫn chạy).
+  const dead =
+    r.track.readyState === "ended" ||
+    r.mutedSince !== null ||
+    (r.recorder !== null && r.recorder.state === "inactive" && !r.rotating);
+  if (dead && (snap.status === "recording" || snap.status === "paused")) {
+    void interrupt(r.hiddenAt ?? r.mutedSince ?? performance.now());
+    return;
+  }
+  r.hiddenAt = null;
   if (!r.wakeLock || r.wakeLock.released) void acquireWakeLock(r);
 }
 
@@ -196,7 +274,7 @@ function tick() {
       recorderError: r.recorderError,
     })
   ) {
-    void interrupt();
+    void interrupt(r.mutedSince ?? now);
     return;
   }
   let level = 0;
@@ -291,24 +369,33 @@ export async function startRecording(opts: {
     analyser,
     wakeLock: null,
     recorder: null,
+    stopped: Promise.resolve(),
     pieceId: "",
+    pieceStartedAt: 0,
     chunkIdx: 0,
     writes: Promise.resolve(),
+    memChunks: [],
+    writeFailed: false,
     pieceActiveStart: 0,
     activeAccum: 0,
     runningSince: performance.now(),
     mutedSince: null,
+    hiddenAt: null,
+    cutoff: null,
     recorderError: false,
     rotating: false,
     timer: null,
   };
   run = r;
-  track.onended = () => void interrupt();
+  track.onended = () => void interrupt(performance.now());
   track.onmute = () => {
     r.mutedSince ??= performance.now();
   };
   track.onunmute = () => {
+    // iOS chạy nền: mute + unmute có thể đến dồn lúc quay lại, trước khi tick kịp thấy → xét ở đây.
+    const since = r.mutedSince;
     r.mutedSince = null;
+    if (since !== null && performance.now() - since >= 3000) void interrupt(since);
   };
   document.addEventListener("visibilitychange", onVisibility);
   window.addEventListener("beforeunload", onBeforeUnload);
@@ -342,7 +429,7 @@ export function resumeRecording() {
   emit({ status: "recording" });
 }
 
-async function finish(next: Partial<RecorderState>) {
+async function finish(next: (r: Run) => Partial<RecorderState>) {
   const r = run;
   if (!r || (snap.status !== "recording" && snap.status !== "paused")) return;
   r.activeAccum = activeMs(r);
@@ -350,25 +437,26 @@ async function finish(next: Partial<RecorderState>) {
   emit({ status: "stopping", level: 0, elapsedMs: r.baseMs + r.activeAccum });
   if (r.timer) clearInterval(r.timer);
   r.timer = null;
-  // Đang đổi mảnh dở → đợi xong rồi mới chốt mảnh mới.
-  while (r.rotating) await new Promise((res) => setTimeout(res, 50));
+  // Đang đổi mảnh dở → đợi xong (có hạn) rồi mới chốt mảnh mới.
+  for (let i = 0; r.rotating && i < 200; i++) await sleep(50);
   try {
     await closePiece(r);
   } catch (e) {
     console.error("[recorder] chốt mảnh thất bại", e);
   }
   teardown(r);
-  emit(next);
+  emit(next(r));
 }
 
 export function stopRecording(): Promise<void> {
-  return finish({ ...IDLE });
+  return finish(() => ({ ...IDLE }));
 }
 
-function interrupt(): Promise<void> {
+/** Bị ngắt: `at` = mốc performance.now() ngừng tính giờ (lúc bị ẩn / mic câm / track kết thúc). */
+function interrupt(at: number): Promise<void> {
   const r = run;
-  const at = r ? r.baseMs + activeMs(r) : 0;
-  return finish({ status: "interrupted", interruptedAtMs: at, level: 0 });
+  if (r && r.cutoff === null) r.cutoff = at;
+  return finish((done) => ({ status: "interrupted", interruptedAtMs: done.baseMs + done.activeAccum, level: 0 }));
 }
 
 /** Bỏ thông báo "bị ngắt" / "bị từ chối" / lỗi → về nghỉ. */
@@ -383,6 +471,18 @@ export function isRecordingActive(): boolean {
 
 export function stopActiveRecording(): Promise<void> {
   return stopRecording();
+}
+
+/** Chỉ trạng thái (không có đồng hồ / mức âm) — dùng cho component lớn. */
+export function useRecorderStatus(): RecorderStatusSnap {
+  return useSyncExternalStore(
+    (fn) => {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
+    () => statusSnap,
+    () => statusSnap,
+  );
 }
 
 export function useInterviewRecorder(): RecorderState {

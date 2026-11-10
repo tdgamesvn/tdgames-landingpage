@@ -8,8 +8,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Mic, Pause, Play, Square } from "lucide-react";
 import type { InterviewSession } from "@/app/admin/_lib/types";
-import { RECORD_TIMESLICE_MS, audioPiecesOf, formatClock, nextSegment, segmentsOf, type AudioPiece } from "@/lib/interview-audio";
-import { flushPending, livePieceId, subscribeQueue, unsavedCount, type QueueState } from "./recorder-queue";
+import { RECORD_TIMESLICE_MS, audioPiecesOf, formatClock, isOrphanPiece, segmentPlan, segmentsOf, type AudioPiece } from "@/lib/interview-audio";
+import { flushPending, livePieceId, subscribeQueue, unsavedCount, type LocalPiece, type QueueState } from "./recorder-queue";
 import { chunkCount, finishPiece, listPieces, removePiece, updatePiece, type StoredPiece } from "./recorder-store";
 import {
   pauseRecording,
@@ -17,6 +17,7 @@ import {
   resumeRecording,
   stopRecording,
   useInterviewRecorder,
+  useRecorderStatus,
 } from "./useInterviewRecorder";
 
 const BTN_REC =
@@ -163,17 +164,24 @@ export function SegmentList({ session }: { session: InterviewSession }) {
   );
 }
 
-export function totalDurationMs(session: InterviewSession) {
-  return segmentsOf(audioPiecesOf(session)).reduce((n, g) => n + g.duration_ms, 0);
+/** Đoạn kế tiếp + mốc đồng hồ cho Ghi tiếp — gồm cả mảnh của vòng còn trong máy chưa lên server. */
+export function planFor(session: InterviewSession, local: LocalPiece[]) {
+  return segmentPlan(
+    audioPiecesOf(session),
+    local.filter((l) => l.sessionId === session.id),
+  );
 }
 
-export function nextSegmentOf(session: InterviewSession) {
-  return nextSegment(audioPiecesOf(session));
+/** Trạng thái hàng đợi (mảnh trong máy chờ tải lên) cho component cần biết. */
+export function useQueueState(): QueueState {
+  const [q, setQ] = useState<QueueState>({ pending: 0, uploading: null, error: null, local: [] });
+  useEffect(() => subscribeQueue(setQ), []);
+  return q;
 }
 
 /** Trạng thái hàng đợi upload — "đang tải lên", lỗi + Thử lại. */
 export function QueueStatus({ userKey }: { userKey: string }) {
-  const [q, setQ] = useState<QueueState>({ pending: 0, uploading: null, error: null });
+  const [q, setQ] = useState<QueueState>({ pending: 0, uploading: null, error: null, local: [] });
   useEffect(() => subscribeQueue(setQ), []);
   if (q.error) {
     return (
@@ -209,7 +217,7 @@ export function RecoveryBanner({
   /** Vòng PV để gắn bản ghi khi vòng gốc không còn — mới nhất, chưa có thì tạo. */
   ensureTarget: () => Promise<InterviewSession | null>;
 }) {
-  const rec = useInterviewRecorder();
+  const rec = useRecorderStatus();
   const [items, setItems] = useState<Orphan[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -225,7 +233,8 @@ export function RecoveryBanner({
       try {
         const all = await listPieces({ userId: userKey, appId });
         const live = livePieceId();
-        const orphans = all.filter((p) => p.id !== live && (p.state === "recording" || p.state === "needs_target"));
+        const now = Date.now();
+        const orphans = all.filter((p) => isOrphanPiece(p, live, now));
         next = await Promise.all(
           orphans.map(async (p) => ({ ...p, estMs: p.duration_ms ?? (await chunkCount(p.id)) * RECORD_TIMESLICE_MS })),
         );
@@ -238,6 +247,12 @@ export function RecoveryBanner({
       alive = false;
     };
   }, [userKey, appId, rec.status, sessions.length, version]);
+
+  // Mảnh tab khác đang ghi mà tab đó chết → sau ~30s im mới thành mồ côi; xét lại định kỳ.
+  useEffect(() => {
+    const t = setInterval(() => setVersion((v) => v + 1), 15_000);
+    return () => clearInterval(t);
+  }, []);
 
   if (items.length === 0) return null;
   const recActive = rec.status === "requesting" || rec.status === "recording" || rec.status === "paused" || rec.status === "stopping";
@@ -264,7 +279,7 @@ export function RecoveryBanner({
         if (!target) throw new Error("Không có vòng PV để lưu vào");
         await updatePiece(p.id, {
           sessionId: target.id,
-          segment: nextSegmentOf(target),
+          segment: planFor(target, []).next,
           state: "pending",
           duration_ms: p.estMs,
         });
@@ -308,7 +323,7 @@ export function RecoveryBanner({
  */
 export function UnsavedRecordingsBadge({ userKey }: { userKey: string }) {
   const rec = useInterviewRecorder();
-  const [q, setQ] = useState<QueueState>({ pending: 0, uploading: null, error: null });
+  const [q, setQ] = useState<QueueState>({ pending: 0, uploading: null, error: null, local: [] });
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -327,6 +342,21 @@ export function UnsavedRecordingsBadge({ userKey }: { userKey: string }) {
     };
   }, [userKey, q.pending, q.uploading, rec.status]);
 
+  const recActive = rec.status === "recording" || rec.status === "paused" || rec.status === "stopping";
+  if (recActive) {
+    // Luôn thấy đang ghi + dừng được, kể cả khi hồ sơ đang ghi đã đóng / lọc mất khỏi danh sách.
+    return (
+      <button
+        onClick={() => void stopRecording()}
+        disabled={rec.status === "stopping"}
+        title="Đang ghi âm PV — bấm để dừng và lưu"
+        className="hr-toolbar-btn whitespace-nowrap text-[12px] text-red-300"
+      >
+        <span className={`h-2 w-2 rounded-full bg-red-500 ${rec.status === "recording" ? "animate-pulse" : ""}`} />
+        {formatClock(rec.elapsedMs)} · Dừng
+      </button>
+    );
+  }
   if (count === 0) return null;
   return (
     <button

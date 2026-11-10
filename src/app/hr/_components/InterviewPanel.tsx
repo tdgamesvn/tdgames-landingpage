@@ -12,11 +12,11 @@ import {
   RecorderBar,
   RecoveryBanner,
   SegmentList,
-  nextSegmentOf,
-  totalDurationMs,
+  planFor,
+  useQueueState,
 } from "./InterviewRecorder";
 import { subscribeSessions } from "./recorder-queue";
-import { startRecording, useInterviewRecorder, type RecorderStatus } from "./useInterviewRecorder";
+import { startRecording, useRecorderStatus, type RecorderStatus } from "./useInterviewRecorder";
 import { CalendarDays, Check, ChevronRight, RefreshCw, Sparkles } from "lucide-react";
 import { hrFetch, useHrSession } from "./HrSession";
 
@@ -343,9 +343,14 @@ function SessionCard({
   // Ghi âm trong app: thiếu quyền xem phân tích thì server giấu audio → không thấy đoạn đã ghi / Ghi tiếp.
   const canRecord = canManage && canAnalysis;
   const userKey = useRecorderUserKey();
-  const rec = useInterviewRecorder();
+  const rec = useRecorderStatus();
+  const queue = useQueueState();
   const recActive = REC_ACTIVE.includes(rec.status);
   const recordingHere = recActive && rec.sessionId === session.id;
+  // Còn mảnh của vòng này trong máy chưa lên server → chưa cho Ghi lại / thay file / xoá vòng
+  // (mảnh cũ tải lên sau sẽ lẫn vào bản ghi mới hoặc rơi vào vòng đã xoá).
+  const localPending = queue.local.some((l) => l.sessionId === session.id);
+  const plan = planFor(session, queue.local);
   const pieces = audioPiecesOf(session);
   const hasAudio = pieces.length > 0;
   const recordedInApp = Boolean(session.audio_pieces?.length);
@@ -524,7 +529,12 @@ function SessionCard({
           )}
         </div>
         {canManage && (
-          <button onClick={onDelete} className={BTN_RED} disabled={busy !== null || recordingHere}>
+          <button
+            onClick={onDelete}
+            className={BTN_RED}
+            disabled={busy !== null || recordingHere || localPending}
+            title={localPending ? "Còn ghi âm của vòng này đang chờ tải lên" : undefined}
+          >
             Xoá vòng
           </button>
         )}
@@ -605,12 +615,12 @@ function SessionCard({
                 <RecordButton
                   label="Ghi tiếp"
                   disabled={recActive || busy !== null}
-                  onClick={() => record(nextSegmentOf(session), totalDurationMs(session))}
+                  onClick={() => record(plan.next, plan.baseMs)}
                 />
-                <button onClick={recordAgain} className={BTN_PLAIN} disabled={recActive || busy !== null}>
+                <button onClick={recordAgain} className={BTN_PLAIN} disabled={recActive || busy !== null || localPending}>
                   Ghi lại
                 </button>
-                <button onClick={replaceWithFile} className={BTN_PLAIN} disabled={recActive || busy !== null}>
+                <button onClick={replaceWithFile} className={BTN_PLAIN} disabled={recActive || busy !== null || localPending}>
                   {busy === "upload" ? "Đang tải lên…" : "Thay bằng file…"}
                 </button>
               </div>
@@ -621,7 +631,7 @@ function SessionCard({
         ) : (
           <>
           {canRecord && (
-            <RecordButton disabled={recActive || busy !== null} onClick={() => record(1, 0)} />
+            <RecordButton disabled={recActive || busy !== null} onClick={() => record(plan.next, plan.baseMs)} />
           )}
           <div
             onClick={() => fileRef.current?.click()}
@@ -797,7 +807,8 @@ export default function InterviewPanel({
   const canManage = can("interviews.manage");
   const canRecord = canManage && can("apps.view_interview_analysis");
   const userKey = useRecorderUserKey();
-  const rec = useInterviewRecorder();
+  const rec = useRecorderStatus();
+  const queue = useQueueState();
   const recActive = REC_ACTIVE.includes(rec.status);
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -861,7 +872,13 @@ export default function InterviewPanel({
   );
 
   const latest = sessions.reduce<InterviewSession | null>((m, s) => (!m || s.round > m.round ? s : m), null);
-  const latestEmpty = latest && audioPiecesOf(latest).length === 0 && !latest.transcript?.trim() ? latest : null;
+  const latestEmpty =
+    latest &&
+    audioPiecesOf(latest).length === 0 &&
+    !latest.transcript?.trim() &&
+    !queue.local.some((l) => l.sessionId === latest.id)
+      ? latest
+      : null;
 
   // Nút Ghi âm ở header: vòng mới nhất còn trống (đã đặt lịch trước) → ghi vào đó; không thì tạo vòng mới.
   // Không bao giờ nối vào buổi PV cũ — nối tiếp là nút "Ghi tiếp" trong thẻ vòng.

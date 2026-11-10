@@ -131,11 +131,7 @@ export function appendPiece(
     audio_key: null,
     audio_bytes: null,
   };
-  if (row.transcript_source === "gemini" || row.transcript_source === "whisper") {
-    update.transcript = null;
-    update.transcript_source = null;
-  }
-  return { duplicate: false, update };
+  return { duplicate: false, update: { ...update, ...machineTranscriptReset(row.transcript_source) } };
 }
 
 /**
@@ -195,4 +191,47 @@ export function formatClock(ms: number): string {
   const m = Math.floor((t % 3600) / 60);
   const s = String(t % 60).padStart(2, "0");
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+
+/**
+ * Mảnh "recording" trong máy là mồ côi (app chết giữa chừng) khi không phải mảnh tab này đang ghi
+ * VÀ đã im >30s — tab /hr khác trên cùng máy có thể vẫn đang ghi nó (ghi chunk mỗi 5s).
+ */
+export const ORPHAN_SILENCE_MS = 30_000;
+export function isOrphanPiece(
+  p: { id: string; state: string; startedAt: number; lastChunkAt?: number },
+  liveId: string | null,
+  now: number,
+): boolean {
+  if (p.state === "needs_target") return true;
+  if (p.state !== "recording" || p.id === liveId) return false;
+  return now - (p.lastChunkAt ?? p.startedAt) > ORPHAN_SILENCE_MS;
+}
+
+/** Thời gian ghi thật; `cutoff` = lúc app bị ẩn (iOS treo JS, đồng hồ vẫn chạy) → không tính phần sau đó. */
+export function activeDuration(t: { accum: number; runningSince: number | null; now: number; cutoff: number | null }): number {
+  if (t.runningSince === null) return t.accum;
+  return t.accum + Math.max(0, Math.min(t.now, t.cutoff ?? t.now) - t.runningSince);
+}
+
+/** Ghi âm của vòng đổi (thêm/thay/xoá) → transcript máy gỡ không còn đúng; transcript dán tay giữ. */
+export function machineTranscriptReset(source: string | null | undefined): { transcript?: null; transcript_source?: null } {
+  return source === "gemini" || source === "whisper" ? { transcript: null, transcript_source: null } : {};
+}
+
+/** Thứ tự gửi gỡ băng: theo đoạn, trong đoạn theo thời điểm. */
+export function orderedPieces(pieces: AudioPiece[]): AudioPiece[] {
+  return segmentsOf(pieces).flatMap((g) => g.pieces);
+}
+
+/** Đoạn kế tiếp + mốc đồng hồ cho Ghi tiếp — gồm cả mảnh còn trong máy chưa lên server. */
+export function segmentPlan(
+  server: AudioPiece[],
+  local: { segment: number; duration_ms: number | null }[],
+): { next: number; baseMs: number } {
+  const all = [...server, ...local];
+  return {
+    next: all.reduce((m, p) => Math.max(m, p.segment), 0) + 1,
+    baseMs: all.reduce((n, p) => n + (p.duration_ms ?? 0), 0),
+  };
 }

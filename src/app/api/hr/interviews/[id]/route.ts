@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication, loadScopedInterview } from "@/lib/hr-session";
 import { redactInterview } from "@/lib/hr-scope";
 import { deleteFromR2, r2PublicUrl } from "@/lib/r2";
-import { allAudioKeys, isInterviewAudioKey } from "@/lib/interview-audio";
+import { allAudioKeys, isInterviewAudioKey, machineTranscriptReset } from "@/lib/interview-audio";
 import { audioKeyUsedElsewhere } from "@/lib/interview-audio-server";
 import { notifyCandidate } from "@/lib/hr-notify";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
@@ -176,10 +176,14 @@ export async function PATCH(
     allowed.audio_pieces = null;
     const { data: prev } = await supabase
       .from("interview_sessions")
-      .select("audio_key, audio_pieces")
+      .select("audio_key, audio_pieces, transcript_source")
       .eq("id", id)
       .single();
-    if (prev) oldAudioKeys = allAudioKeys(prev).filter((k) => k !== allowed.audio_key);
+    if (prev) {
+      oldAudioKeys = allAudioKeys(prev).filter((k) => k !== allowed.audio_key);
+      // Transcript máy gỡ là của bản ghi cũ — để lại thì Phân tích chấm bản đã xoá.
+      if (!("transcript" in body)) Object.assign(allowed, machineTranscriptReset(prev.transcript_source));
+    }
   }
 
   const { data, error } = await supabase

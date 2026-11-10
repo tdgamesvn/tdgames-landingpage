@@ -15,7 +15,7 @@ import {
   extractCvText,
 } from "@/lib/interview-ai";
 import { TranscribeError, transcribeFromUrls } from "@/lib/transcribe";
-import { audioPiecesOf } from "@/lib/interview-audio";
+import { audioPiecesOf, orderedPieces } from "@/lib/interview-audio";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,7 +63,7 @@ async function runAnalysis(id: string): Promise<RunResult> {
       return { error: "Chưa có ghi âm và cũng chưa có transcript — upload mp3 hoặc dán transcript trước." };
     }
     try {
-      const out = await transcribeFromUrls(pieces.map((p) => p.url));
+      const out = await transcribeFromUrls(orderedPieces(pieces).map((p) => p.url));
       transcript = out.text;
       transcriptSource = out.source;
     } catch (e) {

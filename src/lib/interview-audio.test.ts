@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 
 import {
   AUDIO_MAX_BYTES,
+  activeDuration,
   allAudioKeys,
   appendPiece,
   audioFileError,
@@ -12,11 +13,15 @@ import {
   formatProgress,
   geminiAudioMime,
   isInterviewAudioKey,
+  isOrphanPiece,
+  machineTranscriptReset,
   nextSegment,
+  orderedPieces,
   parsePieceInput,
   pickRecorderMime,
   planParts,
   recordingFileName,
+  segmentPlan,
   segmentsOf,
   shouldTreatAsInterrupted,
   type AudioPiece,
@@ -201,4 +206,43 @@ test("formatClock: m:ss dưới 1 tiếng, h:mm:ss từ 1 tiếng", () => {
   assert.equal(formatClock(0), "0:00");
   assert.equal(formatClock(65_400), "1:05");
   assert.equal(formatClock(3_725_000), "1:02:05");
+});
+
+// ── Sau review cuối ──────────────────────────────────────────────────────────
+
+test("isOrphanPiece: mảnh 'recording' chỉ mồ côi khi không phải mảnh đang ghi VÀ im >30s (tab khác vẫn đang ghi thì không)", () => {
+  const now = 1_000_000;
+  const p = { id: "a", state: "recording" as const, startedAt: now - 600_000, lastChunkAt: now - 10_000 };
+  assert.equal(isOrphanPiece(p, null, now), false); // tab khác vừa ghi chunk 10s trước
+  assert.equal(isOrphanPiece({ ...p, lastChunkAt: now - 31_000 }, null, now), true);
+  assert.equal(isOrphanPiece({ ...p, lastChunkAt: now - 31_000 }, "a", now), false); // chính mình đang ghi
+  assert.equal(isOrphanPiece({ ...p, lastChunkAt: undefined }, null, now), true); // dữ liệu cũ: dùng startedAt
+  assert.equal(isOrphanPiece({ ...p, state: "needs_target" as const }, null, now), true);
+  assert.equal(isOrphanPiece({ ...p, state: "pending" as const, lastChunkAt: 0 }, null, now), false);
+});
+
+test("activeDuration: không tính khoảng app bị treo nền sau mốc cutoff (iOS)", () => {
+  assert.equal(activeDuration({ accum: 1000, runningSince: 5000, now: 9000, cutoff: null }), 5000);
+  assert.equal(activeDuration({ accum: 1000, runningSince: 5000, now: 600_000, cutoff: 7000 }), 3000);
+  assert.equal(activeDuration({ accum: 1000, runningSince: null, now: 9000, cutoff: 7000 }), 1000);
+  assert.equal(activeDuration({ accum: 0, runningSince: 8000, now: 9000, cutoff: 7000 }), 0);
+});
+
+test("machineTranscriptReset: thay/xoá ghi âm → xoá transcript máy gỡ, giữ transcript dán tay", () => {
+  assert.deepEqual(machineTranscriptReset("gemini"), { transcript: null, transcript_source: null });
+  assert.deepEqual(machineTranscriptReset("whisper"), { transcript: null, transcript_source: null });
+  assert.deepEqual(machineTranscriptReset("manual"), {});
+  assert.deepEqual(machineTranscriptReset(null), {});
+});
+
+test("orderedPieces: gỡ băng theo thứ tự đoạn, không theo thứ tự gắn (mảnh khôi phục gắn muộn)", () => {
+  const out = orderedPieces([piece(3, 3), piece(1, 1), piece(2, 2, 1000, "2026-11-10T11:00:00Z")]);
+  assert.deepEqual(out.map((p) => p.key), [K(1), K(2), K(3)]);
+});
+
+test("segmentPlan: Ghi tiếp tính cả mảnh còn trong máy chưa lên server", () => {
+  assert.deepEqual(segmentPlan([piece(1, 1, 60_000)], []), { next: 2, baseMs: 60_000 });
+  assert.deepEqual(segmentPlan([piece(1, 1, 60_000)], [{ segment: 2, duration_ms: 30_000 }]), { next: 3, baseMs: 90_000 });
+  assert.deepEqual(segmentPlan([], [{ segment: 1, duration_ms: null }]), { next: 2, baseMs: 0 });
+  assert.deepEqual(segmentPlan([], []), { next: 1, baseMs: 0 });
 });

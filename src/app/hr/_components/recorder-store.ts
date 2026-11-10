@@ -21,6 +21,8 @@ export type StoredPiece = {
   startedAt: number;
   duration_ms: number | null;
   state: "recording" | "pending" | "needs_target";
+  /** Lần cuối ghi chunk — tab khác đang ghi thì mới đây, mảnh mồ côi (app chết) thì im lâu. */
+  lastChunkAt?: number;
   /** Đã lên R2 nhưng chưa gắn vào vòng PV — gửi lại không upload lần nữa. */
   uploaded?: { key: string; url: string; bytes: number };
 };
@@ -39,7 +41,18 @@ function db(): Promise<IDBDatabase> {
       d.createObjectStore(PIECES, { keyPath: "id" });
       d.createObjectStore(CHUNKS); // key [pieceId, idx]
     };
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => {
+      const d = req.result;
+      // WebKit hay mất kết nối IndexedDB sau khi app chạy nền → lần sau mở lại, đừng giữ kết nối chết.
+      d.onclose = () => {
+        dbPromise = null;
+      };
+      d.onversionchange = () => {
+        d.close();
+        dbPromise = null;
+      };
+      resolve(d);
+    };
     req.onerror = () => {
       dbPromise = null;
       reject(req.error ?? new Error("Không mở được bộ nhớ máy (IndexedDB)"));
@@ -49,6 +62,20 @@ function db(): Promise<IDBDatabase> {
 }
 
 async function run<T>(
+  stores: string[],
+  mode: IDBTransactionMode,
+  fn: (tx: IDBTransaction) => IDBRequest<T> | void,
+): Promise<T | undefined> {
+  try {
+    return await runOnce(stores, mode, fn);
+  } catch {
+    // Kết nối hỏng (InvalidStateError / "Connection to Indexed Database server lost") → mở lại, thử 1 lần.
+    dbPromise = null;
+    return runOnce(stores, mode, fn);
+  }
+}
+
+async function runOnce<T>(
   stores: string[],
   mode: IDBTransactionMode,
   fn: (tx: IDBTransaction) => IDBRequest<T> | void,
@@ -71,8 +98,22 @@ export async function startPiece(meta: Omit<StoredPiece, "state" | "duration_ms"
 }
 
 export async function appendChunk(pieceId: string, idx: number, blob: Blob): Promise<void> {
-  await run([CHUNKS], "readwrite", (tx) => {
+  await run([PIECES, CHUNKS], "readwrite", (tx) => {
     tx.objectStore(CHUNKS).put(blob, [pieceId, idx]);
+    const pieces = tx.objectStore(PIECES);
+    const get = pieces.get(pieceId);
+    get.onsuccess = () => {
+      if (get.result) pieces.put({ ...get.result, lastChunkAt: Date.now() });
+    };
+  });
+}
+
+/** Ghi lại toàn bộ chunk của mảnh (bản trong RAM) — khi lưu từng chunk từng hỏng giữa chừng. */
+export async function rewriteChunks(pieceId: string, blobs: Blob[]): Promise<void> {
+  await run([CHUNKS], "readwrite", (tx) => {
+    const store = tx.objectStore(CHUNKS);
+    store.delete(chunkRange(pieceId));
+    blobs.forEach((b, i) => store.put(b, [pieceId, i]));
   });
 }
 
