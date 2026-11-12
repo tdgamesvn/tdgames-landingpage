@@ -10,7 +10,14 @@ export default function GoogleAnalytics() {
   if (ids.length === 0) return null;
 
   // Bỏ ?chat=<mã> (link "Continue the conversation" trong mail chat) khỏi URL gửi GA — mã là bí mật 1 lần.
-  const config = ids.map((id) => `gtag('config', '${id}', { page_location: __tdgLoc });`).join("\n");
+  // allow_enhanced_conversions: cho tag Ads nhận email (gtag tự hash SHA-256 trong trình duyệt) — xem trackEvent.
+  const config = ids
+    .map((id) =>
+      id === ADS_ID
+        ? `gtag('config', '${id}', { page_location: __tdgLoc, allow_enhanced_conversions: true });`
+        : `gtag('config', '${id}', { page_location: __tdgLoc });`,
+    )
+    .join("\n");
 
   return (
     <>

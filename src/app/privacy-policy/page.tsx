@@ -87,7 +87,8 @@ const SECTIONS: LegalSection[] = [
     title: "Cookies and Analytics",
     paragraphs: [
       "We use cookies and similar tracking technologies to operate the site and to understand, in aggregate, how it is used. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. If you do not accept cookies, some portions of the Service may not function correctly.",
-      "We may use third-party Service Providers to monitor and analyse the use of our Service. These providers process technical and usage information on our behalf and are not permitted to use it for their own purposes. This website does not display third-party advertising and does not run advertising or ad-attribution networks; advertising in our Apps is described separately below.",
+      "We use Google Analytics to understand, in aggregate, how the site is used, and Google Ads to measure whether our search advertising leads to project enquiries. When you submit our contact form, the Google tag converts your email address into a one-way hash in your browser before sending it to Google, which uses it only to match the enquiry to an earlier ad interaction (Google Ads enhanced conversions). Information about how Google processes this data is available in the Google Privacy Policy at policies.google.com/privacy.",
+      "This website does not display third-party advertising; advertising in our Apps is described separately below.",
     ],
   },
   {
@@ -177,7 +178,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      updated="29 August 2026"
+      updated="12 November 2026"
       intro={INTRO}
       sections={SECTIONS}
     />

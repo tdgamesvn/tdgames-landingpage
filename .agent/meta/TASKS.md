@@ -2,6 +2,7 @@
 
 ## Doing
 
+- [ ] SEO + Ads: kế hoạch `docs/marketing/2026-11-12-seo-ads-plan.md` (2026-11-12) — chờ sếp duyệt. Em: trang /services/spine-animation, audit toàn site. Sếp: key event GA4 + link Ads/GSC + tạo chiến dịch Search $400 + remarketing $100. LOG 2026-11-12
 - [ ] Sếp: đăng nhập lại Claude trong cliproxyapi (Mac mini) — credential Claude hỏng (invalid x-api-key). Tạm thời VPS AI_MODEL=gpt-6.1-sol (2026-11-10). Đăng nhập xong muốn thì đổi lại. LOG 2026-11-10
 - [x] Mail xác nhận tự động cho khách gửi form báo giá — AI viết (chỉ mail đầu, hỏi đúng thông tin thiếu), gửi sau 3 phút, VI xưng anh/chị, huỷ được trong /crm; từ toan.dang@, Reply/BCC về toan.dang@ (2026-11-10) — ĐANG CHẠY THẬT (LEAD_ACK_MODE=live). Theo dõi vài lead đầu (Discord sales: AI viết hay mail mẫu). LOG 2026-11-10
 - [ ] HR: ghi âm PV ngay trong app /hr (nút ⏺ Ghi âm trên hồ sơ, iPhone PWA) (2026-11-10) — ĐÃ DEPLOY. Chờ sếp thử trên iPhone thật: ghi → dừng → nghe; khoá máy giữa chừng → Ghi tiếp; tắt hẳn app → mở lại ~30s thấy Khôi phục; Phân tích ra 1 transcript. Spec 2026-11-10-interview-recorder-design. Minor tồn: LOG 2026-11-10. 6 file thử mồ côi trên R2 đã xoá 2026-11-10

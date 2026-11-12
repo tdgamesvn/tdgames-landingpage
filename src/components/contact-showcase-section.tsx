@@ -85,11 +85,15 @@ export default function ContactShowcaseSection({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Something went wrong");
-      trackEvent("generate_lead", {
-        service: data.get("service"),
-        budget: data.get("budget") || undefined,
-        page: window.location.pathname,
-      });
+      trackEvent(
+        "generate_lead",
+        {
+          service: data.get("service"),
+          budget: data.get("budget") || undefined,
+          page: window.location.pathname,
+        },
+        { email: String(data.get("email") ?? "") },
+      );
       form.reset();
       setChannel("");
       setState("sent");
