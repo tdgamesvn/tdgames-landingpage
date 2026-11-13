@@ -936,8 +936,10 @@ function CandidateModal({
                     className="inline-flex items-center gap-1 rounded-md border border-dashed border-white/25 px-1.5 py-0.5 text-white/80 transition-colors hover:border-[var(--hr-orange)] hover:text-[var(--hr-orange)]"
                   >
                     {app.jobs.title}
-                    <ArrowLeftRight className="h-3 w-3" aria-hidden />
-                    <span className="sr-only">— đổi vị trí ứng tuyển</span>
+                    <span className="inline-flex items-center gap-0.5 font-semibold text-[var(--hr-orange)]">
+                      <ArrowLeftRight className="h-3 w-3" aria-hidden />Đổi
+                    </span>
+                    <span className="sr-only">vị trí ứng tuyển</span>
                   </button>
                 ) : (
                   <span className="text-white/80">{app.jobs.title}</span>
