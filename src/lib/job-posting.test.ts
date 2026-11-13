@@ -81,6 +81,7 @@ test("jobPostingJsonLd: đủ field, baseSalary VND/MONTH, không validThrough",
   assert.equal(ld.directApply, true);
   assert.equal(ld.hiringOrganization["@id"], "https://tdgamestudio.com/#organization");
   assert.equal(ld.jobLocation.address.addressCountry, "VN");
+  assert.equal(ld.jobLocation.address.postalCode, "100000");
   assert.equal(ld.url, "https://tdgamestudio.com/careers/2d-game-artist");
   assert.deepEqual(ld.baseSalary?.value, {
     "@type": "QuantitativeValue",

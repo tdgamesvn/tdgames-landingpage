@@ -6602,3 +6602,8 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
   - Kiểm: tsc 0, eslint sạch, gitnexus impact CandidateModal LOW. E2E production (boss tạm + 2 hồ sơ ZZTEST): 10/10 PASS (400 cùng job, 409 trùng, 200 đổi, jobs.title mới, ai_score null, đề test theo job mới, bình luận, đổi ngược). Dọn: hồ sơ xoá qua API, user + session xoá, kiểm còn 0. UI chưa xem bằng mắt.
   - Việc của sếp/HR: tạo đề test cho job Graphic Designer (tab Jobs, hiện chưa có đề) → mở hồ sơ Chu Hà My → ⋯ → Đổi vị trí ứng tuyển → Graphic Designer → gửi link test.
 - (tiếp) Sếp: "chả thấy đổi vị trí ở đâu" (nút nằm trong ⋯) → thêm lối vào dễ thấy: tên vị trí dưới tên ứng viên thành chip bấm được "2D Game Artist ⇆ Đổi" (chỉ boss/hr), vẫn giữ mục trong ⋯ (commit ac22faf, 883ccaf, đã deploy). Đã xem bằng Playwright trên prod (boss tạm + hồ sơ ZZTEST): chip hiện đúng, bấm mở hộp thoại đúng. Dọn: hồ sơ + user + session xoá, kiểm còn 0; script/ảnh tạm đã xoá.
+
+## 2026-11-13 (tiếp) — Search Console: JobPosting thiếu postalCode / validThrough
+- Sếp gửi ảnh GSC "Cải thiện giao diện của mục": thiếu `postalCode` (jobLocation.address) + thiếu `validThrough`, mỗi lỗi 1 mục (cảnh báo, mục vẫn hợp lệ).
+- Sửa `jobPostingJsonLd`: có streetAddress (job tại Hà Nội — cả 6 job đang mở) → thêm `postalCode: OFFICE_POSTAL_CODE` ("100000", trùng Organization ở root layout). Test 10/10, tsc 0.
+- `validThrough` CỐ Ý không thêm: bảng jobs không có hạn nộp; Google hướng dẫn job không có hạn thì bỏ trống — cảnh báo này để nguyên. Muốn hết: thêm trường "Hạn nộp" cho job (chờ sếp).

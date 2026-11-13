@@ -77,6 +77,8 @@ export function employmentTypeOf(type: string | null | undefined): string | unde
 
 /** Địa chỉ văn phòng (trùng Organization ở root layout) — dùng khi job chỉ ghi "Hà Nội". */
 export const OFFICE_STREET = "Toà Hoà Bình Green City, 505 Minh Khai, Phường Vĩnh Tuy";
+/** Mã bưu chính văn phòng — trùng Organization.address.postalCode ở root layout. */
+export const OFFICE_POSTAL_CODE = "100000";
 
 /**
  * "Hà Nội: Toà Hoà Bình Green City, 505 Minh Khai, Phường Vĩnh Tuy, Hà Nội" → phần đường phố.
@@ -146,7 +148,8 @@ export function jobPostingJsonLd(job: JobPostingInput) {
       "@type": "Place",
       address: {
         "@type": "PostalAddress",
-        ...(streetAddress ? { streetAddress } : {}),
+        // Có địa chỉ văn phòng (job làm tại Hà Nội) → kèm mã bưu chính (Search Console báo thiếu).
+        ...(streetAddress ? { streetAddress, postalCode: OFFICE_POSTAL_CODE } : {}),
         addressLocality: "Hà Nội",
         addressRegion: "Hà Nội",
         addressCountry: "VN",
