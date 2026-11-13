@@ -129,6 +129,8 @@ export type Job = {
   /** Job có nhận hình thức freelancer (ứng viên freelancer → cột Freelancer thay vì Lưu hồ sơ). */
   accepts_freelance?: boolean;
   created_at: string;
+  /** Hạn nộp "YYYY-MM-DD" (tuỳ chọn) → JobPosting.validThrough. */
+  apply_deadline?: string | null;
   /** Tài khoản Leader phụ trách job (hr_users.id). */
   leader_user_id?: string | null;
 };

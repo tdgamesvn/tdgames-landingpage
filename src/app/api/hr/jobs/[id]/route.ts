@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, jobInScope } from "@/lib/hr-session";
+import { normalizeDeadline } from "@/lib/job-posting";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 const EDITABLE_JOB_COLUMNS = [
   "title", "type", "location", "level", "salary", "rate_per_hour", "summary", "description",
   "categories", "requirements", "responsibilities", "nice_to_have", "skills", "image_url", "is_active",
-  "accepts_freelance", "leader_user_id",
+  "accepts_freelance", "leader_user_id", "apply_deadline",
 ] as const;
 
 export async function PATCH(
@@ -48,6 +49,13 @@ export async function PATCH(
   const inScopeJob = await jobInScope(ctx, id).catch(() => undefined);
   if (inScopeJob === undefined) return NextResponse.json({ error: "Không đọc được job" }, { status: 500 });
   if (!inScopeJob) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Hạn nộp: "YYYY-MM-DD" có thật hoặc rỗng/null (= không có hạn).
+  if ("apply_deadline" in body) {
+    const d = normalizeDeadline(body.apply_deadline);
+    if (d === undefined) return NextResponse.json({ error: "Hạn nộp không hợp lệ" }, { status: 400 });
+    body.apply_deadline = d;
+  }
 
   const supabase = getSupabaseAdmin();
 

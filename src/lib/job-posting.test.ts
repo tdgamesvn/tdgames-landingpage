@@ -5,10 +5,12 @@ import assert from "node:assert/strict";
 import {
   OFFICE_STREET,
   employmentTypeOf,
+  formatDeadlineVi,
   jobDescriptionHtml,
   jobPostingJsonLd,
   jobStreetAddress,
   monthlySalaryVnd,
+  normalizeDeadline,
   parseSalaryRangeVnd,
 } from "./job-posting.ts";
 
@@ -91,6 +93,23 @@ test("jobPostingJsonLd: đủ field, baseSalary VND/MONTH, không validThrough",
   });
   assert.equal(ld.baseSalary?.currency, "VND");
   assert.ok(!("validThrough" in ld));
+});
+
+test("jobPostingJsonLd: có hạn nộp → validThrough cuối ngày giờ VN", () => {
+  const ld = jobPostingJsonLd({ title: "GD", slug: "gd", type: "fulltime", location: "Hà Nội", apply_deadline: "2026-12-31" });
+  assert.equal(ld.validThrough, "2026-12-31T23:59:59+07:00");
+  assert.equal(ld.jobLocation.address.postalCode, "100000");
+});
+
+test("normalizeDeadline / formatDeadlineVi", () => {
+  assert.equal(normalizeDeadline(""), null);
+  assert.equal(normalizeDeadline(null), null);
+  assert.equal(normalizeDeadline("2026-02-28"), "2026-02-28");
+  assert.equal(normalizeDeadline("2026-02-30"), undefined);
+  assert.equal(normalizeDeadline("31/12/2026"), undefined);
+  assert.equal(normalizeDeadline(20261231), undefined);
+  assert.equal(formatDeadlineVi("2026-12-31"), "31/12/2026");
+  assert.equal(formatDeadlineVi(null), null);
 });
 
 test("jobPostingJsonLd: lương thoả thuận → không có baseSalary", () => {

@@ -9,7 +9,7 @@ import JsonLd from "@/components/json-ld";
 import SiteFooter from "@/components/site-footer";
 import SiteHeader from "@/components/site-header";
 import { breadcrumbJsonLd } from "@/lib/json-ld";
-import { jobPostingJsonLd } from "@/lib/job-posting";
+import { formatDeadlineVi, jobPostingJsonLd } from "@/lib/job-posting";
 import { getActiveJob, isJobSlug, listActiveJobs } from "@/lib/jobs-data";
 import { ogImages } from "@/lib/seo";
 import JobActions, { RefLink } from "./job-actions";
@@ -17,7 +17,7 @@ import JobActions, { RefLink } from "./job-actions";
 // Trang chi tiết 1 job (tiếng Việt) — trang index được cho từ khoá "tuyển dụng <vị trí> hà nội".
 // /careers?job=<slug> (panel) vẫn giữ; /apply/<slug> là form (noindex).
 // Cache DB 300s như /careers. Job đóng (is_active=false) / slug lạ → 404, không giữ trang
-// job hết hạn (JobPosting không có validThrough).
+// job hết hạn (validThrough chỉ khi job có hạn nộp — jobs.apply_deadline).
 
 // Font riêng có subset vietnamese: Nunito của root layout chỉ có latin, Rajdhani/Changa One không có dấu tiếng Việt.
 const nunitoVi = Nunito_Sans({ weight: ["400", "600", "700", "800", "900"], subsets: ["latin", "vietnamese"] });
@@ -130,6 +130,7 @@ export default async function CareerJobPage({ params }: Props) {
   const postedLabel = Number.isNaN(posted.getTime())
     ? null
     : posted.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+  const deadlineLabel = formatDeadlineVi(job.apply_deadline);
   const lists = {
     responsibilities: (job.responsibilities ?? []).filter(Boolean),
     requirements: (job.requirements ?? []).filter(Boolean),
@@ -210,7 +211,13 @@ export default async function CareerJobPage({ params }: Props) {
             <Fact label="Hình thức">{TYPE_LABEL[job.type] ?? job.type}</Fact>
             <Fact label="Cấp bậc">{job.level || "Mọi cấp bậc"}</Fact>
           </dl>
-          {postedLabel && <p className="mt-3 text-xs text-white/45">Đăng ngày {postedLabel}</p>}
+          {(postedLabel || deadlineLabel) && (
+            <p className="mt-3 text-xs text-white/45">
+              {postedLabel && <>Đăng ngày {postedLabel}</>}
+              {postedLabel && deadlineLabel && " · "}
+              {deadlineLabel && <span className="font-semibold text-white/70">Hạn nộp {deadlineLabel}</span>}
+            </p>
+          )}
 
           <div className="mt-10 flex flex-col gap-8">
             {job.description && job.description !== job.summary && (

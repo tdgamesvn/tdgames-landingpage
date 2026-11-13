@@ -2084,13 +2084,15 @@ type JobDraft = {
   categories: string; requirements: string; responsibilities: string;
   nice_to_have: string; skills: string; image_url: string; is_active: boolean;
   accepts_freelance: boolean;
+  /** "YYYY-MM-DD" hoặc "" (không có hạn). */
+  apply_deadline: string;
 };
 
 const EMPTY_DRAFT: JobDraft = {
   title: "", type: "fulltime", location: "", level: "", salary: "",
   summary: "", description: "", categories: "", requirements: "",
   responsibilities: "", nice_to_have: "", skills: "", image_url: "", is_active: true,
-  accepts_freelance: false,
+  accepts_freelance: false, apply_deadline: "",
 };
 
 function jobToDraft(j: Job): JobDraft {
@@ -2104,6 +2106,7 @@ function jobToDraft(j: Job): JobDraft {
     skills: j.skills.join(", "),
     image_url: j.image_url, is_active: j.is_active,
     accepts_freelance: j.accepts_freelance === true,
+    apply_deadline: j.apply_deadline ?? "",
   };
 }
 
@@ -2118,6 +2121,7 @@ function draftToPayload(d: JobDraft) {
     skills: d.skills.split(",").map((s) => s.trim()).filter(Boolean),
     image_url: d.image_url, is_active: d.is_active,
     accepts_freelance: d.accepts_freelance,
+    apply_deadline: d.apply_deadline || null,
   };
 }
 
@@ -2271,10 +2275,23 @@ function JobForm({
         </div>
       </div>
 
-      {/* Categories + Summary */}
-      <div>
-        <label className={labelCls}>Categories (comma-separated)</label>
-        <input className={inputCls} value={d.categories} onChange={(e) => set("categories", e.target.value)} placeholder="Art, Animation" />
+      {/* Categories + Hạn nộp + Summary */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="sm:col-span-2">
+          <label className={labelCls}>Categories (comma-separated)</label>
+          <input className={inputCls} value={d.categories} onChange={(e) => set("categories", e.target.value)} placeholder="Art, Animation" />
+        </div>
+        <div>
+          <label className={labelCls}>Hạn nộp (tuỳ chọn)</label>
+          <div className="flex gap-1.5">
+            <input type="date" className={inputCls} value={d.apply_deadline} onChange={(e) => set("apply_deadline", e.target.value)} />
+            {d.apply_deadline && (
+              <button type="button" onClick={() => set("apply_deadline", "")} title="Bỏ hạn nộp"
+                className="shrink-0 rounded-lg border border-white/15 px-2 text-xs text-white/50 hover:bg-white/5">✕</button>
+            )}
+          </div>
+          <p className="mt-1 text-[10px] text-white/35">Để trống = tuyển đến khi đủ. Có hạn → hiện trên trang job + gửi Google.</p>
+        </div>
       </div>
       <div>
         <label className={labelCls}>Summary (shown in detail panel)</label>

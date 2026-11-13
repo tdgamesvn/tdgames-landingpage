@@ -16,7 +16,32 @@ export type JobPostingInput = {
   nice_to_have?: string[] | null;
   skills?: string[] | null;
   created_at?: string | null;
+  /** Hạn nộp "YYYY-MM-DD" (tuỳ chọn). */
+  apply_deadline?: string | null;
 };
+
+/**
+ * Chuẩn hoá hạn nộp từ form/API: "" / null → null; "YYYY-MM-DD" là ngày có thật → giữ nguyên;
+ * còn lại → undefined (không hợp lệ).
+ */
+export function normalizeDeadline(v: unknown): string | null | undefined {
+  if (v === null || v === "" || v === undefined) return null;
+  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return undefined;
+  const d = new Date(`${v}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v ? v : undefined;
+}
+
+/** Hạn nộp → validThrough: hết ngày đó theo giờ Việt Nam. */
+export function validThroughOf(deadline: string | null | undefined): string | undefined {
+  const d = normalizeDeadline(deadline);
+  return d ? `${d}T23:59:59+07:00` : undefined;
+}
+
+/** "2026-12-31" → "31/12/2026" (hiển thị trên trang job). */
+export function formatDeadlineVi(deadline: string | null | undefined): string | null {
+  const d = normalizeDeadline(deadline);
+  return d ? d.split("-").reverse().join("/") : null;
+}
 
 /**
  * "Junior: 10–15 triệu/tháng | Senior: 15–20 triệu/tháng" → { min: 10e6, max: 20e6 } (VND/tháng).
@@ -121,8 +146,12 @@ export function jobDescriptionHtml(job: JobPostingInput): string {
   return parts.join("");
 }
 
-/** JSON-LD JobPosting. Không có validThrough (không có dữ liệu hạn nộp thật); job đóng → trang 404. */
+/**
+ * JSON-LD JobPosting. validThrough chỉ khi job có hạn nộp thật (Google: không có hạn thì bỏ trống);
+ * job đóng → trang 404.
+ */
 export function jobPostingJsonLd(job: JobPostingInput) {
+  const validThrough = validThroughOf(job.apply_deadline);
   const salary = monthlySalaryVnd(job.salary, job.type);
   const employmentType = employmentTypeOf(job.type);
   const streetAddress = jobStreetAddress(job.location);
@@ -135,6 +164,7 @@ export function jobPostingJsonLd(job: JobPostingInput) {
     description: jobDescriptionHtml(job),
     identifier: { "@type": "PropertyValue", name: "TD Games", value: job.slug },
     ...(datePosted ? { datePosted } : {}),
+    ...(validThrough ? { validThrough } : {}),
     ...(employmentType ? { employmentType } : {}),
     // @id nối với Organization của root layout; name/sameAs/logo để validator không cần dereference.
     hiringOrganization: {

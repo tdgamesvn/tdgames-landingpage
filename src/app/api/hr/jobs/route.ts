@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser } from "@/lib/hr-session";
+import { normalizeDeadline } from "@/lib/job-posting";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,6 +41,8 @@ export async function POST(request: Request) {
   if (!title || !type) {
     return NextResponse.json({ error: "title and type are required" }, { status: 400 });
   }
+  const apply_deadline = normalizeDeadline(body.apply_deadline);
+  if (apply_deadline === undefined) return NextResponse.json({ error: "Hạn nộp không hợp lệ" }, { status: 400 });
 
   // Auto-generate slug from title
   const slug = String(title)
@@ -58,6 +61,7 @@ export async function POST(request: Request) {
       skills: skills ?? [], image_url: image_url ?? "",
       is_active: is_active ?? false,
       accepts_freelance: accepts_freelance === true,
+      apply_deadline,
       slug,
     }])
     .select()
