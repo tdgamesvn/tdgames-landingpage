@@ -927,7 +927,21 @@ function CandidateModal({
             <div className="min-w-0 flex-1">
               <h3 className="text-[21px] font-bold leading-tight tracking-tight text-white">{app.full_name}</h3>
               <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-white/50">
-                {app.jobs && <span className="text-white/80">{app.jobs.title}</span>}
+                {app.jobs && (canMoveJob ? (
+                  // Bấm thẳng vào tên vị trí để đổi — chỗ người dùng nhìn thấy vị trí là chỗ sửa nó.
+                  <button
+                    type="button"
+                    onClick={() => setShowMoveJob(true)}
+                    title="Đổi vị trí ứng tuyển"
+                    className="inline-flex items-center gap-1 rounded-md border border-dashed border-white/25 px-1.5 py-0.5 text-white/80 transition-colors hover:border-[var(--hr-orange)] hover:text-[var(--hr-orange)]"
+                  >
+                    {app.jobs.title}
+                    <ArrowLeftRight className="h-3 w-3" aria-hidden />
+                    <span className="sr-only">— đổi vị trí ứng tuyển</span>
+                  </button>
+                ) : (
+                  <span className="text-white/80">{app.jobs.title}</span>
+                ))}
                 <span>Nộp ngày {new Date(app.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })}</span>
                 {app.referred_by && <span className="font-semibold text-amber-400">via {app.referred_by}</span>}
               </p>
