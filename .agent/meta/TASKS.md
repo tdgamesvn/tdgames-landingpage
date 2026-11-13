@@ -2,6 +2,7 @@
 
 ## Doing
 
+- [ ] HR: Đổi vị trí ứng tuyển (⋯ trong hồ sơ) (2026-11-13) — ĐÃ DEPLOY, E2E 10/10. Chờ sếp/HR: tạo đề test job Graphic Designer, chuyển hồ sơ Chu Hà My, xem UI. LOG 2026-11-13
 - [ ] SEO + Ads (2026-11-12): kế hoạch `docs/marketing/2026-11-12-seo-ads-plan.md`. GA4/Ads/GSC xong, enhanced conversions đã deploy. Chiến dịch `Search – Animation – T1` ĐANG CHẠY (165k/ngày). Còn: kiểm cài đặt sau publish + từ khoá phủ định; tạo chiến dịch Art 99k + VFX/Full (sếp chốt 3 hay 4); tuần sau xem Search terms. Em: trang /services/spine-animation?, audit SEO. LOG 2026-11-12
 - [ ] Sếp: đăng nhập lại Claude trong cliproxyapi (Mac mini) — credential Claude hỏng (invalid x-api-key). Tạm thời VPS AI_MODEL=gpt-6.1-sol (2026-11-10). Đăng nhập xong muốn thì đổi lại. LOG 2026-11-10
 - [x] Mail xác nhận tự động cho khách gửi form báo giá — AI viết (chỉ mail đầu, hỏi đúng thông tin thiếu), gửi sau 3 phút, VI xưng anh/chị, huỷ được trong /crm; từ toan.dang@, Reply/BCC về toan.dang@ (2026-11-10) — ĐANG CHẠY THẬT (LEAD_ACK_MODE=live). Theo dõi vài lead đầu (Discord sales: AI viết hay mail mẫu). LOG 2026-11-10
