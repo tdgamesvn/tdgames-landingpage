@@ -33,7 +33,7 @@ import { fetchPdfBlob, openPdfInNewTab } from "./OfferLetterFields";
 import { previousReviewNote } from "@/lib/offer-letter-approval";
 import { normalizeRefCode } from "@/lib/hr-ref-codes";
 import { cvViewerUrl, safeExternalUrl } from "@/lib/cv-viewer";
-import { ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
+import { ArrowLeftRight, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -407,6 +407,105 @@ function RejectModal({
   );
 }
 
+/** Đổi vị trí ứng tuyển (vd. apply 2D Game Artist → chuyển sang Graphic Designer). */
+function MoveJobDialog({
+  app,
+  onDone,
+  onCancel,
+}: {
+  app: Application;
+  onDone: (updated: Partial<Application>) => void;
+  onCancel: () => void;
+}) {
+  const [jobs, setJobs] = useState<Job[] | null>(null);
+  const [target, setTarget] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    hrFetch("/api/hr/jobs")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((d) => alive && setJobs(((d.jobs ?? []) as Job[]).filter((j) => j.id !== app.job_id)))
+      .catch(() => alive && setError("Không tải được danh sách vị trí"));
+    return () => {
+      alive = false;
+    };
+  }, [app.job_id]);
+
+  async function confirmMove() {
+    if (!target) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await hrFetch(`/api/hr/applications/${app.id}/move-job`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id: target }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      onDone(data.application);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Không đổi được vị trí");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Job đang mở lên trước; job đã đóng vẫn chọn được (chuyển sang vị trí nội bộ chưa đăng tuyển).
+  const sorted = (jobs ?? []).slice().sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.title.localeCompare(b.title));
+
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={onCancel}>
+      <div className="w-full max-w-md rounded-2xl border border-white/15 hr-sheet p-6 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div>
+          <h3 className="text-base font-bold text-white">Đổi vị trí ứng tuyển</h3>
+          <p className="mt-1 text-xs text-white/50">
+            <span className="font-semibold text-white/70">{app.full_name}</span> đang ở{" "}
+            <span className="font-semibold text-white/70">{app.jobs?.title ?? "vị trí hiện tại"}</span>
+          </p>
+        </div>
+
+        <label className="block">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-white/40">Chuyển sang</span>
+          <select
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            disabled={!jobs || busy}
+            className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none"
+          >
+            <option value="">{jobs ? "— Chọn vị trí —" : "Đang tải…"}</option>
+            {sorted.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.title}{j.is_active ? "" : " (đã đóng)"}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <ul className="list-disc space-y-1 pl-4 text-[12px] leading-relaxed text-white/55">
+          <li>Link test sẽ mở đề của vị trí mới; bài đã nộp vẫn giữ.</li>
+          <li>Điểm AI cũ bị xoá — bấm &ldquo;Chấm bằng AI&rdquo; để chấm theo JD mới.</li>
+          <li>Trạng thái, bình luận, lịch PV, mail đã gửi giữ nguyên. Không gửi mail cho ứng viên.</li>
+        </ul>
+
+        {error && <p className="text-xs text-red-400">{error}</p>}
+
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button onClick={onCancel} className="rounded-lg border border-white/15 px-4 py-2 text-xs text-white/60 hover:bg-white/5 transition-colors">
+            Huỷ
+          </button>
+          <button onClick={() => void confirmMove()} disabled={!target || busy} className="hr-primary-btn hr-primary-btn--sm disabled:opacity-50">
+            {busy ? "Đang chuyển…" : "Đổi vị trí"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function DetailRow({ label, value, href }: { label: string; value?: string | number | null; href?: string }) {
@@ -695,9 +794,12 @@ function CandidateModal({
     onCloseProp();
   }, [onCloseProp]);
   const S = useStatuses();
-  const { can } = useHrSession();
+  const { can, me } = useHrSession();
   const canEdit = can("apps.edit");
   const canComment = can("apps.comment");
+  // Đổi vị trí ứng tuyển: chỉ Sếp/HR (Leader đổi đi là mất quyền xem hồ sơ) — server kiểm lại.
+  const canMoveJob = canEdit && (me?.role === "boss" || me?.role === "hr");
+  const [showMoveJob, setShowMoveJob] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   // Xem CV cạnh hồ sơ (màn ≥1024px). Nhớ lựa chọn để mở ứng viên khác vẫn giữ.
   const cvEmbed = cvViewerUrl(app.cv_url);
@@ -884,6 +986,11 @@ function CandidateModal({
                     <RefreshCw className="hr-ico" />{freelance ? "Chuyển sang fulltime" : "Chuyển sang freelancer"}
                   </button>
                 )}
+                {canMoveJob && (
+                  <button role="menuitem" onClick={() => setShowMoveJob(true)} disabled={saving} className="hr-menu-item">
+                    <ArrowLeftRight className="hr-ico" />Đổi vị trí ứng tuyển
+                  </button>
+                )}
                 {can("apps.delete") && (
                   <button role="menuitem" onClick={onDeleteApp} disabled={saving} className="hr-menu-item text-red-400">
                     <Trash2 className="hr-ico" />Xoá hồ sơ
@@ -1035,6 +1142,7 @@ function CandidateModal({
             )}
 
             <SubmissionsPanel
+              key={app.job_id /* đổi vị trí → tải lại đề test của job mới */}
               appId={app.id}
               review={app.test_review}
               onReview={(test_review) => onPatch({ test_review })}
@@ -1093,10 +1201,21 @@ function CandidateModal({
           {/* Right: comments */}
           {canComment && (
             <div className="flex min-w-0 flex-col border-t border-white/10 px-4 py-4 md:overflow-hidden md:border-l md:border-t-0 md:px-5">
-              <CommentThread appId={app.id} listMaxH="max-h-[52vh] md:max-h-none md:flex-1" />
+              <CommentThread key={app.job_id /* hiện bình luận "Đã chuyển vị trí" */} appId={app.id} listMaxH="max-h-[52vh] md:max-h-none md:flex-1" />
             </div>
           )}
         </div>
+
+        {showMoveJob && (
+          <MoveJobDialog
+            app={app}
+            onDone={(updated) => {
+              setShowMoveJob(false);
+              onPatch(updated);
+            }}
+            onCancel={() => setShowMoveJob(false)}
+          />
+        )}
 
         {/* Reject modal (inside stopPropagation container) */}
         {showRejectModal && (
