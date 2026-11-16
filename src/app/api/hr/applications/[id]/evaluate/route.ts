@@ -4,6 +4,7 @@ import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { redactApplication } from "@/lib/hr-scope";
 import { HR_SIGNALS_RULES, aiBackendErrorMessage, extractCvText, hrSignals } from "@/lib/interview-ai";
 import { PORTFOLIO_RULES, portfolioPreview } from "@/lib/portfolio-preview";
+import { aiFetchErrorMessage } from "@/lib/ai-fetch-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,11 +110,8 @@ export async function POST(
       }),
       signal: AbortSignal.timeout(90_000),
     });
-  } catch {
-    return NextResponse.json(
-      { error: "AI backend unreachable (Mac tắt / cliproxyapi không chạy?)" },
-      { status: 502 }
-    );
+  } catch (e) {
+    return NextResponse.json({ error: aiFetchErrorMessage(e, 90_000) }, { status: 502 });
   }
   if (!res.ok) {
     return NextResponse.json(

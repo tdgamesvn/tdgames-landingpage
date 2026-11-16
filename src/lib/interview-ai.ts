@@ -1,5 +1,6 @@
 import "server-only";
 import { safeFetch } from "@/lib/safe-fetch";
+import { aiFetchErrorMessage } from "@/lib/ai-fetch-error";
 
 /**
  * Tầng AI dùng chung cho tuyển dụng: chấm hồ sơ (evaluate), sinh câu hỏi PV
@@ -64,6 +65,7 @@ export async function callAiJson<T>(
   opts: { timeoutMs?: number; images?: string[] } = {},
 ): Promise<{ data: T; model: string }> {
   const { baseUrl, apiKey, model } = getAiConfig();
+  const timeoutMs = opts.timeoutMs ?? 90_000;
 
   let res: Response;
   try {
@@ -89,10 +91,10 @@ export async function callAiJson<T>(
           },
         ],
       }),
-      signal: AbortSignal.timeout(opts.timeoutMs ?? 90_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
-  } catch {
-    throw new AiError("AI backend unreachable (Mac tắt / cliproxyapi không chạy?)");
+  } catch (e) {
+    throw new AiError(aiFetchErrorMessage(e, timeoutMs));
   }
 
   if (!res.ok) throw new AiError(await aiBackendErrorMessage(res));
