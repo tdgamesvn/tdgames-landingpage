@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail } from "@/lib/hr-email";
 import { deliverCandidateEmail, resolveCcForApplication } from "@/lib/hr-email-send";
-import { isOfferFamilyKind } from "@/lib/hr-email-base";
+import { OFFER_DECLINED_ONLY, isOfferFamilyKind } from "@/lib/hr-email-base";
 import { redactEmailRow } from "@/lib/hr-scope";
 import { NO_OFFER_LETTER, offerFileName, validateOfferLetter, type OfferLetterData } from "@/lib/offer-letter";
 import { pdfErrorResponse, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
@@ -68,11 +68,14 @@ export async function POST(request: Request, { params }: Ctx) {
   if (!subject || !text) return NextResponse.json({ error: "Thiếu tiêu đề hoặc nội dung" }, { status: 400 });
   const interviewId = typeof body.interview_id === "string" && body.interview_id ? body.interview_id : null;
 
-  const app = await loadScopedApplication(ctx, id, "id, email, job_id, assignee_user_id, work_type").catch(() => undefined);
+  const app = await loadScopedApplication(ctx, id, "id, email, job_id, assignee_user_id, work_type, offer_status").catch(() => undefined);
   if (app === undefined) return NextResponse.json({ error: "Không đọc được hồ sơ" }, { status: 500 });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const flMail = freelanceManualMailError(app.work_type);
   if (flMail) return NextResponse.json({ error: flMail }, { status: 400 });
+  if (kind === "offer_declined" && app.offer_status !== "declined") {
+    return NextResponse.json({ error: OFFER_DECLINED_ONLY }, { status: 400 });
+  }
   const appEmail = typeof app.email === "string" ? app.email : null;
   if (!isValidEmail(appEmail)) return NextResponse.json({ error: "Ứng viên chưa có email hợp lệ" }, { status: 400 });
 

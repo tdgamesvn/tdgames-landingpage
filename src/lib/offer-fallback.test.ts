@@ -40,3 +40,8 @@ test("leaveAcceptedWarning: chỉ khi rời Đã nhận; nêu onboard, hoa hồn
   assert.match(w, /đã duyệt/);
   assert.match(leaveAcceptedWarning("accepted", "pending")!, /Chờ trả lời/);
 });
+
+test("backupCandidates: bỏ người bị chặn (blocked)", () => {
+  const apps = [app("me", "offer"), { ...app("x", "talent_pool"), blocked: true }, app("y", "talent_pool")];
+  assert.deepEqual(backupCandidates(apps, { id: "me", job_id: "j1" }, OPEN).pool.map((a) => a.id), ["y"]);
+});

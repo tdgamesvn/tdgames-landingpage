@@ -47,6 +47,9 @@ export const KIND_LABEL: Record<CandidateEmailKind, string> = {
  */
 export const OFFER_FAMILY_KINDS: readonly CandidateEmailKind[] = ["offer", "offer_declined"];
 
+/** Mail "Xác nhận từ chối offer" chỉ gửi khi Kết quả offer = Từ chối (tránh báo nhầm "thư mời hết hiệu lực"). */
+export const OFFER_DECLINED_ONLY = "Chỉ gửi mail này khi Kết quả offer là “Từ chối”";
+
 export function isOfferFamilyKind(kind: string): boolean {
   return (OFFER_FAMILY_KINDS as readonly string[]).includes(kind);
 }
