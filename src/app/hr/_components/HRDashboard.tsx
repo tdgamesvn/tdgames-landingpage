@@ -3214,6 +3214,7 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
         const r = await hrFetch(`/api/hr/applications/${app.id}/backups`).catch(() => null);
         const j = r?.ok ? ((await r.json().catch(() => null)) as BackupHint | null) : null;
         if (j) setBackupHint({ ...j, appId: app.id });
+        else setError("Đã lưu kết quả, nhưng không tải được danh sách ứng viên dự phòng");
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Không lưu được kết quả offer");
