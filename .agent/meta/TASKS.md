@@ -10,7 +10,8 @@
 - [ ] Chat trên website (khách → sếp, ứng viên → HR; tab Chat trong /hr; giai đoạn 1 KHÔNG AI) (2026-11-05) — ĐÃ DEPLOY. Chờ sếp: cài/bật chuông app /hr để nhận báo, sửa câu có sẵn trong tab Chat ⚙. AI Phase A (nháp) 2026-11-05 → AI TỰ TRẢ LỜI 24/7 BẬT 2026-11-06 (spec 2026-11-05-chat-ai-design). Theo dõi 👎 / câu chờ. 9 minor ĐÃ SỬA 2026-11-05. LOG 2026-11-05
 - [x] /hr tab Freelancer — kho freelancer (trạng thái/hạng/rate/có vấn đề/lọc, đổi hình thức) (2026-11-05) — ĐÃ DEPLOY. Minor tồn: LOG 2026-11-05.
 - [x] /hr ứng viên Freelancer: cờ "Nhận freelancer" trên job, auto status Freelancer / Lưu hồ sơ + 2 mail riêng (2026-11-04) — ĐÃ DEPLOY, E2E OK. Chờ sếp bật cờ cho job cần nhận freelancer. LOG 2026-11-04
-- [ ] HR: thư mời nhận việc PDF + mail offer mới (2026-10-28) — ĐÃ DEPLOY. Chờ sếp/Kế toán thử: soạn thư 1 hồ sơ Offer thật → gửi (chế độ test về tony@). Tồn nhỏ: tải lại file từ lịch sử khi 429/503 hiện JSON thô; header /hr tràn ngang ở 390px (có từ trước). LOG 2026-10-28
+- [ ] HR: thư mời PDF bị đè chữ khi danh sách ngắt trang (mẫu dài mặc định: mục Giấy tờ cuối trang 1) — lỗi cũ, phát hiện 2026-11-18, chưa sửa. LOG 2026-11-18
+- [ ] HR: thư mời nhận việc PDF + mail offer mới (2026-10-28) — ĐÃ DEPLOY. Chờ sếp/Kế toán thử: soạn thư 1 hồ sơ Offer thật → gửi (prod đã LIVE). 2026-11-18 thêm tên dòng lương + GROSS/NET. Tồn nhỏ: tải lại file từ lịch sử khi 429/503 hiện JSON thô; header /hr tràn ngang ở 390px (có từ trước). LOG 2026-10-28
 
 - [ ] HR: đăng nhập theo tài khoản + phân quyền theo vai (2026-10-27) — ĐÃ DEPLOY. + Discord ID + tag đúng người (2026-10-27) — chờ sếp điền Discord ID trong tab Tài khoản. Mật khẩu chung ĐÃ GỠ 2026-10-28. Minor tồn: clientIp nên ưu tiên x-real-ip (nginx ghi đè) trước cf-connecting-ip; nút ghi trong GET (remind, draft test token); file R2 cũ svg chưa chuyển; /api/hr/upload + upload-cv vẫn tin content-type trình duyệt. LOG 2026-10-27
 
