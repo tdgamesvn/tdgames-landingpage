@@ -78,6 +78,7 @@ export default function OnboardingSection({
   const progressRef = useRef(onProgress);
   const summaryRef = useRef<Summary | undefined>(app.onboarding);
   const seq = useRef(0);
+  const dataRef = useRef<Payload | null>(null);
   useEffect(() => {
     progressRef.current = onProgress;
     summaryRef.current = app.onboarding;
@@ -101,6 +102,7 @@ export default function OnboardingSection({
       const p = j as unknown as Payload;
       setHidden(false);
       setData(p);
+      dataRef.current = p;
       setDataFor(app.id);
       setDateVal(null);
       report(summaryOf(p));
@@ -140,6 +142,16 @@ export default function OnboardingSection({
     }
     void Promise.resolve().then(load);
   }, [canView, eligible, app.offer_status, load]);
+
+  // Ngày đi làm đổi từ nơi khác (khối Hoa hồng) → app.onboarding khác dữ liệu đang hiện → tải lại.
+  // Tự sửa ở đây thì apply() đã đặt dataRef khớp nên không tải lại (không lặp).
+  const sumDate = app.onboarding?.start_date;
+  const sumConfirmed = app.onboarding?.confirmed;
+  useEffect(() => {
+    const cur = dataRef.current;
+    if (!canView || !eligible || sumDate === undefined || !cur) return;
+    if (cur.start.date !== sumDate || cur.start.confirmed !== sumConfirmed) void Promise.resolve().then(load);
+  }, [canView, eligible, sumDate, sumConfirmed, load]);
 
   async function patch(body: Record<string, unknown>, itemId: string | null) {
     setPending(itemId ?? "date");

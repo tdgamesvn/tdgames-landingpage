@@ -3434,8 +3434,16 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
           />
         )}
         {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
-        {/* key theo ngày đi làm: sửa ngày ở khối Onboard (cùng dữ liệu) → khối hoa hồng tải lại. */}
-        <ReferralOfferBlock key={app.onboarding?.start_date ?? ""} appId={app.id} offerStatus={app.offer_status ?? null} />
+        {/* key theo ngày đi làm: sửa ngày ở khối Onboard (cùng dữ liệu) → khối hoa hồng tải lại.
+            Ngược lại, sửa ở đây → onStartDateChange cập nhật app.onboarding → khối Onboard tải lại. */}
+        <ReferralOfferBlock
+          key={app.onboarding?.start_date ?? ""}
+          appId={app.id}
+          offerStatus={app.offer_status ?? null}
+          onStartDateChange={(start_date, confirmed) =>
+            onPatch({ onboarding: app.onboarding ? { ...app.onboarding, start_date, confirmed } : app.onboarding })
+          }
+        />
       </div>
     </section>
   );

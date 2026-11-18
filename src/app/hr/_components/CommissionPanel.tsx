@@ -244,7 +244,16 @@ type AppReferral = {
 };
 
 /** Khối hoa hồng trong phần Offer của hồ sơ. null khi không có quyền xem / chưa Đã nhận và chưa có khoản. */
-export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offerStatus: string | null }) {
+export function ReferralOfferBlock({
+  appId,
+  offerStatus,
+  onStartDateChange,
+}: {
+  appId: string;
+  offerStatus: string | null;
+  /** Gọi sau khi lưu ngày đi làm thành công, kèm ngày hiệu lực server trả về (để khối Onboard/thẻ đồng bộ). */
+  onStartDateChange?: (date: string | null, confirmed: boolean) => void;
+}) {
   const { can } = useHrSession();
   const canView = can("referrals.view");
   const canManage = can("referrals.manage");
@@ -284,6 +293,10 @@ export function ReferralOfferBlock({ appId, offerStatus }: { appId: string; offe
     setBusy(false);
     if (!r.ok) return setErr(r.error);
     apply(r.data);
+    if ("start_date" in body) {
+      const st = (r.data as unknown as AppReferral).start;
+      if (st) onStartDateChange?.(st.date, st.confirmed);
+    }
     // needsManual: cờ đã lưu trên hồ sơ → hiện ở khung cảnh báo bên dưới, không báo "thành công".
     if (r.data.needsManual !== true && okText) setNote(okText);
   }
