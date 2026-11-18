@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScope } from "@/lib/hr-session";
 import { inScope, redactApplication } from "@/lib/hr-scope";
+import { isOnboardingEligible } from "@/lib/hr-onboarding";
+import { loadOnboardingSummaries, type OnboardingSummary } from "@/lib/hr-onboarding-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,10 +43,29 @@ export async function GET(request: Request) {
     for (const r of pend ?? []) pendingOffers.add(String(r.application_id));
   }
 
-  const rows = ((data ?? []) as unknown as Record<string, unknown>[])
-    .filter((a) => inScope(scope, { job_id: String(a.job_id), status: String(a.status), offer_status: (a.offer_status as string | null) ?? null }))
-    // Gỡ field theo quyền (kể cả interview_sessions lồng bên trong).
-    .map((a) => redactApplication({ ...a, offer_approval_status: pendingOffers.has(String(a.id)) ? "pending" : null }, ctx.perms));
+  const scoped = ((data ?? []) as unknown as Record<string, unknown>[]).filter((a) =>
+    inScope(scope, { job_id: String(a.job_id), status: String(a.status), offer_status: (a.offer_status as string | null) ?? null }),
+  );
+
+  // Tiến độ onboard trên thẻ (chỉ người có onboard.view, hồ sơ đã nhận offer). Lỗi → log + bỏ field, không chặn danh sách.
+  let onboarding = new Map<string, OnboardingSummary>();
+  if (ctx.perms.has("onboard.view")) {
+    const ids = scoped
+      .filter((a) => isOnboardingEligible({ offer_status: (a.offer_status as string | null) ?? null, work_type: (a.work_type as string | null) ?? null }))
+      .map((a) => String(a.id));
+    try {
+      onboarding = await loadOnboardingSummaries(ids);
+    } catch (e) {
+      console.error("applications: đọc tóm tắt onboard lỗi:", e instanceof Error ? e.message : e);
+    }
+  }
+
+  // Gỡ field theo quyền (kể cả interview_sessions lồng bên trong).
+  const rows = scoped.map((a) => {
+    const red = redactApplication({ ...a, offer_approval_status: pendingOffers.has(String(a.id)) ? "pending" : null }, ctx.perms);
+    const ob = onboarding.get(String(a.id));
+    return ob ? { ...red, onboarding: { start_date: ob.start_date, confirmed: ob.confirmed, done: ob.done, total: ob.total } } : red;
+  });
 
   return NextResponse.json({ applications: rows, total: rows.length });
 }
