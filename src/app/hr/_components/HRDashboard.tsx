@@ -30,6 +30,9 @@ import { STATUS_PALETTE } from "./status-palette";
 import { avatarColorIndex } from "@/lib/hr-comment-mentions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 import { fetchPdfBlob, openPdfInNewTab } from "./OfferLetterFields";
+import OnboardingSection from "./OnboardingSection";
+import { reminderDates, shortDateVi } from "@/lib/hr-onboarding";
+import { vnDateString } from "@/lib/offer-letter";
 import { previousReviewNote } from "@/lib/offer-letter-approval";
 import { normalizeRefCode } from "@/lib/hr-ref-codes";
 import { cvViewerUrl, safeExternalUrl } from "@/lib/cv-viewer";
@@ -106,6 +109,33 @@ const DUPLICATE_BADGE: Record<NonNullable<Application["duplicate_kind"]>, { labe
     title: "Người này đã từng ứng tuyển — xem mục Hồ sơ khác",
   },
 };
+
+/** Badge onboard trên card — chỉ có tóm tắt (ngày + số mục) nên tự tính trạng thái từ đó. */
+function OnboardingBadge({ o }: { o: NonNullable<Application["onboarding"]> }) {
+  const done = o.total > 0 && o.done === o.total;
+  const overdue = !done && !!o.start_date && vnDateString(new Date()) > reminderDates(o.start_date).week1;
+  const cls = done
+    ? "border-green-500/40 bg-green-500/10 text-green-300"
+    : overdue
+      ? "border-red-500/40 bg-red-500/10 text-[var(--hr-danger-ink)]"
+      : "border-teal-500/40 bg-teal-500/10 text-teal-300";
+  const text = done
+    ? "✅ Đã onboard"
+    : o.start_date
+      ? `🗓 Đi làm ${shortDateVi(o.start_date)} · ${o.done}/${o.total}`
+      : "🗓 Chưa có ngày đi làm";
+  const title = [
+    o.start_date && !o.confirmed ? "dự kiến từ thư mời" : null,
+    overdue ? "Đã hết tuần đầu mà checklist onboard chưa xong" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${cls}`} title={title || undefined}>
+      {text}
+    </span>
+  );
+}
 
 /** Đơn trùng mà người giới thiệu mới chưa được báo (quyền giới thiệu thuộc người trước). */
 function needsReferrerNotice(a: Application): boolean {
@@ -1180,6 +1210,8 @@ function CandidateModal({
 
             <OfferSection app={app} onPatch={onPatch} />
 
+            <OnboardingSection app={app} onProgress={(onboarding) => onPatch({ onboarding })} />
+
             <CandidateMailSection
               appId={app.id}
               candidateName={app.full_name}
@@ -1535,6 +1567,7 @@ function AppCard({
             Chờ duyệt offer
           </span>
         )}
+        {app.onboarding && <OnboardingBadge o={app.onboarding} />}
         <DuplicateBadges app={app} />
         {app.referred_by && (
           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
@@ -3401,7 +3434,8 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
           />
         )}
         {error && <p role="alert" className="text-[13px] text-red-400">{error}</p>}
-        <ReferralOfferBlock appId={app.id} offerStatus={app.offer_status ?? null} />
+        {/* key theo ngày đi làm: sửa ngày ở khối Onboard (cùng dữ liệu) → khối hoa hồng tải lại. */}
+        <ReferralOfferBlock key={app.onboarding?.start_date ?? ""} appId={app.id} offerStatus={app.offer_status ?? null} />
       </div>
     </section>
   );

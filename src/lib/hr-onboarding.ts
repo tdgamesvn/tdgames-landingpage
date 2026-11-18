@@ -2,6 +2,8 @@
 import type { HrRole, PermissionKey } from "./hr-permissions.ts";
 import { addWorkingDays, isValidDate } from "./offer-letter.ts";
 
+const SHORT_WEEKDAY = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
 export type OnboardStage = "before" | "day1" | "week1";
 export type OnboardTemplateItem = { id: string; label: string; stage: OnboardStage; leader: boolean };
 export type OnboardItem = OnboardTemplateItem & {
@@ -134,4 +136,13 @@ export function onboardingCardState(i: {
   if (i.items.length > 0 && i.items.every((x) => x.done_at !== null)) return "done";
   if (i.startDate && i.todayVn > reminderDates(i.startDate).week1) return "overdue";
   return "active";
+}
+
+/** "T2 23/11" cho thẻ ứng viên; ngày sai → "". */
+export function shortDateVi(date: string): string {
+  if (!isValidDate(date)) return "";
+  const d = new Date(`${date}T00:00:00Z`);
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `${SHORT_WEEKDAY[d.getUTCDay()]} ${dd}/${mm}`;
 }

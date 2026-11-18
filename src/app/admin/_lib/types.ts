@@ -221,6 +221,8 @@ export type Application = {
   offer_status?: "pending" | "accepted" | "declined" | null;
   /** /api/hr/applications: "pending" khi thư mời nhận việc đang chờ Sếp duyệt (nhãn trên card). */
   offer_approval_status?: "pending" | null;
+  /** /api/hr/applications: tiến độ onboard (chỉ hồ sơ đủ điều kiện + quyền onboard.view) — badge trên card. */
+  onboarding?: { start_date: string | null; confirmed: boolean; done: number; total: number } | null;
   created_at: string;
   jobs?: { title: string; slug: string };
   /** /api/hr/applications join sẵn để card biết có bài nộp chờ Leader chấm. */

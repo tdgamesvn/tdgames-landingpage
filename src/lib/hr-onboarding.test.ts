@@ -14,6 +14,7 @@ import {
   reminderDates,
   sanitizeOnboardingTemplate,
   setItemDone,
+  shortDateVi,
   validateOnboardingTemplate,
 } from "./hr-onboarding.ts";
 import type { PermissionKey } from "./hr-permissions.ts";
@@ -94,4 +95,10 @@ test("onboardingCardState: done / overdue sau week1 / active", () => {
   assert.equal(onboardingCardState({ startDate: "2026-11-23", items, todayVn: "2026-11-30" }), "overdue");
   const all = items.reduce((acc, it) => setItemDone(acc, it.id, true, { id: "u", name: "x" }, "t")!, items);
   assert.equal(onboardingCardState({ startDate: "2026-11-23", items: all, todayVn: "2026-11-30" }), "done");
+});
+test("shortDateVi: thứ viết tắt + dd/mm; ngày sai → chuỗi rỗng", () => {
+  assert.equal(shortDateVi("2026-11-23"), "T2 23/11");
+  assert.equal(shortDateVi("2026-11-28"), "T7 28/11");
+  assert.equal(shortDateVi("2026-11-29"), "CN 29/11");
+  assert.equal(shortDateVi("2026-02-30"), "");
 });

@@ -3,13 +3,15 @@
 /**
  * Tab "Mẫu mail": sửa tiêu đề + nội dung 6 loại mail ứng viên, chèn biến `{ten_bien}`,
  * xem trước đúng giao diện mail thật. Lỗi server hiện nguyên văn.
- * Mục thứ 7 "Thư mời nhận việc" = mẫu công ty của PDF đính kèm mail offer (OfferLetterDefaultsPanel).
+ * Mục "Thư mời nhận việc" = mẫu công ty của PDF đính kèm mail offer (OfferLetterDefaultsPanel);
+ * mục "Checklist onboard" = mẫu checklist người mới (OnboardingTemplatePanel, cần onboard.template).
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Monitor, RotateCcw, Save, Smartphone, Undo2 } from "lucide-react";
 import { hrFetch, useHrSession } from "./HrSession";
 import OfferLetterDefaultsPanel from "./OfferLetterDefaultsPanel";
+import OnboardingTemplatePanel from "./OnboardingTemplatePanel";
 import { textToHtml, CANDIDATE_EMAIL_KINDS, KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
 import { HIDDEN_VARS, SAMPLE_DRAFT_INPUT, renderTemplate, templateVars } from "@/lib/hr-email-templates";
 import { formatInterviewTime } from "@/lib/interview-schedule";
@@ -43,11 +45,12 @@ export default function EmailTemplatesPanel() {
   const { can } = useHrSession();
   // Mẫu thư mời nhận việc thuộc luồng offer → chỉ Kế toán + Sếp.
   const canLetter = can("emails.templates") && can("emails.send_offer");
-  // Đang ở mục "Thư mời nhận việc" (không phải 1 loại mail) + trạng thái sửa dở của mục đó.
-  const [letterOpen, setLetterOpen] = useState(false);
-  const letterDirty = useRef(false);
-  const onLetterDirty = useCallback((d: boolean) => {
-    letterDirty.current = d;
+  const canOnboard = can("onboard.template");
+  // Đang ở mục đặc biệt (không phải 1 loại mail): "Thư mời nhận việc" / "Checklist onboard" + trạng thái sửa dở của mục đó.
+  const [special, setSpecial] = useState<null | "letter" | "onboarding">(null);
+  const specialDirty = useRef(false);
+  const onSpecialDirty = useCallback((d: boolean) => {
+    specialDirty.current = d;
   }, []);
   const [data, setData] = useState<Data | null>(null);
   const [loadError, setLoadError] = useState("");
@@ -130,12 +133,21 @@ export default function EmailTemplatesPanel() {
     return () => window.removeEventListener("beforeunload", h);
   }, [dirty]);
 
+  /** Rời mục hiện tại — hỏi nếu đang sửa dở. false = người dùng huỷ. */
+  function leaveCurrent(): boolean {
+    if (special) {
+      const what = special === "letter" ? "mẫu thư mời" : "checklist onboard";
+      if (specialDirty.current && !confirm(`Bỏ thay đổi chưa lưu của ${what}?`)) return false;
+      specialDirty.current = false;
+      return true;
+    }
+    return !dirty || confirm("Bỏ thay đổi chưa lưu của mẫu này?");
+  }
+
   function pickKind(k: CandidateEmailKind) {
-    if (k === kind && !letterOpen) return;
-    if (letterOpen) {
-      if (letterDirty.current && !confirm("Bỏ thay đổi chưa lưu của mẫu thư mời?")) return;
-      setLetterOpen(false);
-    } else if (dirty && !confirm("Bỏ thay đổi chưa lưu của mẫu này?")) return;
+    if (k === kind && !special) return;
+    if (!leaveCurrent()) return;
+    setSpecial(null);
     setKind(k);
     setDraft(null);
     setNotice(null);
@@ -208,13 +220,18 @@ export default function EmailTemplatesPanel() {
   if (loadError) return <p className="text-[13px] text-[var(--hr-danger-ink)]">{loadError}</p>;
   if (!data || !saved) return <p className="py-16 text-center text-sm text-white/30">Đang tải mẫu mail…</p>;
 
-  function pickLetter() {
-    if (letterOpen) return;
-    if (dirty && !confirm("Bỏ thay đổi chưa lưu của mẫu này?")) return;
+  function pickSpecial(s: "letter" | "onboarding") {
+    if (special === s) return;
+    if (!leaveCurrent()) return;
     setDraft(null);
     setNotice(null);
-    setLetterOpen(true);
+    setSpecial(s);
   }
+
+  const tabCls = (on: boolean) =>
+    `flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hr-orange)] ${
+      on ? "bg-[var(--hr-segment-on)] font-semibold text-[var(--hr-ink)] shadow-sm" : "text-[var(--hr-ink-2)] hover:text-[var(--hr-ink)]"
+    }`;
 
   const status = saved.isDefault
     ? "Đang dùng mẫu mặc định"
@@ -231,7 +248,7 @@ export default function EmailTemplatesPanel() {
           className="-mx-1 flex max-w-full gap-1 overflow-x-auto rounded-full bg-[var(--hr-segment-bg)] p-1"
         >
           {data.templates.map((t) => {
-            const on = t.kind === kind && !letterOpen;
+            const on = t.kind === kind && !special;
             return (
               <button
                 key={t.kind}
@@ -239,11 +256,7 @@ export default function EmailTemplatesPanel() {
                 aria-selected={on}
                 type="button"
                 onClick={() => pickKind(t.kind)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hr-orange)] ${
-                  on
-                    ? "bg-[var(--hr-segment-on)] font-semibold text-[var(--hr-ink)] shadow-sm"
-                    : "text-[var(--hr-ink-2)] hover:text-[var(--hr-ink)]"
-                }`}
+                className={tabCls(on)}
               >
                 {t.label.replace(" (không phù hợp)", "")}
                 {!t.isDefault && (
@@ -253,24 +266,25 @@ export default function EmailTemplatesPanel() {
             );
           })}
           {canLetter && (
+            <button role="tab" aria-selected={special === "letter"} type="button" onClick={() => pickSpecial("letter")} className={tabCls(special === "letter")}>
+              Thư mời nhận việc
+            </button>
+          )}
+          {canOnboard && (
             <button
               role="tab"
-              aria-selected={letterOpen}
+              aria-selected={special === "onboarding"}
               type="button"
-              onClick={pickLetter}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hr-orange)] ${
-                letterOpen
-                  ? "bg-[var(--hr-segment-on)] font-semibold text-[var(--hr-ink)] shadow-sm"
-                  : "text-[var(--hr-ink-2)] hover:text-[var(--hr-ink)]"
-              }`}
+              onClick={() => pickSpecial("onboarding")}
+              className={tabCls(special === "onboarding")}
             >
-              Thư mời nhận việc
+              Checklist onboard
             </button>
           )}
         </div>
       </div>
 
-      {!letterOpen && (kind === "application_received" || kind === "freelance_received" || kind === "freelance_not_open") && (
+      {!special && (kind === "application_received" || kind === "freelance_received" || kind === "freelance_not_open") && (
         <div className={`${surface} flex flex-wrap items-center justify-between gap-3 px-5 py-3`}>
           <div className="min-w-0">
             <p className="text-[14px] font-semibold text-[var(--hr-ink)]">
@@ -296,8 +310,10 @@ export default function EmailTemplatesPanel() {
         </div>
       )}
 
-      {letterOpen ? (
-        <OfferLetterDefaultsPanel onDirtyChange={onLetterDirty} />
+      {special === "letter" ? (
+        <OfferLetterDefaultsPanel onDirtyChange={onSpecialDirty} />
+      ) : special === "onboarding" ? (
+        <OnboardingTemplatePanel onDirtyChange={onSpecialDirty} />
       ) : (
 
       <div className="grid gap-4 lg:h-[calc(100vh-190px)] lg:min-h-[560px] lg:grid-cols-2">
