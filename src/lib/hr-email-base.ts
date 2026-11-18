@@ -20,6 +20,7 @@ export const CANDIDATE_EMAIL_KINDS = [
   "duplicate_rejection",
   "freelance_received",
   "freelance_not_open",
+  "offer_declined",
 ] as const;
 
 export type CandidateEmailKind = (typeof CANDIDATE_EMAIL_KINDS)[number];
@@ -37,7 +38,21 @@ export const KIND_LABEL: Record<CandidateEmailKind, string> = {
   duplicate_rejection: "Đã ứng tuyển trước đó (tự động)",
   freelance_received: "Cảm ơn ứng tuyển — Freelancer (job có nhận)",
   freelance_not_open: "Cảm ơn ứng tuyển — Freelancer (job chưa nhận)",
+  offer_declined: "Xác nhận từ chối offer",
 };
+
+/**
+ * Mail thuộc luồng offer (sếp chốt 2026-10-29: chỉ Kế toán + Sếp): quyền `emails.send_offer`, ẩn với người
+ * không có quyền, CC hiring@ + Kế toán + Sếp, From/Reply-To theo người liên hệ offer.
+ */
+export const OFFER_FAMILY_KINDS: readonly CandidateEmailKind[] = ["offer", "offer_declined"];
+
+/** Mail "Xác nhận từ chối offer" chỉ gửi khi Kết quả offer = Từ chối (tránh báo nhầm "thư mời hết hiệu lực"). */
+export const OFFER_DECLINED_ONLY = "Chỉ gửi mail này khi Kết quả offer là “Từ chối”";
+
+export function isOfferFamilyKind(kind: string): boolean {
+  return (OFFER_FAMILY_KINDS as readonly string[]).includes(kind);
+}
 
 /** Loại mail chỉ hệ thống gửi (tự động khi ứng viên nộp đơn) — HR không gửi tay từ hồ sơ. */
 export const SYSTEM_ONLY_EMAIL_KINDS: readonly CandidateEmailKind[] = [

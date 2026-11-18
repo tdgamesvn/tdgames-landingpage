@@ -312,3 +312,10 @@ test("resolveCc offer: tài khoản TD Games Assistant (assistant@) không bao g
   // Trợ lý gửi: Sếp + Kế toán vẫn được CC.
   assert.deepEqual(resolveCc(liveCfg, "offer", withBot, { assigneeId: null, jobLeaderId: null, senderEmail: "assistant@tdgamestudio.com" }).ccPreview, [HIRING, "acc@td.com", "boss@td.com"]);
 });
+
+test("resolveCc offer_declined: như offer — hiring@ + Kế toán + Sếp, không người support", () => {
+  const a = resolveCc(liveCfg, "offer_declined", staff, { assigneeId: "h3", jobLeaderId: "l1", senderEmail: "x@td.com" });
+  const b = resolveCc(liveCfg, "offer", staff, { assigneeId: "h3", jobLeaderId: "l1", senderEmail: "x@td.com" });
+  assert.deepEqual(a.ccPreview, b.ccPreview);
+  assert.ok(!a.ccPreview.includes("hr3@td.com"));
+});

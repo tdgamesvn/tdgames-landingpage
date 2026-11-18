@@ -39,6 +39,7 @@ export const KIND_VARS: Record<CandidateEmailKind, string[]> = {
   duplicate_rejection: [...COMMON_VARS, "ngay_ung_tuyen_truoc", "ngay_duoc_nop_lai", "cau_gioi_thieu"],
   freelance_received: [...COMMON_VARS],
   freelance_not_open: [...COMMON_VARS],
+  offer_declined: [...COMMON_VARS],
 };
 
 /** Biến còn hợp lệ (mẫu cũ không lỗi) nhưng không gợi ý chèn trong tab Mẫu mail. */
@@ -169,6 +170,16 @@ export const DEFAULT_TEMPLATES: Record<CandidateEmailKind, EmailTemplate> = {
       "Cảm ơn bạn đã dành thời gian quan tâm và ứng tuyển vị trí {vi_tri} tại TD Games.",
       "Chúng mình xin báo vị trí này đã tìm được ứng viên phù hợp ở thời điểm hiện tại. TD Games sẽ lưu hồ sơ của bạn và chủ động liên hệ khi có cơ hội phù hợp.",
       "Chúc bạn nhiều may mắn và thành công trên con đường sắp tới.",
+      "{chu_ky}",
+    ].join("\n\n"),
+  },
+  offer_declined: {
+    subject: "Xác nhận thông tin offer — {vi_tri} | TD Games",
+    body: [
+      "Chào {ten_ung_vien},",
+      "TD Games đã nhận được phản hồi của bạn về việc không tiếp tục nhận offer vị trí {vi_tri}. Chúng mình tôn trọng quyết định của bạn và xác nhận thư mời nhận việc trước đó không còn hiệu lực.",
+      "Cảm ơn bạn đã dành thời gian cho quá trình tuyển dụng. TD Games sẽ lưu hồ sơ của bạn — nếu sau này bạn muốn quay lại hoặc có câu hỏi, cứ trả lời email này nhé.",
+      "Chúc bạn mọi điều tốt đẹp!",
       "{chu_ky}",
     ].join("\n\n"),
   },

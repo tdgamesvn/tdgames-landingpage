@@ -3,17 +3,26 @@
  * câu hỏi lại khi đổi Kết quả offer khỏi "Đã nhận", và danh sách ứng viên dự phòng cùng job.
  */
 
-export type BackupApp = { id: string; job_id: string; full_name: string; status: string; work_type: string | null };
+export type BackupApp = {
+  id: string;
+  job_id: string;
+  full_name: string;
+  status: string;
+  work_type: string | null;
+  blocked?: boolean | null;
+};
 
 const TALENT_POOL = "talent_pool";
 
-/** Ứng viên cùng job (bỏ chính hồ sơ + freelancer): `pool` = cột Lưu hồ sơ, `open` = đang trong pipeline. */
+/** Ứng viên cùng job (bỏ chính hồ sơ, freelancer, người bị chặn): `pool` = cột Lưu hồ sơ, `open` = đang trong pipeline. */
 export function backupCandidates<T extends BackupApp>(
   apps: readonly T[],
   current: { id: string; job_id: string },
   openKeys: ReadonlySet<string>,
 ): { pool: T[]; open: T[] } {
-  const same = apps.filter((a) => a.job_id === current.job_id && a.id !== current.id && a.work_type !== "freelancer");
+  const same = apps.filter(
+    (a) => a.job_id === current.job_id && a.id !== current.id && a.work_type !== "freelancer" && !a.blocked,
+  );
   return {
     pool: same.filter((a) => a.status === TALENT_POOL),
     open: same.filter((a) => openKeys.has(a.status)),
