@@ -1,45 +1,23 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
-import { vnDateKey } from "@/lib/interview-schedule";
-import { isValidDate } from "@/lib/offer-letter";
+import { hasLockedPayout, parseAppReferralPatch, resolveBeneficiary } from "@/lib/referral-commission";
 import {
-  cancelOnLeave,
-  hasLockedPayout,
-  parseAppReferralPatch,
-  rescheduleDueDates,
-  resolveBeneficiary,
-  statusAfterDueEdit,
-  type PayoutLite,
-} from "@/lib/referral-commission";
-import {
+  applyStartDateChange,
   deleteOpenPayouts,
   effectiveStartDate,
   loadPayouts,
   loadPlacement,
   loadReferralBasics,
+  reapplyLeaveCancel,
   savePlacement,
-  setPayoutStatus,
   syncApplicationPayouts,
-  type PayoutRow,
 } from "@/lib/referral-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function lite(rows: PayoutRow[]): PayoutLite[] {
-  return rows.map((p) => ({
-    id: p.id,
-    milestone_months: p.milestone_months,
-    status: p.status,
-    due_date: p.due_date,
-    rule_key: p.rule_key,
-    amount_edited: p.amount_edited,
-    amount_issue: p.amount_issue,
-  }));
-}
 
 /** Không có lương; chỉ người hưởng, số khoản, ngày đi làm / nghỉ. */
 async function buildView(appId: string, referredBy: string | null) {
@@ -100,33 +78,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: "Hồ sơ đã có hoa hồng được duyệt/đã trả — không đổi người giới thiệu được" }, { status: 409 });
     }
 
-    if (patch.start_date !== undefined) {
-      await savePlacement(id, { start_date: patch.start_date, start_confirmed: patch.start_date !== null });
-      const start = await effectiveStartDate(id);
-      const rows = await loadPayouts(id);
-      const today = vnDateKey(new Date());
-      for (const c of rescheduleDueDates(lite(rows), start.date)) {
-        const old = rows.find((r) => r.id === c.id);
-        if (!old) continue;
-        // Hạn đổi → trạng thái theo hạn mới, xoá dấu đã nhắc để được nhắc lại khi tới hạn mới.
-        const { error } = await getSupabaseAdmin()
-          .from("referral_payouts")
-          .update({ due_date: c.due_date, status: statusAfterDueEdit(old.status, c.due_date, today), due_notified_at: null })
-          .eq("id", c.id)
-          .eq("status", old.status);
-        if (error) throw new Error(error.message);
-      }
-    }
-
+    // Ghi ngày nghỉ trước để bước áp lại huỷ mốc (trong applyStartDateChange) dùng ngày nghỉ mới.
     if (patch.left_date !== undefined) await savePlacement(id, { left_date: patch.left_date });
 
-    // Đổi ngày đi làm hoặc đặt ngày nghỉ: áp lại huỷ mốc sau ngày nghỉ (hạn có thể vừa được tính từ ngày đi làm mới).
-    if (patch.start_date !== undefined || (patch.left_date !== undefined && patch.left_date !== null)) {
-      const left = (await loadPlacement(id))?.left_date ?? null;
-      if (left && isValidDate(left)) {
-        const [dd, mm, yyyy] = [left.slice(8, 10), left.slice(5, 7), left.slice(0, 4)];
-        await setPayoutStatus(cancelOnLeave(lite(await loadPayouts(id)), left), "cancelled", `UV nghỉ ngày ${dd}/${mm}/${yyyy}`);
-      }
+    if (patch.start_date !== undefined) {
+      // Ghi ngày đi làm → dời hạn khoản → áp lại huỷ mốc sau ngày nghỉ.
+      await applyStartDateChange(id, patch.start_date);
+    } else if (patch.left_date !== undefined && patch.left_date !== null) {
+      // Chỉ đặt ngày nghỉ: áp lại huỷ mốc sau ngày nghỉ.
+      await reapplyLeaveCancel(id);
     }
 
     if (changingReferrer) {

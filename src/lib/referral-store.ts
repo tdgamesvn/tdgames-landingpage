@@ -9,11 +9,15 @@ import "server-only";
 import { getSupabaseAdmin } from "./supabase-admin";
 import { loadOfferLetterRow } from "./offer-letter-store";
 import { isValidDate } from "./offer-letter.ts";
+import { vnDateKey } from "./interview-schedule";
 import {
   NEEDS_MANUAL_REASON,
   REFERRAL_DEFAULTS_KEY,
   approvedBaseSalary,
+  cancelOnLeave,
   effectiveStatus,
+  rescheduleDueDates,
+  statusAfterDueEdit,
   bankChangedRecent,
   isCommissionable,
   isSelfPayout,
@@ -406,6 +410,53 @@ export async function savePlacement(
   if (historyEntry) row.history = [...(current?.history ?? []), historyEntry];
   const { error } = await getSupabaseAdmin().from("referral_placements").upsert(row, { onConflict: "application_id" });
   if (error) throw new Error(`savePlacement: ${error.message}`);
+}
+
+/** Bản rút gọn của khoản cho các hàm thuần trong referral-commission. */
+export function payoutsLite(rows: PayoutRow[]): PayoutLite[] {
+  return rows.map((p) => ({
+    id: p.id,
+    milestone_months: p.milestone_months,
+    status: p.status,
+    due_date: p.due_date,
+    rule_key: p.rule_key,
+    amount_edited: p.amount_edited,
+    amount_issue: p.amount_issue,
+  }));
+}
+
+/** Áp lại huỷ các mốc có hạn sau ngày nghỉ (nếu placement có left_date hợp lệ). */
+export async function reapplyLeaveCancel(appId: string): Promise<void> {
+  const left = (await loadPlacement(appId))?.left_date ?? null;
+  if (left && isValidDate(left)) {
+    const [dd, mm, yyyy] = [left.slice(8, 10), left.slice(5, 7), left.slice(0, 4)];
+    await setPayoutStatus(cancelOnLeave(payoutsLite(await loadPayouts(appId)), left), "cancelled", `UV nghỉ ngày ${dd}/${mm}/${yyyy}`);
+  }
+}
+
+/**
+ * Đổi ngày đi làm (một nguồn duy nhất cho hoa hồng + onboard):
+ * ghi placement (null = bỏ ngày, không còn "đã chốt") → dời hạn các khoản còn mở theo ngày mới
+ * (trạng thái theo hạn mới, xoá dấu đã nhắc) → áp lại huỷ mốc sau ngày nghỉ nếu có.
+ */
+export async function applyStartDateChange(appId: string, date: string | null): Promise<void> {
+  await savePlacement(appId, { start_date: date, start_confirmed: date !== null });
+  const start = await effectiveStartDate(appId);
+  const rows = await loadPayouts(appId);
+  const today = vnDateKey(new Date());
+  for (const c of rescheduleDueDates(payoutsLite(rows), start.date)) {
+    const old = rows.find((r) => r.id === c.id);
+    if (!old) continue;
+    // Hạn đổi → trạng thái theo hạn mới, xoá dấu đã nhắc để được nhắc lại khi tới hạn mới.
+    const { error } = await getSupabaseAdmin()
+      .from("referral_payouts")
+      .update({ due_date: c.due_date, status: statusAfterDueEdit(old.status, c.due_date, today), due_notified_at: null })
+      .eq("id", c.id)
+      .eq("status", old.status);
+    if (error) throw new Error(`applyStartDateChange: ${error.message}`);
+  }
+  // Hạn có thể vừa được tính từ ngày đi làm mới → áp lại huỷ mốc sau ngày nghỉ.
+  await reapplyLeaveCancel(appId);
 }
 
 /** Xoá mọi khoản upcoming/due của hồ sơ (đổi người giới thiệu); không chạm approved/paid. Trả số dòng xoá. */
