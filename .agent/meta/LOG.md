@@ -6645,3 +6645,8 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Render thử PDF thật (tsx + bản sao bỏ server-only): thư Tài 2 trang sạch, dòng "Trợ cấp thực tập (Full-time) (NET) 4.000.000 VND".
 - Phát hiện lỗi CŨ (không do lần sửa này): mẫu dài mặc định (5 phúc lợi + 3 giấy tờ) → mục "Các giấy tờ cần chuẩn bị" ngắt trang làm 2 dòng danh sách đè lên nhau ở cuối trang 1. Chưa sửa.
 - Next: sếp vào /hr → chuyển Tài sang Offer → soạn thư theo hướng dẫn (nhãn "Trợ cấp thực tập (Full-time)", NET, xoá phụ cấp) → Lưu → Gửi mail offer (LIVE, hạn xác nhận sửa 20/11).
+
+## 2026-11-18 (tiếp) — Tài khoản /hr "TD Games Assistant" (vai Sếp) để Claude gửi offer hộ sếp
+- Sếp yêu cầu tạo tài khoản riêng để sau này nhờ em gửi offer. Tạo hr_users deb94e8f… `toan.dang+assistant@tdgamestudio.com`, display "TD Games Assistant", role boss (Sếp lưu thư = tự duyệt; người liên hệ offer = Kế toán), mật khẩu ngẫu nhiên lưu `.env.local` (HR_ASSISTANT_EMAIL / HR_ASSISTANT_PASSWORD, gitignored, chỉ trên Mac mini). Đăng nhập prod 200, GET offer-letter 200. Email là alias của sếp → mail quên mật khẩu chỉ về hộp sếp.
+- Vì mail offer CC mọi Sếp: resolveCc bỏ địa chỉ alias "a+x@d" khi hộp thư gốc đã được CC hoặc là người gửi → ứng viên không thấy alias trợ lý, sếp không nhận 2 bản. Test hr-email 34/34 (+1). GitNexus resolveCc LOW.
+- Cách dùng: login POST /api/hr/auth/login (header origin https://tdgamestudio.com) bằng creds trong .env.local → cookie → gọi API /hr như người dùng. Vẫn phải hỏi sếp OK nội dung trước khi gửi mail thật.

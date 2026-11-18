@@ -95,7 +95,11 @@ export function resolveCc(
     for (const u of staff) if (!u.disabled && u.role === "accountant") add(u.email);
     for (const u of staff) if (!u.disabled && u.role === "boss") add(u.email);
   }
-  return { cc: cfg.mode === "live" ? out : [], ccPreview: out, fixed: hiring ? [hiring] : [] };
+  // Alias "a+x@d" (vd tài khoản trợ lý toan.dang+assistant@) → bỏ nếu hộp thư gốc "a@d" đã được CC
+  // hoặc là người gửi: không lộ alias cho ứng viên, không gửi 2 bản vào cùng hộp thư.
+  const mailbox = (e: string) => e.replace(/\+[^@]*@/, "@");
+  const cc = out.filter((e) => mailbox(e) === e || (!out.includes(mailbox(e)) && mailbox(e) !== mailbox(sender)));
+  return { cc: cfg.mode === "live" ? cc : [], ccPreview: cc, fixed: hiring ? [hiring] : [] };
 }
 
 /**

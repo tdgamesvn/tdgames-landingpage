@@ -295,3 +295,13 @@ test("textToHtml: chân mail ứng viên ghi hiring@; mail nội bộ truyền f
   const staff = textToHtml("Chào bạn", { footerEmail: "hr@tdgamestudio.com" });
   assert.ok(staff.includes("mailto:hr@tdgamestudio.com"));
 });
+
+test("resolveCc offer: alias +… của hộp thư đã có / của người gửi không bị CC (tài khoản trợ lý)", () => {
+  const withAssistant = [...staff, { id: "b2", email: "boss+assistant@td.com", role: "boss" as const, disabled: false }];
+  // Sếp gửi: không lộ alias trợ lý ra CC.
+  assert.deepEqual(resolveCc(liveCfg, "offer", withAssistant, { assigneeId: null, jobLeaderId: null, senderEmail: "boss@td.com" }).ccPreview, [HIRING, "acc@td.com"]);
+  // Trợ lý gửi: Sếp vẫn được CC, alias (người gửi) không.
+  assert.deepEqual(resolveCc(liveCfg, "offer", withAssistant, { assigneeId: null, jobLeaderId: null, senderEmail: "boss+assistant@td.com" }).ccPreview, [HIRING, "acc@td.com", "boss@td.com"]);
+  // Người khác gửi: chỉ hộp thư gốc của Sếp.
+  assert.deepEqual(resolveCc(liveCfg, "offer", withAssistant, { assigneeId: null, jobLeaderId: null, senderEmail: "acc@td.com" }).ccPreview, [HIRING, "boss@td.com"]);
+});
