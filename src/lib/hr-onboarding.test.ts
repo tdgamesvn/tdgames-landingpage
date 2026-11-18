@@ -79,6 +79,17 @@ test("setItemDone: chỉ đổi 1 mục, bỏ tích xoá người/giờ, id lạ
   assert.equal(b.find((x) => x.id === "contract")!.done_by_name, "Thảo");
   assert.equal(setItemDone(items, "nope", true, { id: "u", name: "x" }, "t"), null);
 });
+test("setItemDone: tích lại mục đã tích giữ nguyên người/giờ; bỏ tích mục chưa tích không đổi", () => {
+  const items = itemsFromTemplate(DEFAULT_ONBOARDING_TEMPLATE);
+  const a = setItemDone(items, "welcome", true, { id: "uA", name: "A" }, "t1")!;
+  const b = setItemDone(a, "welcome", true, { id: "uB", name: "B" }, "t2")!;
+  const w = b.find((x) => x.id === "welcome")!;
+  assert.equal(w.done_by_name, "A");
+  assert.equal(w.done_by_user_id, "uA");
+  assert.equal(w.done_at, "t1");
+  const c = setItemDone(items, "welcome", false, { id: "uB", name: "B" }, "t2")!;
+  assert.deepEqual(c, items);
+});
 test("canTickItem: boss/onboard.edit mọi mục; Leader chỉ mục leader của job mình", () => {
   const leaderItem = DEFAULT_ONBOARDING_TEMPLATE.find((x) => x.leader)!;
   const other = DEFAULT_ONBOARDING_TEMPLATE[0];

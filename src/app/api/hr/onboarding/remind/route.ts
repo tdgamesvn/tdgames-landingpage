@@ -3,11 +3,16 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireCronOrHr } from "@/lib/hr-session";
 import { getDiscordUrl } from "@/lib/discord-notify";
 import { formatDateVi, vnDateString } from "@/lib/offer-letter";
-import { dueReminders, isOnboardingEligible, STAGE_LABEL } from "@/lib/hr-onboarding";
+import { dueReminders, isOnboardingEligible, reminderDates, STAGE_LABEL } from "@/lib/hr-onboarding";
 import { ensureOnboarding, markReminded } from "@/lib/hr-onboarding-store";
 import { effectiveStartDate } from "@/lib/referral-store";
 import { onboardingReminderPayload } from "@/lib/hr-push-payload";
 import { dispatchCandidateNotify, loadNotifyStaff, toNotifyApp } from "@/lib/hr-notify";
+
+// Discord: field value ≤ 1024, embed title ≤ 256 — vượt thì webhook bị từ chối.
+function clipField(s: string, max = 1024): string {
+  return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +54,8 @@ export async function GET(request: Request) {
     try {
       const start = await effectiveStartDate(app.id);
       if (!start.date) continue;
+      const rd = reminderDates(start.date);
+      if (todayVn !== rd.before && todayVn !== rd.day1 && todayVn !== rd.week1) continue;
       const ob = await ensureOnboarding(app.id);
       const stages = dueReminders({
         startDate: start.date,
@@ -59,19 +66,22 @@ export async function GET(request: Request) {
       });
 
       for (const stage of stages) {
-        const pendingAll = ob.items.filter((x) => x.stage === stage && x.done_at === null).map((x) => x.label);
+        // Hết tuần đầu: liệt kê mọi mục còn thiếu ở mọi giai đoạn; các mốc khác chỉ giai đoạn đó.
+        const pendingAll = ob.items
+          .filter((x) => (stage === "week1" || x.stage === stage) && x.done_at === null)
+          .map((x) => x.label);
         const lines = pendingAll.slice(0, 10).map((l) => `• ${l}`);
         if (pendingAll.length > 10) lines.push("…");
         const fields = [
           { name: "Ngày đi làm", value: `${formatDateVi(start.date)}${start.confirmed ? "" : " (dự kiến)"}`, inline: true },
         ];
-        if (lines.length > 0) fields.push({ name: "Còn chưa xong", value: lines.join("\n"), inline: false });
+        if (lines.length > 0) fields.push({ name: "Còn chưa xong", value: clipField(lines.join("\n")), inline: false });
 
         const r = await dispatchCandidateNotify({ event: "onboard_remind" }, app, staffCtx, {
           content: `🗓 **Onboard** — ${app.full_name} · ${STAGE_LABEL[stage]}`,
           embeds: [
             {
-              title: `${app.full_name} — ${app.jobTitle ?? "?"}`,
+              title: clipField(`${app.full_name} — ${app.jobTitle ?? "?"}`, 256),
               color: 0x10b981,
               fields,
               timestamp: new Date().toISOString(),

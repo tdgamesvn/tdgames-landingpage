@@ -101,17 +101,22 @@ export default function OnboardingTemplatePanel({ onDirtyChange }: { onDirtyChan
   if (loadError) return <p className="text-[13px] text-[var(--hr-danger-ink)]">{loadError}</p>;
   if (!loaded || !items) return <p className="py-16 text-center text-sm text-[var(--hr-ink-3)]">Đang tải mẫu checklist…</p>;
 
-  const set = (i: number, patch: Partial<OnboardTemplateItem>) =>
+  const set = (i: number, patch: Partial<OnboardTemplateItem>) => {
+    setNotice(null);
     setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  };
   const move = (i: number, d: -1 | 1) => {
     const j = i + d;
     if (j < 0 || j >= items.length) return;
+    setNotice(null);
     const next = [...items];
     [next[i], next[j]] = [next[j], next[i]];
     setItems(next);
   };
-  const add = () =>
+  const add = () => {
+    setNotice(null);
     setItems([...items, { id: crypto.randomUUID(), label: "", stage: items[items.length - 1]?.stage ?? "before", leader: false }]);
+  };
 
   const emptyLabel = items.some((x) => !x.label.trim());
   const status =
@@ -184,7 +189,10 @@ export default function OnboardingTemplatePanel({ onDirtyChange }: { onDirtyChan
                 aria-label={`Xoá mục ${i + 1}`}
                 title="Xoá"
                 disabled={items.length <= 1}
-                onClick={() => setItems(items.filter((_, j) => j !== i))}
+                onClick={() => {
+                  setNotice(null);
+                  setItems(items.filter((_, j) => j !== i));
+                }}
               >
                 <Trash2 className="h-4 w-4" />
               </button>

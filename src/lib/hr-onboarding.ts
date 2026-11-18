@@ -118,7 +118,9 @@ export function setItemDone(
   actor: { id: string; name: string },
   nowIso: string,
 ): OnboardItem[] | null {
-  if (!items.some((x) => x.id === itemId)) return null;
+  const cur = items.find((x) => x.id === itemId);
+  if (!cur) return null;
+  if ((cur.done_at !== null) === done) return items; // đã đúng trạng thái: giữ người/giờ cũ
   return items.map((x) =>
     x.id !== itemId
       ? x
