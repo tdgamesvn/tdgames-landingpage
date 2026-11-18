@@ -68,3 +68,13 @@ test("referrals.*: HR xem+quản lý, Kế toán xem+trả, Leader không gì", 
   assert.ok(acc.has("referrals.view") && acc.has("referrals.pay") && !acc.has("referrals.manage"));
   assert.ok(!ld.has("referrals.view") && !ld.has("referrals.manage") && !ld.has("referrals.pay"));
 });
+
+test("quyền onboard.*: mặc định theo vai", () => {
+  const leader = effectivePermissions("leader", []);
+  assert.ok(leader.has("onboard.view"));
+  assert.ok(!leader.has("onboard.edit"));
+  const acc = effectivePermissions("accountant", []);
+  assert.ok(acc.has("onboard.edit"));
+  assert.ok(!acc.has("onboard.template"));
+  assert.ok(effectivePermissions("hr", []).has("onboard.template"));
+});

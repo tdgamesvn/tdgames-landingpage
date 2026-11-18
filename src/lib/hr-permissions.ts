@@ -50,6 +50,10 @@ export const HR_PERMISSIONS = [
   { key: "chat.candidates", label: "Xem & trả lời chat của ứng viên", group: "Chat website", defaults: d(true, false, false) },
   { key: "chat.clients", label: "Xem & trả lời chat của khách hàng", group: "Chat website", defaults: d(false, false, false) },
   { key: "chat.manage", label: "Sửa câu hỏi có sẵn & cài đặt chat", group: "Chat website", defaults: d(false, false, false) },
+  // Onboard người mới (2026-11-18): ngày đi làm + checklist sau khi nhận offer.
+  { key: "onboard.view", label: "Xem ngày đi làm & checklist onboard", group: "Onboard người mới", defaults: d(true, true, true) },
+  { key: "onboard.edit", label: "Tích checklist onboard, sửa ngày đi làm", group: "Onboard người mới", defaults: d(true, false, true) },
+  { key: "onboard.template", label: "Sửa mẫu checklist onboard", group: "Onboard người mới", defaults: d(true, false, false) },
 ] as const satisfies readonly PermissionDef[];
 
 export type PermissionKey = (typeof HR_PERMISSIONS)[number]["key"];

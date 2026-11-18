@@ -38,6 +38,8 @@ export const BASE_FIELDS: readonly string[] = Object.freeze([
   "available_from", "status", "offer_status", "offer_status_at", "created_at", "updated_at",
   "message", "available_hours_per_week", "assignee_user_id", "offer_approval_status",
   "duplicate_kind", "status_changed_at",
+  // Onboard: tiến độ {start_date, confirmed, done, total} — server chỉ gắn khi người xem có onboard.view.
+  "onboarding",
   // Kho freelancer: tiến độ / hạng / nhãn — ai xem được hồ sơ thì xem được (rate nằm ở apps.view_salary).
   "freelance_stage", "freelance_level", "freelance_job_open", "freelance_issue",
 ]);

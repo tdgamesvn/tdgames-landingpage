@@ -224,3 +224,9 @@ test("pushBatches: leader mặc định không có apps.view_notes → ghi chú 
   const out = pushBatches({ targets: ["l1"], staff, perms, perm: "apps.view_notes", push: full, restricted });
   assert.deepEqual(out, [{ payload: restricted, userIds: ["l1"] }]);
 });
+
+test("onboard_remind: Sếp + người phụ trách + Leader job", () => {
+  const r = candidateRecipients({ ...base, event: "onboard_remind" });
+  assert.deepEqual(new Set(r.userIds), new Set(["b", "h1", "l1"]));
+  assert.equal(r.everyone, false);
+});

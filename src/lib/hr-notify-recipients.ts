@@ -17,7 +17,8 @@ export type NotifyEvent =
   | "new_application"
   | "interview_schedule"
   | "interview_remind"
-  | "assigned";
+  | "assigned"
+  | "onboard_remind";
 
 export type RecipientStaff = { id: string; role: HrRole; disabled: boolean; discord_user_id: string | null };
 
@@ -32,6 +33,7 @@ const LEADER_EVENTS: ReadonlySet<NotifyEvent> = new Set<NotifyEvent>([
   "interview_schedule",
   "test_submitted",
   "new_application",
+  "onboard_remind",
 ]);
 
 export function candidateRecipients(i: {

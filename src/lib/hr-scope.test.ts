@@ -207,3 +207,8 @@ test("redactApplication: trường kho freelancer giữ cho mọi vai (trừ rat
   }
   assert.ok(!("rate_vnd_per_hour" in redactApplication(fl, effectivePermissions("leader", []))));
 });
+
+test("redactApplication giữ field onboarding khi thiếu quyền", () => {
+  const out = redactApplication({ id: "a", onboarding: { done: 1 } }, new Set());
+  assert.deepEqual(out.onboarding, { done: 1 });
+});
