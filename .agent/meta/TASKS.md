@@ -2,7 +2,7 @@
 
 ## Doing
 
-- [ ] HR: UV rút offer — đợt 1 (hỏi lại + gợi ý dự phòng) ĐÃ DEPLOY; đợt 2 (mail "Xác nhận từ chối offer" + dự phòng từ máy chủ) ở nhánh `feat/offer-declined-mail` CHỜ SẾP CHẠY SQL `20261118120000_offer_declined_mail.sql` rồi mới merge/deploy (2026-11-18). LOG 2026-11-18 (tối)
+- [x] HR: UV rút offer — hỏi lại khi rời Đã nhận + gợi ý dự phòng (từ máy chủ) + mail "Xác nhận từ chối offer" (2026-11-18) — ĐÃ DEPLOY 4fe7e47, SQL CHECK sếp đã chạy. LOG 2026-11-18 (tối)
 - [x] HR: Onboard người mới — ngày đi làm trên thẻ + khối Onboard + checklist chung 9 việc (sửa ở Mẫu mail) + nhắc Discord/push (2026-11-18) — ĐÃ DEPLOY (9708e68), E2E prod 16/16 + nhắc 1 lần không trùng + UI 1440/390. Chờ sếp/HR dùng thật khi Tài đánh dấu Đã nhận. Minor tồn: LOG 2026-11-18
 - [ ] HR: Đổi vị trí ứng tuyển (⋯ trong hồ sơ) (2026-11-13) — ĐÃ DEPLOY, E2E 10/10. Chờ sếp/HR: tạo đề test job Graphic Designer, chuyển hồ sơ Chu Hà My, xem UI. LOG 2026-11-13
 - [ ] SEO + Ads (2026-11-12): kế hoạch `docs/marketing/2026-11-12-seo-ads-plan.md`. GA4/Ads/GSC xong, enhanced conversions đã deploy. Chiến dịch `Search – Animation – T1` ĐANG CHẠY (165k/ngày). Còn: kiểm cài đặt sau publish + từ khoá phủ định; tạo chiến dịch Art 99k + VFX/Full (sếp chốt 3 hay 4); tuần sau xem Search terms. Em: trang /services/spine-animation?, audit SEO. LOG 2026-11-12
