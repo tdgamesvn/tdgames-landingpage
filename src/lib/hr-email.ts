@@ -8,6 +8,7 @@
 import { OFFICE_ADDRESS } from "./company-location.ts";
 import {
   CANDIDATE_EMAIL_KINDS,
+  ASSISTANT_EMAIL,
   HIRING_EMAIL,
   KIND_LABEL,
   MBTI_TEST_URL,
@@ -83,7 +84,7 @@ export function resolveCc(
   const add = (email: string | null | undefined) => {
     if (!email || !isValidEmail(email)) return;
     const e = email.trim().toLowerCase();
-    if (e !== sender && !out.includes(e)) out.push(e);
+    if (e !== sender && e !== ASSISTANT_EMAIL && !out.includes(e)) out.push(e);
   };
   const active = (id: string | null) => (id ? staff.find((u) => u.id === id && !u.disabled) ?? null : null);
   const hiring = isValidEmail(cfg.hiring) ? cfg.hiring.trim().toLowerCase() : null;

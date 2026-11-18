@@ -305,3 +305,10 @@ test("resolveCc offer: alias +… của hộp thư đã có / của người g�
   // Người khác gửi: chỉ hộp thư gốc của Sếp.
   assert.deepEqual(resolveCc(liveCfg, "offer", withAssistant, { assigneeId: null, jobLeaderId: null, senderEmail: "acc@td.com" }).ccPreview, [HIRING, "boss@td.com"]);
 });
+
+test("resolveCc offer: tài khoản TD Games Assistant (assistant@) không bao giờ bị CC", () => {
+  const withBot = [...staff, { id: "b3", email: "Assistant@tdgamestudio.com", role: "boss" as const, disabled: false }];
+  assert.deepEqual(resolveCc(liveCfg, "offer", withBot, { assigneeId: null, jobLeaderId: null, senderEmail: "acc@td.com" }).ccPreview, [HIRING, "boss@td.com"]);
+  // Trợ lý gửi: Sếp + Kế toán vẫn được CC.
+  assert.deepEqual(resolveCc(liveCfg, "offer", withBot, { assigneeId: null, jobLeaderId: null, senderEmail: "assistant@tdgamestudio.com" }).ccPreview, [HIRING, "acc@td.com", "boss@td.com"]);
+});

@@ -117,6 +117,8 @@ export const MBTI_TEST_URL = "https://www.topcv.vn/mbti/lam-trac-nghiem";
 
 /** Hộp thư tuyển dụng — mail gửi ứng viên đi từ / ký bằng địa chỉ này (sếp chốt 2026-10-28; hr@ cho việc nội bộ). */
 export const HIRING_EMAIL = "hiring@tdgamestudio.com";
+/** Tài khoản /hr "TD Games Assistant" (vai Sếp, Claude thao tác hộ sếp) — không bao giờ CC ứng viên. */
+export const ASSISTANT_EMAIL = "assistant@tdgamestudio.com";
 
 /** "0385456273" → "0385 456 273"; số khác (vd. +84…) giữ nguyên. */
 export function formatPhoneVi(phone: string): string {
