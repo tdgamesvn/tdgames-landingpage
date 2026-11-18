@@ -24,3 +24,17 @@ jobs:
             echo "❌ Interview remind endpoint returned $STATUS"
             exit 1
           fi
+
+      - name: 🧑‍💼 Trigger onboarding remind endpoint
+        if: ${{ !cancelled() }}
+        run: |
+          STATUS=$(curl -s -o /tmp/onboard_body.txt -w "%{http_code}" \
+            -X GET \
+            -H "x-hr-cron-key: ${{ secrets.HR_CRON_SECRET }}" \
+            "https://tdgamestudio.com/api/hr/onboarding/remind")
+          echo "HTTP $STATUS"
+          cat /tmp/onboard_body.txt
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Onboarding remind endpoint returned $STATUS"
+            exit 1
+          fi

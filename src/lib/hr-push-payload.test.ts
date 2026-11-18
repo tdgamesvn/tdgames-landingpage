@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { interviewReminderPayload, isPushSubscriptionInput, mentionPayload } from "./hr-push-payload.ts";
+import { interviewReminderPayload, isPushSubscriptionInput, mentionPayload, onboardingReminderPayload } from "./hr-push-payload.ts";
 
 const base = {
   candidateName: "Nguyễn Văn A",
@@ -121,4 +121,20 @@ test("restrictedPushPayload: giữ tiêu đề/tag/url, body chung chung không 
   assert.equal(p.title, "📝 T sửa ghi chú — N");
   assert.equal(p.tag, "hr-note-a");
   assert.equal(p.url, "/hr");
+});
+
+test("nhắc onboard: tag/title theo stage, body có tên + ngày + số việc, không lộ tiền", () => {
+  const i = { appId: "a1", candidateName: "Trần B", startDate: "2026-11-23", pending: ["x", "y"] };
+  const titles = { before: "Mai có người mới đi làm", day1: "Hôm nay có người mới đi làm", week1: "Hết tuần đầu của người mới" } as const;
+  for (const stage of ["before", "day1", "week1"] as const) {
+    const p = onboardingReminderPayload({ ...i, stage });
+    assert.equal(p.title, titles[stage]);
+    assert.equal(p.tag, `hr-onboard-${stage}-a1`);
+    assert.equal(p.url, "/hr");
+    assert.ok(p.body.startsWith("Trần B"));
+    assert.ok(p.body.includes("Thứ Hai 23/11/2026"));
+    assert.ok(p.body.includes("còn 2 việc"));
+    assert.ok(!/\d{1,3}(\.\d{3}){2}/.test(p.body));
+    assert.ok(Array.from(p.body).length <= 160);
+  }
 });

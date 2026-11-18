@@ -4,6 +4,8 @@
  */
 
 import { formatInterviewTime } from "./interview-schedule.ts";
+import { formatDateVi } from "./offer-letter.ts";
+import type { OnboardStage } from "./hr-onboarding.ts";
 
 export type PushPayload = { title: string; body: string; url: string; tag: string };
 
@@ -91,6 +93,28 @@ export function candidatePushPayload(i: {
   };
   const body = [text, job].filter(Boolean).join(" · ") || "Mở /hr để xem";
   return { title: titles[i.event], body: clip(body, 160), url: "/hr", tag: `hr-${i.event}-${i.appId}` };
+}
+
+/** Push nhắc việc onboard người mới (không có lương/thù lao). Tag theo mốc + hồ sơ. */
+export function onboardingReminderPayload(i: {
+  stage: OnboardStage;
+  appId: string;
+  candidateName: string;
+  startDate: string;
+  pending: string[];
+}): PushPayload {
+  const titles: Record<OnboardStage, string> = {
+    before: "Mai có người mới đi làm",
+    day1: "Hôm nay có người mới đi làm",
+    week1: "Hết tuần đầu của người mới",
+  };
+  const name = i.candidateName || "Ứng viên";
+  return {
+    title: titles[i.stage],
+    body: clip(`${name} · ${formatDateVi(i.startDate)} — còn ${i.pending.length} việc`, 160),
+    url: "/hr",
+    tag: `hr-onboard-${i.stage}-${i.appId}`,
+  };
 }
 
 /** Bản chung chung cho người thiếu quyền xem nội dung: giữ tiêu đề/tag/url, body không lộ gì. */
