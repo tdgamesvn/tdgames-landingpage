@@ -9,6 +9,7 @@ import { OFFICE_ADDRESS } from "./company-location.ts";
 import {
   CANDIDATE_EMAIL_KINDS,
   ASSISTANT_EMAIL,
+  isOfferFamilyKind,
   HIRING_EMAIL,
   KIND_LABEL,
   MBTI_TEST_URL,
@@ -90,9 +91,9 @@ export function resolveCc(
   const hiring = isValidEmail(cfg.hiring) ? cfg.hiring.trim().toLowerCase() : null;
   if (hiring) out.push(hiring);
   // Offer: chỉ Kế toán + Sếp (sếp chốt 2026-10-29) → không CC người support.
-  if (kind !== "offer") add(active(opts.assigneeId)?.email);
+  if (!isOfferFamilyKind(kind)) add(active(opts.assigneeId)?.email);
   if (LEADER_CC_KINDS.includes(kind)) add(active(opts.jobLeaderId)?.email);
-  if (kind === "offer") {
+  if (isOfferFamilyKind(kind)) {
     for (const u of staff) if (!u.disabled && u.role === "accountant") add(u.email);
     for (const u of staff) if (!u.disabled && u.role === "boss") add(u.email);
   }

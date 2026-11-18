@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail } from "@/lib/hr-email";
 import { deliverCandidateEmail, resolveCcForApplication } from "@/lib/hr-email-send";
+import { isOfferFamilyKind } from "@/lib/hr-email-base";
 import { redactEmailRow } from "@/lib/hr-scope";
 import { NO_OFFER_LETTER, offerFileName, validateOfferLetter, type OfferLetterData } from "@/lib/offer-letter";
 import { pdfErrorResponse, renderOfferLetterPdf } from "@/lib/offer-letter-pdf";
@@ -34,7 +35,7 @@ export async function GET(request: Request, { params }: Ctx) {
   // Mail offer chỉ người có quyền offer (Kế toán + Sếp) thấy — sếp chốt 2026-10-29.
   const canOffer = auth.ctx.perms.has("emails.send_offer");
   const emails = (data ?? [])
-    .filter((r) => canOffer || r.kind !== "offer")
+    .filter((r) => canOffer || !isOfferFamilyKind(r.kind))
     .map((r) => redactEmailRow(r, auth.ctx.perms));
   return NextResponse.json({ emails });
 }
@@ -55,7 +56,7 @@ export async function POST(request: Request, { params }: Ctx) {
   }
   const kind = body.kind;
   if (isSystemOnlyKind(kind)) return NextResponse.json({ error: "Loại mail này chỉ hệ thống tự động gửi" }, { status: 400 });
-  if (!ctx.perms.has(kind === "offer" ? "emails.send_offer" : "emails.send")) {
+  if (!ctx.perms.has(isOfferFamilyKind(kind) ? "emails.send_offer" : "emails.send")) {
     return NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
   }
   // Mail bài test chứa link test → cần cả quyền xem test (khớp với draft).

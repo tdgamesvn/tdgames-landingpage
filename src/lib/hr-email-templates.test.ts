@@ -167,7 +167,7 @@ for (const offer of [null, undefined, { startDate: "" }, { startDate: "01/12" },
   cases.push({ kind: "offer", candidateName: "A", jobTitle: "Dev", offer });
 }
 // Loại mới (2026-10-30) không có bản cũ để đối chiếu — test riêng ở cuối file.
-const NEW_KINDS: readonly string[] = ["on_hold", "position_filled", "duplicate_rejection", "freelance_received", "freelance_not_open"];
+const NEW_KINDS: readonly string[] = ["on_hold", "position_filled", "duplicate_rejection", "freelance_received", "freelance_not_open", "offer_declined"];
 for (const kind of CANDIDATE_EMAIL_KINDS.filter((k) => !NEW_KINDS.includes(k))) {
   cases.push({ kind, candidateName: "  ", jobTitle: "" });
 }
@@ -455,4 +455,20 @@ test("rejection: đã nộp bài test → thêm đoạn cảm ơn bài test; ch�
   // Đoạn bài test nằm giữa câu cảm ơn ứng tuyển và câu báo kết quả.
   assert.ok(tested.indexOf("ứng tuyển vị trí Dev") < tested.indexOf(TEST_REJECTION_PARAGRAPH));
   assert.ok(tested.indexOf(TEST_REJECTION_PARAGRAPH) < tested.indexOf("Sau khi cân nhắc"));
+});
+
+test("offer_declined: nhãn, gửi tay, thuộc nhóm offer, mẫu mặc định hợp lệ + không lộ số tiền", async () => {
+  const { isOfferFamilyKind } = await import("./hr-email-base.ts");
+  assert.equal(KIND_LABEL.offer_declined, "Xác nhận từ chối offer");
+  assert.equal(isSystemOnlyKind("offer_declined"), false);
+  assert.equal(isOfferFamilyKind("offer_declined"), true);
+  assert.equal(isOfferFamilyKind("offer"), true);
+  assert.equal(isOfferFamilyKind("rejection"), false);
+  const t = DEFAULT_TEMPLATES.offer_declined;
+  assert.equal(validateTemplate("offer_declined", t.subject, t.body), null);
+  const r = renderTemplate(t, templateVars({ kind: "offer_declined", candidateName: "Tài", jobTitle: "2D Game Artist" }));
+  assert.match(r.subject, /2D Game Artist/);
+  assert.match(r.text, /Chào Tài/);
+  assert.match(r.text, /không còn hiệu lực/);
+  assert.ok(!/\d{1,3}(\.\d{3}){2}/.test(r.text));
 });

@@ -3449,6 +3449,15 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
                 <X className="hr-ico-solo" />
               </button>
             </div>
+            {canMail && (
+              <button
+                type="button"
+                onClick={() => prompt({ appId: app.id, candidateName: app.full_name, kind: "offer_declined" })}
+                className="hr-secondary-btn"
+              >
+                Gửi mail xác nhận cho ứng viên
+              </button>
+            )}
             {(
               [
                 ["Lưu hồ sơ (có thể đã nhận mail \"đã tuyển đủ\" — liên hệ lại rồi chuyển về Interview/Offer)", backupHint.pool],

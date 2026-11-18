@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser } from "@/lib/hr-session";
 import { CANDIDATE_EMAIL_KINDS, KIND_LABEL, isCandidateEmailKind } from "@/lib/hr-email";
 import { DEFAULT_TEMPLATES, KIND_VARS, VAR_HELP, validateTemplate } from "@/lib/hr-email-templates";
+import { isOfferFamilyKind } from "@/lib/hr-email-base";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
   const rows = new Map(((data ?? []) as Row[]).map((r) => [r.kind, r]));
   // Mẫu mail offer chỉ Kế toán + Sếp (quyền emails.send_offer) — sếp chốt 2026-10-29.
   const canOffer = auth.ctx.perms.has("emails.send_offer");
-  const templates = CANDIDATE_EMAIL_KINDS.filter((kind) => canOffer || kind !== "offer").map((kind) => {
+  const templates = CANDIDATE_EMAIL_KINDS.filter((kind) => canOffer || !isOfferFamilyKind(kind)).map((kind) => {
     const r = rows.get(kind);
     return {
       kind,
@@ -45,7 +46,7 @@ export async function PUT(req: Request) {
   const subject = input?.subject;
   const body = input?.body;
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "Loại mẫu không hợp lệ" }, { status: 400 });
-  if (kind === "offer" && !auth.ctx.perms.has("emails.send_offer")) return forbidden();
+  if (isOfferFamilyKind(kind) && !auth.ctx.perms.has("emails.send_offer")) return forbidden();
   if (typeof subject !== "string" || typeof body !== "string") {
     return NextResponse.json({ error: "Thiếu tiêu đề hoặc nội dung" }, { status: 400 });
   }
@@ -72,7 +73,7 @@ export async function DELETE(req: Request) {
   if ("response" in auth) return auth.response;
   const kind = new URL(req.url).searchParams.get("kind");
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "Loại mẫu không hợp lệ" }, { status: 400 });
-  if (kind === "offer" && !auth.ctx.perms.has("emails.send_offer")) return forbidden();
+  if (isOfferFamilyKind(kind) && !auth.ctx.perms.has("emails.send_offer")) return forbidden();
   const { error } = await getSupabaseAdmin().from("hr_email_templates").delete().eq("kind", kind);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

@@ -11,6 +11,7 @@ import {
   type HrEmailConfig,
 } from "./hr-email";
 import { offerContactUser } from "./hr-email-templates";
+import { isOfferFamilyKind } from "./hr-email-base";
 import { getSupabaseAdmin } from "./supabase-admin";
 import type { HrContext } from "./hr-session";
 import type { HrRole } from "./hr-permissions";
@@ -111,7 +112,7 @@ export async function resolveCcForApplication(
     created_at: (u.created_at as string | null) ?? null,
   }));
   const r = resolveCc(cfg, kind, staff, { assigneeId: app.assigneeId, jobLeaderId, senderEmail: ctx.user.email });
-  if (kind === "offer") {
+  if (isOfferFamilyKind(kind)) {
     const sender = staff.find((u) => u.id === ctx.user.id) ?? null;
     const contact = offerContactUser(sender, staff);
     const accountants = staff.filter((u) => u.role === "accountant" && !u.disabled);

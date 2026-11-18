@@ -13,6 +13,7 @@ import { hrFetch, useHrSession } from "./HrSession";
 import OfferLetterDialog, { type OfferLetterRequest } from "./OfferLetterDialog";
 import { fetchPdfBlob, openPdfInNewTab } from "./OfferLetterFields";
 import { KIND_LABEL, type CandidateEmailKind } from "@/lib/hr-email";
+import { isOfferFamilyKind } from "@/lib/hr-email-base";
 import type { PermissionKey } from "@/lib/hr-permissions";
 import { formatInterviewTime } from "@/lib/interview-schedule";
 
@@ -75,7 +76,7 @@ export function useCandidateMail() {
 
 /** Quyền cần để gửi từng loại mail (khớp POST /api/hr/applications/[id]/emails). */
 function canSendKind(can: (p: PermissionKey) => boolean, kind: CandidateEmailKind) {
-  if (kind === "offer") return can("emails.send_offer");
+  if (isOfferFamilyKind(kind)) return can("emails.send_offer");
   if (kind === "test_assignment") return can("emails.send") && can("apps.view_tests");
   return can("emails.send");
 }

@@ -5,7 +5,7 @@ import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken } from "@/lib/hr-tests";
 import { resolveCcForApplication } from "@/lib/hr-email-send";
 import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail, type DraftInput } from "@/lib/hr-email";
-import { holdReplyBy } from "@/lib/hr-email-base";
+import { holdReplyBy, isOfferFamilyKind } from "@/lib/hr-email-base";
 import { NO_OFFER_LETTER, offerDraftFields, offerFileName, validateOfferLetter } from "@/lib/offer-letter";
 import { loadOfferContact, loadOfferLetterRow, approvalForClient } from "@/lib/offer-letter-store";
 import { canSendOffer, OFFER_NOT_APPROVED } from "@/lib/offer-letter-approval";
@@ -32,7 +32,7 @@ export async function GET(request: Request, { params }: Ctx) {
   if (!isCandidateEmailKind(kind)) return NextResponse.json({ error: "kind không hợp lệ" }, { status: 400 });
   if (isSystemOnlyKind(kind)) return NextResponse.json({ error: "Loại mail này chỉ hệ thống tự động gửi" }, { status: 400 });
   const forbidden = () => NextResponse.json({ error: "Bạn không có quyền làm việc này" }, { status: 403 });
-  if (!auth.ctx.perms.has(kind === "offer" ? "emails.send_offer" : "emails.send")) return forbidden();
+  if (!auth.ctx.perms.has(isOfferFamilyKind(kind) ? "emails.send_offer" : "emails.send")) return forbidden();
   // Nháp bài test tạo token + lộ link test → cần thêm quyền xem test, kiểm TRƯỚC khi tạo token.
   if (kind === "test_assignment" && !auth.ctx.perms.has("apps.view_tests")) return forbidden();
   const scoped = await loadScopedApplication(auth.ctx, id, "id, work_type").catch(() => undefined);
