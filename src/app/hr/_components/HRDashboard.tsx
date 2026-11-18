@@ -34,6 +34,7 @@ import OnboardingSection from "./OnboardingSection";
 import { reminderDates, shortDateVi } from "@/lib/hr-onboarding";
 import { vnDateString } from "@/lib/offer-letter";
 import { previousReviewNote } from "@/lib/offer-letter-approval";
+import { backupCandidates, leaveAcceptedWarning } from "@/lib/offer-fallback";
 import { normalizeRefCode } from "@/lib/hr-ref-codes";
 import { cvViewerUrl, safeExternalUrl } from "@/lib/cv-viewer";
 import { ArrowLeftRight, ArrowUpRight, CalendarDays, Check, ChevronDown, ChevronsLeft, CircleAlert, CircleCheck, ClipboardCheck, Copy, Ellipsis, FileText, ImageIcon, Link2, MessageSquare, RefreshCw, RotateCcw, Sparkles, Trash2, Trophy, X } from "lucide-react";
@@ -86,6 +87,9 @@ const useStatuses = () => useContext(StatusContext);
 /** Tên tài khoản chưa khoá (id → tên) — để hiện người phụ trách trên card / hồ sơ. */
 const StaffContext = createContext<Map<string, string>>(new Map());
 const useStaffNames = () => useContext(StaffContext);
+
+/** Danh sách hồ sơ đang tải (để gợi ý ứng viên dự phòng cùng job khi ứng viên rút offer). */
+const AllAppsContext = createContext<Application[]>([]);
 
 /** Đổi status nhiều hồ sơ tại chỗ (sau "Báo đã tuyển đủ" — kể cả khi mở từ hồ sơ khác). */
 const AppsMovedContext = createContext<(ids: string[], status: ApplicationStatus) => void>(() => {});
@@ -3117,6 +3121,10 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
   const [saving, setSaving] = useState(false);
   // Vừa đặt "Đã nhận" + job còn ứng viên mở khác → gợi ý "Báo đã tuyển đủ" (số ứng viên; null = không gợi ý).
   const [filledHint, setFilledHint] = useState<number | null>(null);
+  // Vừa đặt "Từ chối" → ứng viên dự phòng cùng job (null = không hiện).
+  const allApps = useContext(AllAppsContext);
+  const openApp = useContext(OpenAppContext);
+  const [backupHint, setBackupHint] = useState<{ pool: Application[]; open: Application[] } | null>(null);
   const [closeOutOpen, setCloseOutOpen] = useState(false);
   const [error, setError] = useState("");
   // Trạng thái bước: thư mời đã lưu chưa (ai, lúc nào, duyệt chưa) + mail offer đã gửi chưa (lần gần nhất).
@@ -3175,8 +3183,11 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
   if (!canSetResult && !canMail && !app.offer_status) return null;
 
   async function setResult(v: (typeof OFFER_CHOICES)[number]["key"]) {
+    const warn = leaveAcceptedWarning(app.offer_status ?? null, v);
+    if (warn && !confirm(warn)) return;
     setSaving(true);
     setError("");
+    setBackupHint(null);
     try {
       const res = await hrFetch(`/api/hr/applications/${app.id}`, {
         method: "PATCH",
@@ -3190,6 +3201,11 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
       if (v === "accepted" && can("apps.edit")) {
         const n = await countOpenCandidates(app.job_id, app.id);
         setFilledHint(n > 0 ? n : null);
+      }
+      // Ứng viên rút lại → gợi ý người dự phòng cùng job (Lưu hồ sơ trước — có thể đã nhận mail "đã tuyển đủ").
+      if (v === "declined") {
+        const openKeys = new Set(S.list.filter((s) => s.kind === "open").map((s) => s.key));
+        setBackupHint(backupCandidates(allApps, app, openKeys));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Không lưu được kết quả offer");
@@ -3419,6 +3435,42 @@ function OfferSection({ app, onPatch }: { app: Application; onPatch: (patch: Par
             <button type="button" onClick={() => setFilledHint(null)} className="text-white/40 hover:text-white/70" aria-label="Ẩn gợi ý">
               <X className="hr-ico-solo" />
             </button>
+          </div>
+        )}
+        {backupHint && app.offer_status === "declined" && (
+          <div role="status" className="space-y-1.5 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[13px] text-white/80">
+            <div className="flex items-start justify-between gap-2">
+              <span>
+                {backupHint.pool.length + backupHint.open.length > 0
+                  ? "Ứng viên rút lại — job này còn người dự phòng:"
+                  : "Ứng viên rút lại — job này không còn ứng viên dự phòng nào. Cân nhắc mở lại job để tuyển tiếp."}
+              </span>
+              <button type="button" onClick={() => setBackupHint(null)} className="text-white/40 hover:text-white/70" aria-label="Ẩn gợi ý">
+                <X className="hr-ico-solo" />
+              </button>
+            </div>
+            {(
+              [
+                ["Lưu hồ sơ (có thể đã nhận mail \"đã tuyển đủ\" — liên hệ lại rồi chuyển về Interview/Offer)", backupHint.pool],
+                ["Đang trong pipeline", backupHint.open],
+              ] as const
+            ).map(([label, list]) =>
+              list.length === 0 ? null : (
+                <div key={label}>
+                  <p className="text-[12px] text-white/55">
+                    {label}: {list.length}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {list.slice(0, 8).map((b) => (
+                      <button key={b.id} type="button" onClick={() => openApp(b.id)} className="hr-secondary-btn">
+                        {b.full_name} · {S.label(b.status)}
+                      </button>
+                    ))}
+                    {list.length > 8 && <span className="self-center text-[12px] text-white/45">+{list.length - 8} người nữa</span>}
+                  </div>
+                </div>
+              ),
+            )}
           </div>
         )}
         {closeOutOpen && (
@@ -3775,6 +3827,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     <StatusContext.Provider value={statusApi}>
     <StaffContext.Provider value={staffNames}>
     <AppsMovedContext.Provider value={moveApps}>
+    <AllAppsContext.Provider value={apps}>
     <OpenAppContext.Provider value={setSearchOpenId}>
     <CandidateMailProvider>
     <div className="hr-app min-h-screen text-white">
@@ -3903,6 +3956,7 @@ function HrWorkspace({ theme }: { theme: ThemeState }) {
     </div>
     </CandidateMailProvider>
     </OpenAppContext.Provider>
+    </AllAppsContext.Provider>
     </AppsMovedContext.Provider>
     </StaffContext.Provider>
     </StatusContext.Provider>
