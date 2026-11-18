@@ -11,6 +11,7 @@ import {
   formatVnd,
   mergeOfferLetter,
   offerFileName,
+  offerSalaryLines,
   offerTotal,
   sanitizeOfferLetter,
   sanitizeOfferLetterDefaults,
@@ -254,4 +255,39 @@ test("resolveConfirmBy: hạn tự tính không vượt ngày bắt đầu", () 
   assert.equal(resolveConfirmBy("2026-10-29", now, "2026-10-31").date, "2026-10-29");
   // Ngày bắt đầu sai/trống → không kẹp.
   assert.equal(resolveConfirmBy("", now, "abc").date, "2026-11-02");
+});
+
+test("offerSalaryLines: không phụ cấp → 1 dòng, nhãn tuỳ chỉnh + NET", () => {
+  const d = sample({ baseSalary: 4_000_000, salaryLabel: "Trợ cấp thực tập (Full-time)", salaryBasis: "net" });
+  assert.deepEqual(offerSalaryLines(d), [{ label: "Trợ cấp thực tập (Full-time) (NET)", amount: 4_000_000, bold: true }]);
+});
+
+test("offerSalaryLines: mặc định (thư cũ không có trường mới) → Lương cơ bản, gross", () => {
+  const d = sample({ baseSalary: 10_000_000 });
+  assert.equal(d.salaryLabel, "");
+  assert.equal(d.salaryBasis, "gross");
+  assert.deepEqual(offerSalaryLines(d), [{ label: "Lương cơ bản (gross)", amount: 10_000_000, bold: true }]);
+});
+
+test("offerSalaryLines: có phụ cấp → từng dòng + Tổng lương theo GROSS/NET", () => {
+  const allowances = [{ name: "Xăng xe", amount: 500_000 }, { name: "KPI", amount: null }];
+  assert.deepEqual(offerSalaryLines(sample({ baseSalary: 7_000_000, allowances })), [
+    { label: "Lương cơ bản", amount: 7_000_000, bold: false },
+    { label: "Phụ cấp xăng xe", amount: 500_000, bold: false },
+    { label: "Tổng lương gross", amount: 7_500_000, bold: true },
+  ]);
+  assert.equal(offerSalaryLines(sample({ baseSalary: 7_000_000, allowances, salaryBasis: "net" })).at(-1)?.label, "Tổng lương NET");
+});
+
+test("sanitize: salaryBasis chỉ nhận net, còn lại gross; thư cũ thiếu trường → không bị coi là đổi", () => {
+  assert.equal(sanitizeOfferLetter({ salaryBasis: "net" }).salaryBasis, "net");
+  assert.equal(sanitizeOfferLetter({ salaryBasis: "NET!" }).salaryBasis, "gross");
+  assert.equal(sanitizeOfferLetter({}).salaryLabel, "");
+  const old = { candidateName: "A", jobTitle: "Dev", baseSalary: 1_000_000 };
+  assert.deepEqual(sanitizeOfferLetter(old), sanitizeOfferLetter({ ...old, salaryLabel: "", salaryBasis: "gross" }));
+});
+
+test("validate: thiếu tiền báo theo nhãn tuỳ chỉnh; nhãn quá dài bị chặn", () => {
+  assert.match(validateOfferLetter(sample({ baseSalary: null, salaryLabel: "Trợ cấp thực tập" })) ?? "", /trợ cấp thực tập/i);
+  assert.ok(validateOfferLetter(sample({ salaryLabel: "x".repeat(301) })));
 });

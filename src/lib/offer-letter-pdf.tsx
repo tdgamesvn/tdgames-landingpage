@@ -11,7 +11,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { Document, Font, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
-import { formatStartVi, formatVnd, offerTotal, type OfferLetterData } from "./offer-letter";
+import { formatStartVi, formatVnd, offerSalaryLines, type OfferLetterData } from "./offer-letter";
 import { RenderSlots } from "./render-slots";
 
 const ASSETS = path.join(process.cwd(), "src", "assets");
@@ -178,21 +178,11 @@ function listItem(label: string, values: string[], note?: string): Item[] {
   return [{ label, note, lines: v.length ? v.map(bullet) : [<View key={0} />] }];
 }
 
-/** "Xăng xe" → "xăng xe" (ghép sau "Phụ cấp"); viết tắt như "KPI" giữ nguyên. */
-function allowanceLabel(name: string): string {
-  const t = name.trim();
-  return t.length > 1 && t[1] === t[1].toLocaleLowerCase("vi") ? t[0].toLocaleLowerCase("vi") + t.slice(1) : t;
-}
-
 function salaryLines(d: OfferLetterData): ReactNode[] {
-  const lines: [string, string, boolean][] = [];
-  if (d.baseSalary !== null) lines.push(["Lương cơ bản", formatVnd(d.baseSalary), false]);
-  for (const a of d.allowances) if (a.amount !== null && a.name) lines.push([`Phụ cấp ${allowanceLabel(a.name)}`, formatVnd(a.amount), false]);
-  lines.push(["Tổng lương gross", formatVnd(offerTotal(d)), true]);
-  return lines.map(([k, v, bold], i) => (
+  return offerSalaryLines(d).map(({ label, amount, bold }, i) => (
     <View key={i} style={[s.money, i === 0 || bold ? { marginTop: 2 } : {}]} wrap={false}>
-      <Text style={[s.moneyLabel, bold ? s.label : {}]}>{`• ${k}`}</Text>
-      <Text style={bold ? s.label : {}}>{v}</Text>
+      <Text style={[s.moneyLabel, bold ? s.label : {}]}>{`• ${label}`}</Text>
+      <Text style={bold ? s.label : {}}>{formatVnd(amount)}</Text>
     </View>
   ));
 }

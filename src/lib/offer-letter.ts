@@ -6,6 +6,8 @@
 
 export type ScheduleItem = { time: string; task: string };
 export type Allowance = { name: string; amount: number | null };
+export type SalaryBasis = "gross" | "net";
+export const SALARY_LABEL_DEFAULT = "Lương cơ bản";
 
 /** Mẫu mặc định công ty (app_settings `offer_letter_defaults`), sửa trong tab Mẫu mail. */
 export type OfferLetterDefaults = {
@@ -38,6 +40,10 @@ export type OfferLetterData = {
   /** "HH:MM" */
   startTime: string;
   baseSalary: number | null;
+  /** Tên dòng lương trên thư ("Trợ cấp thực tập"…); trống → "Lương cơ bản". */
+  salaryLabel: string;
+  /** Lương ghi trên thư là gross hay NET. Thư cũ không có trường này → gross. */
+  salaryBasis: SalaryBasis;
   allowances: Allowance[];
   probationNote: string;
   location: string;
@@ -190,6 +196,8 @@ export function buildOfferLetterData(
     startDate: "",
     startTime: defaults.startTime,
     baseSalary: null,
+    salaryLabel: "",
+    salaryBasis: "gross",
     allowances: defaults.allowanceNames.map((name) => ({ name, amount: null })),
     probationNote: defaults.probationNote,
     location: defaults.location,
@@ -226,6 +234,38 @@ export function offerTotal(data: OfferLetterData): number {
   let total = data.baseSalary ?? 0;
   for (const a of data.allowances) if (a.amount !== null) total += a.amount;
   return total;
+}
+
+export function salaryLabelOf(data: Pick<OfferLetterData, "salaryLabel">): string {
+  return data.salaryLabel.trim() || SALARY_LABEL_DEFAULT;
+}
+
+export function salaryBasisText(basis: SalaryBasis): string {
+  return basis === "net" ? "NET" : "gross";
+}
+
+/** "Xăng xe" → "xăng xe" (ghép sau "Phụ cấp"); viết tắt như "KPI" giữ nguyên. */
+function allowanceLabel(name: string): string {
+  const t = name.trim();
+  return t.length > 1 && t[1] === t[1].toLocaleLowerCase("vi") ? t[0].toLocaleLowerCase("vi") + t.slice(1) : t;
+}
+
+export type SalaryLine = { label: string; amount: number; bold: boolean };
+
+/**
+ * Dòng tiền trong mục "Mức lương" của PDF. Không có phụ cấp → 1 dòng "<nhãn> (gross|NET)";
+ * có phụ cấp → nhãn lương, từng phụ cấp, rồi "Tổng lương gross|NET".
+ */
+export function offerSalaryLines(d: OfferLetterData): SalaryLine[] {
+  const basis = salaryBasisText(d.salaryBasis);
+  const label = salaryLabelOf(d);
+  const allowances = d.allowances.filter((a): a is { name: string; amount: number } => a.amount !== null && !!a.name);
+  if (allowances.length === 0) return [{ label: `${label} (${basis})`, amount: offerTotal(d), bold: true }];
+  const lines: SalaryLine[] = [];
+  if (d.baseSalary !== null) lines.push({ label, amount: d.baseSalary, bold: false });
+  for (const a of allowances) lines.push({ label: `Phụ cấp ${allowanceLabel(a.name)}`, amount: a.amount, bold: false });
+  lines.push({ label: `Tổng lương ${basis}`, amount: offerTotal(d), bold: true });
+  return lines;
 }
 
 // ── Ép kiểu từ JSON client ──
@@ -275,6 +315,8 @@ export function sanitizeOfferLetter(input: unknown): OfferLetterData {
     startDate: str(o.startDate),
     startTime: normTime(o.startTime),
     baseSalary: amount(o.baseSalary),
+    salaryLabel: str(o.salaryLabel),
+    salaryBasis: o.salaryBasis === "net" ? "net" : "gross",
     allowances,
     probationNote: str(o.probationNote),
     location: str(o.location),
@@ -327,6 +369,7 @@ export function sanitizeOfferLetterDefaults(input: unknown): OfferLetterDefaults
 const TEXT_LABEL: Record<string, string> = {
   candidateName: "Tên ứng viên",
   jobTitle: "Chức danh",
+  salaryLabel: "Tên dòng lương",
   probationNote: "Ghi chú thử việc",
   location: "Địa điểm làm việc",
   workingHours: "Thời gian làm việc",
@@ -376,7 +419,7 @@ function checkAmount(n: number | null, label: string): string | null {
 export function validateOfferLetterLimits(data: OfferLetterData): string | null {
   const t = checkTexts(data as unknown as Record<string, unknown>);
   if (t) return t;
-  const b = checkAmount(data.baseSalary, "Lương cơ bản");
+  const b = checkAmount(data.baseSalary, salaryLabelOf(data));
   if (b) return b;
   for (const [i, a] of data.allowances.entries()) {
     const e = checkAmount(a.amount, `Phụ cấp “${a.name || `dòng ${i + 1}`}”`);
@@ -395,7 +438,7 @@ export function validateOfferLetter(data: OfferLetterData): string | null {
   if (!data.jobTitle.trim()) return "Thiếu chức danh";
   if (!isValidDate(data.startDate)) return "Thiếu ngày bắt đầu làm việc (hoặc ngày không hợp lệ)";
   if (!isValidTime(data.startTime)) return "Giờ bắt đầu không hợp lệ (dạng 08:45)";
-  if (data.baseSalary === null || !(data.baseSalary > 0)) return "Thiếu lương cơ bản";
+  if (data.baseSalary === null || !(data.baseSalary > 0)) return `Thiếu ${salaryLabelOf(data).toLocaleLowerCase("vi")}`;
   const limits = validateOfferLetterLimits(data);
   if (limits) return limits;
   // So chuỗi YYYY-MM-DD = so ngày.

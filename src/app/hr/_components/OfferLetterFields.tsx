@@ -13,8 +13,11 @@ import {
   OFFER_MAX_ITEMS,
   OFFER_MAX_PARAGRAPH,
   OFFER_MAX_TEXT,
+  SALARY_LABEL_DEFAULT,
   formatVnd,
   offerTotal,
+  salaryBasisText,
+  salaryLabelOf,
   type OfferLetterData,
   type OfferLetterDefaults,
   type ScheduleItem,
@@ -204,9 +207,40 @@ export function OfferLetterFields(props: Props) {
       <Group title="Lương">
         {L && letter ? (
           <>
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <label className="block">
+                <span className={labelCls}>Tên dòng lương trên thư</span>
+                <input
+                  className={inputCls}
+                  maxLength={OFFER_MAX_TEXT}
+                  value={L.salaryLabel}
+                  placeholder={SALARY_LABEL_DEFAULT}
+                  onChange={(e) => setL({ salaryLabel: e.target.value })}
+                />
+              </label>
+              <div>
+                <span className={labelCls}>Lương ghi theo</span>
+                <div role="radiogroup" aria-label="Lương ghi theo gross hay NET" className="flex rounded-lg bg-[var(--hr-segment-bg)] p-0.5">
+                  {(["gross", "net"] as const).map((b) => (
+                    <button
+                      key={b}
+                      type="button"
+                      role="radio"
+                      aria-checked={L.salaryBasis === b}
+                      onClick={() => setL({ salaryBasis: b })}
+                      className={`rounded-md px-3 py-1.5 text-[13px] font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--hr-orange)] ${
+                        L.salaryBasis === b ? "bg-[var(--hr-raised)] text-[var(--hr-ink)] shadow-sm" : "text-[var(--hr-ink-2)]"
+                      }`}
+                    >
+                      {b === "net" ? "NET" : "Gross"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
             <div>
-              <span className={labelCls}>Lương cơ bản</span>
-              <MoneyInput label="Lương cơ bản" value={L.baseSalary} onChange={(x) => setL({ baseSalary: x })} />
+              <span className={labelCls}>{salaryLabelOf(L)}</span>
+              <MoneyInput label={salaryLabelOf(L)} value={L.baseSalary} onChange={(x) => setL({ baseSalary: x })} />
               {letter.expectedSalary && (
                 <span className="mt-1 block text-[12px] text-[var(--hr-ink-3)]">
                   Ứng viên mong muốn: <span className="text-[var(--hr-ink-2)]">{letter.expectedSalary}</span> (tham khảo)
@@ -250,7 +284,7 @@ export function OfferLetterFields(props: Props) {
               )}
             </div>
             <div className="flex items-center justify-between rounded-lg bg-[var(--hr-segment-bg)] px-3 py-2">
-              <span className="text-[13px] font-semibold text-[var(--hr-ink)]">Tổng lương gross</span>
+              <span className="text-[13px] font-semibold text-[var(--hr-ink)]">Tổng lương {salaryBasisText(L.salaryBasis)}</span>
               <span className="text-[15px] font-semibold tabular-nums text-[var(--hr-orange-ink)]" data-testid="offer-total">
                 {formatVnd(offerTotal(L))}
               </span>
