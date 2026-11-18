@@ -183,3 +183,9 @@ Mail HR gửi ứng viên từ /hr (Resend, `hr@tdgamestudio.com`). RLS bật, c
 - `chat_kb`: title, content, audience client|candidate|any, active, sort_order — thẻ sự thật AI được dùng (seed: 11 câu có sẵn + 8 thẻ công ty từ /company-profile).
 - `chat_ai_drafts`: thread_id (cascade), trigger_message_id, status pending|sent|discarded|superseded|failed|skipped, answer, needs_human, confidence, sources jsonb [{ref,title}], warnings jsonb, model, input/output_tokens, cost_usd (ước tính $2/$10 per MTok), error, rating ±1, edited, decided_by/at. Tổng cost_usd tháng (giờ VN) = ngân sách đã dùng.
 - app_settings: chat_ai_mode off|draft (= draft), chat_ai_budget_usd (100), chat_ai_alert_<loại> (mốc ms lần báo admin cuối, gộp 30'). chat_ai_enabled cũ không dùng.
+
+## Onboard người mới (migration 20261118000000_hr_onboarding, đã áp prod 2026-11-18)
+- `hr_onboarding`: application_id PK (FK applications cascade), items jsonb `[{id,label,stage before|day1|week1,leader,done_at,done_by_user_id,done_by_name}]` (chụp mẫu lúc tạo), reminded jsonb `{stage:{at,for_date}}`, created_at, updated_at (store tự đặt — dùng làm khoá lạc quan khi tích). RLS bật, chỉ service role.
+- app_settings `hr_onboarding_checklist` (JSON text; thiếu → 9 mục mặc định trong src/lib/hr-onboarding.ts).
+- Quyền mới: onboard.view (HR/Leader/Kế toán), onboard.edit (HR/Kế toán), onboard.template (HR).
+- Ngày đi làm: dùng chung effectiveStartDate (referral_placements.start_date → offer_letters.data.startDate).

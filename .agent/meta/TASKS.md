@@ -2,7 +2,7 @@
 
 ## Doing
 
-- [ ] HR: Onboard người mới — ngày đi làm + checklist chung 9 việc + nhắc Discord/push (trước 1 ngày làm việc, sáng ngày đầu, hết tuần đầu) (2026-11-18). Spec `docs/superpowers/specs/2026-11-18-hr-onboarding-design.md` SẾP ĐÃ DUYỆT; plan `docs/superpowers/plans/2026-11-18-hr-onboarding.md` (7 task) chờ sếp chọn cách chạy. LOG 2026-11-18
+- [x] HR: Onboard người mới — ngày đi làm trên thẻ + khối Onboard + checklist chung 9 việc (sửa ở Mẫu mail) + nhắc Discord/push (2026-11-18) — ĐÃ DEPLOY (9708e68), E2E prod 16/16 + nhắc 1 lần không trùng + UI 1440/390. Chờ sếp/HR dùng thật khi Tài đánh dấu Đã nhận. Minor tồn: LOG 2026-11-18
 - [ ] HR: Đổi vị trí ứng tuyển (⋯ trong hồ sơ) (2026-11-13) — ĐÃ DEPLOY, E2E 10/10. Chờ sếp/HR: tạo đề test job Graphic Designer, chuyển hồ sơ Chu Hà My, xem UI. LOG 2026-11-13
 - [ ] SEO + Ads (2026-11-12): kế hoạch `docs/marketing/2026-11-12-seo-ads-plan.md`. GA4/Ads/GSC xong, enhanced conversions đã deploy. Chiến dịch `Search – Animation – T1` ĐANG CHẠY (165k/ngày). Còn: kiểm cài đặt sau publish + từ khoá phủ định; tạo chiến dịch Art 99k + VFX/Full (sếp chốt 3 hay 4); tuần sau xem Search terms. Em: trang /services/spine-animation?, audit SEO. LOG 2026-11-12
 - [ ] Sếp: đăng nhập lại Claude trong cliproxyapi (Mac mini) — credential Claude hỏng (invalid x-api-key). Tạm thời VPS AI_MODEL=gpt-6-sol (2026-11-16; 6.1-sol chậm ~70s làm sinh câu hỏi PV quá 90s). Claude vẫn 401 khi kiểm 2026-11-16. Đăng nhập xong muốn thì đổi lại. LOG 2026-11-10
