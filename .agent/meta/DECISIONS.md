@@ -404,3 +404,9 @@ Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, khôn
 ## 2026-11-12 — Google Ads enhanced conversions bằng gtag (email hash)
 - Form báo giá gửi email khách cho gtag qua `gtag('set','user_data')` ngay trước conversion lead; gtag hash SHA-256 trong trình duyệt. Chỉ email, không SĐT/tên. Đã công bố ở Privacy Policy (mục Cookies and Analytics).
 - Lý do: khách B2B hay đổi thiết bị → đếm thiếu chuyển đổi; sếp chọn (a) bật thay vì tắt tính năng.
+
+## 2026-11-20 — Claude đọc + thao tác Google Ads qua Ads Script (không qua Ads API)
+- Ads API: Cloud project 744795499244 bị từ chối quyền Explorer 2 lần (Google không nêu lý do, đã loại trừ thanh toán). Không dùng trình duyệt tự động để bấm giao diện Ads (dễ hỏng / dễ bị khoá).
+- Thay bằng Google Ads Script `docs/marketing/google-ads-report-script.gs` chạy HẰNG GIỜ trong tài khoản Ads: ghi báo cáo ra Sheet `1Z7SyQB-D456X7VgFxITJy_cgfDrlRQRzWLW0SSI3wY0`, thực hiện lệnh ở tab `lenh` (Claude ghi bằng `scripts/ads-command.mjs`), gửi báo cáo sáng (≥ 8h) qua Telegram/Discord nếu điền token/webhook trong script.
+- Giới hạn (sếp duyệt): Claude TỰ làm chỉ 5 hành động ADD_NEGATIVE / REMOVE_NEGATIVE / ADD_KEYWORD / PAUSE_KEYWORD / ENABLE_KEYWORD (whitelist cứng trong script, lệnh khác → REJECTED). Ngân sách, giá thầu, tạo/bật/tắt chiến dịch, quảng cáo: hỏi sếp, sếp tự làm. Không bao giờ đụng thanh toán.
+- GA4 + Search Console đọc trực tiếp bằng API với service account chỉ-đọc (`scripts/marketing-report.mjs`, `scripts/lib/google-sa.mjs`).

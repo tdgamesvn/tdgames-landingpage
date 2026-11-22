@@ -1,0 +1,65 @@
+[
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "live2d",
+  "match_type": "BROAD",
+  "note": "2026-11-22 phủ định đợt 3"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "l2d",
+  "match_type": "BROAD",
+  "note": "2026-11-22 phủ định đợt 3"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "cubism",
+  "match_type": "BROAD",
+  "note": "2026-11-22 phủ định đợt 3"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "rigby2d",
+  "match_type": "BROAD",
+  "note": "2026-11-22 phủ định đợt 3"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "sprite sheet",
+  "match_type": "PHRASE",
+  "note": "2026-11-22 phủ định đợt 3"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spritesheet",
+  "match_type": "BROAD",
+  "note": "2026-11-22 phủ định đợt 3"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "dragon bones",
+  "match_type": "PHRASE",
+  "note": "2026-11-22 phủ định đợt 3"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "flipaclip",
+  "match_type": "BROAD",
+  "note": "2026-11-22 phủ định đợt 3"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "azur lane",
+  "match_type": "PHRASE",
+  "note": "2026-11-22 phủ định đợt 3"
+ }
+]

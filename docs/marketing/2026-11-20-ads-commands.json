@@ -1,0 +1,510 @@
+[
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "job",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "jobs",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "career",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "careers",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "salary",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "intern",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "internship",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "vacancy",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "resume",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "course",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "courses",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "tutorial",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "tutorials",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "learn",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "learning",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "lesson",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "udemy",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "youtube",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "how to",
+  "match_type": "PHRASE",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "free",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "download",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "crack",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "cracked",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "torrent",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "apk",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "mod",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "template",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "templates",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "nft",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "reddit",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "fiverr",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "upwork",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spline",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "esoteric",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "license",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "trial",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "software",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "runtime",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "runtimes",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "plugin",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "editor",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "dragonbones",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "blender",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "after effects",
+  "match_type": "PHRASE",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "photoshop",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "procreate",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "toon boom",
+  "match_type": "PHRASE",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "moho",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "medical",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "surgery",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "surgical",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spinal",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "anatomy",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "patient",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "pain",
+  "match_type": "BROAD",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spine 2d",
+  "match_type": "EXACT",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spine2d",
+  "match_type": "EXACT",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spine 2d animation",
+  "match_type": "EXACT",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spine animation",
+  "match_type": "EXACT",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spline2d",
+  "match_type": "EXACT",
+  "note": "2026-11-20 phủ định đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "2d game animation",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "2d animation for games",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "game animation studio",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "game animation services",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "game character animation",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "character animation for games",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "mobile game animation",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "spine animation for games",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "spine animation services",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "hire game animator",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "keyword": "hire 2d animator",
+  "match_type": "PHRASE",
+  "ad_group": "Nhóm quảng cáo 1",
+  "note": "2026-11-20 từ khoá mới đợt 1"
+ }
+]
