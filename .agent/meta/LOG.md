@@ -6733,4 +6733,5 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 ## 2026-11-24 (tối) — Viết lại mục "hero kit" trang spine (sếp: "chả thấy hấp dẫn, không đúng nhu cầu khách")
 - Chẩn đoán: bảng nói theo góc studio (danh sách animation + độ dài lấp chỗ), không trả lời nỗi lo người thuê; không bằng chứng/số/CTA.
 - Thay bằng mục "Before you send us a character": 4 thẻ câu hỏi của khách (giữ đúng art? chạy engine ngay? bao lâu/bao nhiêu? tin studio mới?) — CHỈ dùng thông tin site đã công bố (FAQ 2D animation: theo rig/style khách, báo giá + ngày giao trong 24h, review blocking/timing/polish, GMT+7; 50+ dự án / 1.200+ asset / 12+ studio quay lại; pipeline Unity/Cocos). Thẻ 2 link về rig ML (event đỏ); thẻ 4 số to màu cam. Hero kit thu thành hàng chip + nút "Send us one character". Bỏ khối 3 ý bàn giao.
+- ĐÃ DEPLOY 6bf6c46 (CI OK), prod có mục mới. Gửi 3 ảnh Telegram.
 - Chờ sếp số thật để mạnh hơn: thời gian 1 hero kit, năng lực nhân vật/tháng, có làm thử 1 nhân vật không (free/paid).
