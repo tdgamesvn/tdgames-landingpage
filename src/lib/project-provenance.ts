@@ -4,7 +4,8 @@
  * 2026-10-31 — giữ trên site để tham khảo nhưng phải ghi rõ nguồn gốc ở trang case study,
  * mọi thẻ liệt kê và metadata.
  * Là việc thật của studio (không nhãn, không nằm ở đây): Monster Legends (Social Point),
- * battle-of-the-gods-mytheria (outsource của TD Games).
+ * battle-of-the-gods-mytheria (outsource của TD Games), boss-animation / The Twins (sếp xác
+ * nhận 2026-11-24: coi là sản phẩm của TD Games).
  */
 export type ProjectProvenance = {
   /** founder-previous: làm khi là nhân viên công ty khác; founder-personal: bài cá nhân. */

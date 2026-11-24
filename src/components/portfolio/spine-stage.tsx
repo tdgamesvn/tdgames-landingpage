@@ -232,9 +232,9 @@ type StageProps = {
   animationLabels: Readonly<Record<string, string>>;
   theme: ProjectTheme;
   /**
-   * Căn nhân vật giữa khung theo chiều dọc ở MỌI tỉ lệ khung (mặc định chỉ khung hẹp).
-   * Trang /services/spine-animation bật (sếp 2026-11-24: "căn giữa nhân vật vào khung");
-   * trang Monster Legends giữ bản đã duyệt (chân đúng mặt sàn).
+   * Căn nhân vật giữa khung theo chiều dọc ở mọi tỉ lệ khung (sếp 2026-11-24: "căn giữa
+   * nhân vật vào khung" — bật cho /services/spine-animation rồi cả 10 trang Monster Legends).
+   * false = bản cũ: khung ngang đặt chân đúng mặt sàn ảnh, chỉ khung hẹp mới căn giữa.
    */
   centre?: boolean;
   /** Nhận player khi dựng xong (null khi huỷ) — vd. vẽ dopesheet theo animation đang chạy. */
@@ -287,7 +287,7 @@ function MonsterStage({
   backgroundRoom,
   animationLabels,
   theme,
-  centre = false,
+  centre = true,
   onPlayer,
 }: StageProps & { monster: SpineMonster }) {
   // Mặc định bậc cao nhất — bản đẹp nhất để khoe.
@@ -404,8 +404,8 @@ function MonsterStage({
     // phần sàn đá kéo tới đáy ảnh nên chân vẫn trên sàn. Desktop gần như không đổi.
     const heightPx = f ? (f.w / body.width) * body.height : 0;
     const centred = Math.min(0.92 * SH, (SH + heightPx) / 2);
-    // Chỉ khung hẹp (mobile vuông) mới căn giữa + dời nền; khung ngang giữ nguyên bản
-    // sếp đã duyệt (chân đúng mặt sàn, nền cố định — đồng đều giữa các sân khấu).
+    // Căn giữa + dời nền theo chân (mặc định mọi khung, sếp 2026-11-24). centre=false giữ bản
+    // cũ: chỉ khung hẹp căn giữa, khung ngang chân đúng mặt sàn, nền cố định.
     const narrow = centre || SW / SH < 1.2;
     const feet = narrow ? Math.max(ground, centred) : ground;
     const liftPx = f ? feet - box.offsetTop - f.y : 0;
