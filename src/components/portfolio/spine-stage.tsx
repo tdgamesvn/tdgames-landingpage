@@ -231,6 +231,14 @@ type StageProps = {
   backgroundRoom: number;
   animationLabels: Readonly<Record<string, string>>;
   theme: ProjectTheme;
+  /**
+   * Căn nhân vật giữa khung theo chiều dọc ở MỌI tỉ lệ khung (mặc định chỉ khung hẹp).
+   * Trang /services/spine-animation bật (sếp 2026-11-24: "căn giữa nhân vật vào khung");
+   * trang Monster Legends giữ bản đã duyệt (chân đúng mặt sàn).
+   */
+  centre?: boolean;
+  /** Nhận player khi dựng xong (null khi huỷ) — vd. vẽ dopesheet theo animation đang chạy. */
+  onPlayer?: (player: Player | null) => void;
 };
 
 export default function SpineStage({
@@ -279,6 +287,8 @@ function MonsterStage({
   backgroundRoom,
   animationLabels,
   theme,
+  centre = false,
+  onPlayer,
 }: StageProps & { monster: SpineMonster }) {
   // Mặc định bậc cao nhất — bản đẹp nhất để khoe.
   const [tierKey, setTierKey] = useState(monster.tiers[monster.tiers.length - 1].key);
@@ -312,6 +322,11 @@ function MonsterStage({
   /** Điểm chân trong toạ độ canvas (px CSS) — trục ép/xiên của bóng. */
   const footRef = useRef<Foot | null>(null);
 
+  const onPlayerRef = useRef(onPlayer);
+  useEffect(() => {
+    onPlayerRef.current = onPlayer;
+  }, [onPlayer]);
+
   const anims = useMemo(() => sortAnims(tier.animations), [tier]);
   // Showreel (sếp chốt 2026-10-18): idle xen giữa mọi lần đổi animation, walk lặp 2 lần.
   // Bỏ "prone" (ngã gục) — nằm giữa chuỗi trông như lỗi. Chuỗi lặp lại từ idle đầu.
@@ -338,6 +353,7 @@ function MonsterStage({
           setReady(false);
           setFailed(false);
           playerRef.current = null;
+          onPlayerRef.current?.(null);
         }
       },
       { rootMargin: "300px 0px" },
@@ -390,7 +406,7 @@ function MonsterStage({
     const centred = Math.min(0.92 * SH, (SH + heightPx) / 2);
     // Chỉ khung hẹp (mobile vuông) mới căn giữa + dời nền; khung ngang giữ nguyên bản
     // sếp đã duyệt (chân đúng mặt sàn, nền cố định — đồng đều giữa các sân khấu).
-    const narrow = SW / SH < 1.2;
+    const narrow = centre || SW / SH < 1.2;
     const feet = narrow ? Math.max(ground, centred) : ground;
     const liftPx = f ? feet - box.offsetTop - f.y : 0;
     setLift(liftPx);
@@ -437,7 +453,7 @@ function MonsterStage({
       ),
     );
     setZoom((z) => ({ ...z, k: Math.max(z.k, minBgKRef.current) }));
-  }, [groundY, tier.scale, backgroundRoom]);
+  }, [groundY, tier.scale, backgroundRoom, centre]);
 
   useEffect(() => {
     const box = boxRef.current;
@@ -628,6 +644,7 @@ function MonsterStage({
                 layout();
                 setReady(true);
                 setFailed(false);
+                onPlayerRef.current?.(p);
               }}
             />
           )}

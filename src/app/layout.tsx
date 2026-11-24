@@ -143,6 +143,7 @@ const ORGANIZATION_JSON_LD = {
   makesOffer: [
     ["2D Art", "/services/2d-art"],
     ["2D Animation", "/services/2d-animation"],
+    ["Spine Animation", "/services/spine-animation"],
     ["2D VFX", "/services/2d-vfx"],
     ["Full Game Production", "/services/full-game-production"],
   ].map(([name, path]) => ({

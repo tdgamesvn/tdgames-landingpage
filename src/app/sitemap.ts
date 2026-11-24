@@ -94,6 +94,7 @@ const STATIC_ROUTES: [string, string[]][] = [
   ["/about", ["about"]],
   ["/services/2d-art", ["services/2d-art"]],
   ["/services/2d-animation", ["services/2d-animation"]],
+  ["/services/spine-animation", ["services/spine-animation"]],
   ["/services/2d-vfx", ["services/2d-vfx"]],
   ["/services/full-game-production", ["services/full-game-production"]],
   ["/portfolio", ["portfolio"]],

@@ -323,6 +323,12 @@ export default function SiteFooter() {
                   2D Animation
                 </Link>
                 <Link
+                  href="/services/spine-animation"
+                  className="block transition-colors hover:text-white"
+                >
+                  Spine Animation
+                </Link>
+                <Link
                   href="/services/2d-vfx"
                   className="block transition-colors hover:text-white"
                 >

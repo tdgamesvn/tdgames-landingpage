@@ -410,3 +410,8 @@ Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, khôn
 - Thay bằng Google Ads Script `docs/marketing/google-ads-report-script.gs` chạy HẰNG GIỜ trong tài khoản Ads: ghi báo cáo ra Sheet `1Z7SyQB-D456X7VgFxITJy_cgfDrlRQRzWLW0SSI3wY0`, thực hiện lệnh ở tab `lenh` (Claude ghi bằng `scripts/ads-command.mjs`), gửi báo cáo sáng (≥ 8h) qua Telegram/Discord nếu điền token/webhook trong script.
 - Giới hạn (sếp duyệt): Claude TỰ làm chỉ 5 hành động ADD_NEGATIVE / REMOVE_NEGATIVE / ADD_KEYWORD / PAUSE_KEYWORD / ENABLE_KEYWORD (whitelist cứng trong script, lệnh khác → REJECTED). Ngân sách, giá thầu, tạo/bật/tắt chiến dịch, quảng cáo: hỏi sếp, sếp tự làm. Không bao giờ đụng thanh toán.
 - GA4 + Search Console đọc trực tiếp bằng API với service account chỉ-đọc (`scripts/marketing-report.mjs`, `scripts/lib/google-sa.mjs`).
+
+## 2026-11-24 — Trang /services/spine-animation tách khỏi /services/2d-animation
+- Trang riêng (không dùng ServicePageTemplate): hero "chọn nhân vật" + chương theo dự án. Chữ giữ đúng hệ trang dịch vụ (H1 Changa One cam/trắng, dòng phụ Nunito Sans cam giãn chữ, h2 Rajdhani) — sếp bắt lỗi font tự chọn ở mockup.
+- Monster Legends dùng lại `SpineStage` với 2 prop tuỳ chọn: `centre` (căn nhân vật giữa khung theo chiều dọc ở mọi tỉ lệ khung — sếp yêu cầu cho trang này) và `onPlayer` (dopesheet đọc key/event thật từ animation đang chạy, không vẽ số giả). Mặc định tắt → 10 trang Monster Legends giữ nguyên bản đã duyệt.
+- Nhãn nguồn gốc: Summoner Era dùng `PROJECT_PROVENANCE` (Founder's previous work · Zitga); Kayn Snow Moon ghi "Fan-made piece" theo case study. Media mới ở R2 `landing/services/spine-animation/*-v1.jpg`, OG `landing/og/spine-animation-v1.jpg`.

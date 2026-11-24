@@ -29,6 +29,12 @@ const navLinks = [
         icon: "animation",
       },
       {
+        label: "Spine Animation",
+        href: "/services/spine-animation",
+        description: "Heroes, monsters & bosses rigged in Spine for midcore games",
+        icon: "animation",
+      },
+      {
         label: "2D VFX",
         href: "/services/2d-vfx",
         description: "Skill Effects, Particles, Explosions & more",
