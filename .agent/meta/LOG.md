@@ -6729,3 +6729,8 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Kiểm: tsc sạch, eslint sạch file mới (2 lỗi no-html-link cũ ở site-footer, có từ trước), `npm run build` OK (1 lần lỗi tạm do tải Google Fonts, build lại OK). `next dev` (turbopack) lỗi next/font ở MỌI trang dịch vụ (cả 2d-animation) → lỗi môi trường dev, kiểm bằng `next start`. Ảnh 1440 + 390: không tràn ngang (đã sửa grid blowout do hàng chip SpineStage), nhân vật căn giữa.
 - ĐÃ DEPLOY ed2875d (CI 3m11s, kèm 4 commit meta/marketing trước đó chưa push). Prod kiểm: title/canonical/OG đúng, menu có link, video hero chạy, sân khấu Spine tải + dopesheet chạy, /portfolio/monster-legends-fire không đổi. Gửi 4 ảnh Telegram.
 - Next: sếp xem prod; trả lời The Twins nhãn founder?; có áp `centre` cho 10 trang Monster Legends không.
+
+## 2026-11-24 (tối) — Viết lại mục "hero kit" trang spine (sếp: "chả thấy hấp dẫn, không đúng nhu cầu khách")
+- Chẩn đoán: bảng nói theo góc studio (danh sách animation + độ dài lấp chỗ), không trả lời nỗi lo người thuê; không bằng chứng/số/CTA.
+- Thay bằng mục "Before you send us a character": 4 thẻ câu hỏi của khách (giữ đúng art? chạy engine ngay? bao lâu/bao nhiêu? tin studio mới?) — CHỈ dùng thông tin site đã công bố (FAQ 2D animation: theo rig/style khách, báo giá + ngày giao trong 24h, review blocking/timing/polish, GMT+7; 50+ dự án / 1.200+ asset / 12+ studio quay lại; pipeline Unity/Cocos). Thẻ 2 link về rig ML (event đỏ); thẻ 4 số to màu cam. Hero kit thu thành hàng chip + nút "Send us one character". Bỏ khối 3 ý bàn giao.
+- Chờ sếp số thật để mạnh hơn: thời gian 1 hero kit, năng lực nhân vật/tháng, có làm thử 1 nhân vật không (free/paid).

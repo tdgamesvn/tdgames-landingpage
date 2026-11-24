@@ -122,20 +122,40 @@ const ML_FACTS = [
   ["10 elements", "Fire, water, nature, earth, thunder, dark, light, magic, metal and special."],
 ] as const;
 
-const KIT = [
-  ["Idle", "1.5–2 s loop", "Seamless loop with breathing and cloth follow-through"],
-  ["Walk / run", "Loop", "Matched to your move speed so feet don't slide"],
-  ["Attack", "0.8–1.2 s", "Hit frame marked with a Spine event your code can listen for"],
-  ["Skill and ultimate", "1.5–3 s", "Anticipation, impact and recovery, with VFX on separate slots"],
-  ["Hit, die, victory", "Short", "Reactions that read clearly at battle zoom"],
-  ["Evolutions and skins", "Per tier", "Baby to awakened forms, each rigged and animated in Spine"],
-] as const;
+// 4 câu khách hỏi trước khi thuê (sếp duyệt 2026-11-24). Chỉ dùng thông tin site đã công bố:
+// FAQ 2D animation (rig theo style/rig khách, báo giá + ngày giao trong 24h, review 3 mốc,
+// múi giờ GMT+7), số liệu 50+/1200+/12+, pipeline Unity/Cocos (About/company profile).
+const QUESTIONS: readonly {
+  q: string;
+  a: string;
+  proof?: { label: string; href: string };
+  stats?: readonly (readonly [string, string])[];
+}[] = [
+  {
+    q: "Will it still look like our art?",
+    a: "We rig from your PSD and follow your style guide and bone naming. If a part is missing behind an arm or under a cape, we flag it before we animate, not after delivery.",
+  },
+  {
+    q: "Will it run in our engine on day one?",
+    a: "You get the .spine project, skeleton and atlas, exported for the Spine version your runtime uses, from pipelines that ship to Unity and Cocos. Hit frames are keyed as Spine events your code can listen for.",
+    proof: { label: "See the events on the Monster Legends rig above", href: "#work" },
+  },
+  {
+    q: "How long, and how much?",
+    a: "Send a brief and you get a price per kit and a delivery date within 24 hours, before you sign. Reviews happen at blocking, timing and polish, so changes land while they are still cheap.",
+  },
+  {
+    q: "Why trust a studio we haven't used?",
+    a: "Start with one character and judge the work. We work in GMT+7, so feedback sent at the end of a US day is actioned before the next morning.",
+    stats: [
+      ["50+", "projects delivered"],
+      ["1,200+", "assets shipped"],
+      ["12+", "studios came back"],
+    ],
+  },
+];
 
-const HANDOFF = [
-  ["Spine project and exports", "The .spine file, JSON or binary skeleton and texture atlas, on the Spine version your runtime uses."],
-  ["Named for your code", "Animations, skins, slots and events follow a naming list you approve, so nothing gets renamed after delivery."],
-  ["Checked before handoff", "We preview every kit in a Spine player and send pivot notes and an integration checklist with the files."],
-] as const;
+const KIT = ["Idle", "Walk / run", "Attack", "Skill", "Ultimate", "Hit", "Die", "Victory", "Evolutions and skins"] as const;
 
 export default function SpineAnimationPage() {
   const jsonLd = [
@@ -411,51 +431,65 @@ export default function SpineAnimationPage() {
           </div>
         </section>
 
-        {/* 5. Hero kit */}
+        {/* 5. Câu hỏi của khách */}
         <section className="pt-20 md:pt-28">
-          <div className={`${WRAP} grid grid-cols-1 items-start gap-10 md:grid-cols-[5fr_7fr] md:gap-14 [&>*]:min-w-0`}>
+          <div className={WRAP}>
             <SectionHead
               title={
                 <>
-                  What one
+                  Before you send
                   <br />
-                  hero kit includes
+                  us a character
                 </>
               }
             >
-              A typical midcore hero, ready for battle and the gacha screen. We adjust the list to your combat system
-              before quoting.
+              The four questions producers and art leads ask us first, answered with what we can show.
             </SectionHead>
-            <table className="w-full border-collapse text-[15px]">
-              <thead>
-                <tr className="border-b border-white/10 text-left text-[13px] font-semibold text-gray-400">
-                  <th className="pb-2.5 font-semibold">Animation</th>
-                  <th className="pb-2.5 font-semibold">Typical length</th>
-                  <th className="pb-2.5 font-semibold">What you get</th>
-                </tr>
-              </thead>
-              <tbody>
-                {KIT.map(([a, len, what]) => (
-                  <tr key={a} className="border-b border-white/10 align-top">
-                    <td className="w-[30%] py-3 pr-3 text-[19px] font-bold" style={{ fontFamily: "var(--font-rajdhani)" }}>
-                      {a}
-                    </td>
-                    <td className="w-[22%] py-3.5 pr-3 text-[#ffcc8e]">{len}</td>
-                    <td className="py-3.5 text-gray-300">{what}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className={`${WRAP} mt-14 grid gap-6 md:grid-cols-3 md:gap-5`}>
-            {HANDOFF.map(([t, d]) => (
-              <div key={t} className="border-t-2 border-[#f59e0b] pt-4">
-                <h3 className="mb-2 text-[23px] font-bold leading-tight" style={{ fontFamily: "var(--font-rajdhani)" }}>
-                  {t}
-                </h3>
-                <p className="text-[15.5px] text-gray-300">{d}</p>
+            <div className="grid gap-3 md:grid-cols-2 md:gap-5">
+              {QUESTIONS.map(({ q, a, proof, stats }) => (
+                <article key={q} className="rounded-[14px] border border-white/10 bg-[#12141c] p-6 md:p-8">
+                  <h3 className="text-[24px] font-bold leading-tight md:text-[28px]" style={{ fontFamily: "var(--font-rajdhani)" }}>
+                    “{q}”
+                  </h3>
+                  {stats ? (
+                    <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
+                      {stats.map(([k, v]) => (
+                        <div key={v} className="flex flex-col">
+                          <dt className="order-2 mt-1 text-[13px] text-gray-400">{v}</dt>
+                          <dd className="text-[34px] font-bold leading-none text-[#f59e0b] md:text-[40px]" style={{ fontFamily: "var(--font-rajdhani)" }}>
+                            {k}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : null}
+                  <p className="mt-3 text-[15.5px] leading-relaxed text-gray-300 md:text-base">{a}</p>
+                  {proof ? (
+                    <Link href={proof.href} className="mt-4 inline-block text-[15px] font-semibold text-[#f59e0b] hover:text-[#ffcc8e]">
+                      {proof.label}
+                    </Link>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+            <div className="mt-10 flex flex-col gap-6 border-t border-white/10 pt-8 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[15px] text-gray-400">A typical hero kit, adjusted to your combat system before we quote:</p>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {KIT.map((k) => (
+                    <li key={k} className="rounded-full border border-white/15 px-3.5 py-1.5 text-[13px] font-semibold text-gray-200">
+                      {k}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
+              <Link
+                href="#quote"
+                className="inline-block shrink-0 self-start rounded-xl border-2 border-[#f59e0b] bg-[#f59e0b] px-7 py-3.5 text-center text-base font-bold uppercase tracking-wider text-black transition-colors duration-300 hover:bg-transparent hover:text-white md:self-auto md:text-[17px]"
+              >
+                Send us one character
+              </Link>
+            </div>
           </div>
           <p className={`${WRAP} mt-10 text-[15px] text-gray-400`}>
             Need frame-by-frame, UI motion or cinematics too?{" "}
