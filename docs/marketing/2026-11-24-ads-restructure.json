@@ -1,0 +1,250 @@
+[
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "makko",
+  "match_type": "BROAD",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phủ định người tìm phần mềm/công cụ"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "metahuman",
+  "match_type": "BROAD",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phủ định người tìm phần mềm/công cụ"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "slash effect",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phủ định người tìm phần mềm/công cụ"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spine 2d price",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phủ định người tìm phần mềm/công cụ"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spine2d price",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phủ định người tìm phần mềm/công cụ"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "spine 2d professional",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phủ định người tìm phần mềm/công cụ"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "2d spine",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phủ định người tìm phần mềm/công cụ"
+ },
+ {
+  "action": "ADD_NEGATIVE",
+  "target": "Search – Animation – T1",
+  "keyword": "sprite animation",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phủ định người tìm phần mềm/công cụ"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "game animation outsourcing",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): nhóm chung → /services/2d-animation"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "game animation studio",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): nhóm chung → /services/2d-animation"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "game animation services",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): nhóm chung → /services/2d-animation"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "2d game animation studio",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): nhóm chung → /services/2d-animation"
+ },
+ {
+  "action": "ADD_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "2d animation outsourcing for games",
+  "match_type": "EXACT",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): nhóm chung → /services/2d-animation"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "character animation for games",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "game character animation",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "hire 2d animator",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "2d game animation",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "2d animation for games",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "game animation outsourcing",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "game animation services",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "spine animator for hire",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "game animation studio",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "2d character animation for games",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "hire game animator",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "2d game animation studio",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "spine animation studio",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "spine animation outsourcing",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "spine 2d animation services",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "2d animation outsourcing for games",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "spine animation services",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "spine animation for games",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ },
+ {
+  "action": "PAUSE_KEYWORD",
+  "target": "Search – Animation – T1",
+  "ad_group": "Nhóm quảng cáo 1",
+  "keyword": "mobile game animation",
+  "match_type": "PHRASE",
+  "note": "2026-11-24 tái cấu trúc (sếp OK): phrase khớp lệch sang người tìm phần mềm → thay bằng exact"
+ }
+]
