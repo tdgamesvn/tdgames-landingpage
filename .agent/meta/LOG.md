@@ -6727,4 +6727,5 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Media mới lên R2 (upload-r2-new-keys): Kayn jpg nén, Kennix still, Twins combo1/combo4 (thumbnail Vimeo), Summoner Era knight/mage/sphinx poster, OG. Twins chỉ có Vimeo → ảnh tĩnh + link case study.
 - Menu Services (header), footer, sitemap, Organization makesOffer thêm Spine Animation. Breadcrumb JSON-LD: Home > 2D Animation > Spine Animation.
 - Kiểm: tsc sạch, eslint sạch file mới (2 lỗi no-html-link cũ ở site-footer, có từ trước), `npm run build` OK (1 lần lỗi tạm do tải Google Fonts, build lại OK). `next dev` (turbopack) lỗi next/font ở MỌI trang dịch vụ (cả 2d-animation) → lỗi môi trường dev, kiểm bằng `next start`. Ảnh 1440 + 390: không tràn ngang (đã sửa grid blowout do hàng chip SpineStage), nhân vật căn giữa.
+- ĐÃ DEPLOY ed2875d (CI 3m11s, kèm 4 commit meta/marketing trước đó chưa push). Prod kiểm: title/canonical/OG đúng, menu có link, video hero chạy, sân khấu Spine tải + dopesheet chạy, /portfolio/monster-legends-fire không đổi. Gửi 4 ảnh Telegram.
 - Next: sếp xem prod; trả lời The Twins nhãn founder?; có áp `centre` cho 10 trang Monster Legends không.

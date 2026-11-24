@@ -2,7 +2,7 @@
 
 ## Doing
 
-- [ ] Trang `/services/spine-animation` (2026-11-24) — dựng theo mockup v2 sếp duyệt: hero chọn nhân vật (6 dự án), Monster Legends Spine sống căn giữa + dopesheet key thật, Bosses (Twins + Stickman), Yomi 2, Kayn + Summoner Era, hero kit, form. Menu Services + footer + sitemap + JSON-LD. Chờ sếp xem trên prod. Mở: The Twins có cần nhãn việc cũ founder không; có căn giữa nhân vật ở 10 trang Monster Legends không; cân nhắc link chéo trong nội dung /services/2d-animation; bật lại Ads trỏ trang này. LOG 2026-11-24
+- [ ] Trang `/services/spine-animation` (2026-11-24) — dựng theo mockup v2 sếp duyệt: hero chọn nhân vật (6 dự án), Monster Legends Spine sống căn giữa + dopesheet key thật, Bosses (Twins + Stickman), Yomi 2, Kayn + Summoner Era, hero kit, form. Menu Services + footer + sitemap + JSON-LD. ĐÃ DEPLOY ed2875d. Chờ sếp xem trên prod. Mở: The Twins có cần nhãn việc cũ founder không; có căn giữa nhân vật ở 10 trang Monster Legends không; cân nhắc link chéo trong nội dung /services/2d-animation; bật lại Ads trỏ trang này. LOG 2026-11-24
 - [x] HR: UV rút offer — hỏi lại khi rời Đã nhận + gợi ý dự phòng (từ máy chủ) + mail "Xác nhận từ chối offer" (2026-11-18) — ĐÃ DEPLOY 4fe7e47, SQL CHECK sếp đã chạy. LOG 2026-11-18 (tối)
 - [x] HR: Onboard người mới — ngày đi làm trên thẻ + khối Onboard + checklist chung 9 việc (sửa ở Mẫu mail) + nhắc Discord/push (2026-11-18) — ĐÃ DEPLOY (9708e68), E2E prod 16/16 + nhắc 1 lần không trùng + UI 1440/390. Chờ sếp/HR dùng thật khi Tài đánh dấu Đã nhận. Minor tồn: LOG 2026-11-18
 - [ ] HR: Đổi vị trí ứng tuyển (⋯ trong hồ sơ) (2026-11-13) — ĐÃ DEPLOY, E2E 10/10. Chờ sếp/HR: tạo đề test job Graphic Designer, chuyển hồ sơ Chu Hà My, xem UI. LOG 2026-11-13
