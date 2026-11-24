@@ -125,6 +125,8 @@ const ML_FACTS = [
 // 4 câu khách hỏi trước khi thuê (sếp duyệt 2026-11-24). Chỉ dùng thông tin site đã công bố:
 // FAQ 2D animation (rig theo style/rig khách, báo giá + ngày giao trong 24h, review 3 mốc,
 // múi giờ GMT+7), số liệu 50+/1200+/12+, pipeline Unity/Cocos (About/company profile).
+// Sếp cho số 2026-11-24: hero kit 3–5 ngày; 10–20 nhân vật/tháng tuỳ độ phức tạp, tăng được
+// bằng nhân sự inhouse + mạng freelancer; test free hoặc trả phí tuỳ độ phức tạp + quy mô.
 const QUESTIONS: readonly {
   q: string;
   a: string;
@@ -133,7 +135,7 @@ const QUESTIONS: readonly {
 }[] = [
   {
     q: "Will it still look like our art?",
-    a: "We rig from your PSD and follow your style guide and bone naming. If a part is missing behind an arm or under a cape, we flag it before we animate, not after delivery.",
+    a: "We rig from your PSD and follow your style guide and bone naming. If a part is missing behind an arm or under a cape, we flag it before we animate. Reviews happen at blocking, timing and polish, so changes land while they are still cheap.",
   },
   {
     q: "Will it run in our engine on day one?",
@@ -141,12 +143,16 @@ const QUESTIONS: readonly {
     proof: { label: "See the events on the Monster Legends rig above", href: "#work" },
   },
   {
-    q: "How long, and how much?",
-    a: "Send a brief and you get a price per kit and a delivery date within 24 hours, before you sign. Reviews happen at blocking, timing and polish, so changes land while they are still cheap.",
+    q: "How fast, and how many?",
+    a: "Need a big batch on a short deadline? We add in-house artists and our freelance network to scale past that. Send a brief and you get a price per kit and a delivery date within 24 hours, before you sign.",
+    stats: [
+      ["3–5 days", "per hero kit"],
+      ["10–20", "characters a month, by complexity"],
+    ],
   },
   {
     q: "Why trust a studio we haven't used?",
-    a: "Start with one character and judge the work. We work in GMT+7, so feedback sent at the end of a US day is actioned before the next morning.",
+    a: "Start with a test character and judge the work. Depending on its complexity and the size of your project, the test is free or paid. We work in GMT+7, so feedback sent at the end of a US day is actioned before the next morning.",
     stats: [
       ["50+", "projects delivered"],
       ["1,200+", "assets shipped"],
@@ -487,7 +493,7 @@ export default function SpineAnimationPage() {
                 href="#quote"
                 className="inline-block shrink-0 self-start rounded-xl border-2 border-[#f59e0b] bg-[#f59e0b] px-7 py-3.5 text-center text-base font-bold uppercase tracking-wider text-black transition-colors duration-300 hover:bg-transparent hover:text-white md:self-auto md:text-[17px]"
               >
-                Send us one character
+                Request a test character
               </Link>
             </div>
           </div>
