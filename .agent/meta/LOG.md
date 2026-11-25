@@ -6763,3 +6763,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Hồ sơ ứng viên (SubmissionsPanel): job ≥ 2 đề → ô tick "Gửi cho ứng viên này"; lưu ngay qua `POST /api/hr/applications/[id]/submissions {action:"tests"}` (kiểm id thuộc job). Copy link test + mail "test_assignment" bị chặn (409 / fail choose_test) khi job nhiều đề mà chưa tick. `/api/test/<token>` chỉ trả đề đã chọn. Đổi vị trí ứng tuyển → test_ids = null.
 - Kiểm local (DB prod, hồ sơ Vũ Thị Thùy Hương có sẵn link): 409 khi chưa chọn, 400 id lạ, chọn Spine → trang ứng viên chỉ thấy Spine, bỏ chọn → về 2 đề (ĐÃ TRẢ VỀ null). UI ô tick OK. detect_changes báo "critical" do gộp GET/POST trùng tên — thực tế chỉ 4 route + SubmissionsPanel.
 - ĐÃ DEPLOY d58f725 (CI OK); smoke prod /hr 200, /api/test/<token lạ> 404.
+
+## 2026-11-25 (tối) — Đặt phòng TDC: có quyền DB TDC, thiết kế bản 2
+- Sếp gửi chuỗi kết nối Postgres TDC → lưu `.env.local` `TDC_DATABASE_URL` (gitignore; chỉ dùng trên Mac cho migration, KHÔNG đưa lên VPS). Không đụng CLI/Keychain/`~/.supabase` (sếp dặn không ảnh hưởng luồng Supabase khác trên máy).
+- Đọc DB TDC (read-only): 1 phòng active "Phòng Hội An"; room_bookings exclusion no_overlap; trigger before/cal xử lý anon (booked_by null, booker_name truyền vào, attendee rỗng ⇒ không cal_event). Repo TDC thật là `TDSolutionsHN/tdc_platforms` (tdgamesvn/tdconsulting-platforms rỗng); migration ghi schema_migrations, mới nhất 20261125220000.
+- Viết lại spec bản 2: TDG gọi 4 RPC `room_ext_rooms/upsert/cancel/get` qua REST TDC bằng anon key + mật mã (TDC lưu băm SHA-256 ở bảng `room_external_clients`), cột external_source/ref + unique index.
+- Next: sếp duyệt + OK commit migration vào repo TDC → writing-plans → làm TDG (ẩn khi thiếu env) → migration TDC trong 22h–8h.
