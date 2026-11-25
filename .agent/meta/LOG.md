@@ -6750,3 +6750,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Đọc repo TDC (gh api, chỉ đọc): `room_rooms`/`room_bookings` có exclusion constraint chặn chồng giờ; TDC recruit đã tự đặt Phòng Hội An (rec_iv_room_auto). Chưa có cửa cho hệ thống ngoài.
 - Sếp chọn: TDC mở Edge Function `room-external` khoá bí mật dùng chung, chống trùng bằng (external_source='tdg', external_ref=id buổi PV); bot TDC làm phía TDC theo đặc tả (hướng a), em làm TDG.
 - Thiết kế `docs/superpowers/specs/2026-11-25-hr-tdc-room-booking-design.md` (commit c90df67), đã gửi Telegram. Next: sếp duyệt → writing-plans → làm TDG (ẩn khi thiếu env TDC_ROOM_API_URL/KEY).
+- (tiếp) Sếp chê cồng kềnh, hỏi cấp quyền DB Supabase TDC → em đề xuất: tự thêm cột + 3 RPC có kiểm mật mã, TDG gọi bằng anon key + mật mã (không Edge Function, không bot TDC); cần chuỗi kết nối/token, OK commit migration repo TDC, giờ chạy. Sếp: "tạm thời như vậy, lưu lại order" → TẠM DỪNG, ghi ở TASKS.
+
+## 2026-11-25 — /hr: sửa tên/ghi chú bài test của job
+- Sếp: không sửa được tên bài test. API `PATCH /api/hr/job-tests/[id]` (title/note) có sẵn từ trước, chỉ thiếu UI → thêm nút "Sửa" ở `ItemRow` (prop `onEdit`, chỉ đề test của job; bài nộp của ứng viên không có). Impact ItemRow/JobTestsPanel LOW.
+- Kiểm local (next start + HR_PUBLIC_ORIGIN=localhost, tài khoản Assistant, cookie qua file tạm đã xoá): mở 2D Spine Animator → Sửa → form đúng tên → Lưu (giữ nguyên tên) → về dòng thường, không lỗi.
+- Câu hỏi sếp: job nhiều bài test thì gửi thế nào → hiện tại trang /test/<token> hiện TẤT CẢ đề của job (2D Spine Animator: ứng viên thấy cả "Test Animation Spine" lẫn "Intern/Fresher"). Đề xuất chọn đề theo ứng viên — chờ sếp.

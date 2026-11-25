@@ -145,6 +145,7 @@ function ItemRow({
   sub,
   note,
   onDelete,
+  onEdit,
 }: {
   icon: ReactNode;
   title: string;
@@ -153,8 +154,57 @@ function ItemRow({
   note: string | null;
   /** Không truyền = không có quyền xoá → ẩn nút. */
   onDelete?: () => void;
+  /** Sửa tiêu đề + ghi chú (đề test của job). Trả lỗi dạng chữ, null = đã lưu. Không truyền → ẩn nút Sửa. */
+  onEdit?: (patch: { title: string; note: string }) => Promise<string | null>;
 }) {
   const [copied, setCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(title);
+  const [draftNote, setDraftNote] = useState(note ?? "");
+  const [saving, setSaving] = useState(false);
+  const [editErr, setEditErr] = useState("");
+
+  async function saveEdit() {
+    if (!onEdit) return;
+    if (!draftTitle.trim()) return setEditErr("Tiêu đề không được trống");
+    setSaving(true);
+    setEditErr("");
+    const err = await onEdit({ title: draftTitle.trim(), note: draftNote.trim() });
+    setSaving(false);
+    if (err) setEditErr(err);
+    else setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="space-y-2 rounded-lg border border-amber-500/30 bg-white/[0.03] px-3 py-2">
+        <input
+          value={draftTitle}
+          onChange={(e) => setDraftTitle(e.target.value)}
+          placeholder="Tiêu đề bài test"
+          className={INPUT}
+          autoFocus
+        />
+        <textarea
+          value={draftNote}
+          onChange={(e) => setDraftNote(e.target.value)}
+          rows={2}
+          placeholder="Ghi chú / hướng dẫn / deadline"
+          className={INPUT}
+        />
+        {editErr && <p className="text-[11px] text-red-400">{editErr}</p>}
+        <div className="flex gap-1.5">
+          <button onClick={() => void saveEdit()} disabled={saving} className={BTN_AMBER}>
+            {saving ? "Đang lưu…" : "Lưu"}
+          </button>
+          <button onClick={() => setEditing(false)} disabled={saving} className={BTN_PLAIN}>
+            Huỷ
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
       <div className="flex items-center gap-2">
@@ -168,6 +218,20 @@ function ItemRow({
         >
           {copied ? <Check className="hr-ico-solo" /> : "Copy"}
         </button>
+        {onEdit && (
+          <button
+            onClick={() => {
+              setDraftTitle(title);
+              setDraftNote(note ?? "");
+              setEditErr("");
+              setEditing(true);
+            }}
+            className={BTN_PLAIN}
+            title="Sửa tiêu đề / ghi chú"
+          >
+            <PenLine className="hr-ico" />Sửa
+          </button>
+        )}
         {onDelete && (
           <button onClick={onDelete} className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30 hover:border-red-500/40 hover:text-red-400">
             <X className="hr-ico-solo" />
@@ -197,6 +261,22 @@ export function JobTestsPanel({ jobId }: { jobId: string }) {
     return () => { alive = false; };
   }, [jobId]);
 
+  async function edit(t: JobTest, patch: { title: string; note: string }) {
+    try {
+      const res = await hrFetch(`/api/hr/job-tests/${t.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return (json.error as string) ?? `HTTP ${res.status}`;
+      setTests((l) => l?.map((x) => (x.id === t.id ? (json.test as JobTest) : x)) ?? null);
+      return null;
+    } catch {
+      return "Không lưu được, thử lại";
+    }
+  }
+
   async function remove(t: JobTest) {
     if (!confirm(`Xoá "${t.title}"?`)) return;
     const res = await hrFetch(`/api/hr/job-tests/${t.id}`, { method: "DELETE" });
@@ -218,6 +298,7 @@ export function JobTestsPanel({ jobId }: { jobId: string }) {
           sub={fmtSize(t.file_size)}
           note={t.note}
           onDelete={() => void remove(t)}
+          onEdit={(patch) => edit(t, patch)}
         />
       ))}
       <AddItemForm<JobTest>
