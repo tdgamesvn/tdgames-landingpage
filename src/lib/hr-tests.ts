@@ -184,4 +184,3 @@ export async function readSubmissionBatch(
 
   return { items, note: clean(form.get("note")) || null };
 }
-

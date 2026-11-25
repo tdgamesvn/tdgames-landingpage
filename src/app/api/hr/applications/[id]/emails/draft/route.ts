@@ -3,6 +3,7 @@ import { freelanceManualMailError } from "@/lib/hr-freelance";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, loadScopedApplication } from "@/lib/hr-session";
 import { newTestToken } from "@/lib/hr-tests";
+import { needsTestChoice } from "@/lib/hr-test-pick";
 import { resolveCcForApplication } from "@/lib/hr-email-send";
 import { buildDraft, getHrEmailConfig, isCandidateEmailKind, isSystemOnlyKind, isValidEmail, type DraftInput } from "@/lib/hr-email";
 import { OFFER_DECLINED_ONLY, holdReplyBy, isOfferFamilyKind } from "@/lib/hr-email-base";
@@ -49,7 +50,7 @@ export async function GET(request: Request, { params }: Ctx) {
   const supabase = getSupabaseAdmin();
   const { data: app } = await supabase
     .from("applications")
-    .select("id, email, full_name, job_id, assignee_user_id, test_token, mbti_type, mbti_url, jobs(title)")
+    .select("id, email, full_name, job_id, assignee_user_id, test_token, test_ids, mbti_type, mbti_url, jobs(title)")
     .eq("id", id)
     .maybeSingle();
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -78,11 +79,12 @@ export async function GET(request: Request, { params }: Ctx) {
 
   let testUrl: string | null = null;
   if (kind === "test_assignment") {
-    const { count } = await supabase
-      .from("job_tests")
-      .select("id", { count: "exact", head: true })
-      .eq("job_id", app.job_id);
-    if (!count) return fail("no_test", "Job chưa có đề test — chưa gửi mail.");
+    const { data: jobTests, error: testsErr } = await supabase.from("job_tests").select("id").eq("job_id", app.job_id);
+    if (testsErr) return NextResponse.json({ error: testsErr.message }, { status: 500 });
+    if (!jobTests?.length) return fail("no_test", "Job chưa có đề test — chưa gửi mail.");
+    if (needsTestChoice(jobTests, app.test_ids as string[] | null)) {
+      return fail("choose_test", "Job có nhiều bài test — tick chọn bài gửi cho ứng viên trong mục Bài test của hồ sơ trước.");
+    }
     let token = app.test_token as string | null;
     if (!token) {
       token = newTestToken();

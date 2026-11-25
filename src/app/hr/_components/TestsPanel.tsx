@@ -473,6 +473,10 @@ export function SubmissionsPanel({
   const canEdit = can("apps.edit");
   const [subs, setSubs] = useState<TestSubmission[]>([]);
   const [tests, setTests] = useState<JobTest[]>([]);
+  // Đề HR chọn gửi cho ứng viên này; null = chưa chọn (job 1 đề → gửi đề đó).
+  const [testIds, setTestIds] = useState<string[] | null>(null);
+  const [pickBusy, setPickBusy] = useState(false);
+  const [pickErr, setPickErr] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [eta, setEta] = useState<{ at: string; setAt: string | null; overdue: boolean } | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -488,6 +492,7 @@ export function SubmissionsPanel({
         if (!alive || !j) return;
         setSubs(j.submissions ?? []);
         setTests(j.tests ?? []);
+        setTestIds(j.testIds ?? null);
         setToken(j.token ?? null);
         // "Quá hạn" tính 1 lần lúc mở modal (Date.now trong render bị lint cấm).
         setEta(j.eta ? { at: j.eta, setAt: j.etaSetAt, overdue: Date.now() > new Date(j.eta).getTime() } : null);
@@ -497,7 +502,31 @@ export function SubmissionsPanel({
     return () => { alive = false; };
   }, [appId, canView]);
 
+  const chosen = testIds?.filter((id) => tests.some((t) => t.id === id)) ?? [];
+  const mustChoose = tests.length >= 2 && chosen.length === 0;
+
+  async function toggleTest(id: string) {
+    const next = chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id];
+    setPickBusy(true);
+    setPickErr("");
+    try {
+      const res = await hrFetch(`/api/hr/applications/${appId}/submissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "tests", test_ids: next }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
+      setTestIds(j.testIds ?? null);
+    } catch (e) {
+      setPickErr(e instanceof Error ? e.message : "Không lưu được lựa chọn");
+    } finally {
+      setPickBusy(false);
+    }
+  }
+
   async function copyTestLink() {
+    if (mustChoose) return alert("Job có nhiều bài test — tick chọn bài gửi cho ứng viên này trước.");
     let t = token;
     if (!t) {
       const res = await hrFetch(`/api/hr/applications/${appId}/submissions`, {
@@ -564,15 +593,34 @@ export function SubmissionsPanel({
 
       {tests.length === 0 ? (
         <p className="text-[11px] text-white/30">Job này chưa có đề test — thêm ở tab Jobs.</p>
-      ) : (
+      ) : tests.length === 1 ? (
         <p className="text-[11px] text-white/45">
-          Đề: {tests.map((t, i) => (
-            <span key={t.id}>
-              {i > 0 && " · "}
-              <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-amber-300/80 hover:underline">{t.title}</a>
-            </span>
-          ))}
+          Đề: <a href={tests[0].url} target="_blank" rel="noopener noreferrer" className="text-amber-300/80 hover:underline">{tests[0].title}</a>
         </p>
+      ) : (
+        <div className="space-y-1 rounded-lg border border-white/10 p-2">
+          <p className="text-[11px] text-white/55">
+            Gửi cho ứng viên này{" "}
+            {mustChoose ? (
+              <span className="font-semibold text-amber-300">— tick bài cần làm trước khi gửi link/mail</span>
+            ) : (
+              <span className="text-white/35">— link test chỉ hiện bài đã tick</span>
+            )}
+          </p>
+          {tests.map((t) => (
+            <label key={t.id} className="flex items-center gap-2 text-[11px]">
+              <input
+                type="checkbox"
+                checked={chosen.includes(t.id)}
+                disabled={!canEdit || pickBusy}
+                onChange={() => void toggleTest(t.id)}
+                className="accent-amber-500"
+              />
+              <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-amber-300/80 hover:underline">{t.title}</a>
+            </label>
+          ))}
+          {pickErr && <p className="text-[11px] text-red-400">{pickErr}</p>}
+        </div>
       )}
 
       {subs.map((s) => (

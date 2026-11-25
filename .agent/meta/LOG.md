@@ -6756,3 +6756,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Sếp: không sửa được tên bài test. API `PATCH /api/hr/job-tests/[id]` (title/note) có sẵn từ trước, chỉ thiếu UI → thêm nút "Sửa" ở `ItemRow` (prop `onEdit`, chỉ đề test của job; bài nộp của ứng viên không có). Impact ItemRow/JobTestsPanel LOW.
 - Kiểm local (next start + HR_PUBLIC_ORIGIN=localhost, tài khoản Assistant, cookie qua file tạm đã xoá): mở 2D Spine Animator → Sửa → form đúng tên → Lưu (giữ nguyên tên) → về dòng thường, không lỗi.
 - Câu hỏi sếp: job nhiều bài test thì gửi thế nào → hiện tại trang /test/<token> hiện TẤT CẢ đề của job (2D Spine Animator: ứng viên thấy cả "Test Animation Spine" lẫn "Intern/Fresher"). Đề xuất chọn đề theo ứng viên — chờ sếp.
+
+## 2026-11-25 — /hr: chọn bài test gửi cho từng ứng viên (sếp OK)
+- Cột `applications.test_ids uuid[]` (NULL = như cũ, hiện tất cả đề) — áp qua MCP apply_migration (version 20261125093951, file đổi tên khớp).
+- Hàm thuần `src/lib/hr-test-pick.ts` (pickTestsForApplication / needsTestChoice) + 5 test node:test pass.
+- Hồ sơ ứng viên (SubmissionsPanel): job ≥ 2 đề → ô tick "Gửi cho ứng viên này"; lưu ngay qua `POST /api/hr/applications/[id]/submissions {action:"tests"}` (kiểm id thuộc job). Copy link test + mail "test_assignment" bị chặn (409 / fail choose_test) khi job nhiều đề mà chưa tick. `/api/test/<token>` chỉ trả đề đã chọn. Đổi vị trí ứng tuyển → test_ids = null.
+- Kiểm local (DB prod, hồ sơ Vũ Thị Thùy Hương có sẵn link): 409 khi chưa chọn, 400 id lạ, chọn Spine → trang ứng viên chỉ thấy Spine, bỏ chọn → về 2 đề (ĐÃ TRẢ VỀ null). UI ô tick OK. detect_changes báo "critical" do gộp GET/POST trùng tên — thực tế chỉ 4 route + SubmissionsPanel.

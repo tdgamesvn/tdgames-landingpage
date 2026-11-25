@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { MAX_SUBMISSION_ITEMS, readSubmissionBatch } from "@/lib/hr-tests";
+import { pickTestsForApplication } from "@/lib/hr-test-pick";
 import { deleteFromR2 } from "@/lib/r2";
 import { notifyCandidate } from "@/lib/hr-notify";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
@@ -15,7 +16,7 @@ async function findApp(token: string) {
   if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return null;
   const { data } = await getSupabaseAdmin()
     .from("applications")
-    .select("id, full_name, job_id, test_eta, jobs(title)")
+    .select("id, full_name, job_id, test_eta, test_ids, jobs(title)")
     .eq("test_token", token)
     .maybeSingle();
   return data as {
@@ -23,6 +24,7 @@ async function findApp(token: string) {
     full_name: string;
     job_id: string;
     test_eta: string | null;
+    test_ids: string[] | null;
     jobs: { title: string } | null;
   } | null;
 }
@@ -89,7 +91,8 @@ export async function GET(_request: Request, { params }: Ctx) {
     candidate: app.full_name,
     job: app.jobs?.title ?? "",
     eta: app.test_eta,
-    tests: tests.data ?? [],
+    // Chỉ đề HR đã chọn cho ứng viên này (chưa chọn → tất cả, như link cũ).
+    tests: pickTestsForApplication(tests.data ?? [], app.test_ids),
     submissions: subs.data ?? [],
     maxItems: MAX_SUBMISSION_ITEMS,
   });

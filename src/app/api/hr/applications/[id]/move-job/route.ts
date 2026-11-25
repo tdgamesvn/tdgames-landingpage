@@ -69,7 +69,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const { data, error } = await supabase
     .from("applications")
-    .update({ job_id: targetJobId, ai_score: null, ai_evaluation: null })
+    .update({ job_id: targetJobId, ai_score: null, ai_evaluation: null, test_ids: null })
     .eq("id", id)
     .select("*, jobs(title, slug)")
     .single();
