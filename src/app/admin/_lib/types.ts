@@ -310,6 +310,12 @@ export type InterviewSession = {
   mode: "offline" | "online" | null;
   meet_url: string | null;
   reminded_at: string | null;
+  /** Giờ kết thúc + phòng họp TD Consulting (chỉ PV offline). room_state null = không đặt phòng. */
+  ends_at?: string | null;
+  room_id?: string | null;
+  room_name?: string | null;
+  room_state?: "booked" | "error" | "cancel_error" | null;
+  room_error?: string | null;
   /** Phân tích chạy nền: null = rảnh/xong, "running", "failed" (lý do ở analysis_error). */
   analysis_status?: "running" | "failed" | null;
   analysis_error?: string | null;

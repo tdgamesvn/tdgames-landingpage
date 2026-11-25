@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { deletePayoutsForApplication } from "@/lib/referral-store";
 import { notifyApplicationUpdate } from "@/lib/hr-notify";
+import { releaseTdcRoomsFor } from "@/lib/tdc-rooms";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,6 +93,7 @@ export async function DELETE(
   } catch {
     return NextResponse.json({ error: "Không kiểm tra được khoản hoa hồng của hồ sơ" }, { status: 500 });
   }
+  await releaseTdcRoomsFor({ applicationId: id });
   const { error } = await supabase.from("applications").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

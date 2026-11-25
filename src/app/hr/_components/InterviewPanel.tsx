@@ -83,7 +83,190 @@ function toLocalInput(iso: string | null) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/** Lịch PV của một vòng: giờ hẹn + offline/online (online bắt buộc link Meet). */
+type TdcRoomOption = { id: string; name: string; location: string | null; free: boolean };
+
+/** "YYYY-MM-DDTHH:MM" (giờ máy) + "HH:MM" → ISO giờ kết thúc cùng ngày; sai/không sau giờ bắt đầu → null. */
+function endIsoOf(when: string, endTime: string): string | null {
+  if (!when || !/^\d{2}:\d{2}$/.test(endTime)) return null;
+  const start = new Date(when);
+  const end = new Date(`${when.slice(0, 10)}T${endTime}`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return null;
+  return end.toISOString();
+}
+
+/** Giờ kết thúc "HH:MM" = giờ bắt đầu + số phút. */
+function plusMinutes(when: string, minutes: number) {
+  const d = new Date(when);
+  if (Number.isNaN(d.getTime())) return "";
+  return toLocalInput(new Date(d.getTime() + minutes * 60_000).toISOString()).slice(11, 16);
+}
+
+/**
+ * Chọn phòng họp TD Consulting trong form lịch Offline. Danh sách + trống/bận lấy theo khung giờ đang chọn
+ * (tải lại khi đổi giờ). Server chưa cấu hình TDC → `onEnabled(false)` và không hiện gì.
+ */
+function RoomPicker({
+  sessionId,
+  startIso,
+  endIso,
+  roomId,
+  onPick,
+  onEnabled,
+  onRooms,
+}: {
+  sessionId: string;
+  startIso: string | null;
+  endIso: string | null;
+  roomId: string | null;
+  onPick: (id: string | null) => void;
+  onEnabled: (v: boolean) => void;
+  onRooms: (rooms: TdcRoomOption[] | null) => void;
+}) {
+  const [rooms, setRooms] = useState<TdcRoomOption[] | null>(null);
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!startIso || !endIso) return;
+    let alive = true;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const q = new URLSearchParams({ start: startIso, end: endIso });
+        const res = await hrFetch(`/api/hr/interviews/${sessionId}/room?${q}`);
+        const data = await res.json();
+        if (!alive) return;
+        if (data.enabled === false) {
+          setEnabled(false);
+          onEnabled(false);
+          return;
+        }
+        setEnabled(true);
+        onEnabled(true);
+        if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+        setRooms(data.rooms);
+        onRooms(data.rooms);
+      } catch (e) {
+        if (!alive) return;
+        setRooms(null);
+        onRooms(null);
+        setError(e instanceof Error ? e.message : "Không tải được danh sách phòng");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }, 350);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+    // onEnabled/onRooms là setState của cha — ổn định.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, startIso, endIso]);
+
+  if (enabled === false) return null;
+  if (!startIso || !endIso) {
+    return enabled ? <p className="text-[10px] text-white/35">Chọn giờ kết thúc để xem phòng họp TD Consulting.</p> : null;
+  }
+  if (enabled === null && loading) return <p className="text-[10px] text-white/35">Đang tải phòng họp…</p>;
+  if (enabled === null) return null;
+
+  const RADIO = "flex items-center gap-2 text-[12px]";
+  return (
+    <div className="space-y-1 rounded border border-white/10 bg-white/[0.02] p-2">
+      <div className="flex items-center justify-between">
+        <span className={LABEL}>Phòng họp (TD Consulting)</span>
+        {loading && <span className="text-[10px] text-white/35">đang kiểm tra…</span>}
+      </div>
+      {error && <p className={ERR}>{error}</p>}
+      {(rooms ?? []).map((r) => {
+        const busyRoom = !r.free;
+        return (
+          <label key={r.id} className={`${RADIO} ${busyRoom && roomId !== r.id ? "opacity-50" : "cursor-pointer"}`}>
+            <input
+              type="radio"
+              name={`room-${sessionId}`}
+              checked={roomId === r.id}
+              disabled={busyRoom && roomId !== r.id}
+              onChange={() => onPick(r.id)}
+            />
+            <span className="text-white/85">{r.name}</span>
+            <span className={`text-[10px] font-bold ${r.free ? "text-green-400" : "text-red-400"}`}>
+              ● {r.free ? "Còn trống" : "Bận"}
+            </span>
+          </label>
+        );
+      })}
+      <label className={`${RADIO} cursor-pointer`}>
+        <input type="radio" name={`room-${sessionId}`} checked={!roomId} onChange={() => onPick(null)} />
+        <span className="text-white/60">Không đặt phòng</span>
+      </label>
+    </div>
+  );
+}
+
+/** Trạng thái phòng TDC dưới dòng lịch: đã đặt / chưa đặt được / chưa trả được (+ Thử lại). */
+function RoomStatus({ session, onChange }: { session: InterviewSession; onChange: (s: InterviewSession) => void }) {
+  const canManage = useHrSession().can("interviews.manage");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Người TDC có thể tự huỷ booking — mở vòng PV sắp tới thì kiểm lại 1 lần.
+  const checkedRef = useRef(false);
+  useEffect(() => {
+    if (checkedRef.current || !canManage || session.room_state !== "booked") return;
+    if (!session.scheduled_at || new Date(session.scheduled_at).getTime() < Date.now()) return;
+    checkedRef.current = true;
+    hrFetch(`/api/hr/interviews/${session.id}/room?check=1`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.changed && d.session) onChange(d.session);
+      })
+      .catch(() => {});
+  }, [canManage, session.id, session.room_state, session.scheduled_at, onChange]);
+
+  if (!session.room_state) return null;
+  const rn = session.room_name?.trim();
+  const name = !rn ? "phòng" : /^phòng\s/i.test(rn) ? rn : `phòng ${rn}`;
+
+  async function retry() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await hrFetch(`/api/hr/interviews/${session.id}/room`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      onChange(data.session);
+      if (data.session.room_state && data.session.room_state !== "booked") setError(data.session.room_error ?? "Vẫn chưa được");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Thử lại thất bại");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (session.room_state === "booked") {
+    return <p className="text-[11px] font-bold text-green-400">✓ Đã đặt {name} (TD Consulting)</p>;
+  }
+  return (
+    <div className="space-y-0.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-bold text-red-400">
+          {session.room_state === "error" ? `Chưa đặt được ${name}` : `Chưa trả được ${name}`}
+        </span>
+        {canManage && (
+          <button onClick={retry} className={BTN_AMBER} disabled={busy}>
+            {busy ? "Đang thử…" : "Thử lại"}
+          </button>
+        )}
+      </div>
+      {(error ?? session.room_error) && <p className="text-[10px] text-white/45">{error ?? session.room_error}</p>}
+    </div>
+  );
+}
+
+/** Lịch PV của một vòng: giờ hẹn + offline/online (online bắt buộc link Meet), offline chọn được phòng TDC. */
 function ScheduleBlock({
   session,
   candidateName,
@@ -99,13 +282,32 @@ function ScheduleBlock({
   const [when, setWhen] = useState(toLocalInput(session.scheduled_at));
   const [mode, setMode] = useState<"offline" | "online">(session.mode ?? "offline");
   const [meet, setMeet] = useState(session.meet_url ?? "");
+  const initialEnd = () =>
+    session.ends_at ? toLocalInput(session.ends_at).slice(11, 16) : plusMinutes(toLocalInput(session.scheduled_at), 60);
+  const initialRoom = () => (session.room_state === "cancel_error" ? null : (session.room_id ?? null));
+  const [endTime, setEndTime] = useState(initialEnd);
+  const [roomId, setRoomId] = useState<string | null>(initialRoom);
+  const [roomsEnabled, setRoomsEnabled] = useState<boolean | null>(null);
+  const [roomList, setRoomList] = useState<TdcRoomOption[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Mốc "bây giờ" chốt lúc mở modal — đủ để phân biệt lịch đã qua.
   const [now] = useState(() => Date.now());
 
+  const startIso = when && !Number.isNaN(new Date(when).getTime()) ? new Date(when).toISOString() : null;
+  const endIso = endIsoOf(when, endTime);
+  const wantsRoom = mode === "offline" && roomsEnabled !== false && Boolean(roomId);
+  const pickedBusy = wantsRoom && roomList?.find((r) => r.id === roomId)?.free === false;
   const meetOk = mode === "offline" || isMeetUrl(meet);
-  const canSave = Boolean(when) && meetOk && !busy;
+  const canSave = Boolean(when) && meetOk && !busy && (!wantsRoom || (Boolean(endIso) && !pickedBusy));
+
+  /** Đổi giờ bắt đầu → giữ nguyên thời lượng (mặc định 60 phút). */
+  function changeWhen(v: string) {
+    const oldEnd = endIsoOf(when, endTime);
+    const minutes = oldEnd && when ? Math.round((Date.parse(oldEnd) - new Date(when).getTime()) / 60_000) : 60;
+    setWhen(v);
+    setEndTime(plusMinutes(v, minutes > 0 ? minutes : 60));
+  }
 
   async function save(payload: Record<string, unknown>) {
     setBusy(true);
@@ -132,17 +334,23 @@ function ScheduleBlock({
     setWhen(toLocalInput(session.scheduled_at));
     setMode(session.mode ?? "offline");
     setMeet(session.meet_url ?? "");
+    setEndTime(initialEnd());
+    setRoomId(initialRoom());
     setError(null);
     setEditing(true);
   }
 
   async function submit() {
     const prev = session;
-    const s = await save({
+    const payload: Record<string, unknown> = {
       scheduled_at: new Date(when).toISOString(),
+      ends_at: endIso,
       mode,
       meet_url: mode === "online" ? meet.trim() : null,
-    });
+    };
+    // Chỉ gửi phòng khi server có bật TDC; chưa biết (chưa tải) thì giữ phòng cũ phía server.
+    if (roomsEnabled) payload.room_id = mode === "offline" ? roomId : null;
+    const s = await save(payload);
     if (!s) return;
     setEditing(false);
     // Lịch đã lưu — giờ mới hỏi có gửi mail cho ứng viên không (Không gửi thì lịch vẫn giữ).
@@ -164,6 +372,8 @@ function ScheduleBlock({
     }
     if (s) {
       setWhen("");
+      setEndTime("");
+      setRoomId(null);
       setMode("offline");
       setMeet("");
       setEditing(true);
@@ -208,6 +418,7 @@ function ScheduleBlock({
         <div className="flex flex-wrap items-center gap-2 text-[12px]">
           <span className={`font-bold ${past ? "text-white/45" : "text-amber-300"}`}>
             <CalendarDays className="hr-ico" />{formatInterviewTime(session.scheduled_at)}
+            {session.ends_at && ` – ${toLocalInput(session.ends_at).slice(11, 16)}`}
           </span>
           {session.mode === "online" ? (
             <>
@@ -235,13 +446,23 @@ function ScheduleBlock({
         </div>
       )}
 
+      {!editing && <RoomStatus session={session} onChange={onChange} />}
+
       {editing && canManage && (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <input
               type="datetime-local"
               value={when}
-              onChange={(e) => setWhen(e.target.value)}
+              onChange={(e) => changeWhen(e.target.value)}
+              className="rounded border border-white/15 bg-white/5 px-2 py-1 text-xs text-white focus:outline-none"
+            />
+            <span className="text-[11px] text-white/45">đến</span>
+            <input
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              aria-label="Giờ kết thúc"
               className="rounded border border-white/15 bg-white/5 px-2 py-1 text-xs text-white focus:outline-none"
             />
             <div className="flex overflow-hidden rounded border border-white/15">
@@ -278,6 +499,21 @@ function ScheduleBlock({
               {!meet.trim() && <p className="text-[10px] text-white/35">PV online bắt buộc có link Google Meet.</p>}
             </div>
           )}
+
+          {when && endTime && !endIso && <p className={ERR}>Giờ kết thúc phải sau giờ bắt đầu (trong cùng ngày).</p>}
+
+          {mode === "offline" && (
+            <RoomPicker
+              sessionId={session.id}
+              startIso={startIso}
+              endIso={endIso}
+              roomId={roomId}
+              onPick={setRoomId}
+              onEnabled={setRoomsEnabled}
+              onRooms={setRoomList}
+            />
+          )}
+          {pickedBusy && <p className={ERR}>Phòng đã có lịch trong khung giờ này. Vui lòng chọn giờ hoặc phòng khác.</p>}
 
           <div className="flex gap-1.5">
             <button onClick={submit} className={BTN_AMBER} disabled={!canSave}>

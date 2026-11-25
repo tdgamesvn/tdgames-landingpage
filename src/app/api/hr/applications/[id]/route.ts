@@ -11,6 +11,7 @@ import { redactApplication } from "@/lib/hr-scope";
 import { loadAssignableMembers } from "@/lib/hr-comment-members";
 import { autoCancelIds, offerTransition } from "@/lib/referral-commission";
 import { deletePayoutsForApplication, loadPayouts, setPayoutStatus, syncApplicationPayouts } from "@/lib/referral-store";
+import { releaseTdcRoomsFor } from "@/lib/tdc-rooms";
 
 const PAYOUT_BLOCK_MSG = "Hồ sơ đã có hoa hồng được duyệt/đã trả — không xoá được";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -244,6 +245,7 @@ export async function DELETE(
     .from("interview_sessions")
     .select("audio_key, audio_pieces")
     .eq("application_id", id);
+  await releaseTdcRoomsFor({ applicationId: id });
   const { error } = await supabase.from("applications").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

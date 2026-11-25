@@ -8,9 +8,29 @@ import { audioKeyUsedElsewhere } from "@/lib/interview-audio-server";
 import { notifyCandidate } from "@/lib/hr-notify";
 import { candidatePushPayload } from "@/lib/hr-push-payload";
 import { formatInterviewTime, isMeetUrl, modeLabel } from "@/lib/interview-schedule";
+import { planRoomAction, roomTimeError, wantedRoom, type RoomAction, type RoomState } from "@/lib/tdc-room-plan";
+import {
+  RoomBusyError,
+  RoomInputError,
+  applyRoomAction,
+  releaseTdcRooms,
+  roomBookingTitle,
+  tdcRoomsEnabled,
+} from "@/lib/tdc-rooms";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+async function jobTitleOf(applicationId: string): Promise<string | null> {
+  const { data } = await getSupabaseAdmin()
+    .from("applications")
+    .select("jobs(title)")
+    .eq("id", applicationId)
+    .maybeSingle();
+  const jobs = (data as { jobs?: { title?: string | null } | { title?: string | null }[] | null } | null)?.jobs;
+  const job = Array.isArray(jobs) ? jobs[0] : jobs;
+  return job?.title ?? null;
+}
 
 async function notifySchedule(
   s: {
@@ -20,6 +40,8 @@ async function notifySchedule(
     scheduled_at: string | null;
     mode: string | null;
     meet_url: string | null;
+    room_name?: string | null;
+    room_state?: string | null;
   },
   actor: { id: string | null; name: string },
 ) {
@@ -39,6 +61,7 @@ async function notifySchedule(
             ? [
                 { name: "Thời gian", value: formatInterviewTime(s.scheduled_at), inline: true },
                 { name: "Hình thức", value: modeLabel(s.mode, s.meet_url) },
+                ...(s.room_name && s.room_state === "booked" ? [{ name: "Phòng", value: s.room_name, inline: true }] : []),
               ]
             : []),
         ],
@@ -109,12 +132,15 @@ export async function PATCH(
   }
 
   // ── Lịch PV: giờ hẹn + hình thức. Online bắt buộc có link Meet; offline thì bỏ link.
-  const scheduleKeys = ["scheduled_at", "mode", "meet_url"].filter((k) => k in body);
+  // Offline có thể kèm giờ kết thúc + phòng họp TDC (đặt/sửa/trả phòng bên TDC trước khi ghi DB).
+  const scheduleKeys = ["scheduled_at", "mode", "meet_url", "ends_at", "room_id"].filter((k) => k in body);
   let scheduleChanged = false;
+  let roomAction: RoomAction = { kind: "none" };
+  let roomPrev: { application_id: string; room_name: string | null; room_booking_id: string | null } | null = null;
   if (scheduleKeys.length > 0) {
     const { data: prev } = await supabase
       .from("interview_sessions")
-      .select("scheduled_at, mode, meet_url")
+      .select("application_id, scheduled_at, mode, meet_url, ends_at, room_id, room_name, room_booking_id, room_state")
       .eq("id", id)
       .single();
     if (!prev) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -154,12 +180,59 @@ export async function PATCH(
       meetUrl = null; // offline / chưa chọn → không giữ link cũ kẻo nhắc nhầm
     }
 
-    scheduleChanged =
-      scheduledAt !== (prev.scheduled_at ? new Date(prev.scheduled_at).toISOString() : null) ||
-      mode !== prev.mode ||
-      meetUrl !== prev.meet_url;
+    const iso = (v: string | null) => (v ? new Date(v).toISOString() : null);
+    const prevAt = iso(prev.scheduled_at as string | null);
+    const prevEnd = iso(prev.ends_at as string | null);
 
-    Object.assign(allowed, { scheduled_at: scheduledAt, mode, meet_url: meetUrl });
+    // Giờ kết thúc: gửi kèm thì lấy; không gửi mà dời giờ bắt đầu thì giữ nguyên thời lượng cũ.
+    let endsAt = prevEnd;
+    if ("ends_at" in body) {
+      if (body.ends_at === null || body.ends_at === "") endsAt = null;
+      else {
+        const d = new Date(String(body.ends_at));
+        if (Number.isNaN(d.getTime())) return NextResponse.json({ error: "Giờ kết thúc không hợp lệ" }, { status: 400 });
+        endsAt = d.toISOString();
+      }
+    } else if (prevEnd && prevAt && scheduledAt && scheduledAt !== prevAt) {
+      endsAt = new Date(new Date(scheduledAt).getTime() + (Date.parse(prevEnd) - Date.parse(prevAt))).toISOString();
+    }
+    if (!scheduledAt) endsAt = null;
+    if (endsAt && scheduledAt && Date.parse(endsAt) <= Date.parse(scheduledAt)) {
+      return NextResponse.json({ error: "Giờ kết thúc phải sau giờ bắt đầu" }, { status: 400 });
+    }
+
+    let roomId = (prev.room_id as string | null) ?? null;
+    if ("room_id" in body) roomId = typeof body.room_id === "string" && body.room_id.trim() ? body.room_id.trim() : null;
+    const next = { scheduled_at: scheduledAt, ends_at: endsAt, mode, room_id: roomId, room_state: null };
+    if (wantedRoom(next) && !tdcRoomsEnabled()) {
+      return NextResponse.json({ error: "Chưa bật đặt phòng TD Consulting" }, { status: 400 });
+    }
+    roomAction = planRoomAction(
+      {
+        scheduled_at: prevAt,
+        ends_at: prevEnd,
+        mode: prev.mode as string | null,
+        room_id: (prev.room_id as string | null) ?? null,
+        room_state: (prev.room_state as RoomState | null) ?? null,
+      },
+      next,
+    );
+    if (roomAction.kind === "upsert") {
+      const err = roomTimeError(scheduledAt, endsAt);
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
+    }
+    roomPrev = {
+      application_id: String(prev.application_id),
+      room_name: (prev.room_name as string | null) ?? null,
+      room_booking_id: (prev.room_booking_id as string | null) ?? null,
+    };
+
+    scheduleChanged =
+      scheduledAt !== prevAt || endsAt !== prevEnd || mode !== prev.mode || meetUrl !== prev.meet_url;
+
+    Object.assign(allowed, { scheduled_at: scheduledAt, ends_at: endsAt, mode, meet_url: meetUrl });
+    // Không cần phòng nữa và không phải gọi TDC (chưa từng giữ phòng) → bỏ lựa chọn cũ.
+    if (!wantedRoom(next) && roomAction.kind === "none") allowed.room_id = null;
     // Đổi lịch → nhắc lại theo thông tin mới.
     if (scheduleChanged) allowed.reminded_at = null;
   }
@@ -183,6 +256,27 @@ export async function PATCH(
       oldAudioKeys = allAudioKeys(prev).filter((k) => k !== allowed.audio_key);
       // Transcript máy gỡ là của bản ghi cũ — để lại thì Phân tích chấm bản đã xoá.
       if (!("transcript" in body)) Object.assign(allowed, machineTranscriptReset(prev.transcript_source));
+    }
+  }
+
+  // Phòng TDC: gọi TRƯỚC khi ghi DB. Phòng bận → 409, không ghi gì (lịch + booking cũ giữ nguyên).
+  // Lỗi mạng/TDC → vẫn lưu lịch, đánh dấu room_state để HR bấm Thử lại.
+  if (roomAction.kind !== "none" && roomPrev) {
+    try {
+      const patch = await applyRoomAction(roomAction, {
+        sessionId: id,
+        start: allowed.scheduled_at as string | null,
+        end: allowed.ends_at as string | null,
+        title: roomBookingTitle(roomAction.kind === "upsert" ? await jobTitleOf(roomPrev.application_id) : null),
+        booker: auth.ctx.user.displayName,
+        prevRoomName: roomPrev.room_name,
+        prevBookingId: roomPrev.room_booking_id,
+      });
+      if (patch) Object.assign(allowed, patch);
+    } catch (e) {
+      if (e instanceof RoomBusyError) return NextResponse.json({ error: e.message, code: "room_busy" }, { status: 409 });
+      if (e instanceof RoomInputError) return NextResponse.json({ error: e.message }, { status: 400 });
+      throw e;
     }
   }
 
@@ -243,9 +337,12 @@ export async function DELETE(
   // Lấy key TRƯỚC khi xoá dòng — xoá xong là mất đường tìm lại file trên R2.
   const { data: prev } = await supabase
     .from("interview_sessions")
-    .select("audio_key, audio_pieces")
+    .select("id, audio_key, audio_pieces, room_id, room_state")
     .eq("id", id)
     .single();
+
+  // Trả phòng TDC trước khi xoá (xoá rồi là mất mã tham chiếu). Lỗi chỉ log, không chặn việc xoá.
+  if (prev) await releaseTdcRooms([prev as { id: string; room_id: string | null; room_state: string | null }]);
 
   const { error } = await supabase.from("interview_sessions").delete().eq("id", id);
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { releaseTdcRoomsFor } from "@/lib/tdc-rooms";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,6 +52,7 @@ export async function DELETE(
   const { id } = await params;
   const supabase = getSupabaseAdmin();
 
+  await releaseTdcRoomsFor({ jobId: id });
   const { error } = await supabase.from("jobs").delete().eq("id", id);
 
   if (error) {

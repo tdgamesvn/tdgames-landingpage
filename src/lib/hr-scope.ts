@@ -107,6 +107,7 @@ export function redactApplication<T extends Record<string, unknown>>(
 export const INTERVIEW_BASE_FIELDS: string[] = [
   "id", "application_id", "round", "title", "scheduled_at", "mode", "meet_url",
   "created_at", "updated_at", "reminded_at", "analysis_status",
+  "ends_at", "room_id", "room_name", "room_state", "room_error",
 ];
 
 export function redactInterview<T extends Record<string, unknown>>(

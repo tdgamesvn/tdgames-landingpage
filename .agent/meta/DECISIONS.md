@@ -415,3 +415,10 @@ Lý do: audit SEO (114 bài/3 tháng, nhiều cặp ăn thịt từ khoá, khôn
 - Trang riêng (không dùng ServicePageTemplate): hero "chọn nhân vật" + chương theo dự án. Chữ giữ đúng hệ trang dịch vụ (H1 Changa One cam/trắng, dòng phụ Nunito Sans cam giãn chữ, h2 Rajdhani) — sếp bắt lỗi font tự chọn ở mockup.
 - Monster Legends dùng lại `SpineStage` với 2 prop tuỳ chọn: `centre` (căn nhân vật giữa khung theo chiều dọc ở mọi tỉ lệ khung — sếp yêu cầu cho trang này) và `onPlayer` (dopesheet đọc key/event thật từ animation đang chạy, không vẽ số giả). Ban đầu mặc định tắt; cùng ngày sếp duyệt bật cho cả 10 trang Monster Legends → `centre` mặc định TRUE (false = bản cũ chân đúng mặt sàn).
 - Nhãn nguồn gốc: Summoner Era dùng `PROJECT_PROVENANCE` (Founder's previous work · Zitga); Kayn Snow Moon ghi "Fan-made piece" theo case study. The Twins (boss-animation) = sản phẩm TD Games, không nhãn (sếp 2026-11-24). Media mới ở R2 `landing/services/spine-animation/*-v1.jpg`, OG `landing/og/spine-animation-v1.jpg`.
+
+## 2026-11-25 — TDG ↔ TDC đặt phòng họp: RPC anon + mật mã, không Edge Function
+- TDG (/hr) đặt Phòng họp TDC bằng 4 RPC `room_ext_rooms/upsert/cancel/get` trên Supabase TDC (dfpasdgvpfugrzbnvsgt), gọi qua REST với anon key TDC (công khai) + `TDC_ROOM_KEY`; TDC chỉ lưu băm SHA-256 ở `room_external_clients`. RPC chỉ đụng booking `external_source='tdg'`.
+- Mã tham chiếu = `interview_sessions.id` (unique khi booked) ⇒ Lưu/Thử lại lặp không sinh booking thứ hai; sửa giờ/phòng = update đúng booking cũ.
+- Phòng bận ⇒ 409, KHÔNG ghi gì (lịch + booking cũ giữ nguyên). Lỗi mạng/TDC ⇒ vẫn lưu lịch, `room_state=error|cancel_error` + nút Thử lại. Xoá vòng/hồ sơ/job ⇒ trả phòng trước, lỗi chỉ log.
+- Chuỗi kết nối Postgres TDC (`TDC_DATABASE_URL`) CHỈ nằm trên Mac để chạy migration TDC — KHÔNG lên VPS. Migration TDC: file vào repo `TDSolutionsHN/tdc_platforms` (qua GitHub API) + chạy psql trong 22h–8h + ghi `supabase_migrations.schema_migrations`; kiểm số phiên bản chưa có trên DB TDC trước khi đặt tên (bot TDC có thể vừa dùng).
+- Thiếu 1 trong 3 env `TDC_SUPABASE_URL` / `TDC_SUPABASE_ANON_KEY` / `TDC_ROOM_KEY` ⇒ tính năng ẩn (form như cũ).

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireHrUser, jobInScope } from "@/lib/hr-session";
 import { normalizeDeadline } from "@/lib/job-posting";
+import { releaseTdcRoomsFor } from "@/lib/tdc-rooms";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,6 +100,7 @@ export async function DELETE(
   if (inScopeJob === undefined) return NextResponse.json({ error: "Không đọc được job" }, { status: 500 });
   if (!inScopeJob) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  await releaseTdcRoomsFor({ jobId: id });
   const { error } = await supabase.from("jobs").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
