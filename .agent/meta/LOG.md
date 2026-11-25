@@ -6744,3 +6744,9 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Sếp bấm (hướng dẫn `docs/marketing/2026-11-24-huong-dan-ads-spine.md`, đã gửi Telegram): GA4 generate_lead = sự kiện chính; tạo nhóm "Spine" 8 từ khoá EXACT + RSA 12 tiêu đề/4 mô tả → /services/spine-animation; CPC thủ công (Spine 70k, nhóm chung 45k); bỏ Thổ Nhĩ Kỳ; giữ 100k/ngày; bật chiến dịch. Đổi tên nhóm chung chỉ sau khi 32 lệnh DONE.
 - Điều kiện dừng: 14 ngày sau khi bật, ≥25 click + 0 lead + search term vẫn là người tìm phần mềm → đề xuất dừng hẳn Ads.
 - Next: kiểm `ads-command.mjs list` (32 lệnh DONE), kiểm Sheet khi sếp làm xong (nhóm Spine, bidding MANUAL_CPC, geo bỏ 2792, ENABLED).
+
+## 2026-11-25 — /hr đặt phòng họp TDC từ lịch phỏng vấn (thiết kế, chờ duyệt)
+- Sếp gửi spec + ảnh: PV Offline trên /hr chọn phòng TDC + giờ kết thúc, Lưu → đặt booking TDC; sửa/huỷ/Online → cập nhật/trả phòng; không trùng.
+- Đọc repo TDC (gh api, chỉ đọc): `room_rooms`/`room_bookings` có exclusion constraint chặn chồng giờ; TDC recruit đã tự đặt Phòng Hội An (rec_iv_room_auto). Chưa có cửa cho hệ thống ngoài.
+- Sếp chọn: TDC mở Edge Function `room-external` khoá bí mật dùng chung, chống trùng bằng (external_source='tdg', external_ref=id buổi PV); bot TDC làm phía TDC theo đặc tả (hướng a), em làm TDG.
+- Thiết kế `docs/superpowers/specs/2026-11-25-hr-tdc-room-booking-design.md` (commit c90df67), đã gửi Telegram. Next: sếp duyệt → writing-plans → làm TDG (ẩn khi thiếu env TDC_ROOM_API_URL/KEY).
