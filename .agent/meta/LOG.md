@@ -6762,3 +6762,4 @@ tdgamestudio.com/hr; lỗi thì revert riêng commit (b). Kiểm tra lại cron 
 - Hàm thuần `src/lib/hr-test-pick.ts` (pickTestsForApplication / needsTestChoice) + 5 test node:test pass.
 - Hồ sơ ứng viên (SubmissionsPanel): job ≥ 2 đề → ô tick "Gửi cho ứng viên này"; lưu ngay qua `POST /api/hr/applications/[id]/submissions {action:"tests"}` (kiểm id thuộc job). Copy link test + mail "test_assignment" bị chặn (409 / fail choose_test) khi job nhiều đề mà chưa tick. `/api/test/<token>` chỉ trả đề đã chọn. Đổi vị trí ứng tuyển → test_ids = null.
 - Kiểm local (DB prod, hồ sơ Vũ Thị Thùy Hương có sẵn link): 409 khi chưa chọn, 400 id lạ, chọn Spine → trang ứng viên chỉ thấy Spine, bỏ chọn → về 2 đề (ĐÃ TRẢ VỀ null). UI ô tick OK. detect_changes báo "critical" do gộp GET/POST trùng tên — thực tế chỉ 4 route + SubmissionsPanel.
+- ĐÃ DEPLOY d58f725 (CI OK); smoke prod /hr 200, /api/test/<token lạ> 404.

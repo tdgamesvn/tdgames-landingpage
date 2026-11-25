@@ -2,6 +2,7 @@
 
 ## Doing
 
+- [x] HR: sửa tên/ghi chú bài test (3be2096) + chọn bài test gửi cho từng ứng viên (d58f725, cột applications.test_ids) (2026-11-25) — ĐÃ DEPLOY. Chờ HR dùng thật. LOG 2026-11-25
 - [ ] HR: đặt phòng họp TDC từ lịch PV Offline (2026-11-25) — TẠM DỪNG (sếp: "tạm thời như vậy, lưu lại order"). Thiết kế `docs/superpowers/specs/2026-11-25-hr-tdc-room-booking-design.md` (bản dùng bot TDC). Sếp chê cồng kềnh → hướng mới: sếp cấp quyền DB Supabase TDC (dfpasdgvpfugrzbnvsgt) để em tự thêm cột + 3 RPC (kiểm mật mã riêng, TDG gọi bằng anon key TDC + mật mã, không Edge Function); cần: chuỗi kết nối/Access Token, OK commit migration vào repo TDC, giờ chạy (TDC quy định 22h–8h). Làm tiếp khi sếp gửi quyền → sửa lại thiết kế. LOG 2026-11-25
 - [ ] Trang `/services/spine-animation` (2026-11-24) — dựng theo mockup v2 sếp duyệt: hero chọn nhân vật (6 dự án), Monster Legends Spine sống căn giữa + dopesheet key thật, Bosses (Twins + Stickman), Yomi 2, Kayn + Summoner Era, hero kit, form. Menu Services + footer + sitemap + JSON-LD. ĐÃ DEPLOY ed2875d. Chờ sếp xem trên prod. Đã chốt: The Twins = sản phẩm TD Games (không nhãn); căn giữa nhân vật cả 10 trang ML. Mở: cân nhắc link chéo trong nội dung /services/2d-animation; bật lại Ads trỏ trang này. LOG 2026-11-24
 - [x] HR: UV rút offer — hỏi lại khi rời Đã nhận + gợi ý dự phòng (từ máy chủ) + mail "Xác nhận từ chối offer" (2026-11-18) — ĐÃ DEPLOY 4fe7e47, SQL CHECK sếp đã chạy. LOG 2026-11-18 (tối)
